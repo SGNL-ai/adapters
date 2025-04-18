@@ -42,14 +42,14 @@ jobs:
       - name: Pull main image
         id: pull-main-image
         run: |
-          echo "Pulling image: ${{ env.REGISTRY }}/${{ env.ORGANIZATION }}/adapters:main-${{ steps.short-sha.outputs.sha }}"
-          docker pull ${{ env.REGISTRY }}/${{ env.ORGANIZATION }}/adapters:main-${{ steps.short-sha.outputs.sha }}
+          echo "Pulling image: ${{ env.REGISTRY }}/${{ env.ORGANIZATION }}/${{ github.event.repository.name }}:main-${{ steps.short-sha.outputs.sha }}"
+          docker pull ${{ env.REGISTRY }}/${{ env.ORGANIZATION }}/${{ github.event.repository.name }}:main-${{ steps.short-sha.outputs.sha }}
 
       - name: Extract metadata (tags, labels) for sgnl-ai/adapters 🏷️
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.ORGANIZATION }}/adapters
+          images: ${{ env.REGISTRY }}/${{ env.ORGANIZATION }}/${{ github.event.repository.name }}
           flavor: |
             latest=false
           tags: |
@@ -59,8 +59,8 @@ jobs:
       - name: Tag and push the image on release
         id: tag-push-image
         run: |
-          echo "Old tag: ${{ env.REGISTRY }}/${{ env.ORGANIZATION }}/adapters:main-${{ steps.short-sha.outputs.sha }}"
+          echo "Old tag: ${{ env.REGISTRY }}/${{ env.ORGANIZATION }}/${{ github.event.repository.name }}:main-${{ steps.short-sha.outputs.sha }}"
           echo "New tag: ${{ steps.meta.outputs.tags }}"
-          docker tag ${{ env.REGISTRY }}/${{ env.ORGANIZATION }}/adapters:main-${{ steps.short-sha.outputs.sha }} ${{ steps.meta.outputs.tags }}
+          docker tag ${{ env.REGISTRY }}/${{ env.ORGANIZATION }}/${{ github.event.repository.name }}:main-${{ steps.short-sha.outputs.sha }} ${{ steps.meta.outputs.tags }}
           echo "Pushing new image: ${{ steps.meta.outputs.tags }}"
           docker push ${{ steps.meta.outputs.tags }}
