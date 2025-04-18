@@ -1,0 +1,236 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: ""
+      proto_major: 0
+      proto_minor: 0
+      content_length: 47
+      transfer_encoding: []
+      trailer: {}
+      host: ""
+      remote_addr: ""
+      request_uri: ""
+      body: Action=ListGroups&MaxItems=1&Version=2010-05-08
+      form:
+        Action:
+          - ListGroups
+        MaxItems:
+          - "1"
+        Version:
+          - "2010-05-08"
+      headers:
+        Amz-Sdk-Invocation-Id:
+          - 1075d565-069b-4e39-b32a-43c1a3f66b29
+        Amz-Sdk-Request:
+          - attempt=1; max=3
+        Authorization:
+          - "{{OMITTED}}"
+        Content-Type:
+          - application/x-www-form-urlencoded
+        User-Agent:
+          - m/E aws-sdk-go-v2/1.30.3 os/linux lang/go#1.22.4 md/GOOS#linux md/GOARCH#amd64 api/iam#1.34.3
+        X-Amz-Date:
+          - 20240723T172334Z
+      url: https://iam.amazonaws.com/
+      method: POST
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding: []
+      trailer: {}
+      content_length: 685
+      uncompressed: false
+      body: |
+        <ListGroupsResponse xmlns="https://iam.amazonaws.com/doc/2010-05-08/">
+          <ListGroupsResult>
+            <IsTruncated>true</IsTruncated>
+            <Marker>MARKER_PLACEHOLDER</Marker>
+            <Groups>
+              <member>
+                <Path>/</Path>
+                <GroupName>Group1</GroupName>
+                <GroupId>AGPAXXXXXXXXXXXXXXXX1</GroupId>
+                <Arn>arn:aws:iam::000000000000:group/Group1</Arn>
+                <CreateDate>2024-05-10T17:29:18Z</CreateDate>
+              </member>
+            </Groups>
+          </ListGroupsResult>
+          <ResponseMetadata>
+            <RequestId>77f453f2-4cf3-4b5e-9894-822f395145a1</RequestId>
+          </ResponseMetadata>
+        </ListGroupsResponse>
+      headers:
+        Content-Length:
+          - "685"
+        Content-Type:
+          - text/xml
+        Date:
+          - Tue, 23 Jul 2024 17:23:33 GMT
+        X-Amzn-Requestid:
+          - 77f453f2-4cf3-4b5e-9894-822f395145a1
+      status: 200 OK
+      code: 200
+      duration: 323.083664ms
+  - id: 1
+    request:
+      proto: ""
+      proto_major: 0
+      proto_minor: 0
+      content_length: 51
+      transfer_encoding: []
+      trailer: {}
+      host: ""
+      remote_addr: ""
+      request_uri: ""
+      body: Action=GetGroup&GroupName=Group1&Version=2010-05-08
+      form:
+        Action:
+          - GetGroup
+        GroupName:
+          - Group1
+        Version:
+          - "2010-05-08"
+      headers:
+        Amz-Sdk-Invocation-Id:
+          - be3d1cd7-4c31-487f-81ec-ad2c81a5af65
+        Amz-Sdk-Request:
+          - attempt=1; max=3
+        Authorization:
+          - "{{OMITTED}}"
+        Content-Type:
+          - application/x-www-form-urlencoded
+        User-Agent:
+          - m/E aws-sdk-go-v2/1.30.3 os/linux lang/go#1.22.4 md/GOOS#linux md/GOARCH#amd64 api/iam#1.34.3
+        X-Amz-Date:
+          - 20240723T172334Z
+      url: https://iam.amazonaws.com/
+      method: POST
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding: []
+      trailer: {}
+      content_length: 792
+      uncompressed: false
+      body: |
+        <GetGroupResponse xmlns="https://iam.amazonaws.com/doc/2010-05-08/">
+          <GetGroupResult>
+            <IsTruncated>false</IsTruncated>
+            <Users>
+              <member>
+                <Path>/</Path>
+                <UserName>sampleuser1</UserName>
+                <Arn>arn:aws:iam::000000000000:user/sampleuser1</Arn>
+                <UserId>AIDAXXXXXXXXXXXXXXXX1</UserId>
+                <CreateDate>2024-05-10T17:29:04Z</CreateDate>
+              </member>
+            </Users>
+            <Group>
+              <Path>/</Path>
+              <GroupName>Group1</GroupName>
+              <GroupId>AGPAXXXXXXXXXXXXXXXX1</GroupId>
+              <Arn>arn:aws:iam::000000000000:group/Group1</Arn>
+              <CreateDate>2024-05-10T17:29:18Z</CreateDate>
+            </Group>
+          </GetGroupResult>
+          <ResponseMetadata>
+            <RequestId>f89f7e8f-1e8b-445a-bea6-cddab4e8bf29</RequestId>
+          </ResponseMetadata>
+        </GetGroupResponse>
+      headers:
+        Content-Length:
+          - "792"
+        Content-Type:
+          - text/xml
+        Date:
+          - Tue, 23 Jul 2024 17:23:33 GMT
+        X-Amzn-Requestid:
+          - f89f7e8f-1e8b-445a-bea6-cddab4e8bf29
+      status: 200 OK
+      code: 200
+      duration: 293.951914ms
+  - id: 2
+    request:
+      proto: ""
+      proto_major: 0
+      proto_minor: 0
+      content_length: 62
+      transfer_encoding: []
+      trailer: {}
+      host: ""
+      remote_addr: ""
+      request_uri: ""
+      body: Action=GetGroup&GroupName=Group1&MaxItems=2&Version=2010-05-08
+      form:
+        Action:
+          - GetGroup
+        GroupName:
+          - Group1
+        MaxItems:
+          - "2"
+        Version:
+          - "2010-05-08"
+      headers:
+        Amz-Sdk-Invocation-Id:
+          - 21a4dbbc-cb2f-4ac2-902e-70c1e6a84d7b
+        Amz-Sdk-Request:
+          - attempt=1; max=3
+        Authorization:
+          - "{{OMITTED}}"
+        Content-Type:
+          - application/x-www-form-urlencoded
+        User-Agent:
+          - m/E aws-sdk-go-v2/1.30.3 os/linux lang/go#1.22.4 md/GOOS#linux md/GOARCH#amd64 api/iam#1.34.3
+        X-Amz-Date:
+          - 20240723T172335Z
+      url: https://iam.amazonaws.com/
+      method: POST
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding: []
+      trailer: {}
+      content_length: 792
+      uncompressed: false
+      body: |
+        <GetGroupResponse xmlns="https://iam.amazonaws.com/doc/2010-05-08/">
+          <GetGroupResult>
+            <IsTruncated>false</IsTruncated>
+            <Users>
+              <member>
+                <Path>/</Path>
+                <UserName>sampleuser1</UserName>
+                <Arn>arn:aws:iam::000000000000:user/sampleuser1</Arn>
+                <UserId>AIDAXXXXXXXXXXXXXXXX1</UserId>
+                <CreateDate>2024-05-10T17:29:04Z</CreateDate>
+              </member>
+            </Users>
+            <Group>
+              <Path>/</Path>
+              <GroupName>Group1</GroupName>
+              <GroupId>AGPAXXXXXXXXXXXXXXXX1</GroupId>
+              <Arn>arn:aws:iam::000000000000:group/Group1</Arn>
+              <CreateDate>2024-05-10T17:29:18Z</CreateDate>
+            </Group>
+          </GetGroupResult>
+          <ResponseMetadata>
+            <RequestId>6d1b2d4e-1036-4634-adb1-951b671f528c</RequestId>
+          </ResponseMetadata>
+        </GetGroupResponse>
+      headers:
+        Content-Length:
+          - "792"
+        Content-Type:
+          - text/xml
+        Date:
+          - Tue, 23 Jul 2024 17:23:35 GMT
+        X-Amzn-Requestid:
+          - 6d1b2d4e-1036-4634-adb1-951b671f528c
+      status: 200 OK
+      code: 200
+      duration: 319.338291ms

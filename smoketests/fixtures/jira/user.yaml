@@ -1,0 +1,64 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: test-instance.atlassian.net
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Basic {{OMITTED}}
+      url: https://test-instance.atlassian.net/rest/api/3/users/search?startAt=0&maxResults=3
+      method: GET
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '[{"self":"https://test-instance.atlassian.net/rest/api/3/user?accountId=712020:c95ef8cc-fe03-43cc-8f50-c390bcb9499f","accountId":"712020:c95ef8cc-fe03-43cc-8f50-c390bcb9499f","accountType":"atlassian","emailAddress":"nick@sgnl.ai","avatarUrls":{},"displayName":"Nick","active":true,"locale":"en_US"},{"self":"https://test-instance.atlassian.net/rest/api/3/user?accountId=557058:f58131cb-b67d-43c7-b30d-6b58d40bd077","accountId":"557058:f58131cb-b67d-43c7-b30d-6b58d40bd077","accountType":"app","avatarUrls":{},"displayName":"Automation for Jira","active":true},{"self":"https://test-instance.atlassian.net/rest/api/3/user?accountId=5d53f3cbc6b9320d9ea5bdc2","accountId":"5d53f3cbc6b9320d9ea5bdc2","accountType":"app","avatarUrls":{},"displayName":"Jira Outlook","active":true}]'
+      headers:
+        Atl-Traceid:
+          - 91e0b52edbe03a8a
+        Cache-Control:
+          - no-cache, no-store, no-transform
+        Content-Type:
+          - application/json;charset=UTF-8
+        Date:
+          - Fri, 29 Sep 2023 22:01:59 GMT
+        Nel:
+          - '{"failure_fraction": 0.001, "include_subdomains": true, "max_age": 600, "report_to": "endpoint-1"}'
+        Report-To:
+          - '{"endpoints": [{"url": "https://dz8aopenkvv6s.cloudfront.net"}], "group": "endpoint-1", "include_subdomains": true, "max_age": 600}'
+        Server:
+          - AtlassianEdge
+        Set-Cookie:
+          - Path=/; SameSite=None; Secure
+        Strict-Transport-Security:
+          - max-age=63072000; includeSubDomains; preload
+        Timing-Allow-Origin:
+          - "*"
+        Vary:
+          - Accept-Encoding
+        X-Aaccountid:
+          - 712020%3Ac95ef8cc-fe03-43cc-8f50-c390bcb9499f
+        X-Arequestid:
+          - d7bb08a67bee65a6cc0851353f952951
+        X-Content-Type-Options:
+          - nosniff
+        X-Xss-Protection:
+          - 1; mode=block
+      status: 200 OK
+      code: 200
+      duration: 349.637545ms

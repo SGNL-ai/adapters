@@ -1,0 +1,55 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: graph.microsoft.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+      url: https://graph.microsoft.com/v1.0/groups?$select=id,displayName,createdDateTime,groupTypes&$top=3
+      method: GET
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding:
+        - chunked
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"@odata.context":"https://graph.microsoft.com/v1.0/$metadata#groups(id,displayName,createdDateTime,groupTypes)","@odata.nextLink":"https://graph.microsoft.com/v1.0/groups?$select=id%2cdisplayName%2ccreatedDateTime%2cgroupTypes&$top=3&$skiptoken=NEXTLINK_TOKEN_PLACEHOLDER","value":[{"id":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee","displayName":"Example Group 1","createdDateTime":"2023-02-21T18:00:53Z","groupTypes":["Unified"]},{"id":"ffffffff-gggg-hhhh-iiii-jjjjjjjjjjjj","displayName":"Example Group 2","createdDateTime":"2022-12-09T23:32:10Z","groupTypes":[]},{"id":"kkkkkkkk-llll-mmmm-nnnn-oooooooooooo","displayName":"Example Group 3","createdDateTime":"2023-02-16T17:46:16Z","groupTypes":[]}]}'
+      headers:
+        Cache-Control:
+          - no-cache
+        Client-Request-Id:
+          - 30260d56-3773-4c8f-97ce-9088d56c13cd
+        Content-Type:
+          - application/json;odata.metadata=minimal;odata.streaming=true;IEEE754Compatible=false;charset=utf-8
+        Date:
+          - Fri, 27 Oct 2023 21:16:47 GMT
+        Odata-Version:
+          - "4.0"
+        Request-Id:
+          - 30260d56-3773-4c8f-97ce-9088d56c13cd
+        Strict-Transport-Security:
+          - max-age=31536000
+        Vary:
+          - Accept-Encoding
+        X-Ms-Ags-Diagnostic:
+          - '{"ServerInfo":{"DataCenter":"West US 2","Slice":"E","Ring":"1","ScaleUnit":"002","RoleInstance":"MWH0EPF0004E171"}}'
+        X-Ms-Resource-Unit:
+          - "1"
+      status: 200 OK
+      code: 200
+      duration: 160.057699ms

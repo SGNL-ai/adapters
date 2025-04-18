@@ -1,0 +1,113 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: test-instance.jiradc.ai
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Basic {{OMITTED}}
+      url: https://test-instance.jiradc.ai/rest/api/latest/groups/picker
+      method: GET
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"header":"Showing 2 of 2 matching groups","total":2,"groups":[{"name":"jira-administrators","html":"jira-administrators","labels":[{"text":"Admin","title":"Users added to this group will be given administrative access","type":"ADMIN"},{"text":"Jira Service Management","title":"Users added to this group will be given access to <strong>Jira Service Management</strong>","type":"SINGLE"}]},{"name":"jira-servicedesk-users","html":"jira-servicedesk-users","labels":[{"text":"Jira Service Management","title":"Users added to this group will be given access to <strong>Jira Service Management</strong>","type":"SINGLE"}]}]}'
+      headers:
+        Cache-Control:
+          - no-cache, no-store, no-transform
+        Content-Security-Policy:
+          - sandbox
+        Content-Type:
+          - application/json;charset=UTF-8
+        Date:
+          - Tue, 01 Apr 2025 05:02:21 GMT
+        Referrer-Policy:
+          - strict-origin-when-cross-origin
+        Server-Timing:
+          - threadId;desc=46155
+        Strict-Transport-Security:
+          - max-age=31536000
+        Vary:
+          - User-Agent
+        X-Content-Type-Options:
+          - nosniff
+        X-Frame-Options:
+          - SAMEORIGIN
+        X-Seraph-Loginreason:
+          - OK
+        X-Xss-Protection:
+          - 1; mode=block
+      status: 200 OK
+      code: 200
+      duration: 189.633949ms
+  - id: 1
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: test-instance.jiradc.ai
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Basic {{OMITTED}}
+      url: https://test-instance.jiradc.ai/rest/api/latest/group/member?groupname=jira-administrators&startAt=0&maxResults=3
+      method: GET
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"self":"https://test-instance.jiradc.ai/rest/api/2/group/member?includeInactiveUsers=false&maxResults=3&groupname=jira-administrators&startAt=0","maxResults":3,"startAt":0,"total":2,"isLast":true,"values":[{"self":"https://test-instance.jiradc.ai/rest/api/2/user?username=damon","name":"damon","key":"JIRAUSER10000","emailAddress":"user1@example.com","avatarUrls":{},"displayName":"Damon","active":true,"timeZone":"UTC"},{"self":"https://test-instance.jiradc.ai/rest/api/2/user?username=jiraadmin","name":"jiraadmin","key":"JIRAUSER10105","emailAddress":"jiraadmin@sgnl.ai","avatarUrls":{},"displayName":"Jira Admin","active":true,"timeZone":"UTC"}]}'
+      headers:
+        Cache-Control:
+          - no-cache, no-store, no-transform
+        Content-Security-Policy:
+          - sandbox
+        Content-Type:
+          - application/json;charset=UTF-8
+        Date:
+          - Tue, 01 Apr 2025 05:02:21 GMT
+        Referrer-Policy:
+          - strict-origin-when-cross-origin
+        Server-Timing:
+          - threadId;desc=46150
+        Strict-Transport-Security:
+          - max-age=31536000
+        Vary:
+          - User-Agent
+        X-Content-Type-Options:
+          - nosniff
+        X-Frame-Options:
+          - SAMEORIGIN
+        X-Seraph-Loginreason:
+          - OK
+        X-Xss-Protection:
+          - 1; mode=block
+      status: 200 OK
+      code: 200
+      duration: 32.451057ms

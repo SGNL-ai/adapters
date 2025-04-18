@@ -1,0 +1,87 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 2717
+      transfer_encoding: []
+      trailer: {}
+      host: api.us-2.crowdstrike.com
+      remote_addr: ""
+      request_uri: ""
+      body: |
+        {"query":"{\n\t\t    entities(\n\t\t        archived: false\n\t\t        enabled: true\n\t\t        types: [ENDPOINT]\n\t\t        sortKey: RISK_SCORE\n\t\t        sortOrder: DESCENDING\n\t\t        first: 2\n\t\t    ) {\n\t\t\t\tpageInfo {\n\t\t\t\t\thasNextPage\n\t\t\t\t\tendCursor\n\t\t\t\t}\n\t\t\t\tnodes {\n\t\t            ... on EndpointEntity {\n\t\t                agentId\n\t\t                agentVersion\n\t\t                archived\n\t\t                cid\n\t\t                creationTime\n\t\t                earliestSeenTraffic\n\t\t                entityId\n\t\t                guestAccountEnabled\n\t\t                hasADDomainAdminRole\n\t\t                hasRole\n\t\t                hostName\n\t\t                impactScore\n\t\t                inactive\n\t\t                lastIpAddress\n\t\t                learned\n\t\t                markTime\n\t\t                mostRecentActivity\n\t\t                primaryDisplayName\n\t\t                riskScore\n\t\t                riskScoreSeverity\n\t\t                secondaryDisplayName\n\t\t                shared\n\t\t                stale\n\t\t                staticIpAddresses\n\t\t                type\n\t\t                unmanaged\n\t\t                watched\n\t\t                ztaScore\n\t\t                accounts {\n\t\t\t\t\t\t\t__typename\n\t\t                    ... on ActiveDirectoryAccountDescriptor {\n\t\t                        archived\n\t\t                        cn\n\t\t                        consistencyGuid\n\t\t                        containingGroupIds\n\t\t                        creationTime\n\t\t                        dataSource\n\t\t                        department\n\t\t                        description\n\t\t                        dn\n\t\t                        domain\n\t\t                        enabled\n\t\t                        expirationTime\n\t\t                        flattenedContainingGroupIds\n\t\t                        lastUpdateTime\n\t\t                        lockoutTime\n\t\t                        mostRecentActivity\n\t\t                        objectGuid\n\t\t                        objectSid\n\t\t                        ou\n\t\t                        samAccountName\n\t\t                        servicePrincipalNames\n\t\t                        title\n\t\t                        upn\n\t\t                        userAccountControl\n\t\t                        userAccountControlFlags\n\t\t                    }\n\t\t                }\n\t\t                riskFactors {\n\t\t                    score\n\t\t                    severity\n\t\t                    type\n\t\t                }\n\t\t            }\n\t\t        }\n\t\t    }\n\t\t}","variables":null}
+      form: {}
+      headers:
+        Accept:
+          - application/json; charset=utf-8
+        Authorization:
+          - Bearer {{OMITTED}}
+        Cache-Control:
+          - no-cache
+        Content-Type:
+          - application/json; charset=utf-8
+      url: https://api.us-2.crowdstrike.com/identity-protection/combined/graphql/v1
+      method: POST
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"data":{"entities":{"pageInfo":{"hasNextPage":true,"endCursor":"eyJyaXNrU2NvcmUiOjAuNDc5MiwiX2lkIjoiODliZTQ3YzMtZjUxYi00OGFmLTg4NGEtZWNiMDJlZDA4MDdhIn0="},"nodes":[{"agentId":"eca21da34c934e8e95c97a4f7af1d9a5","agentVersion":"7.16.18613.0","archived":false,"cid":"8693deb4-bf13-4cfb-8855-ee118d9a0243","creationTime":"2024-05-15T15:17:19.000Z","earliestSeenTraffic":"2024-05-23T02:00:59.187Z","entityId":"3c7aebb9-411b-4ee9-b481-e881f29afcc8","guestAccountEnabled":null,"hasADDomainAdminRole":true,"hasRole":true,"hostName":"mj-dc.corp.sgnl.ai","impactScore":0,"inactive":false,"lastIpAddress":"1.1.1.1","learned":true,"markTime":null,"mostRecentActivity":"2024-10-02T22:40:00.033Z","primaryDisplayName":"mj-dc","riskScore":0.67,"riskScoreSeverity":"MEDIUM","secondaryDisplayName":"mj-dc.corp.sgnl.ai","shared":false,"stale":false,"staticIpAddresses":[],"type":"ENDPOINT","unmanaged":false,"watched":true,"ztaScore":28,"accounts":[{"__typename":"ActiveDirectoryAccountDescriptor","archived":false,"cn":"mj-dc","consistencyGuid":null,"containingGroupIds":["a3f5d59f-40af-45cd-95ce-19dfdd6c2386","95cebf5d-36a6-4994-bbdb-693a60e13749","239dcac1-6d00-4cff-a894-400386750d79"],"creationTime":"2024-05-15T15:17:19.000Z","dataSource":"ACTIVE_DIRECTORY","department":null,"description":null,"dn":"CN=mj-dc,OU=Domain Controllers,DC=corp,DC=sgnl,DC=ai","domain":"CORP.SGNL.AI","enabled":true,"expirationTime":null,"flattenedContainingGroupIds":["a3f5d59f-40af-45cd-95ce-19dfdd6c2386","95cebf5d-36a6-4994-bbdb-693a60e13749","239dcac1-6d00-4cff-a894-400386750d79","f64f4732-d68b-48af-84ce-95cf4c8bb89f"],"lastUpdateTime":"2024-05-15T15:17:19.000Z","lockoutTime":null,"mostRecentActivity":"2024-10-02T22:40:00.033Z","objectGuid":"3c7aebb9-411b-4ee9-b481-e881f29afcc8","objectSid":"S-1-5-21-3468690955-1439461270-1872542213-1000","ou":"corp.sgnl.ai/Domain Controllers","samAccountName":"mj-dc$","servicePrincipalNames":["Dfsr-12F9A27C-BF97-4787-9364-D31B6C55EB04/mj-dc.corp.sgnl.ai","ldap/mj-dc.corp.sgnl.ai/ForestDnsZones.corp.sgnl.ai","ldap/mj-dc.corp.sgnl.ai/DomainDnsZones.corp.sgnl.ai","TERMSRV/mj-dc","TERMSRV/mj-dc.corp.sgnl.ai","DNS/mj-dc.corp.sgnl.ai","GC/mj-dc.corp.sgnl.ai/corp.sgnl.ai","RestrictedKrbHost/mj-dc.corp.sgnl.ai","RestrictedKrbHost/mj-dc","RPC/a905d6eb-fc70-43e4-b48e-0e4c14822b7e._msdcs.corp.sgnl.ai","HOST/mj-dc/CORP","HOST/mj-dc.corp.sgnl.ai/CORP","HOST/mj-dc","HOST/mj-dc.corp.sgnl.ai","HOST/mj-dc.corp.sgnl.ai/corp.sgnl.ai","E3514235-4B06-11D1-AB04-00C04FC2DCD2/a905d6eb-fc70-43e4-b48e-0e4c14822b7e/corp.sgnl.ai","ldap/mj-dc/CORP","ldap/a905d6eb-fc70-43e4-b48e-0e4c14822b7e._msdcs.corp.sgnl.ai","ldap/mj-dc.corp.sgnl.ai/CORP","ldap/mj-dc","ldap/mj-dc.corp.sgnl.ai","ldap/mj-dc.corp.sgnl.ai/corp.sgnl.ai"],"title":null,"upn":null,"userAccountControl":532480,"userAccountControlFlags":["SERVER_TRUST_ACCOUNT","TRUSTED_FOR_DELEGATION"]}],"riskFactors":[{"score":0.6,"severity":"MEDIUM","type":"LDAPS_CHANNEL_BINDING"},{"score":0.4,"severity":"NORMAL","type":"WATCHED"},{"score":0.3,"severity":"NORMAL","type":"LDAP_SIGNING_DISABLED"},{"score":0.3,"severity":"NORMAL","type":"SPOOLER_SERVICE_RUNNING"}]},{"agentId":"84a3c4307fee48ef96deeca4a6377cbc","agentVersion":"7.15.18511.0","archived":false,"cid":"8693deb4-bf13-4cfb-8855-ee118d9a0243","creationTime":"2024-05-29T21:30:17.000Z","earliestSeenTraffic":"2024-05-29T21:33:13.904Z","entityId":"89be47c3-f51b-48af-884a-ecb02ed0807a","guestAccountEnabled":false,"hasADDomainAdminRole":false,"hasRole":true,"hostName":"alice-win11.corp.sgnl.ai","impactScore":0,"inactive":true,"lastIpAddress":"1.1.1.1","learned":true,"markTime":null,"mostRecentActivity":"2024-06-18T21:40:54.682Z","primaryDisplayName":"alice-win11","riskScore":0.48,"riskScoreSeverity":"MEDIUM","secondaryDisplayName":"alice-win11.corp.sgnl.ai","shared":false,"stale":true,"staticIpAddresses":[],"type":"ENDPOINT","unmanaged":false,"watched":false,"ztaScore":null,"accounts":[{"__typename":"ActiveDirectoryAccountDescriptor","archived":false,"cn":"alice-win11","consistencyGuid":null,"containingGroupIds":["b69ca14c-e919-42ba-a21e-62f34c402a13"],"creationTime":"2024-05-29T21:30:17.000Z","dataSource":"ACTIVE_DIRECTORY","department":null,"description":null,"dn":"CN=alice-win11,OU=Computers,OU=Company,DC=corp,DC=sgnl,DC=ai","domain":"CORP.SGNL.AI","enabled":true,"expirationTime":null,"flattenedContainingGroupIds":["b69ca14c-e919-42ba-a21e-62f34c402a13"],"lastUpdateTime":"2024-05-29T21:30:17.000Z","lockoutTime":null,"mostRecentActivity":"2024-06-18T21:40:54.682Z","objectGuid":"89be47c3-f51b-48af-884a-ecb02ed0807a","objectSid":"S-1-5-21-3468690955-1439461270-1872542213-2103","ou":"corp.sgnl.ai/Company/Computers","samAccountName":"ALICE-WIN11$","servicePrincipalNames":["TERMSRV/ALICE-WIN11","TERMSRV/alice-win11.corp.sgnl.ai","RestrictedKrbHost/alice-win11","HOST/alice-win11","RestrictedKrbHost/alice-win11.corp.sgnl.ai","HOST/alice-win11.corp.sgnl.ai"],"title":null,"upn":null,"userAccountControl":4096,"userAccountControlFlags":["WORKSTATION_TRUST_ACCOUNT"]}],"riskFactors":[{"score":0.4,"severity":"NORMAL","type":"STALE_ACCOUNT"},{"score":0.4,"severity":"NORMAL","type":"SMB_SIGNING_DISABLED"}]}]}},"extensions":{"runTime":16,"remainingPoints":499998,"reset":9997,"consumedPoints":2}}'
+      headers:
+        Cache-Control:
+          - no-cache
+        Connection:
+          - keep-alive
+        Content-Type:
+          - application/json; charset=utf-8
+        Date:
+          - Thu, 03 Oct 2024 23:05:18 GMT
+        Etag:
+          - W/"146c-L1jGdpO/G6p/fD+KKXfSEXUsdZQ"
+        Expires:
+          - Thu, 03 Oct 2024 23:05:17 GMT
+        Pragma:
+          - no-cache
+        Server:
+          - nginx
+        Strict-Transport-Security:
+          - max-age=31536000; includeSubDomains
+          - max-age=31536000; includeSubDomains
+        X-Appliance-Date:
+          - "2024-10-03T23:05:18+00:00"
+        X-Appliance-Id:
+          - 9c052a46-40cb-450d-a593-0913074b654a
+        X-Content-Type-Options:
+          - nosniff
+        X-Cs-Region:
+          - us-2
+        X-Cs-Traceid:
+          - be718ea0-337d-4b4d-93cc-cc66b714ecc6
+        X-Dns-Prefetch-Control:
+          - "off"
+        X-Download-Options:
+          - noopen
+        X-Frame-Options:
+          - SAMEORIGIN
+        X-Powered-By:
+          - Express
+        X-Preempt-Version:
+          - 5.79.66885
+        X-Ratelimit-Limit:
+          - "6000"
+        X-Ratelimit-Remaining:
+          - "5997"
+          - "5999"
+        X-Xss-Protection:
+          - 1; mode=block
+      status: 200 OK
+      code: 200
+      duration: 180.140183ms

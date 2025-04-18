@@ -1,0 +1,54 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: test-instance.api.identitynow-demo.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+        Content-Type:
+          - application/json
+      url: https://test-instance.api.identitynow-demo.com/beta/entitlements?limit=2&offset=0
+      method: GET
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: false
+      body: '[{"sourceSchemaObjectType":"applicationRole","attribute":"appRoleAssignments","attributes":{"displayName":"Basic purchaser [on] Windows Store for Business","appRole_description":"Can buy products for inventory, assign and reclaim licenses.","isEnabled":true,"spn_description":null,"allowedMemberTypes":["Application"],"value":"basicpurchaser"},"value":"AZURE_APP_ID_123:AZURE_RESOURCE_ID_456","description":null,"privileged":true,"cloudGoverned":false,"requestable":true,"source":{"type":"SOURCE","id":"SOURCE_ID_123","name":"Azure AD"},"directPermissions":[],"segments":[],"owner":null,"manuallyUpdatedFields":{"DISPLAY_NAME":false},"id":"ENTITLEMENT_ID_456","name":"Basic purchaser [on] Windows Store for Business","created":"2023-09-22T16:50:12.053Z","modified":"2023-09-22T16:56:12.896Z"},{"sourceSchemaObjectType":"applicationRole","attribute":"appRoleAssignments","attributes":{"displayName":"default access [on] TrustedPublishersProxyService","appRole_description":"This is the default access for this service principal","isEnabled":true,"spn_description":null},"value":"efd1eb6f-44f3-4ffe-b4e4-eb68162ea4ae:00000000-0000-0000-0000-000000000000","description":null,"privileged":true,"cloudGoverned":false,"requestable":true,"source":{"type":"SOURCE","id":"SOURCE_ID_123","name":"Azure AD"},"directPermissions":[],"segments":[],"owner":null,"manuallyUpdatedFields":{"DISPLAY_NAME":false},"id":"00218206fe614e7da637f528accdf15e","name":"default access [on] TrustedPublishersProxyService","created":"2023-09-22T16:50:54.856Z","modified":"2023-09-22T16:56:13.788Z"}]'
+      headers:
+        Access-Control-Expose-Headers:
+          - Retry-After,Connection,SLPT-Request-ID,Content-Length,Date,X-Zuul-ServiceId,Content-Type
+        Cache-Control:
+          - no-cache, no-store, must-revalidate
+        Content-Type:
+          - application/json;charset=utf-8
+        Date:
+          - Wed, 13 Dec 2023 15:35:38 GMT
+        Server:
+          - nginx
+        Slpt-Request-Id:
+          - 2a33f2004a1b466fbc0802a13c76956c
+        Vary:
+          - Origin
+          - Access-Control-Request-Method
+          - Access-Control-Request-Headers
+        X-Robots-Tag:
+          - noindex
+      status: 200 OK
+      code: 200
+      duration: 403.545055ms

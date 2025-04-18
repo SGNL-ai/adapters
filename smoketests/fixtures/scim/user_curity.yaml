@@ -1,0 +1,50 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: curity-aws:8443
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            Authorization:
+                - Bearer {{OMITTED}}
+            Content-Type:
+                - application/scim+json
+        url: https://curity-aws:8443/user-management/Users?startIndex=1&count=1
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 588
+        uncompressed: false
+        body: '{"totalResults":2,"startIndex":1,"itemsPerPage":1,"schemas":["urn:ietf:params:scim:api:messages:2.0:ListResponse"],"Resources":[{"id":"VVNFUjo1OTMyMTg5Ny1iMDNiLTRjNjYtOTY2MS02MDM5ZmU3OThmNmE","userName":"Rakshith","schemas":["urn:ietf:params:scim:schemas:core:2.0:User"],"active":false,"emails":[{"value":"rakshith@sgnl.ai","primary":true,"active":true}],"meta":{"resourceType":"User","created":"2023-10-17T16:57:24Z","lastModified":"2023-10-17T16:57:24Z","location":""}}]}'
+        headers:
+            Content-Length:
+                - "588"
+            Content-Security-Policy:
+                - frame-ancestors 'none'
+            Content-Type:
+                - application/scim+json
+            Date:
+                - Wed, 18 Oct 2023 19:33:50 GMT
+            X-Content-Type-Options:
+                - nosniff
+            X-Frame-Options:
+                - DENY
+            X-Xss-Protection:
+                - 1; mode=block
+        status: 200 OK
+        code: 200
+        duration: 353.478875ms

@@ -1,0 +1,237 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: ""
+      proto_major: 0
+      proto_minor: 0
+      content_length: 46
+      transfer_encoding: []
+      trailer: {}
+      host: ""
+      remote_addr: ""
+      request_uri: ""
+      body: Action=ListUsers&MaxItems=2&Version=2010-05-08
+      form:
+        Action:
+          - ListUsers
+        MaxItems:
+          - "2"
+        Version:
+          - "2010-05-08"
+      headers:
+        Amz-Sdk-Invocation-Id:
+          - aa82cd83-fed4-43fc-97fd-0618ac30ab9f
+        Amz-Sdk-Request:
+          - attempt=1; max=3
+        Authorization:
+          - "{{OMITTED}}"
+        Content-Type:
+          - application/x-www-form-urlencoded
+        User-Agent:
+          - m/E aws-sdk-go-v2/1.32.2 os/linux lang/go#1.24.1 md/GOOS#linux md/GOARCH#amd64 api/iam#1.36.4
+        X-Amz-Date:
+          - 20241019T001744Z
+      url: https://iam.amazonaws.com/
+      method: POST
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding: []
+      trailer: {}
+      content_length: 1082
+      uncompressed: false
+      body: |
+        <ListUsersResponse xmlns="https://iam.amazonaws.com/doc/2010-05-08/">
+          <ListUsersResult>
+            <IsTruncated>true</IsTruncated>
+            <Marker>MARKER_PLACEHOLDER</Marker>
+            <Users>
+              <member>
+                <Path>/</Path>
+                <PasswordLastUsed>2024-10-11T03:17:57Z</PasswordLastUsed>
+                <UserName>user1@example.com</UserName>
+                <Arn>arn:aws:iam::000000000000:user/user1@example.com</Arn>
+                <UserId>AIDAXXXXXXXXXXXXXXXX1</UserId>
+                <CreateDate>2024-09-26T20:01:40Z</CreateDate>
+              </member>
+              <member>
+                <Path>/</Path>
+                <PasswordLastUsed>2024-10-10T14:45:27Z</PasswordLastUsed>
+                <UserName>user2@example.com</UserName>
+                <Arn>arn:aws:iam::000000000000:user/user2@example.com</Arn>
+                <UserId>AIDAXXXXXXXXXXXXXXXX2</UserId>
+                <CreateDate>2024-10-10T01:22:32Z</CreateDate>
+              </member>
+            </Users>
+          </ListUsersResult>
+          <ResponseMetadata>
+            <RequestId>c0463560-d54d-40b6-8590-2c7a4b08c1d4</RequestId>
+          </ResponseMetadata>
+        </ListUsersResponse>
+      headers:
+        Content-Length:
+          - "1082"
+        Content-Type:
+          - text/xml
+        Date:
+          - Sat, 19 Oct 2024 00:17:43 GMT
+        X-Amzn-Requestid:
+          - c0463560-d54d-40b6-8590-2c7a4b08c1d4
+      status: 200 OK
+      code: 200
+      duration: 337.939371ms
+  - id: 1
+    request:
+      proto: ""
+      proto_major: 0
+      proto_minor: 0
+      content_length: 58
+      transfer_encoding: []
+      trailer: {}
+      host: ""
+      remote_addr: ""
+      request_uri: ""
+      body: Action=GetUser&UserName=user1%40example.com&Version=2010-05-08
+      form:
+        Action:
+          - GetUser
+        UserName:
+          - user1@example.com
+        Version:
+          - "2010-05-08"
+      headers:
+        Amz-Sdk-Invocation-Id:
+          - d54efbe4-9738-453b-8f5e-36ea36d7213a
+        Amz-Sdk-Request:
+          - attempt=1; max=3
+        Authorization:
+          - "{{OMITTED}}"
+        Content-Type:
+          - application/x-www-form-urlencoded
+        User-Agent:
+          - m/E aws-sdk-go-v2/1.32.2 os/linux lang/go#1.24.1 md/GOOS#linux md/GOARCH#amd64 api/iam#1.36.4
+        X-Amz-Date:
+          - 20241019T001744Z
+      url: https://iam.amazonaws.com/
+      method: POST
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding: []
+      trailer: {}
+      content_length: 684
+      uncompressed: false
+      body: |
+        <GetUserResponse xmlns="https://iam.amazonaws.com/doc/2010-05-08/">
+          <GetUserResult>
+            <User>
+              <Path>/</Path>
+              <PasswordLastUsed>2024-10-11T03:17:57Z</PasswordLastUsed>
+              <UserName>user1@example.com</UserName>
+              <Arn>arn:aws:iam::000000000000:user/user1@example.com</Arn>
+              <UserId>AIDAXXXXXXXXXXXXXXXX1</UserId>
+              <Tags>
+                <member>
+                  <Value>COMPANY_B-POC-SGNL</Value>
+                  <Key>{{OMITTED}}</Key>
+                </member>
+              </Tags>
+              <CreateDate>2024-09-26T20:01:40Z</CreateDate>
+            </User>
+          </GetUserResult>
+          <ResponseMetadata>
+            <RequestId>a56cb86b-8571-403a-822e-a48379cee2d0</RequestId>
+          </ResponseMetadata>
+        </GetUserResponse>
+      headers:
+        Content-Length:
+          - "684"
+        Content-Type:
+          - text/xml
+        Date:
+          - Sat, 19 Oct 2024 00:17:44 GMT
+        X-Amzn-Requestid:
+          - a56cb86b-8571-403a-822e-a48379cee2d0
+      status: 200 OK
+      code: 200
+      duration: 107.611161ms
+  - id: 2
+    request:
+      proto: ""
+      proto_major: 0
+      proto_minor: 0
+      content_length: 56
+      transfer_encoding: []
+      trailer: {}
+      host: ""
+      remote_addr: ""
+      request_uri: ""
+      body: Action=GetUser&UserName=joe%40sgnl.ai&Version=2010-05-08
+      form:
+        Action:
+          - GetUser
+        UserName:
+          - user2@example.com
+        Version:
+          - "2010-05-08"
+      headers:
+        Amz-Sdk-Invocation-Id:
+          - 9474c014-28c9-42e6-a309-b69e423fe1c4
+        Amz-Sdk-Request:
+          - attempt=1; max=3
+        Authorization:
+          - "{{OMITTED}}"
+        Content-Type:
+          - application/x-www-form-urlencoded
+        User-Agent:
+          - m/E aws-sdk-go-v2/1.32.2 os/linux lang/go#1.24.1 md/GOOS#linux md/GOARCH#amd64 api/iam#1.36.4
+        X-Amz-Date:
+          - 20241019T001745Z
+      url: https://iam.amazonaws.com/
+      method: POST
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding: []
+      trailer: {}
+      content_length: 667
+      uncompressed: false
+      body: |
+        <GetUserResponse xmlns="https://iam.amazonaws.com/doc/2010-05-08/">
+          <GetUserResult>
+            <User>
+              <Path>/</Path>
+              <PasswordLastUsed>2024-10-10T14:45:27Z</PasswordLastUsed>
+              <UserName>user2@example.com</UserName>
+              <Arn>arn:aws:iam::000000000000:user/user2@example.com</Arn>
+              <UserId>AIDAXXXXXXXXXXXXXXXX2</UserId>
+              <Tags>
+                <member>
+                  <Value>EXAMPLE-TAG</Value>
+                  <Key>{{OMITTED}}</Key>
+                </member>
+              </Tags>
+              <CreateDate>2024-10-10T01:22:32Z</CreateDate>
+            </User>
+          </GetUserResult>
+          <ResponseMetadata>
+            <RequestId>6c6c3631-f666-4e32-aa65-30c827f4827d</RequestId>
+          </ResponseMetadata>
+        </GetUserResponse>
+      headers:
+        Content-Length:
+          - "667"
+        Content-Type:
+          - text/xml
+        Date:
+          - Sat, 19 Oct 2024 00:17:44 GMT
+        X-Amzn-Requestid:
+          - 6c6c3631-f666-4e32-aa65-30c827f4827d
+      status: 200 OK
+      code: 200
+      duration: 107.806492ms

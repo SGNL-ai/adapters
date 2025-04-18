@@ -1,0 +1,55 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: graph.microsoft.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+      url: https://graph.microsoft.com/v1.0/applications?$select=id,displayName,createdDateTime&$top=3
+      method: GET
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding:
+        - chunked
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"@odata.context":"https://graph.microsoft.com/v1.0/$metadata#applications(id,displayName,createdDateTime)","@odata.nextLink":"https://graph.microsoft.com/v1.0/applications?$select=id%2cdisplayName%2ccreatedDateTime&$top=3&$skiptoken=NEXTLINK_TOKEN_PLACEHOLDER","value":[{"id":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee","displayName":"Example App 1","createdDateTime":"2023-05-05T00:01:52Z"},{"id":"ffffffff-gggg-hhhh-iiii-jjjjjjjjjjjj","displayName":"example-test-sbx","createdDateTime":"2023-03-03T01:44:45Z"},{"id":"kkkkkkkk-llll-mmmm-nnnn-oooooooooooo","displayName":"example-test-stg Test Instance","createdDateTime":"2022-12-09T23:34:32Z"}]}'
+      headers:
+        Cache-Control:
+          - no-cache
+        Client-Request-Id:
+          - 007be476-c804-489f-8fee-748bfad250e6
+        Content-Type:
+          - application/json;odata.metadata=minimal;odata.streaming=true;IEEE754Compatible=false;charset=utf-8
+        Date:
+          - Fri, 27 Oct 2023 21:37:10 GMT
+        Odata-Version:
+          - "4.0"
+        Request-Id:
+          - 007be476-c804-489f-8fee-748bfad250e6
+        Strict-Transport-Security:
+          - max-age=31536000
+        Vary:
+          - Accept-Encoding
+        X-Ms-Ags-Diagnostic:
+          - '{"ServerInfo":{"DataCenter":"West US 2","Slice":"E","Ring":"1","ScaleUnit":"000","RoleInstance":"CO1PEPF000053C6"}}'
+        X-Ms-Resource-Unit:
+          - "1"
+      status: 200 OK
+      code: 200
+      duration: 133.097781ms

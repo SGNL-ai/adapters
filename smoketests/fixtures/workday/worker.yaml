@@ -1,0 +1,47 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: test-instance.workday.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+      url: https://test-instance.workday.com/api/wql/v1/%7B%7BOMITTED%7D%7D/data?limit=3&offset=0&query=SELECT+FTE%2C+company%2C+email_Work%2C+employeeID%2C+employeeType%2C+gender%2C+hireDate%2C+jobTitle%2C+managementLevel%2C+positionID%2C+worker%2C+workerActive+FROM+allWorkers
+      method: GET
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding:
+        - chunked
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"total":843,"data":[{"FTE":"1","company":{"descriptor":"Global Modern Services, Inc. (USA)","id":"cb550da820584750aae8f807882fa79a"},"email_Work":[{"descriptor":"{{OMITTED}}@workday.net","id":"f22d772555044fd29f620ff7ff2b0830"}],"employeeID":"21001","employeeType":[{"descriptor":"Regular","id":"9459f5e6f1084433b767c7901ec04416"}],"gender":{"descriptor":"Female","id":"9cce3bec2d0d420283f76f51b928d885"},"hireDate":"2000-01-01","jobTitle":"Vice President, Human Resources","managementLevel":{"descriptor":"4 Vice President","id":"679d4d1ac6da40e19deb7d91e170431d"},"positionID":"P-00004","worker":{"descriptor":"{{OMITTED}}","id":"3aa5550b7fe348b98d7b5741afc65534"},"workerActive":true},{"FTE":"1","company":{"descriptor":"Global Modern Services, Inc. (USA)","id":"cb550da820584750aae8f807882fa79a"},"email_Work":[{"descriptor":"{{OMITTED}}@workdaySJTest.net","id":"d7fef59db8e21001de457203a69e0001"}],"employeeID":"21002","employeeType":[{"descriptor":"Regular","id":"9459f5e6f1084433b767c7901ec04416"}],"gender":{"descriptor":"Not Declared","id":"a14bf6afa9204ff48a8ea353dd71eb22"},"hireDate":"2000-01-01","jobTitle":"Chief Executive Officer","managementLevel":{"descriptor":"2 Chief Executive Officer","id":"3de1f2834f064394a40a40a727fb6c6d"},"positionID":"P-00001","worker":{"descriptor":"{{OMITTED}}","id":"0e44c92412d34b01ace61e80a47aaf6d"},"workerActive":true},{"FTE":"1","company":{"descriptor":"Global Modern Services, Inc. (USA)","id":"cb550da820584750aae8f807882fa79a"},"email_Work":[{"descriptor":"{{OMITTED}}@workday.net","id":"d7fef59db8e21001dddaa607a7d30001"}],"employeeID":"21003","employeeType":[{"descriptor":"Regular","id":"9459f5e6f1084433b767c7901ec04416"}],"gender":{"descriptor":"Male","id":"d3afbf8074e549ffb070962128e1105a"},"hireDate":"2000-01-01","jobTitle":"Chief Information Officer","managementLevel":{"descriptor":"3 Executive Vice President","id":"0ceb3292987b474bbc40c751a1e22c69"},"positionID":"P-00002","worker":{"descriptor":"{{OMITTED}}","id":"3895af7993ff4c509cbea2e1817172e0"},"workerActive":true}]}'
+      headers:
+        Cache-Control:
+          - no-cache
+        Content-Type:
+          - application/json; charset=UTF-8
+        Date:
+          - Tue, 16 Apr 2024 20:24:28 GMT
+        Set-Cookie:
+          - TS012df9cf=0141bf79028fac6d459f140617441ba951371737633e696bd41c1902bccbf3fa924ca3769147edfc88824329d64be6691ddb54caa7; Path=/; HTTPOnly
+        Strict-Transport-Security:
+          - max-age=31536000; includeSubDomains
+        Wd-Stat-Request-Id:
+          - cb1ccf9e-5bf2-42bd-9879-e8b464f70774
+      status: 200 OK
+      code: 200
+      duration: 406.648626ms

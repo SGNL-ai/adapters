@@ -1,0 +1,207 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: graph.microsoft.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+      url: https://graph.microsoft.com/v1.0/users?$select=id&$top=1
+      method: GET
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"@odata.context":"https://graph.microsoft.com/v1.0/$metadata#users(id)","@odata.nextLink":"https://graph.microsoft.com/v1.0/users?$select=id&$top=1&$skiptoken=NEXTLINK_TOKEN_PLACEHOLDER_1","value":[{"id":"pppppppp-qqqq-rrrr-ssss-tttttttttttt"}]}'
+      headers:
+        Cache-Control:
+          - no-cache
+        Client-Request-Id:
+          - 99091741-ff1f-41e3-8834-34223cb7a29b
+        Content-Type:
+          - application/json;odata.metadata=minimal;odata.streaming=true;IEEE754Compatible=false;charset=utf-8
+        Date:
+          - Thu, 21 Mar 2024 20:15:58 GMT
+        Odata-Version:
+          - "4.0"
+        Request-Id:
+          - 99091741-ff1f-41e3-8834-34223cb7a29b
+        Strict-Transport-Security:
+          - max-age=31536000
+        Vary:
+          - Accept-Encoding
+        X-Ms-Ags-Diagnostic:
+          - '{"ServerInfo":{"DataCenter":"Central India","Slice":"E","Ring":"5","ScaleUnit":"000","RoleInstance":"PN1PEPF00007042"}}'
+        X-Ms-Resource-Unit:
+          - "1"
+      status: 200 OK
+      code: 200
+      duration: 1.309837938s
+  - id: 1
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: graph.microsoft.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+      url: https://graph.microsoft.com/v1.0/users/pppppppp-qqqq-rrrr-ssss-tttttttttttt/transitiveMemberOf/microsoft.graph.directoryRole?$select=id&$top=2
+      method: GET
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"@odata.context":"https://graph.microsoft.com/v1.0/$metadata#directoryRoles(id)","value":[]}'
+      headers:
+        Cache-Control:
+          - no-cache
+        Client-Request-Id:
+          - dfb96598-a8d0-4831-acd3-5b6d325fb45b
+        Content-Type:
+          - application/json;odata.metadata=minimal;odata.streaming=true;IEEE754Compatible=false;charset=utf-8
+        Date:
+          - Thu, 21 Mar 2024 20:16:00 GMT
+        Odata-Version:
+          - "4.0"
+        Request-Id:
+          - dfb96598-a8d0-4831-acd3-5b6d325fb45b
+        Strict-Transport-Security:
+          - max-age=31536000
+        Vary:
+          - Accept-Encoding
+        X-Ms-Ags-Diagnostic:
+          - '{"ServerInfo":{"DataCenter":"Central India","Slice":"E","Ring":"5","ScaleUnit":"000","RoleInstance":"PN1PEPF00007042"}}'
+        X-Ms-Resource-Unit:
+          - "1"
+      status: 200 OK
+      code: 200
+      duration: 1.269621823s
+  - id: 2
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: graph.microsoft.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+      url: https://graph.microsoft.com/v1.0/users?$select=id&$top=1&$skiptoken=NEXTLINK_TOKEN_PLACEHOLDER_2
+      method: GET
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"@odata.context":"https://graph.microsoft.com/v1.0/$metadata#users(id)","@odata.nextLink":"https://graph.microsoft.com/v1.0/users?$select=id&$top=1&$skiptoken=NEXTLINK_TOKEN_PLACEHOLDER_3","value":[{"id":"uuuuuuuu-vvvv-wwww-xxxx-yyyyyyyyyyyy"}]}'
+      headers:
+        Cache-Control:
+          - no-cache
+        Client-Request-Id:
+          - 61b0e847-0640-41b4-974c-26b4e8e33ff5
+        Content-Type:
+          - application/json;odata.metadata=minimal;odata.streaming=true;IEEE754Compatible=false;charset=utf-8
+        Date:
+          - Thu, 21 Mar 2024 20:16:02 GMT
+        Odata-Version:
+          - "4.0"
+        Request-Id:
+          - 61b0e847-0640-41b4-974c-26b4e8e33ff5
+        Strict-Transport-Security:
+          - max-age=31536000
+        Vary:
+          - Accept-Encoding
+        X-Ms-Ags-Diagnostic:
+          - '{"ServerInfo":{"DataCenter":"Central India","Slice":"E","Ring":"5","ScaleUnit":"000","RoleInstance":"PN1PEPF00007042"}}'
+        X-Ms-Resource-Unit:
+          - "1"
+      status: 200 OK
+      code: 200
+      duration: 227.632836ms
+  - id: 3
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: graph.microsoft.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+      url: https://graph.microsoft.com/v1.0/users/uuuuuuuu-vvvv-wwww-xxxx-yyyyyyyyyyyy/transitiveMemberOf/microsoft.graph.directoryRole?$select=id&$top=10
+      method: GET
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"@odata.context":"https://graph.microsoft.com/v1.0/$metadata#directoryRoles(id)","value":[{"id":"0fea7f0d-dea1-458d-9099-69fcc2e3cd42"},{"id":"45a8712b-a814-4b9f-8a1e-4b31714efa12"},{"id":"540b4b34-c25b-437d-8eee-329463952334"},{"id":"d973db57-eb50-4356-959e-f1ce19a22b98"},{"id":"fc6c3c82-669c-4e24-b089-2a2847a43d14"},{"id":"4231e0d9-0f7f-47ff-9af6-473ab9356eda"}]}'
+      headers:
+        Cache-Control:
+          - no-cache
+        Client-Request-Id:
+          - 787ecf46-6f54-4834-8f67-4e1574487212
+        Content-Type:
+          - application/json;odata.metadata=minimal;odata.streaming=true;IEEE754Compatible=false;charset=utf-8
+        Date:
+          - Thu, 21 Mar 2024 20:16:02 GMT
+        Odata-Version:
+          - "4.0"
+        Request-Id:
+          - 787ecf46-6f54-4834-8f67-4e1574487212
+        Strict-Transport-Security:
+          - max-age=31536000
+        Vary:
+          - Accept-Encoding
+        X-Ms-Ags-Diagnostic:
+          - '{"ServerInfo":{"DataCenter":"Central India","Slice":"E","Ring":"5","ScaleUnit":"000","RoleInstance":"PN1PEPF00007042"}}'
+        X-Ms-Resource-Unit:
+          - "1"
+      status: 200 OK
+      code: 200
+      duration: 232.827977ms

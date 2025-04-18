@@ -1,0 +1,226 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: ""
+      proto_major: 0
+      proto_minor: 0
+      content_length: 46
+      transfer_encoding: []
+      trailer: {}
+      host: ""
+      remote_addr: ""
+      request_uri: ""
+      body: Action=ListUsers&MaxItems=2&Version=2010-05-08
+      form:
+        Action:
+          - ListUsers
+        MaxItems:
+          - "2"
+        Version:
+          - "2010-05-08"
+      headers:
+        Amz-Sdk-Invocation-Id:
+          - 2647029e-07f7-454e-b1f5-ebeb46b7c543
+        Amz-Sdk-Request:
+          - attempt=1; max=3
+        Authorization:
+          - "{{OMITTED}}"
+        Content-Type:
+          - application/x-www-form-urlencoded
+        User-Agent:
+          - m/E aws-sdk-go-v2/1.30.3 os/linux lang/go#1.22.4 md/GOOS#linux md/GOARCH#amd64 api/iam#1.34.3
+        X-Amz-Date:
+          - 20240723T172317Z
+      url: https://iam.amazonaws.com/
+      method: POST
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding: []
+      trailer: {}
+      content_length: 813
+      uncompressed: false
+      body: |
+        <ListUsersResponse xmlns="https://iam.amazonaws.com/doc/2010-05-08/">
+          <ListUsersResult>
+            <IsTruncated>false</IsTruncated>
+            <Users>
+              <member>
+                <Path>/</Path>
+                <UserName>sampleuser1</UserName>
+                <Arn>arn:aws:iam::000000000000:user/sampleuser1</Arn>
+                <UserId>AIDAXXXXXXXXXXXXXXXX1</UserId>
+                <CreateDate>2024-05-10T17:29:04Z</CreateDate>
+              </member>
+              <member>
+                <Path>/</Path>
+                <UserName>sgnl-test</UserName>
+                <Arn>arn:aws:iam::000000000000:user/sgnl-test</Arn>
+                <UserId>AIDAXXXXXXXXXXXXXXXX2</UserId>
+                <CreateDate>2024-06-17T10:10:49Z</CreateDate>
+              </member>
+            </Users>
+          </ListUsersResult>
+          <ResponseMetadata>
+            <RequestId>26fe1c6a-0101-44d1-ab39-93b7baf1ffcd</RequestId>
+          </ResponseMetadata>
+        </ListUsersResponse>
+      headers:
+        Content-Length:
+          - "813"
+        Content-Type:
+          - text/xml
+        Date:
+          - Tue, 23 Jul 2024 17:23:18 GMT
+        X-Amzn-Requestid:
+          - 26fe1c6a-0101-44d1-ab39-93b7baf1ffcd
+      status: 200 OK
+      code: 200
+      duration: 1.43107093s
+  - id: 1
+    request:
+      proto: ""
+      proto_major: 0
+      proto_minor: 0
+      content_length: 54
+      transfer_encoding: []
+      trailer: {}
+      host: ""
+      remote_addr: ""
+      request_uri: ""
+      body: Action=GetUser&UserName=sampleuser1&Version=2010-05-08
+      form:
+        Action:
+          - GetUser
+        UserName:
+          - sampleuser1
+        Version:
+          - "2010-05-08"
+      headers:
+        Amz-Sdk-Invocation-Id:
+          - 53ccf128-ac37-4ee0-86c5-161ce0570d58
+        Amz-Sdk-Request:
+          - attempt=1; max=3
+        Authorization:
+          - "{{OMITTED}}"
+        Content-Type:
+          - application/x-www-form-urlencoded
+        User-Agent:
+          - m/E aws-sdk-go-v2/1.30.3 os/linux lang/go#1.22.4 md/GOOS#linux md/GOARCH#amd64 api/iam#1.34.3
+        X-Amz-Date:
+          - 20240723T172320Z
+      url: https://iam.amazonaws.com/
+      method: POST
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding: []
+      trailer: {}
+      content_length: 593
+      uncompressed: false
+      body: |
+        <GetUserResponse xmlns="https://iam.amazonaws.com/doc/2010-05-08/">
+          <GetUserResult>
+            <User>
+              <Path>/</Path>
+              <UserName>sampleuser1</UserName>
+              <Arn>arn:aws:iam::000000000000:user/sampleuser1</Arn>
+              <UserId>AIDAXXXXXXXXXXXXXXXX1</UserId>
+              <Tags>
+                <member>
+                  <Value>IT</Value>
+                  <Key>department</Key>
+                </member>
+              </Tags>
+              <CreateDate>2024-05-10T17:29:04Z</CreateDate>
+            </User>
+          </GetUserResult>
+          <ResponseMetadata>
+            <RequestId>2dd90021-f498-4ba6-b877-a6fe6d952d0c</RequestId>
+          </ResponseMetadata>
+        </GetUserResponse>
+      headers:
+        Content-Length:
+          - "593"
+        Content-Type:
+          - text/xml
+        Date:
+          - Tue, 23 Jul 2024 17:23:19 GMT
+        X-Amzn-Requestid:
+          - 2dd90021-f498-4ba6-b877-a6fe6d952d0c
+      status: 200 OK
+      code: 200
+      duration: 319.063283ms
+  - id: 2
+    request:
+      proto: ""
+      proto_major: 0
+      proto_minor: 0
+      content_length: 52
+      transfer_encoding: []
+      trailer: {}
+      host: ""
+      remote_addr: ""
+      request_uri: ""
+      body: Action=GetUser&UserName=sgnl-test&Version=2010-05-08
+      form:
+        Action:
+          - GetUser
+        UserName:
+          - sgnl-test
+        Version:
+          - "2010-05-08"
+      headers:
+        Amz-Sdk-Invocation-Id:
+          - a9a5f592-faff-48bd-8826-5c6d24600418
+        Amz-Sdk-Request:
+          - attempt=1; max=3
+        Authorization:
+          - "{{OMITTED}}"
+        Content-Type:
+          - application/x-www-form-urlencoded
+        User-Agent:
+          - m/E aws-sdk-go-v2/1.30.3 os/linux lang/go#1.22.4 md/GOOS#linux md/GOARCH#amd64 api/iam#1.34.3
+        X-Amz-Date:
+          - 20240723T172320Z
+      url: https://iam.amazonaws.com/
+      method: POST
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding: []
+      trailer: {}
+      content_length: 467
+      uncompressed: false
+      body: |
+        <GetUserResponse xmlns="https://iam.amazonaws.com/doc/2010-05-08/">
+          <GetUserResult>
+            <User>
+              <Path>/</Path>
+              <UserName>sgnl-test</UserName>
+              <Arn>arn:aws:iam::000000000000:user/sgnl-test</Arn>
+              <UserId>AIDAXXXXXXXXXXXXXXXX2</UserId>
+              <CreateDate>2024-06-17T10:10:49Z</CreateDate>
+            </User>
+          </GetUserResult>
+          <ResponseMetadata>
+            <RequestId>8fd813b3-c3e8-4495-883d-dff014047a49</RequestId>
+          </ResponseMetadata>
+        </GetUserResponse>
+      headers:
+        Content-Length:
+          - "467"
+        Content-Type:
+          - text/xml
+        Date:
+          - Tue, 23 Jul 2024 17:23:20 GMT
+        X-Amzn-Requestid:
+          - 8fd813b3-c3e8-4495-883d-dff014047a49
+      status: 200 OK
+      code: 200
+      duration: 396.771207ms

@@ -1,0 +1,285 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: api.us-2.crowdstrike.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+        Content-Type:
+          - application/json
+      url: https://api.us-2.crowdstrike.com/devices/queries/devices-scroll/v1?limit=1
+      method: GET
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: |-
+        {
+         "meta": {
+          "query_time": 0.066948393,
+          "pagination": {
+           "total": 3,
+           "offset": "FGluY2x1ZGVfY29udGV4dF91dWlkDnF1ZXJ5VGhlbkZldGNoAhZvbkkxTTVtaVQ3U0Y1Smx0RmN0c3lnAAAAACZ80SMWak5SdGpvWllUR2FXcksyRmtSZGEtdxZ3cWl4QnFDSFFNYTM1Y2p5RnBMblNRAAAAACbW99oWS3otcDlvTTlUUkNOa1hmN1ZZUVNFQQ==",
+           "expires_at": 1738979947365312759
+          },
+          "powered_by": "device-api",
+          "trace_id": "23c57d4a-885c-4574-8026-ec9e91b2cf93"
+         },
+         "resources": [
+          "9b9b1e4f7512492f95f8039c065a28a9"
+         ],
+         "errors": []
+        }
+      headers:
+        Connection:
+          - keep-alive
+        Content-Type:
+          - application/json
+        Date:
+          - Sat, 08 Feb 2025 01:57:07 GMT
+        Server:
+          - nginx
+        Strict-Transport-Security:
+          - max-age=31536000; includeSubDomains
+          - max-age=31536000; includeSubDomains
+        X-Cs-Region:
+          - us-2
+        X-Cs-Traceid:
+          - 23c57d4a-885c-4574-8026-ec9e91b2cf93
+        X-Ratelimit-Limit:
+          - "6000"
+        X-Ratelimit-Remaining:
+          - "5990"
+      status: 200 OK
+      code: 200
+      duration: 201.265743ms
+  - id: 1
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 44
+      transfer_encoding: []
+      trailer: {}
+      host: api.us-2.crowdstrike.com
+      remote_addr: ""
+      request_uri: ""
+      body: '{"ids":["9b9b1e4f7512492f95f8039c065a28a9"]}'
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+        Content-Type:
+          - application/json
+      url: https://api.us-2.crowdstrike.com/devices/entities/devices/v2?limit=1
+      method: POST
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding:
+        - chunked
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: |-
+        {
+         "meta": {
+          "query_time": 0.125636421,
+          "powered_by": "device-api",
+          "trace_id": "d1762758-7550-494b-8d33-d2344ceba8ab"
+         },
+         "resources": [
+          {
+           "device_id": "9b9b1e4f7512492f95f8039c065a28a9",
+           "cid": "8693deb4bf134cfb8855ee118d9a0243",
+           "agent_load_flags": "0",
+           "agent_local_time": "2025-01-23T02:27:28.869Z",
+           "agent_version": "7.20.19011.0",
+           "bios_manufacturer": "Xen",
+           "bios_version": "4.11.amazon",
+           "build_number": "20348",
+           "config_id_base": "65994767",
+           "config_id_build": "19011",
+           "config_id_platform": "3",
+           "cpu_signature": "263921",
+           "cpu_vendor": "0",
+           "external_ip": "1.1.1.1",
+           "mac_address": "01-01-01-01-01-01",
+           "instance_id": "i-04d26bf36004d2941",
+           "service_provider": "AWS_EC2_V2",
+           "service_provider_account_id": "{{OMITTED}}",
+           "hostname": "EC2AMAZ-L4LAU4Q",
+           "filesystem_containment_status": "normal",
+           "first_seen": "2025-01-22T19:37:47Z",
+           "last_login_timestamp": "2025-01-22T19:40:45Z",
+           "last_login_user": "Administrator",
+           "last_login_user_sid": "S-1-5-21-1176167308-4253926863-1726221433-500",
+           "last_seen": "2025-01-29T22:59:18Z",
+           "local_ip": "1.1.1.1",
+           "machine_domain": "",
+           "major_version": "10",
+           "minor_version": "0",
+           "os_version": "Windows Server 2022",
+           "os_build": "20348",
+           "platform_id": "0",
+           "platform_name": "Windows",
+           "policies": [
+            {
+             "policy_type": "prevention",
+             "policy_id": "54d24230bdab4ae4aa28d0249a11ea06",
+             "applied": true,
+             "settings_hash": "e511bb5b",
+             "assigned_date": "2025-01-22T19:39:04.463411792Z",
+             "applied_date": "2025-01-22T19:39:15.352190676Z",
+             "rule_groups": []
+            }
+           ],
+           "reduced_functionality_mode": "no",
+           "rtr_state": "enabled",
+           "device_policies": {
+            "prevention": {
+             "policy_type": "prevention",
+             "policy_id": "54d24230bdab4ae4aa28d0249a11ea06",
+             "applied": true,
+             "settings_hash": "e511bb5b",
+             "assigned_date": "2025-01-22T19:39:04.463411792Z",
+             "applied_date": "2025-01-22T19:39:15.352190676Z",
+             "rule_groups": []
+            },
+            "sensor_update": {
+             "policy_type": "sensor-update",
+             "policy_id": "d60e643b93104eb99dd7b2eb8991f62d",
+             "applied": true,
+             "settings_hash": "tagged|1;101",
+             "assigned_date": "2025-01-23T02:29:17.338649539Z",
+             "applied_date": "2025-01-23T02:29:22.761393852Z",
+             "uninstall_protection": "ENABLED"
+            },
+            "device_control": {
+             "policy_type": "device-control",
+             "policy_id": "26995655b4561592ec840eb36f35eaec",
+             "applied": false,
+             "settings_hash": "70933f27",
+             "assigned_date": "2025-01-22T19:39:04.463427335Z",
+             "applied_date": null
+            },
+            "global_config": {
+             "policy_type": "globalconfig",
+             "policy_id": "77ef9d07f49d42ad96e99bc447282b03",
+             "applied": true,
+             "settings_hash": "3be5bc8a",
+             "assigned_date": "2025-01-27T10:21:23.483105072Z",
+             "applied_date": "2025-01-27T10:27:44.035644526Z"
+            },
+            "remote_response": {
+             "policy_type": "remote-response",
+             "policy_id": "938101aebe6e4b2b83da38012f09eefd",
+             "applied": true,
+             "settings_hash": "f472bd8e",
+             "assigned_date": "2025-01-22T19:39:04.463415551Z",
+             "applied_date": "2025-01-22T19:39:15.371842972Z"
+            },
+            "firewall": {
+             "policy_type": "firewall",
+             "policy_id": "5afecf53934d48c79046ffcc6fa30b82",
+             "applied": true,
+             "settings_hash": "54b65ae3",
+             "assigned_date": "2025-01-22T19:39:04.463291157Z",
+             "applied_date": "2025-01-22T19:39:15.159209497Z",
+             "rule_set_id": "5afecf53934d48c79046ffcc6fa30b82"
+            },
+            "system-tray": {
+             "policy_type": "system-tray",
+             "policy_id": "9b63b9a95ae941298b24c788ea4d584f",
+             "applied": true,
+             "settings_hash": "d85de5cdab609fc07504cc24a67b61a3b23aea0c26dbcc0bb9e34dc8f79d716b",
+             "assigned_date": "2025-01-22T19:39:04.463423354Z",
+             "applied_date": "2025-01-22T19:39:15.192489318Z"
+            },
+            "host-retention": {
+             "policy_type": "host-retention",
+             "policy_id": "55c49f68c2e14bcfaf70d02e924b1948",
+             "applied": true,
+             "settings_hash": "fce339fc6cbb4dae36929fe363a81368f4a7e3f2c3a3d62ff7e3ef202ee48df5",
+             "assigned_date": "2025-01-22T19:39:04.463442772Z",
+             "applied_date": "2025-01-22T19:39:15.316185218Z"
+            },
+            "content-update": {
+             "policy_type": "content-update",
+             "policy_id": "5347925bd98544d389e6e32b419be998",
+             "applied": true,
+             "settings_hash": "3309620409608095599",
+             "assigned_date": "2025-01-22T19:39:04.463297437Z",
+             "applied_date": "2025-01-22T19:39:04.463297437Z"
+            }
+           },
+           "groups": [],
+           "group_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+           "product_type": "3",
+           "product_type_desc": "Server",
+           "provision_status": "Provisioned",
+           "serial_number": "ec28443c-b8e5-1e10-d963-788038d1748c",
+           "service_pack_minor": "0",
+           "pointer_size": "8",
+           "status": "normal",
+           "system_manufacturer": "Xen",
+           "system_product_name": "HVM domU",
+           "tags": [],
+           "modified_timestamp": "2025-01-29T23:01:16Z",
+           "meta": {
+            "version": "1955",
+            "version_string": "3:789636765"
+           },
+           "zone_group": "us-east-1a",
+           "kernel_version": "10.0.20348.3089",
+           "os_product_name": "Windows Server 2022 Datacenter",
+           "chassis_type": "1",
+           "chassis_type_desc": "Other",
+           "last_reboot": "2025-01-22T19:26:07Z",
+           "connection_ip": "1.1.1.1",
+           "default_gateway_ip": "1.1.1.1",
+           "connection_mac_address": "01-01-01-01-01-01"
+          }
+         ],
+         "errors": null
+        }
+      headers:
+        Connection:
+          - keep-alive
+        Content-Type:
+          - application/json
+        Date:
+          - Sat, 08 Feb 2025 01:57:07 GMT
+        Server:
+          - nginx
+        Strict-Transport-Security:
+          - max-age=31536000; includeSubDomains
+          - max-age=31536000; includeSubDomains
+        X-Cs-Region:
+          - us-2
+        X-Cs-Traceid:
+          - d1762758-7550-494b-8d33-d2344ceba8ab
+        X-Ratelimit-Limit:
+          - "6000"
+        X-Ratelimit-Remaining:
+          - "5989"
+      status: 200 OK
+      code: 200
+      duration: 173.797602ms

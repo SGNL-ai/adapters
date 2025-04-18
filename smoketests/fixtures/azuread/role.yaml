@@ -1,0 +1,156 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: graph.microsoft.com
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            Authorization:
+                - Bearer {{OMITTED}}
+        url: https://graph.microsoft.com/v1.0/directoryRoles?$select=id,displayName,description,roleTemplateId
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        transfer_encoding: []
+        trailer: {}
+        content_length: -1
+        uncompressed: true
+        body: '{"@odata.context":"https://graph.microsoft.com/v1.0/$metadata#directoryRoles(id,displayName,description,roleTemplateId)","value":[{"id":"0fea7f0d-dea1-458d-9099-69fcc2e3cd42","displayName":"Directory Readers","description":"Can read basic directory information. Commonly used to grant directory read access to applications and guests.","roleTemplateId":"88d8e3e3-8f55-4a1e-953a-9b9898b8876b"},{"id":"18eacdf7-8db3-4028-8ce8-a686ec639d75","displayName":"Global Administrator","description":"Can manage all aspects of Microsoft Entra ID and Microsoft services that use Microsoft Entra identities.","roleTemplateId":"62e90394-69f5-4237-9190-012177145e10"},{"id":"321fd63c-c37c-4a77-bf46-ee0acd84476e","displayName":"Application Developer","description":"Can create application registrations independent of the ''Users can register applications'' setting.","roleTemplateId":"cf1c38e5-3621-4004-a7cb-879624dced7c"},{"id":"33a4c989-c3ff-4597-81c4-81e0a93ffb6e","displayName":"Privileged Role Administrator","description":"Can manage role assignments in Microsoft Entra ID, and all aspects of Privileged Identity Management.","roleTemplateId":"e8611ab8-c189-46e8-94e1-60213ab1f814"},{"id":"62ceaa28-4794-48f9-9b54-f8ed6e9a7c84","displayName":"Directory Writers","description":"Can read and write basic directory information. For granting access to applications, not intended for users.","roleTemplateId":"9360feb5-f418-4baa-8175-e2a00bac4301"},{"id":"795326a8-6eef-410e-9604-649ca68e1241","displayName":"Application Administrator","description":"Can create and manage all aspects of app registrations and enterprise apps.","roleTemplateId":"9b895d92-2cd3-44c7-9d02-a6ac2d5ea5c3"},{"id":"8ed2c3eb-1709-444f-bea2-4fb8e2038d6e","displayName":"Attribute Assignment Reader","description":"Read custom security attribute keys and values for supported Microsoft Entra objects.","roleTemplateId":"ffd52fa5-98dc-465c-991d-fc073eb59f8f"},{"id":"e8d9279e-6883-4add-96e8-5f7c8df5637f","displayName":"User Administrator","description":"Can manage all aspects of users and groups, including resetting passwords for limited admins.","roleTemplateId":"fe930be7-5e62-47db-91af-98c3a49a38b1"},{"id":"fb96a81c-6147-4cfe-b7fe-c63c2725e7c9","displayName":"Groups Administrator","description":"Members of this role can create/manage groups, create/manage groups settings like naming and expiration policies, and view groups activity and audit reports.","roleTemplateId":"fdd7a751-b60b-444a-984c-02652fe8fa1c"}]}'
+        headers:
+            Cache-Control:
+                - no-cache
+            Client-Request-Id:
+                - c78fa03d-7267-495c-a833-f5b28465e1e3
+            Content-Type:
+                - application/json;odata.metadata=minimal;odata.streaming=true;IEEE754Compatible=false;charset=utf-8
+            Date:
+                - Wed, 20 Mar 2024 06:35:01 GMT
+            Odata-Version:
+                - "4.0"
+            Request-Id:
+                - c78fa03d-7267-495c-a833-f5b28465e1e3
+            Strict-Transport-Security:
+                - max-age=31536000
+            Vary:
+                - Accept-Encoding
+            X-Ms-Ags-Diagnostic:
+                - '{"ServerInfo":{"DataCenter":"South India","Slice":"E","Ring":"2","ScaleUnit":"000","RoleInstance":"MA1PEPF0000738A"}}'
+            X-Ms-Resource-Unit:
+                - "1"
+        status: 200 OK
+        code: 200
+        duration: 383.033716ms
+    - id: 1
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: graph.microsoft.com
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            Authorization:
+                - Bearer {{OMITTED}}
+        url: https://graph.microsoft.com/v1.0/directoryRoles?$select=id,displayName,description,roleTemplateId
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        transfer_encoding: []
+        trailer: {}
+        content_length: -1
+        uncompressed: true
+        body: '{"@odata.context":"https://graph.microsoft.com/v1.0/$metadata#directoryRoles(id,displayName,description,roleTemplateId)","value":[{"id":"0fea7f0d-dea1-458d-9099-69fcc2e3cd42","displayName":"Directory Readers","description":"Can read basic directory information. Commonly used to grant directory read access to applications and guests.","roleTemplateId":"88d8e3e3-8f55-4a1e-953a-9b9898b8876b"},{"id":"18eacdf7-8db3-4028-8ce8-a686ec639d75","displayName":"Global Administrator","description":"Can manage all aspects of Microsoft Entra ID and Microsoft services that use Microsoft Entra identities.","roleTemplateId":"62e90394-69f5-4237-9190-012177145e10"},{"id":"321fd63c-c37c-4a77-bf46-ee0acd84476e","displayName":"Application Developer","description":"Can create application registrations independent of the ''Users can register applications'' setting.","roleTemplateId":"cf1c38e5-3621-4004-a7cb-879624dced7c"},{"id":"33a4c989-c3ff-4597-81c4-81e0a93ffb6e","displayName":"Privileged Role Administrator","description":"Can manage role assignments in Microsoft Entra ID, and all aspects of Privileged Identity Management.","roleTemplateId":"e8611ab8-c189-46e8-94e1-60213ab1f814"},{"id":"62ceaa28-4794-48f9-9b54-f8ed6e9a7c84","displayName":"Directory Writers","description":"Can read and write basic directory information. For granting access to applications, not intended for users.","roleTemplateId":"9360feb5-f418-4baa-8175-e2a00bac4301"},{"id":"795326a8-6eef-410e-9604-649ca68e1241","displayName":"Application Administrator","description":"Can create and manage all aspects of app registrations and enterprise apps.","roleTemplateId":"9b895d92-2cd3-44c7-9d02-a6ac2d5ea5c3"},{"id":"8ed2c3eb-1709-444f-bea2-4fb8e2038d6e","displayName":"Attribute Assignment Reader","description":"Read custom security attribute keys and values for supported Microsoft Entra objects.","roleTemplateId":"ffd52fa5-98dc-465c-991d-fc073eb59f8f"},{"id":"e8d9279e-6883-4add-96e8-5f7c8df5637f","displayName":"User Administrator","description":"Can manage all aspects of users and groups, including resetting passwords for limited admins.","roleTemplateId":"fe930be7-5e62-47db-91af-98c3a49a38b1"},{"id":"fb96a81c-6147-4cfe-b7fe-c63c2725e7c9","displayName":"Groups Administrator","description":"Members of this role can create/manage groups, create/manage groups settings like naming and expiration policies, and view groups activity and audit reports.","roleTemplateId":"fdd7a751-b60b-444a-984c-02652fe8fa1c"}]}'
+        headers:
+            Cache-Control:
+                - no-cache
+            Client-Request-Id:
+                - 4e5f7b67-0579-4ecd-b99d-c27a958dcb4e
+            Content-Type:
+                - application/json;odata.metadata=minimal;odata.streaming=true;IEEE754Compatible=false;charset=utf-8
+            Date:
+                - Wed, 20 Mar 2024 06:35:01 GMT
+            Odata-Version:
+                - "4.0"
+            Request-Id:
+                - 4e5f7b67-0579-4ecd-b99d-c27a958dcb4e
+            Strict-Transport-Security:
+                - max-age=31536000
+            Vary:
+                - Accept-Encoding
+            X-Ms-Ags-Diagnostic:
+                - '{"ServerInfo":{"DataCenter":"South India","Slice":"E","Ring":"2","ScaleUnit":"000","RoleInstance":"MA1PEPF0000738A"}}'
+            X-Ms-Resource-Unit:
+                - "1"
+        status: 200 OK
+        code: 200
+        duration: 302.745528ms
+    - id: 2
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: graph.microsoft.com
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            Authorization:
+                - Bearer {{OMITTED}}
+        url: https://graph.microsoft.com/v1.0/directoryRoles?$select=id,displayName,description,roleTemplateId
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        transfer_encoding: []
+        trailer: {}
+        content_length: -1
+        uncompressed: true
+        body: '{"@odata.context":"https://graph.microsoft.com/v1.0/$metadata#directoryRoles(id,displayName,description,roleTemplateId)","value":[{"id":"0fea7f0d-dea1-458d-9099-69fcc2e3cd42","displayName":"Directory Readers","description":"Can read basic directory information. Commonly used to grant directory read access to applications and guests.","roleTemplateId":"88d8e3e3-8f55-4a1e-953a-9b9898b8876b"},{"id":"18eacdf7-8db3-4028-8ce8-a686ec639d75","displayName":"Global Administrator","description":"Can manage all aspects of Microsoft Entra ID and Microsoft services that use Microsoft Entra identities.","roleTemplateId":"62e90394-69f5-4237-9190-012177145e10"},{"id":"321fd63c-c37c-4a77-bf46-ee0acd84476e","displayName":"Application Developer","description":"Can create application registrations independent of the ''Users can register applications'' setting.","roleTemplateId":"cf1c38e5-3621-4004-a7cb-879624dced7c"},{"id":"33a4c989-c3ff-4597-81c4-81e0a93ffb6e","displayName":"Privileged Role Administrator","description":"Can manage role assignments in Microsoft Entra ID, and all aspects of Privileged Identity Management.","roleTemplateId":"e8611ab8-c189-46e8-94e1-60213ab1f814"},{"id":"62ceaa28-4794-48f9-9b54-f8ed6e9a7c84","displayName":"Directory Writers","description":"Can read and write basic directory information. For granting access to applications, not intended for users.","roleTemplateId":"9360feb5-f418-4baa-8175-e2a00bac4301"},{"id":"795326a8-6eef-410e-9604-649ca68e1241","displayName":"Application Administrator","description":"Can create and manage all aspects of app registrations and enterprise apps.","roleTemplateId":"9b895d92-2cd3-44c7-9d02-a6ac2d5ea5c3"},{"id":"8ed2c3eb-1709-444f-bea2-4fb8e2038d6e","displayName":"Attribute Assignment Reader","description":"Read custom security attribute keys and values for supported Microsoft Entra objects.","roleTemplateId":"ffd52fa5-98dc-465c-991d-fc073eb59f8f"},{"id":"e8d9279e-6883-4add-96e8-5f7c8df5637f","displayName":"User Administrator","description":"Can manage all aspects of users and groups, including resetting passwords for limited admins.","roleTemplateId":"fe930be7-5e62-47db-91af-98c3a49a38b1"},{"id":"fb96a81c-6147-4cfe-b7fe-c63c2725e7c9","displayName":"Groups Administrator","description":"Members of this role can create/manage groups, create/manage groups settings like naming and expiration policies, and view groups activity and audit reports.","roleTemplateId":"fdd7a751-b60b-444a-984c-02652fe8fa1c"}]}'
+        headers:
+            Cache-Control:
+                - no-cache
+            Client-Request-Id:
+                - 937a287a-cf58-4660-91ca-8035331a7240
+            Content-Type:
+                - application/json;odata.metadata=minimal;odata.streaming=true;IEEE754Compatible=false;charset=utf-8
+            Date:
+                - Wed, 20 Mar 2024 06:35:02 GMT
+            Odata-Version:
+                - "4.0"
+            Request-Id:
+                - 937a287a-cf58-4660-91ca-8035331a7240
+            Strict-Transport-Security:
+                - max-age=31536000
+            Vary:
+                - Accept-Encoding
+            X-Ms-Ags-Diagnostic:
+                - '{"ServerInfo":{"DataCenter":"South India","Slice":"E","Ring":"2","ScaleUnit":"000","RoleInstance":"MA1PEPF0000738A"}}'
+            X-Ms-Resource-Unit:
+                - "1"
+        status: 200 OK
+        code: 200
+        duration: 297.254309ms

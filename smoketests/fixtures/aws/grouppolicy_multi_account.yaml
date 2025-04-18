@@ -1,0 +1,67 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: ""
+      proto_major: 0
+      proto_minor: 0
+      content_length: 47
+      transfer_encoding: []
+      trailer: {}
+      host: ""
+      remote_addr: ""
+      request_uri: ""
+      body: Action=ListGroups&MaxItems=1&Version=2010-05-08
+      form:
+        Action:
+          - ListGroups
+        MaxItems:
+          - "1"
+        Version:
+          - "2010-05-08"
+      headers:
+        Amz-Sdk-Invocation-Id:
+          - e482255d-cf33-4819-ac22-17e0bf5c419c
+        Amz-Sdk-Request:
+          - attempt=1; max=3
+        Authorization:
+          - "{{OMITTED}}"
+        Content-Type:
+          - application/x-www-form-urlencoded
+        User-Agent:
+          - m/E aws-sdk-go-v2/1.32.2 os/linux lang/go#1.24.1 md/GOOS#linux md/GOARCH#amd64 api/iam#1.36.4
+        X-Amz-Date:
+          - 20241019T005157Z
+      url: https://iam.amazonaws.com/
+      method: POST
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding: []
+      trailer: {}
+      content_length: 294
+      uncompressed: false
+      body: |
+        <ListGroupsResponse xmlns="https://iam.amazonaws.com/doc/2010-05-08/">
+          <ListGroupsResult>
+            <IsTruncated>false</IsTruncated>
+            <Groups/>
+          </ListGroupsResult>
+          <ResponseMetadata>
+            <RequestId>e9092621-b16d-4eee-8372-c08086fadaab</RequestId>
+          </ResponseMetadata>
+        </ListGroupsResponse>
+      headers:
+        Content-Length:
+          - "294"
+        Content-Type:
+          - text/xml
+        Date:
+          - Sat, 19 Oct 2024 00:51:56 GMT
+        X-Amzn-Requestid:
+          - e9092621-b16d-4eee-8372-c08086fadaab
+      status: 200 OK
+      code: 200
+      duration: 310.580327ms

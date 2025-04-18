@@ -1,0 +1,67 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: test-instance.service-now.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Basic {{OMITTED}}
+      url: https://test-instance.service-now.com/api/now/v2/table/sn_customerservice_case?sysparm_fields=sys_id,number&sysparm_exclude_reference_link=true&sysparm_limit=200&sysparm_query=ORDERBYsys_id
+      method: GET
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding:
+        - chunked
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"result":[{"sys_id":"0b6027408737c910793a97983cbb3514","number":"CSE0014483"},{"sys_id":"0c702b8487774910b8137448dabb3564","number":"CSE0019923"},{"sys_id":"0e70a78487774910b8137448dabb3520","number":"CSE0010140"}]}'
+      headers:
+        Cache-Control:
+          - no-cache,no-store,must-revalidate,max-age=-1
+        Connection:
+          - keep-alive
+        Content-Type:
+          - application/json;charset=UTF-8
+        Date:
+          - Wed, 18 Oct 2023 16:18:30 GMT
+        Expires:
+          - "0"
+        Pragma:
+          - no-store,no-cache
+        Server:
+          - snow_adc
+        Server-Timing:
+          - sem_wait;dur=0, sesh_wait;dur=0
+        Set-Cookie:
+          - BIGipServerpool_test-instance=a485ae87c070af10fe3b9d3d7d735b86; httponly; secure; path=/; SameSite=None
+          - glide_user=; Max-Age=0; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Path=/; HttpOnly; secure; SameSite=None
+          - glide_user_session=; Max-Age=0; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Path=/; HttpOnly; secure; SameSite=None
+          - glide_user_route=glide.683fb8f399d74f82fe27a5f0445fbcf4; Max-Age=2147483647; Expires=Mon, 05-Nov-2091 19:32:37 GMT; Path=/; HttpOnly; secure; SameSite=None
+          - glide_node_id_for_js=5c46e6f3842fb5d823e324bfc3379f5903475ed5d46990a229ba355dcbb160a9; Path=/; secure; SameSite=None
+        Strict-Transport-Security:
+          - max-age=63072000; includeSubDomains
+        X-Content-Type-Options:
+          - nosniff
+        X-Is-Logged-In:
+          - "true"
+        X-Total-Count:
+          - "122"
+        X-Transaction-Id:
+          - 574de090f1f3
+      status: 200 OK
+      code: 200
+      duration: 323.631981ms

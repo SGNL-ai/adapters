@@ -1,0 +1,66 @@
+name: Create Release Docker Image
+on:
+  release:
+    types: [published]
+  push:
+    tags: ["v*"]
+env:
+  REGISTRY: ghcr.io
+  ORGANIZATION: sgnl-ai
+
+# Cancel previous workflows on the PR branch when there are multiple fast commits.
+# `head_ref` is the name of the PR branch and is defined only on pushes to a PR branch. Thus, it
+# creates a concurrency group for all commits to a PR branch, cancelling previous workflows.
+# When a PR is merged into main, `head_ref` is undefined, so `run_id` is used and a unique
+# concurrency group is created for each commit to main, meaning no previous workflows are cancelled.
+# Reference: https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#example-using-a-fallback-value
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  pull-tag-push:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - name: Log in to GHCR 🔑
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Get the 7 char commit SHA: https://github.com/benjlevesque/short-sha
+      - uses: benjlevesque/short-sha@v3.0
+        name: short-sha
+        id: short-sha
+        with:
+          length: 7
+
+      # Pull an already existing image
+      - name: Pull main image
+        id: pull-main-image
+        run: |
+          echo "Pulling image: ${{ env.REGISTRY }}/${{ env.ORGANIZATION }}/adapters:main-${{ steps.short-sha.outputs.sha }}"
+          docker pull ${{ env.REGISTRY }}/${{ env.ORGANIZATION }}/adapters:main-${{ steps.short-sha.outputs.sha }}
+
+      - name: Extract metadata (tags, labels) for sgnl-ai/adapters 🏷️
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.ORGANIZATION }}/adapters
+          flavor: |
+            latest=false
+          tags: |
+            type=semver,pattern={{version}}
+
+      # Tag and push the image on release
+      - name: Tag and push the image on release
+        id: tag-push-image
+        run: |
+          echo "Old tag: ${{ env.REGISTRY }}/${{ env.ORGANIZATION }}/adapters:main-${{ steps.short-sha.outputs.sha }}"
+          echo "New tag: ${{ steps.meta.outputs.tags }}"
+          docker tag ${{ env.REGISTRY }}/${{ env.ORGANIZATION }}/adapters:main-${{ steps.short-sha.outputs.sha }} ${{ steps.meta.outputs.tags }}
+          echo "Pushing new image: ${{ steps.meta.outputs.tags }}"
+          docker push ${{ steps.meta.outputs.tags }}

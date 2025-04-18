@@ -1,0 +1,58 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: test-instance.duosecurity.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Basic {{OMITTED}}
+        Content-Type:
+          - application/x-www-form-urlencoded
+        Date:
+          - Wed, 31 Jan 2024 20:12:50 +0000
+      url: https://test-instance.duosecurity.com/admin/v1/groups?limit=1&offset=0
+      method: GET
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding: []
+      trailer: {}
+      content_length: 256
+      uncompressed: false
+      body: '{"metadata": {"next_offset": 1, "total_objects": 5}, "response": [{"desc": "random group 1", "group_id": "DGKUKQSTG7ZFDN2N1XID", "mobile_otp_enabled": false, "name": "group1", "push_enabled": false, "sms_enabled": false, "status": "Active"}], "stat": "OK"}'
+      headers:
+        Cache-Control:
+          - no-store
+        Connection:
+          - keep-alive
+        Content-Length:
+          - "256"
+        Content-Security-Policy:
+          - default-src 'self'; frame-src 'self' ; img-src 'self'  ; connect-src 'self'
+        Content-Type:
+          - application/json
+        Date:
+          - Wed, 31 Jan 2024 20:12:50 GMT
+        Etag:
+          - '"99d82ca035410160eaaa587c35541c83373bf432"'
+        Pragma:
+          - no-cache
+        Server:
+          - Duo/1.0
+        Strict-Transport-Security:
+          - max-age=31536000
+      status: 200 OK
+      code: 200
+      duration: 173.853861ms

@@ -1,0 +1,87 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 1886
+      transfer_encoding: []
+      trailer: {}
+      host: api.us-2.crowdstrike.com
+      remote_addr: ""
+      request_uri: ""
+      body: |
+        {"query":"{\n\t\t\tentities(\n\t\t\t\tarchived: false\n\t\t\t\tenabled: true\n\t\t\t\ttypes: [USER]\n\t\t\t\tsortKey: RISK_SCORE\n\t\t\t\tsortOrder: DESCENDING\n\t\t\t\tfirst: 2\n\t\t\t) {\n\t\t\t\tpageInfo {\n\t\t\t\t\thasNextPage\n\t\t\t\t\tendCursor\n\t\t\t\t}\n\t\t\t\tnodes {\n\t\t\t\t\t... on UserEntity {\n\t\t\t\t\t\tarchived\n\t\t\t\t\t\tcreationTime\n\t\t\t\t\t\tearliestSeenTraffic\n\t\t\t\t\t\temailAddresses\n\t\t\t\t\t\tentityId\n\t\t\t\t\t\thasADDomainAdminRole\n\t\t\t\t\t\timpactScore\n\t\t\t\t\t\tinactive\n\t\t\t\t\t\tlearned\n\t\t\t\t\t\tmarkTime\n\t\t\t\t\t\tmostRecentActivity\n\t\t\t\t\t\triskScore\n\t\t\t\t\t\triskScoreSeverity\n\t\t\t\t\t\triskScoreWithoutLinkedAccounts\n\t\t\t\t\t\tsecondaryDisplayName\n\t\t\t\t\t\tshared\n\t\t\t\t\t\tstale\n\t\t\t\t\t\twatched\n\t\t\t\t\t\ttype\n\t\t\t\t\t\triskFactors {\n\t\t\t\t\t\t\tscore\n\t\t\t\t\t\t\tseverity\n\t\t\t\t\t\t\ttype\n\t\t\t\t\t\t}\n\t\t\t\t\t\taccounts {\n\t\t\t\t\t\t\t__typename\n\t\t\t\t\t\t\t... on ActiveDirectoryAccountDescriptor {\n\t\t\t\t\t\t\t\tarchived\n\t\t\t\t\t\t\t\tcn\n\t\t\t\t\t\t\t\tconsistencyGuid\n\t\t\t\t\t\t\t\tcontainingGroupIds\n\t\t\t\t\t\t\t\tcreationTime\n\t\t\t\t\t\t\t\tdataSource\n\t\t\t\t\t\t\t\tdepartment\n\t\t\t\t\t\t\t\tdescription\n\t\t\t\t\t\t\t\tdn\n\t\t\t\t\t\t\t\tdomain\n\t\t\t\t\t\t\t\tenabled\n\t\t\t\t\t\t\t\texpirationTime\n\t\t\t\t\t\t\t\tflattenedContainingGroupIds\n\t\t\t\t\t\t\t\tlastUpdateTime\n\t\t\t\t\t\t\t\tlockoutTime\n\t\t\t\t\t\t\t\tmostRecentActivity\n\t\t\t\t\t\t\t\tobjectGuid\n\t\t\t\t\t\t\t\tobjectSid\n\t\t\t\t\t\t\t\tou\n\t\t\t\t\t\t\t\tsamAccountName\n\t\t\t\t\t\t\t\tservicePrincipalNames\n\t\t\t\t\t\t\t\ttitle\n\t\t\t\t\t\t\t\tupn\n\t\t\t\t\t\t\t\tuserAccountControl\n\t\t\t\t\t\t\t\tuserAccountControlFlags\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t}\n\t\t\t\t\t\tprimaryDisplayName\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}","variables":null}
+      form: {}
+      headers:
+        Accept:
+          - application/json; charset=utf-8
+        Authorization:
+          - Bearer {{OMITTED}}
+        Cache-Control:
+          - no-cache
+        Content-Type:
+          - application/json; charset=utf-8
+      url: https://api.us-2.crowdstrike.com/identity-protection/combined/graphql/v1
+      method: POST
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"data":{"entities":{"pageInfo":{"hasNextPage":true,"endCursor":"eyJyaXNrU2NvcmUiOjAuNjQ1NTk0Nzc1NTA2MDQ4NCwiX2lkIjoiODNhNDllZjEtMTdhNy00ZmE0LWI5MGYtOTE0MmRmYTQ5NTc3In0="},"nodes":[{"archived":false,"creationTime":"2024-05-15T15:29:10.000Z","earliestSeenTraffic":"2024-05-23T02:02:43.960Z","emailAddresses":[],"entityId":"095b6929-44b9-4525-a0cc-9ef4552011f3","hasADDomainAdminRole":true,"impactScore":0.92,"inactive":true,"learned":true,"markTime":null,"mostRecentActivity":"2024-05-29T23:27:14.229Z","riskScore":0.66,"riskScoreSeverity":"MEDIUM","riskScoreWithoutLinkedAccounts":0.6561,"secondaryDisplayName":"CORP.SGNL.AI\\Wendolyn.Garber","shared":false,"stale":true,"watched":false,"type":"USER","riskFactors":[{"score":0.6,"severity":"MEDIUM","type":"WEAK_PASSWORD_POLICY"},{"score":0.425,"severity":"NORMAL","type":"STALE_ACCOUNT"}],"accounts":[{"__typename":"ActiveDirectoryAccountDescriptor","archived":false,"cn":"Wendolyn Garber","consistencyGuid":null,"containingGroupIds":["cc1ea590-c660-450f-b35a-841d553fb32d","6b518e93-b160-47e7-b02d-34d41c9677d3"],"creationTime":"2024-05-15T15:29:10.000Z","dataSource":"ACTIVE_DIRECTORY","department":"Finance","description":null,"dn":"CN=Wendolyn Garber,OU=Users,OU=Company,DC=corp,DC=sgnl,DC=ai","domain":"CORP.SGNL.AI","enabled":true,"expirationTime":null,"flattenedContainingGroupIds":["cc1ea590-c660-450f-b35a-841d553fb32d","6b518e93-b160-47e7-b02d-34d41c9677d3","635a5aa3-9e41-4e6d-9493-9a49634ecc7a","f64f4732-d68b-48af-84ce-95cf4c8bb89f","2ae1c90a-0fc9-403b-8cb0-a9622c51ea67"],"lastUpdateTime":"2024-05-15T15:29:10.000Z","lockoutTime":null,"mostRecentActivity":"2024-05-29T23:27:14.229Z","objectGuid":"095b6929-44b9-4525-a0cc-9ef4552011f3","objectSid":"S-1-5-21-3468690955-1439461270-1872542213-1140","ou":"corp.sgnl.ai/Company/Users","samAccountName":"Wendolyn.Garber","servicePrincipalNames":[],"title":null,"upn":"Wendolyn.Garber@sgnldemos.com","userAccountControl":512,"userAccountControlFlags":["NORMAL_ACCOUNT"]}],"primaryDisplayName":"Wendolyn Garber"},{"archived":false,"creationTime":"2024-08-25T18:18:00.000Z","earliestSeenTraffic":"2024-09-04T02:23:23.435Z","emailAddresses":[],"entityId":"83a49ef1-17a7-4fa4-b90f-9142dfa49577","hasADDomainAdminRole":true,"impactScore":0.4,"inactive":true,"learned":false,"markTime":null,"mostRecentActivity":"2024-09-12T15:02:40.094Z","riskScore":0.65,"riskScoreSeverity":"MEDIUM","riskScoreWithoutLinkedAccounts":0.6455947755402129,"secondaryDisplayName":"WHOLESALECHIPS.CO\\sgnl.sor","shared":false,"stale":false,"watched":false,"type":"USER","riskFactors":[{"score":0.6,"severity":"MEDIUM","type":"WEAK_PASSWORD_POLICY"},{"score":0.3,"severity":"NORMAL","type":"DUPLICATE_PASSWORD"},{"score":0.15,"severity":"NORMAL","type":"INACTIVE_ACCOUNT"},{"score":0.008449012344016,"severity":"NORMAL","type":"LDAP_RECONNAISSANCE"}],"accounts":[{"__typename":"ActiveDirectoryAccountDescriptor","archived":false,"cn":"sgnl sor","consistencyGuid":null,"containingGroupIds":["68bd95ed-9d9f-4ad1-baf3-f2c004b7fd18","dd133c9c-74c5-42af-b446-596f130eee8f"],"creationTime":"2024-08-25T18:18:00.000Z","dataSource":"ACTIVE_DIRECTORY","department":null,"description":"Used for SGNL SoR","dn":"CN=sgnl sor,CN=Users,DC=wholesalechips,DC=co","domain":"WHOLESALECHIPS.CO","enabled":true,"expirationTime":null,"flattenedContainingGroupIds":["68bd95ed-9d9f-4ad1-baf3-f2c004b7fd18","dd133c9c-74c5-42af-b446-596f130eee8f","925b0caa-edbb-46c6-80a0-1700950a7a86","6d68930f-414e-4f00-85fe-28b868cbb910"],"lastUpdateTime":"2024-08-25T18:18:00.000Z","lockoutTime":null,"mostRecentActivity":"2024-09-12T15:02:40.094Z","objectGuid":"83a49ef1-17a7-4fa4-b90f-9142dfa49577","objectSid":"S-1-5-21-1361080754-2191010971-608695987-1104","ou":null,"samAccountName":"sgnl.sor","servicePrincipalNames":[],"title":null,"upn":"sgnl.sor@wholesalechips.co","userAccountControl":66048,"userAccountControlFlags":["NORMAL_ACCOUNT","DONT_EXPIRE_PASSWORD"]}],"primaryDisplayName":"sgnl sor"}]}},"extensions":{"runTime":23,"remainingPoints":499998,"reset":1796,"consumedPoints":2}}'
+      headers:
+        Cache-Control:
+          - no-cache
+        Connection:
+          - keep-alive
+        Content-Type:
+          - application/json; charset=utf-8
+        Date:
+          - Thu, 03 Oct 2024 22:59:13 GMT
+        Etag:
+          - W/"fc3-oVIIKLzgG1xXRBKXuG+aNUAG4YE"
+        Expires:
+          - Thu, 03 Oct 2024 22:59:12 GMT
+        Pragma:
+          - no-cache
+        Server:
+          - nginx
+        Strict-Transport-Security:
+          - max-age=31536000; includeSubDomains
+          - max-age=31536000; includeSubDomains
+        X-Appliance-Date:
+          - "2024-10-03T22:59:13+00:00"
+        X-Appliance-Id:
+          - 9c052a46-40cb-450d-a593-0913074b654a
+        X-Content-Type-Options:
+          - nosniff
+        X-Cs-Region:
+          - us-2
+        X-Cs-Traceid:
+          - 27634b32-6313-49a0-aec7-78c668c7f0f3
+        X-Dns-Prefetch-Control:
+          - "off"
+        X-Download-Options:
+          - noopen
+        X-Frame-Options:
+          - SAMEORIGIN
+        X-Powered-By:
+          - Express
+        X-Preempt-Version:
+          - 5.79.66885
+        X-Ratelimit-Limit:
+          - "6000"
+        X-Ratelimit-Remaining:
+          - "5997"
+          - "5999"
+        X-Xss-Protection:
+          - 1; mode=block
+      status: 200 OK
+      code: 200
+      duration: 180.482095ms

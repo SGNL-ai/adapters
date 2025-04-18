@@ -1,0 +1,57 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: fictitious-scim.server:8080
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            Authorization:
+                - Basic {{OMITTED}}
+            Content-Type:
+                - application/scim+json
+        url: https://fictitious-scim.server:8080/identityiq/scim/v2/Users?startIndex=1&count=1
+        method: GET
+      response:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        transfer_encoding: []
+        trailer: {}
+        content_length: 1149
+        uncompressed: false
+        # Copied from pkg/scim/common_test.go -> full user representation
+        body: '{"schemas":["urn:ietf:params:scim:api:messages:2.0:ListResponse"],"totalResults":5,"itemsPerPage":1,"startIndex":5,"Resources":[{"schemas":["urn:ietf:params:scim:schemas:core:2.0:User","urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"],"id":"2819c223-7f76-453a-919d-413861904000","externalId":"701984","userName":"bjensen@example.com","name":{"formatted":"Ms. Barbara J Jensen, III","familyName":"Jensen","givenName":"Barbara","middleName":"Jane","honorificPrefix":"Ms.","honorificSuffix":"III"},"displayName":"Babs Jensen","nickName":"Babs","profileUrl":"https://login.example.com/bjensen","emails":[{"value":"bjensen@example.com","display":"bjensen@example.com","type":"work","primary":true},{"value":"babs@jensen.org","type":"home"}],"addresses":[{"formatted":"100 Universal City Plaza\nHollywood, CA 91608 USA","streetAddress":"100 Universal City Plaza","locality":"Hollywood","region":"CA","postalCode":"91608","country":"USA","type":"work"},{"streetAddress":"456 Hollywood Blvd","locality":"Hollywood","region":"CA","postalCode":"91608","country":"USA","formatted":"456 Hollywood Blvd\nHollywood, CA 91608 USA","type":"home"}],"phoneNumbers":[{"value":"555-555-5555","display":"555-555-5555","type":"work","primary":true},{"value":"555-555-4444","type":"mobile"}],"ims":[{"value":"someaimhandle","display":"someaimhandle","type":"aim","primary":true}],"photos":[{"value":"https://photos.example.com/profilephoto/72930000000Ccne/F","display":"https://photos.example.com/profilephoto/72930000000Ccne/F","type":"photo","primary":true},{"value":"https://photos.example.com/profilephoto/72930000000Ccne/T","type":"thumbnail"}],"userType":"Employee","title":"Tour Guide","preferredLanguage":"en-US","locale":"en-US","timezone":"America/Los_Angeles","active":true,"password":"OMITTED","groups":[{"value":"e9e30dba-f08f-4109-8486-d5c6a331660a","$ref":"../Groups/e9e30dba-f08f-4109-8486-d5c6a331660a","display":"Tour Guides","type":"direct"},{"value":"fc348aa8-3835-40eb-a20b-c726e15c55b5","$ref":"../Groups/fc348aa8-3835-40eb-a20b-c726e15c55b5","display":"Employees"},{"value":"71ddacd2-a8e7-49b8-a5db-ae50d0a5bfd7","$ref":"../Groups/71ddacd2-a8e7-49b8-a5db-ae50d0a5bfd7","display":"US Employees"}],"entitlements":[{"value":"e9e30dba-f08f-4109-8486-d5c6a331abc","display":"E1","type":"entitlement","primary":true}],"roles":[{"value":"e9e30dba-f08f-4109-8486-d5c6a33role","display":"Role A","type":"role","primary":true}],"x509Certificates":[{"value":"some_certificate_value","display":"SGNLCertificate","type":"secret","primary":true}],"urn:ietf:params:scim:schemas:extension:enterprise:2.0:User":{"employeeNumber":"701984","costCenter":"4130","organization":"Universal Studios","division":"Theme Park","department":"Tour Operations","manager":{"value":"26118915-6090-4610-87e4-49d8ca9f808d","$ref":"../Users/26118915-6090-4610-87e4-49d8ca9f808d","displayName":"John Smith"}},"meta":{"resourceType":"User","created":"2010-01-23T04:56:22Z","lastModified":"2011-05-13T04:42:34Z","version":"W\/\"3694e05e9dff591\"","location":"https://example.com/v2/Users/2819c223-7f76-453a-919d-413861904646"}}]}'
+        headers:
+            Cache-Control:
+                - no-store
+            Cf-Cache-Status:
+                - DYNAMIC
+            Cf-Ray:
+                - 81834c1b9aefc39f-SEA
+            Connection:
+                - keep-alive
+            Content-Length:
+                - "1149"
+            Content-Type:
+                - application/scim+json;charset=UTF-8
+            Date:
+                - Wed, 18 Oct 2023 19:48:10 GMT
+            Pragma:
+                - no-cache
+            Server:
+                - cloudflare
+            Set-Cookie:
+                - JSESSIONID={{OMITTED}}; Path=/identityiq; HttpOnly
+        status: 200 OK
+        code: 200
+        duration: 472.31168ms

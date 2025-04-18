@@ -1,0 +1,238 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: ""
+      proto_major: 0
+      proto_minor: 0
+      content_length: 46
+      transfer_encoding: []
+      trailer: {}
+      host: ""
+      remote_addr: ""
+      request_uri: ""
+      body: Action=ListRoles&MaxItems=2&Version=2010-05-08
+      form:
+        Action:
+          - ListRoles
+        MaxItems:
+          - "2"
+        Version:
+          - "2010-05-08"
+      headers:
+        Amz-Sdk-Invocation-Id:
+          - ad27eb60-9d49-4c6a-b045-e106e4e635d6
+        Amz-Sdk-Request:
+          - attempt=1; max=3
+        Authorization:
+          - "{{OMITTED}}"
+        Content-Type:
+          - application/x-www-form-urlencoded
+        User-Agent:
+          - m/E aws-sdk-go-v2/1.32.2 os/linux lang/go#1.24.1 md/GOOS#linux md/GOARCH#amd64 api/iam#1.36.4
+        X-Amz-Date:
+          - 20241019T003554Z
+      url: https://iam.amazonaws.com/
+      method: POST
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding: []
+      trailer: {}
+      content_length: 2403
+      uncompressed: false
+      body: |
+        <ListRolesResponse xmlns="https://iam.amazonaws.com/doc/2010-05-08/">
+          <ListRolesResult>
+            <IsTruncated>true</IsTruncated>
+            <Marker>MARKER_PLACEHOLDER</Marker>
+            <Roles>
+              <member>
+                <Path>/</Path>
+                <AssumeRolePolicyDocument>%7B%22Version%22%3A%222012-10-17%22%2C%22Statement%22%3A%5B%7B%22Effect%22%3A%22Allow%22%2C%22Principal%22%3A%7B%22Federated%22%3A%22arn%3Aaws%3Aiam%3A%3A000000000000%3Asaml-provider%2FCOMPANY_A-COMPANY_B%22%7D%2C%22Action%22%3A%22sts%3AAssumeRoleWithSAML%22%2C%22Condition%22%3A%7B%22StringEquals%22%3A%7B%22SAML%3Aaud%22%3A%22https%3A%2F%2Fsignin.aws.amazon.com%2Fsaml%22%7D%7D%7D%2C%7B%22Effect%22%3A%22Allow%22%2C%22Principal%22%3A%7B%22Federated%22%3A%22arn%3Aaws%3Aiam%3A%3A000000000000%3Asaml-provider%2Fsgnl-demo.oktapreview.com%22%7D%2C%22Action%22%3A%22sts%3AAssumeRoleWithSAML%22%2C%22Condition%22%3A%7B%22StringEquals%22%3A%7B%22SAML%3Aaud%22%3A%22https%3A%2F%2Fsignin.aws.amazon.com%2Fsaml%22%7D%7D%7D%5D%7D</AssumeRolePolicyDocument>
+                <MaxSessionDuration>3600</MaxSessionDuration>
+                <RoleId>AROAXXXXXXXXXXXXXXXX1</RoleId>
+                <RoleName>AdminAccessRole</RoleName>
+                <Description/>
+                <Arn>arn:aws:iam::000000000000:role/AdminAccessRole</Arn>
+                <CreateDate>2024-10-01T13:30:36Z</CreateDate>
+              </member>
+              <member>
+                <Path>/aws-service-role/support.amazonaws.com/</Path>
+                <AssumeRolePolicyDocument>%7B%22Version%22%3A%222012-10-17%22%2C%22Statement%22%3A%5B%7B%22Effect%22%3A%22Allow%22%2C%22Principal%22%3A%7B%22Service%22%3A%22support.amazonaws.com%22%7D%2C%22Action%22%3A%22sts%3AAssumeRole%22%7D%5D%7D</AssumeRolePolicyDocument>
+                <MaxSessionDuration>3600</MaxSessionDuration>
+                <RoleId>AROAXXXXXXXXXXXXXXXX2</RoleId>
+                <RoleName>AWSServiceRoleForSupport</RoleName>
+                <Description>Enables resource access for AWS to provide billing, administrative and support services</Description>
+                <Arn>arn:aws:iam::000000000000:role/aws-service-role/support.amazonaws.com/AWSServiceRoleForSupport</Arn>
+                <CreateDate>2024-08-20T14:04:36Z</CreateDate>
+              </member>
+            </Roles>
+          </ListRolesResult>
+          <ResponseMetadata>
+            <RequestId>6b1df3c2-1fc9-4633-adcb-1cfbb1535a66</RequestId>
+          </ResponseMetadata>
+        </ListRolesResponse>
+      headers:
+        Content-Length:
+          - "2403"
+        Content-Type:
+          - text/xml
+        Date:
+          - Sat, 19 Oct 2024 00:35:54 GMT
+        X-Amzn-Requestid:
+          - 6b1df3c2-1fc9-4633-adcb-1cfbb1535a66
+      status: 200 OK
+      code: 200
+      duration: 312.653396ms
+  - id: 1
+    request:
+      proto: ""
+      proto_major: 0
+      proto_minor: 0
+      content_length: 58
+      transfer_encoding: []
+      trailer: {}
+      host: ""
+      remote_addr: ""
+      request_uri: ""
+      body: Action=GetRole&RoleName=AdminAccessRole&Version=2010-05-08
+      form:
+        Action:
+          - GetRole
+        RoleName:
+          - AdminAccessRole
+        Version:
+          - "2010-05-08"
+      headers:
+        Amz-Sdk-Invocation-Id:
+          - d542eb6b-4bf9-43f3-8517-50f6434c8b2e
+        Amz-Sdk-Request:
+          - attempt=1; max=3
+        Authorization:
+          - "{{OMITTED}}"
+        Content-Type:
+          - application/x-www-form-urlencoded
+        User-Agent:
+          - m/E aws-sdk-go-v2/1.32.2 os/linux lang/go#1.24.1 md/GOOS#linux md/GOARCH#amd64 api/iam#1.36.4
+        X-Amz-Date:
+          - 20241019T003554Z
+      url: https://iam.amazonaws.com/
+      method: POST
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding: []
+      trailer: {}
+      content_length: 1460
+      uncompressed: false
+      body: |
+        <GetRoleResponse xmlns="https://iam.amazonaws.com/doc/2010-05-08/">
+          <GetRoleResult>
+            <Role>
+              <Path>/</Path>
+              <AssumeRolePolicyDocument>%7B%22Version%22%3A%222012-10-17%22%2C%22Statement%22%3A%5B%7B%22Effect%22%3A%22Allow%22%2C%22Principal%22%3A%7B%22Federated%22%3A%22arn%3Aaws%3Aiam%3A%3A000000000000%3Asaml-provider%2FCOMPANY_A-COMPANY_B%22%7D%2C%22Action%22%3A%22sts%3AAssumeRoleWithSAML%22%2C%22Condition%22%3A%7B%22StringEquals%22%3A%7B%22SAML%3Aaud%22%3A%22https%3A%2F%2Fsignin.aws.amazon.com%2Fsaml%22%7D%7D%7D%2C%7B%22Effect%22%3A%22Allow%22%2C%22Principal%22%3A%7B%22Federated%22%3A%22arn%3Aaws%3Aiam%3A%3A000000000000%3Asaml-provider%2Fsgnl-demo.oktapreview.com%22%7D%2C%22Action%22%3A%22sts%3AAssumeRoleWithSAML%22%2C%22Condition%22%3A%7B%22StringEquals%22%3A%7B%22SAML%3Aaud%22%3A%22https%3A%2F%2Fsignin.aws.amazon.com%2Fsaml%22%7D%7D%7D%5D%7D</AssumeRolePolicyDocument>
+              <MaxSessionDuration>3600</MaxSessionDuration>
+              <RoleId>AROAXXXXXXXXXXXXXXXX1</RoleId>
+              <RoleLastUsed>
+                <LastUsedDate>2024-10-17T21:44:11Z</LastUsedDate>
+                <Region>us-east-2</Region>
+              </RoleLastUsed>
+              <RoleName>AdminAccessRole</RoleName>
+              <Description/>
+              <Arn>arn:aws:iam::000000000000:role/AdminAccessRole</Arn>
+              <CreateDate>2024-10-01T13:30:36Z</CreateDate>
+            </Role>
+          </GetRoleResult>
+          <ResponseMetadata>
+            <RequestId>a56ab9c0-edcd-4578-acf6-573affbd9496</RequestId>
+          </ResponseMetadata>
+        </GetRoleResponse>
+      headers:
+        Content-Length:
+          - "1460"
+        Content-Type:
+          - text/xml
+        Date:
+          - Sat, 19 Oct 2024 00:35:54 GMT
+        X-Amzn-Requestid:
+          - a56ab9c0-edcd-4578-acf6-573affbd9496
+      status: 200 OK
+      code: 200
+      duration: 94.807141ms
+  - id: 2
+    request:
+      proto: ""
+      proto_major: 0
+      proto_minor: 0
+      content_length: 67
+      transfer_encoding: []
+      trailer: {}
+      host: ""
+      remote_addr: ""
+      request_uri: ""
+      body: Action=GetRole&RoleName=AWSServiceRoleForSupport&Version=2010-05-08
+      form:
+        Action:
+          - GetRole
+        RoleName:
+          - AWSServiceRoleForSupport
+        Version:
+          - "2010-05-08"
+      headers:
+        Amz-Sdk-Invocation-Id:
+          - 516481f6-a2ff-4759-9d9d-87e5bbeaa6b6
+        Amz-Sdk-Request:
+          - attempt=1; max=3
+        Authorization:
+          - "{{OMITTED}}"
+        Content-Type:
+          - application/x-www-form-urlencoded
+        User-Agent:
+          - m/E aws-sdk-go-v2/1.32.2 os/linux lang/go#1.24.1 md/GOOS#linux md/GOARCH#amd64 api/iam#1.36.4
+        X-Amz-Date:
+          - 20241019T003555Z
+      url: https://iam.amazonaws.com/
+      method: POST
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding: []
+      trailer: {}
+      content_length: 1037
+      uncompressed: false
+      body: |
+        <GetRoleResponse xmlns="https://iam.amazonaws.com/doc/2010-05-08/">
+          <GetRoleResult>
+            <Role>
+              <Path>/aws-service-role/support.amazonaws.com/</Path>
+              <AssumeRolePolicyDocument>%7B%22Version%22%3A%222012-10-17%22%2C%22Statement%22%3A%5B%7B%22Effect%22%3A%22Allow%22%2C%22Principal%22%3A%7B%22Service%22%3A%22support.amazonaws.com%22%7D%2C%22Action%22%3A%22sts%3AAssumeRole%22%7D%5D%7D</AssumeRolePolicyDocument>
+              <MaxSessionDuration>3600</MaxSessionDuration>
+              <RoleId>AROAXXXXXXXXXXXXXXXX2</RoleId>
+              <RoleLastUsed/>
+              <RoleName>AWSServiceRoleForSupport</RoleName>
+              <Description>Enables resource access for AWS to provide billing, administrative and support services</Description>
+              <Arn>arn:aws:iam::000000000000:role/aws-service-role/support.amazonaws.com/AWSServiceRoleForSupport</Arn>
+              <CreateDate>2024-08-20T14:04:36Z</CreateDate>
+            </Role>
+          </GetRoleResult>
+          <ResponseMetadata>
+            <RequestId>32ff593a-a4c9-4e42-a161-3586c2255750</RequestId>
+          </ResponseMetadata>
+        </GetRoleResponse>
+      headers:
+        Content-Length:
+          - "1037"
+        Content-Type:
+          - text/xml
+        Date:
+          - Sat, 19 Oct 2024 00:35:54 GMT
+        X-Amzn-Requestid:
+          - 32ff593a-a4c9-4e42-a161-3586c2255750
+      status: 200 OK
+      code: 200
+      duration: 100.613545ms

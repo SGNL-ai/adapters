@@ -1,0 +1,52 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: graph.microsoft.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+      url: https://graph.microsoft.com/v1.0/roleManagement/directory/roleAssignmentScheduleRequests?$select=id,principalId,roleDefinitionId,action,justification&$top=3&$skip=3
+      method: GET
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"@odata.context":"https://graph.microsoft.com/v1.0/$metadata#roleManagement/directory/roleAssignmentScheduleRequests(id,principalId,roleDefinitionId,action,justification)","value":[{"id":"42f1f2ac-6a85-41bc-8dea-47e041036c07","action":"selfDeactivate","principalId":"pppppppp-qqqq-rrrr-ssss-tttttttttttt","roleDefinitionId":"cf1c38e5-3621-4004-a7cb-879624dced7c","justification":"Deactivation request"},{"id":"82a9d99b-6d13-4dfc-b173-958ef0ee0525","action":"selfDeactivate","principalId":"pppppppp-qqqq-rrrr-ssss-tttttttttttt","roleDefinitionId":"cf1c38e5-3621-4004-a7cb-879624dced7c","justification":"Deactivation request"},{"id":"8651181b-e433-4a53-8839-0bc85fe4a3a2","action":"selfDeactivate","principalId":"pppppppp-qqqq-rrrr-ssss-tttttttttttt","roleDefinitionId":"cf1c38e5-3621-4004-a7cb-879624dced7c","justification":"Deactivation request"}]}'
+      headers:
+        Cache-Control:
+          - private
+        Client-Request-Id:
+          - adc0c428-02c2-41e9-a1d5-8a1260dbf872
+        Content-Type:
+          - application/json;odata.metadata=minimal;odata.streaming=true;IEEE754Compatible=false;charset=utf-8
+        Date:
+          - Tue, 05 Nov 2024 03:02:57 GMT
+        Odata-Version:
+          - "4.0"
+        Request-Id:
+          - adc0c428-02c2-41e9-a1d5-8a1260dbf872
+        Strict-Transport-Security:
+          - max-age=31536000
+        Vary:
+          - Accept-Encoding
+        X-Ms-Ags-Diagnostic:
+          - '{"ServerInfo":{"DataCenter":"West US 2","Slice":"E","Ring":"4","ScaleUnit":"005","RoleInstance":"MWH0EPF0009ACAB"}}'
+      status: 200 OK
+      code: 200
+      duration: 190.039873ms

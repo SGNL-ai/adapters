@@ -1,0 +1,80 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 697
+      transfer_encoding: []
+      trailer: {}
+      host: api.github.com
+      remote_addr: ""
+      request_uri: ""
+      body: '{"query":"query {\n\t\torganization (login: \"dh-test-org-2\") {\n\t\t\tannouncement, announcementExpiresAt, announcementUserDismissible, anyPinnableItems, archivedAt, avatarUrl, createdAt, databaseId, description, descriptionHTML, email, id, ipAllowListEnabledSetting, isVerified, location, login, name, newTeamResourcePath, newTeamUrl, organizationBillingEmail, pinnedItemsRemaining, projectsResourcePath, projectsUrl, requiresTwoFactorAuthentication, resourcePath, teamsResourcePath, teamsUrl, twitterUsername, updatedAt, url, viewerCanAdminister, viewerCanChangePinnedItems, viewerCanCreateProjects, viewerCanCreateRepositories, viewerCanCreateTeams, viewerIsAMember, websiteUrl \n\t\t}\n\t}"}'
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+        Content-Type:
+          - application/json
+      url: https://api.github.com/graphql
+      method: POST
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"data":{"organization":{"announcement":null,"announcementExpiresAt":null,"announcementUserDismissible":null,"anyPinnableItems":true,"archivedAt":null,"avatarUrl":"","createdAt":"2024-11-13T03:10:21Z","databaseId":188285299,"description":null,"descriptionHTML":"<div></div>","email":null,"id":"O_kgDOCzkBcw","ipAllowListEnabledSetting":"DISABLED","isVerified":false,"location":null,"login":"dh-test-org-2","name":"dh-test-org-2","newTeamResourcePath":"/orgs/dh-test-org-2/new-team","newTeamUrl":"https://github.com/orgs/dh-test-org-2/new-team","organizationBillingEmail":"dhanya@sgnl.ai","pinnedItemsRemaining":6,"projectsResourcePath":"/orgs/dh-test-org-2/projects","projectsUrl":"https://github.com/orgs/dh-test-org-2/projects","requiresTwoFactorAuthentication":false,"resourcePath":"/dh-test-org-2","teamsResourcePath":"/orgs/dh-test-org-2/teams","teamsUrl":"https://github.com/orgs/dh-test-org-2/teams","twitterUsername":null,"updatedAt":"2024-11-15T00:43:08Z","url":"https://github.com/dh-test-org-2","viewerCanAdminister":true,"viewerCanChangePinnedItems":true,"viewerCanCreateProjects":true,"viewerCanCreateRepositories":true,"viewerCanCreateTeams":true,"viewerIsAMember":true,"websiteUrl":null}}}'
+      headers:
+        Access-Control-Allow-Origin:
+          - "*"
+        Access-Control-Expose-Headers:
+          - ETag, Link, Location, Retry-After, X-GitHub-OTP, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Used, X-RateLimit-Resource, X-RateLimit-Reset, X-OAuth-Scopes, X-Accepted-OAuth-Scopes, X-Poll-Interval, X-GitHub-Media-Type, X-GitHub-SSO, X-GitHub-Request-Id, Deprecation, Sunset
+        Content-Security-Policy:
+          - default-src 'none'
+        Content-Type:
+          - application/json; charset=utf-8
+        Date:
+          - Mon, 18 Nov 2024 21:43:44 GMT
+        Github-Authentication-Token-Expiration:
+          - 2024-12-15 01:29:41 UTC
+        Referrer-Policy:
+          - origin-when-cross-origin, strict-origin-when-cross-origin
+        Server:
+          - github.com
+        Strict-Transport-Security:
+          - max-age=31536000; includeSubdomains; preload
+        Vary:
+          - Accept-Encoding, Accept, X-Requested-With
+        X-Accepted-Oauth-Scopes:
+          - repo
+        X-Content-Type-Options:
+          - nosniff
+        X-Frame-Options:
+          - deny
+        X-Github-Media-Type:
+          - github.v4; format=json
+        X-Github-Request-Id:
+          - 0810:11A9B5:2DB0EF9:2E04EBE:673BB510
+        X-Oauth-Scopes:
+          - admin:enterprise, admin:gpg_key, admin:org, admin:org_hook, admin:public_key, admin:repo_hook, admin:ssh_signing_key, audit_log, codespace, copilot, delete:packages, delete_repo, gist, notifications, project, repo, user, workflow, write:discussion, write:packages
+        X-Ratelimit-Limit:
+          - "5000"
+        X-Ratelimit-Remaining:
+          - "4891"
+        X-Ratelimit-Reset:
+          - "1731966295"
+        X-Ratelimit-Resource:
+          - graphql
+        X-Ratelimit-Used:
+          - "109"
+        X-Xss-Protection:
+          - "0"
+      status: 200 OK
+      code: 200
+      duration: 256.839064ms

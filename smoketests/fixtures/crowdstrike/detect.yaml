@@ -1,0 +1,373 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: api.us-2.crowdstrike.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+      url: https://api.us-2.crowdstrike.com/detects/queries/detects/v1?limit=2&offset=2
+      method: GET
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: |-
+        {
+         "meta": {
+          "query_time": 0.005207338,
+          "pagination": {
+           "offset": 2,
+           "limit": 2,
+           "total": 6
+          },
+          "powered_by": "legacy-detects",
+          "trace_id": "0f1740be-f9fd-420c-ac80-f5b995318c2b"
+         },
+         "resources": [
+          "ldt:9b9b1e4f7512492f95f8039c065a28a9:4295459139",
+          "ldt:9b9b1e4f7512492f95f8039c065a28a9:1169567"
+         ],
+         "errors": []
+        }
+      headers:
+        Connection:
+          - keep-alive
+        Content-Type:
+          - application/json
+        Date:
+          - Sat, 25 Jan 2025 21:04:13 GMT
+        Server:
+          - nginx
+        Strict-Transport-Security:
+          - max-age=31536000; includeSubDomains
+          - max-age=31536000; includeSubDomains
+        X-Cs-Region:
+          - us-2
+        X-Cs-Traceid:
+          - 0f1740be-f9fd-420c-ac80-f5b995318c2b
+        X-Ratelimit-Limit:
+          - "6000"
+        X-Ratelimit-Remaining:
+          - "5985"
+      status: 200 OK
+      code: 200
+      duration: 140.345514ms
+  - id: 1
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 106
+      transfer_encoding: []
+      trailer: {}
+      host: api.us-2.crowdstrike.com
+      remote_addr: ""
+      request_uri: ""
+      body: '{"ids":["ldt:9b9b1e4f7512492f95f8039c065a28a9:4295459139","ldt:9b9b1e4f7512492f95f8039c065a28a9:1169567"]}'
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+        Content-Type:
+          - application/json
+      url: https://api.us-2.crowdstrike.com/detects/entities/summaries/GET/v1?limit=2&offset=2
+      method: POST
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding:
+        - chunked
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: |-
+        {
+         "meta": {
+          "query_time": 0.006956325,
+          "powered_by": "legacy-detects",
+          "trace_id": "cab7dca4-f834-487f-91cc-b040cd9d6f10"
+         },
+         "resources": [
+          {
+           "cid": "8693deb4bf134cfb8855ee118d9a0243",
+           "created_timestamp": "2025-01-22T19:48:16.921558696Z",
+           "detection_id": "ldt:9b9b1e4f7512492f95f8039c065a28a9:1169567",
+           "device": {
+            "device_id": "9b9b1e4f7512492f95f8039c065a28a9",
+            "cid": "8693deb4bf134cfb8855ee118d9a0243",
+            "agent_load_flags": "0",
+            "agent_local_time": "2025-01-22T19:45:19.682Z",
+            "agent_version": "7.19.18913.0",
+            "bios_manufacturer": "Xen",
+            "bios_version": "4.11.amazon",
+            "config_id_base": "65994767",
+            "config_id_build": "18913",
+            "config_id_platform": "3",
+            "external_ip": "1.1.1.1",
+            "hostname": "EC2AMAZ-L4LAU4Q",
+            "first_seen": "2025-01-22T19:37:47Z",
+            "last_login_timestamp": "2025-01-22T19:40:45Z",
+            "last_login_user": "Administrator",
+            "last_seen": "2025-01-22T19:45:30Z",
+            "local_ip": "1.1.1.1",
+            "mac_address": "01-01-01-01-01-01",
+            "machine_domain": "",
+            "major_version": "10",
+            "minor_version": "0",
+            "os_version": "Windows Server 2022",
+            "platform_id": "0",
+            "platform_name": "Windows",
+            "product_type": "3",
+            "product_type_desc": "Server",
+            "status": "normal",
+            "system_manufacturer": "Xen",
+            "system_product_name": "HVM domU",
+            "modified_timestamp": "2025-01-22T19:47:13Z",
+            "instance_id": "i-04d26bf36004d2941",
+            "service_provider": "AWS_EC2_V2",
+            "service_provider_account_id": "{{OMITTED}}"
+           },
+           "behaviors": [
+            {
+             "device_id": "9b9b1e4f7512492f95f8039c065a28a9",
+             "timestamp": "2025-01-22T19:44:18Z",
+             "template_instance_id": "1342",
+             "behavior_id": "10304",
+             "filename": "cmd.exe",
+             "filepath": "\\Device\\HarddiskVolume1\\Windows\\System32\\cmd.exe",
+             "alleged_filetype": "exe",
+             "cmdline": "cmd.exe  crowdstrike_test_high",
+             "scenario": "suspicious_activity",
+             "objective": "Falcon Detection Method",
+             "tactic": "Falcon Overwatch",
+             "tactic_id": "CSTA0006",
+             "technique": "Malicious Activity",
+             "technique_id": "CST0002",
+             "display_name": "TestTriggerHigh",
+             "description": "A high level detection was triggered on this process for testing purposes.",
+             "severity": 70,
+             "confidence": 100,
+             "ioc_type": "",
+             "ioc_value": "",
+             "ioc_source": "",
+             "ioc_description": "",
+             "user_name": "Administrator",
+             "user_id": "S-1-5-21-1176167308-4253926863-1726221433-500",
+             "control_graph_id": "ctg:9b9b1e4f7512492f95f8039c065a28a9:1169567",
+             "triggering_process_graph_id": "pid:9b9b1e4f7512492f95f8039c065a28a9:166798888",
+             "sha256": "41871dade953d9f40f4aa445fc19982ab59d263c8aa93d7f67a1451663a09a57",
+             "md5": "448d1a22fb3e4e05dace52091152cc27",
+             "parent_details": {
+              "parent_sha256": "41871dade953d9f40f4aa445fc19982ab59d263c8aa93d7f67a1451663a09a57",
+              "parent_md5": "448d1a22fb3e4e05dace52091152cc27",
+              "parent_cmdline": "\"C:\\Windows\\system32\\cmd.exe\" ",
+              "parent_process_graph_id": "pid:9b9b1e4f7512492f95f8039c065a28a9:158082492"
+             },
+             "pattern_disposition": 0,
+             "pattern_disposition_details": {
+              "indicator": false,
+              "detect": false,
+              "inddet_mask": false,
+              "sensor_only": false,
+              "rooting": false,
+              "kill_process": false,
+              "kill_subprocess": false,
+              "quarantine_machine": false,
+              "quarantine_file": false,
+              "policy_disabled": false,
+              "kill_parent": false,
+              "operation_blocked": false,
+              "process_blocked": false,
+              "registry_operation_blocked": false,
+              "critical_process_disabled": false,
+              "bootup_safeguard_enabled": false,
+              "fs_operation_blocked": false,
+              "handle_operation_downgraded": false,
+              "kill_action_failed": false,
+              "blocking_unsupported_or_disabled": false,
+              "suspend_process": false,
+              "suspend_parent": false
+             }
+            }
+           ],
+           "email_sent": false,
+           "first_behavior": "2025-01-22T19:44:18Z",
+           "last_behavior": "2025-01-22T19:44:18Z",
+           "max_confidence": 100,
+           "max_severity": 70,
+           "max_severity_displayname": "High",
+           "show_in_ui": true,
+           "status": "new",
+           "hostinfo": {
+            "domain": ""
+           },
+           "seconds_to_triaged": 0,
+           "seconds_to_resolved": 0,
+           "behaviors_processed": [
+            "pid:9b9b1e4f7512492f95f8039c065a28a9:166798888:10304"
+           ],
+           "date_updated": "2025-01-22T19:48:38Z"
+          },
+          {
+           "cid": "8693deb4bf134cfb8855ee118d9a0243",
+           "created_timestamp": "2025-01-22T19:48:57.812628852Z",
+           "detection_id": "ldt:9b9b1e4f7512492f95f8039c065a28a9:4295459139",
+           "device": {
+            "device_id": "9b9b1e4f7512492f95f8039c065a28a9",
+            "cid": "8693deb4bf134cfb8855ee118d9a0243",
+            "agent_load_flags": "0",
+            "agent_local_time": "2025-01-22T19:45:19.682Z",
+            "agent_version": "7.19.18913.0",
+            "bios_manufacturer": "Xen",
+            "bios_version": "4.11.amazon",
+            "config_id_base": "65994767",
+            "config_id_build": "18913",
+            "config_id_platform": "3",
+            "external_ip": "1.1.1.1",
+            "hostname": "EC2AMAZ-L4LAU4Q",
+            "first_seen": "2025-01-22T19:37:47Z",
+            "last_login_timestamp": "2025-01-22T19:40:45Z",
+            "last_login_user": "Administrator",
+            "last_seen": "2025-01-22T19:45:30Z",
+            "local_ip": "1.1.1.1",
+            "mac_address": "01-01-01-01-01-01",
+            "machine_domain": "",
+            "major_version": "10",
+            "minor_version": "0",
+            "os_version": "Windows Server 2022",
+            "platform_id": "0",
+            "platform_name": "Windows",
+            "product_type": "3",
+            "product_type_desc": "Server",
+            "status": "normal",
+            "system_manufacturer": "Xen",
+            "system_product_name": "HVM domU",
+            "modified_timestamp": "2025-01-22T19:47:13Z",
+            "instance_id": "i-04d26bf36004d2941",
+            "service_provider": "AWS_EC2_V2",
+            "service_provider_account_id": "{{OMITTED}}"
+           },
+           "behaviors": [
+            {
+             "device_id": "9b9b1e4f7512492f95f8039c065a28a9",
+             "timestamp": "2025-01-22T19:48:48Z",
+             "template_instance_id": "1343",
+             "behavior_id": "10303",
+             "filename": "cmd.exe",
+             "filepath": "\\Device\\HarddiskVolume1\\Windows\\System32\\cmd.exe",
+             "alleged_filetype": "exe",
+             "cmdline": "cmd.exe  crowdstrike_test_critical",
+             "scenario": "suspicious_activity",
+             "objective": "Falcon Detection Method",
+             "tactic": "Falcon Overwatch",
+             "tactic_id": "CSTA0006",
+             "technique": "Malicious Activity",
+             "technique_id": "CST0002",
+             "display_name": "TestTriggerCritical",
+             "description": "A critical level detection was triggered on this process for testing purposes.",
+             "severity": 90,
+             "confidence": 100,
+             "ioc_type": "",
+             "ioc_value": "",
+             "ioc_source": "",
+             "ioc_description": "",
+             "user_name": "Administrator",
+             "user_id": "S-1-5-21-1176167308-4253926863-1726221433-500",
+             "control_graph_id": "ctg:9b9b1e4f7512492f95f8039c065a28a9:4295459139",
+             "triggering_process_graph_id": "pid:9b9b1e4f7512492f95f8039c065a28a9:4341293422",
+             "sha256": "41871dade953d9f40f4aa445fc19982ab59d263c8aa93d7f67a1451663a09a57",
+             "md5": "448d1a22fb3e4e05dace52091152cc27",
+             "parent_details": {
+              "parent_sha256": "41871dade953d9f40f4aa445fc19982ab59d263c8aa93d7f67a1451663a09a57",
+              "parent_md5": "448d1a22fb3e4e05dace52091152cc27",
+              "parent_cmdline": "\"C:\\Windows\\system32\\cmd.exe\" ",
+              "parent_process_graph_id": "pid:9b9b1e4f7512492f95f8039c065a28a9:158082492"
+             },
+             "pattern_disposition": 0,
+             "pattern_disposition_details": {
+              "indicator": false,
+              "detect": false,
+              "inddet_mask": false,
+              "sensor_only": false,
+              "rooting": false,
+              "kill_process": false,
+              "kill_subprocess": false,
+              "quarantine_machine": false,
+              "quarantine_file": false,
+              "policy_disabled": false,
+              "kill_parent": false,
+              "operation_blocked": false,
+              "process_blocked": false,
+              "registry_operation_blocked": false,
+              "critical_process_disabled": false,
+              "bootup_safeguard_enabled": false,
+              "fs_operation_blocked": false,
+              "handle_operation_downgraded": false,
+              "kill_action_failed": false,
+              "blocking_unsupported_or_disabled": false,
+              "suspend_process": false,
+              "suspend_parent": false
+             }
+            }
+           ],
+           "email_sent": false,
+           "first_behavior": "2025-01-22T19:48:48Z",
+           "last_behavior": "2025-01-22T19:48:48Z",
+           "max_confidence": 100,
+           "max_severity": 90,
+           "max_severity_displayname": "Critical",
+           "show_in_ui": true,
+           "status": "new",
+           "hostinfo": {
+            "domain": ""
+           },
+           "seconds_to_triaged": 0,
+           "seconds_to_resolved": 0,
+           "behaviors_processed": [
+            "pid:9b9b1e4f7512492f95f8039c065a28a9:4341293422:10303"
+           ],
+           "date_updated": "2025-01-22T19:49:19Z"
+          }
+         ],
+         "errors": []
+        }
+      headers:
+        Connection:
+          - keep-alive
+        Content-Type:
+          - application/json
+        Date:
+          - Sat, 25 Jan 2025 21:04:13 GMT
+        Server:
+          - nginx
+        Strict-Transport-Security:
+          - max-age=31536000; includeSubDomains
+          - max-age=31536000; includeSubDomains
+        X-Cs-Region:
+          - us-2
+        X-Cs-Traceid:
+          - cab7dca4-f834-487f-91cc-b040cd9d6f10
+        X-Ratelimit-Limit:
+          - "6000"
+        X-Ratelimit-Remaining:
+          - "5984"
+      status: 200 OK
+      code: 200
+      duration: 53.851934ms

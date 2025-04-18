@@ -1,0 +1,224 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: ""
+      proto_major: 0
+      proto_minor: 0
+      content_length: 46
+      transfer_encoding: []
+      trailer: {}
+      host: ""
+      remote_addr: ""
+      request_uri: ""
+      body: Action=ListRoles&MaxItems=1&Version=2010-05-08
+      form:
+        Action:
+          - ListRoles
+        MaxItems:
+          - "1"
+        Version:
+          - "2010-05-08"
+      headers:
+        Amz-Sdk-Invocation-Id:
+          - be37ab6b-5a21-412c-96fc-8604e97fab93
+        Amz-Sdk-Request:
+          - attempt=1; max=3
+        Authorization:
+          - "{{OMITTED}}"
+        Content-Type:
+          - application/x-www-form-urlencoded
+        User-Agent:
+          - m/E aws-sdk-go-v2/1.30.3 os/linux lang/go#1.22.4 md/GOOS#linux md/GOARCH#amd64 api/iam#1.34.3
+        X-Amz-Date:
+          - 20240723T172330Z
+      url: https://iam.amazonaws.com/
+      method: POST
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding: []
+      trailer: {}
+      content_length: 1468
+      uncompressed: false
+      body: |
+        <ListRolesResponse xmlns="https://iam.amazonaws.com/doc/2010-05-08/">
+          <ListRolesResult>
+            <IsTruncated>true</IsTruncated>
+            <Marker>MARKER_PLACEHOLDER</Marker>
+            <Roles>
+              <member>
+                <Path>/aws-reserved/sso.amazonaws.com/</Path>
+                <AssumeRolePolicyDocument>%7B%22Version%22%3A%222012-10-17%22%2C%22Statement%22%3A%5B%7B%22Effect%22%3A%22Allow%22%2C%22Principal%22%3A%7B%22Federated%22%3A%22arn%3Aaws%3Aiam%3A%3A000000000000%3Asaml-provider%2FAWSSSO_123456abcdef_DO_NOT_DELETE%22%7D%2C%22Action%22%3A%5B%22sts%3AAssumeRoleWithSAML%22%2C%22sts%3ATagSession%22%5D%2C%22Condition%22%3A%7B%22StringEquals%22%3A%7B%22SAML%3Aaud%22%3A%22https%3A%2F%2Fsignin.aws.amazon.com%2Fsaml%22%7D%7D%7D%5D%7D</AssumeRolePolicyDocument>
+                <MaxSessionDuration>43200</MaxSessionDuration>
+                <RoleId>AROAXXXXXXXXXXXXXXXX1</RoleId>
+                <RoleName>AWSReservedSSO_AdministratorAccess_1234567890abcdef</RoleName>
+                <Arn>arn:aws:iam::000000000000:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess_1234567890abcdef</Arn>
+                <CreateDate>2023-12-13T19:51:02Z</CreateDate>
+              </member>
+            </Roles>
+          </ListRolesResult>
+          <ResponseMetadata>
+            <RequestId>e79e40a3-1bb1-4dad-9285-311d739cffa2</RequestId>
+          </ResponseMetadata>
+        </ListRolesResponse>
+      headers:
+        Content-Length:
+          - "1468"
+        Content-Type:
+          - text/xml
+        Date:
+          - Tue, 23 Jul 2024 17:23:30 GMT
+        X-Amzn-Requestid:
+          - e79e40a3-1bb1-4dad-9285-311d739cffa2
+      status: 200 OK
+      code: 200
+      duration: 282.478784ms
+  - id: 1
+    request:
+      proto: ""
+      proto_major: 0
+      proto_minor: 0
+      content_length: 94
+      transfer_encoding: []
+      trailer: {}
+      host: ""
+      remote_addr: ""
+      request_uri: ""
+      body: Action=GetRole&RoleName=AWSReservedSSO_AdministratorAccess_1234567890abcdef&Version=2010-05-08
+      form:
+        Action:
+          - GetRole
+        RoleName:
+          - AWSReservedSSO_AdministratorAccess_1234567890abcdef
+        Version:
+          - "2010-05-08"
+      headers:
+        Amz-Sdk-Invocation-Id:
+          - 18dac641-3d9e-4553-91bf-20c13e6cff81
+        Amz-Sdk-Request:
+          - attempt=1; max=3
+        Authorization:
+          - "{{OMITTED}}"
+        Content-Type:
+          - application/x-www-form-urlencoded
+        User-Agent:
+          - m/E aws-sdk-go-v2/1.30.3 os/linux lang/go#1.22.4 md/GOOS#linux md/GOARCH#amd64 api/iam#1.34.3
+        X-Amz-Date:
+          - 20240723T172331Z
+      url: https://iam.amazonaws.com/
+      method: POST
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding: []
+      trailer: {}
+      content_length: 1299
+      uncompressed: false
+      body: |
+        <GetRoleResponse xmlns="https://iam.amazonaws.com/doc/2010-05-08/">
+          <GetRoleResult>
+            <Role>
+              <Path>/aws-reserved/sso.amazonaws.com/</Path>
+              <AssumeRolePolicyDocument>%7B%22Version%22%3A%222012-10-17%22%2C%22Statement%22%3A%5B%7B%22Effect%22%3A%22Allow%22%2C%22Principal%22%3A%7B%22Federated%22%3A%22arn%3Aaws%3Aiam%3A%3A000000000000%3Asaml-provider%2FAWSSSO_123456abcdef_DO_NOT_DELETE%22%7D%2C%22Action%22%3A%5B%22sts%3AAssumeRoleWithSAML%22%2C%22sts%3ATagSession%22%5D%2C%22Condition%22%3A%7B%22StringEquals%22%3A%7B%22SAML%3Aaud%22%3A%22https%3A%2F%2Fsignin.aws.amazon.com%2Fsaml%22%7D%7D%7D%5D%7D</AssumeRolePolicyDocument>
+              <MaxSessionDuration>43200</MaxSessionDuration>
+              <RoleId>AROAXXXXXXXXXXXXXXXX1</RoleId>
+              <RoleLastUsed>
+                <LastUsedDate>2024-05-24T19:53:16Z</LastUsedDate>
+                <Region>us-east-2</Region>
+              </RoleLastUsed>
+              <RoleName>AWSReservedSSO_AdministratorAccess_1234567890abcdef</RoleName>
+              <Arn>arn:aws:iam::000000000000:role/aws-reserved/sso.amazonaws.com/AWSReservedSSO_AdministratorAccess_1234567890abcdef</Arn>
+              <CreateDate>2023-12-13T19:51:02Z</CreateDate>
+            </Role>
+          </GetRoleResult>
+          <ResponseMetadata>
+            <RequestId>071e7e84-39d0-4716-806b-7e70177e328a</RequestId>
+          </ResponseMetadata>
+        </GetRoleResponse>
+      headers:
+        Content-Length:
+          - "1299"
+        Content-Type:
+          - text/xml
+        Date:
+          - Tue, 23 Jul 2024 17:23:30 GMT
+        X-Amzn-Requestid:
+          - 071e7e84-39d0-4716-806b-7e70177e328a
+      status: 200 OK
+      code: 200
+      duration: 324.806182ms
+  - id: 2
+    request:
+      proto: ""
+      proto_major: 0
+      proto_minor: 0
+      content_length: 122
+      transfer_encoding: []
+      trailer: {}
+      host: ""
+      remote_addr: ""
+      request_uri: ""
+      body: Action=ListAttachedRolePolicies&MaxItems=1&RoleName=AWSReservedSSO_AdministratorAccess_1234567890abcdef&Version=2010-05-08
+      form:
+        Action:
+          - ListAttachedRolePolicies
+        MaxItems:
+          - "1"
+        RoleName:
+          - AWSReservedSSO_AdministratorAccess_1234567890abcdef
+        Version:
+          - "2010-05-08"
+      headers:
+        Amz-Sdk-Invocation-Id:
+          - af396469-5734-4a95-b3ae-9966b29ba555
+        Amz-Sdk-Request:
+          - attempt=1; max=3
+        Authorization:
+          - "{{OMITTED}}"
+        Content-Type:
+          - application/x-www-form-urlencoded
+        User-Agent:
+          - m/E aws-sdk-go-v2/1.30.3 os/linux lang/go#1.22.4 md/GOOS#linux md/GOARCH#amd64 api/iam#1.34.3
+        X-Amz-Date:
+          - 20240723T172331Z
+      url: https://iam.amazonaws.com/
+      method: POST
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding: []
+      trailer: {}
+      content_length: 542
+      uncompressed: false
+      body: |
+        <ListAttachedRolePoliciesResponse xmlns="https://iam.amazonaws.com/doc/2010-05-08/">
+          <ListAttachedRolePoliciesResult>
+            <IsTruncated>false</IsTruncated>
+            <AttachedPolicies>
+              <member>
+                <PolicyArn>arn:aws:iam::aws:policy/AdministratorAccess</PolicyArn>
+                <PolicyName>AdministratorAccess</PolicyName>
+              </member>
+            </AttachedPolicies>
+          </ListAttachedRolePoliciesResult>
+          <ResponseMetadata>
+            <RequestId>67afe557-68fa-417d-bf07-5c0b332daa3d</RequestId>
+          </ResponseMetadata>
+        </ListAttachedRolePoliciesResponse>
+      headers:
+        Content-Length:
+          - "542"
+        Content-Type:
+          - text/xml
+        Date:
+          - Tue, 23 Jul 2024 17:23:30 GMT
+        X-Amzn-Requestid:
+          - 67afe557-68fa-417d-bf07-5c0b332daa3d
+      status: 200 OK
+      code: 200
+      duration: 292.903817ms

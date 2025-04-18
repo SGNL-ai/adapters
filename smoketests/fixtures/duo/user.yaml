@@ -1,0 +1,57 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: test-instance.duosecurity.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Basic {{OMITTED}}
+        Content-Type:
+          - application/x-www-form-urlencoded
+        Date:
+          - Wed, 31 Jan 2024 19:36:19 +0000
+      url: https://test-instance.duosecurity.com/admin/v1/users?limit=1&offset=0
+      method: GET
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding:
+        - chunked
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"metadata": {"next_offset": 1, "total_objects": 10}, "response": [{"alias1": null, "alias2": null, "alias3": null, "alias4": null, "aliases": {}, "created": 1706041056, "desktoptokens": [], "email": "user1@example.com", "firstname": null, "groups": [{"desc": "random group 1", "group_id": "DGKUKQSTG7ZFDN2N1XID", "mobile_otp_enabled": false, "name": "group1", "push_enabled": false, "sms_enabled": false, "status": "Active"}], "is_enrolled": true, "last_directory_sync": null, "last_login": null, "lastname": null, "lockout_reason": null, "notes": "", "phones": [{"activated": false, "capabilities": ["sms"], "encrypted": "Encrypted", "extension": "", "fingerprint": "Unknown", "last_seen": "", "model": "Unknown", "name": "", "number": "+11111111111", "phone_id": "DPFL36P8Z8LZANN1FFEZ", "platform": "Apple iOS", "screenlock": "Unknown", "sms_passcodes_sent": false, "tampered": "Unknown", "type": "Mobile"}], "realname": "Test User 1", "status": "active", "tokens": [], "u2ftokens": [], "user_id": "DUYC8O4O953VBGGKLHAL", "username": "user1", "webauthncredentials": []}], "stat": "OK"}'
+      headers:
+        Cache-Control:
+          - no-store
+        Connection:
+          - keep-alive
+        Content-Security-Policy:
+          - default-src 'self'; frame-src 'self' ; img-src 'self'  ; connect-src 'self'
+        Content-Type:
+          - application/json
+        Date:
+          - Wed, 31 Jan 2024 19:36:19 GMT
+        Etag:
+          - W/"98aa990630221159b17870c6bdd984c2899a458f"
+        Pragma:
+          - no-cache
+        Server:
+          - Duo/1.0
+        Strict-Transport-Security:
+          - max-age=31536000
+      status: 200 OK
+      code: 200
+      duration: 125.342127ms

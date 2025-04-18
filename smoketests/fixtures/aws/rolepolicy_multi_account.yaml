@@ -1,0 +1,226 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: ""
+      proto_major: 0
+      proto_minor: 0
+      content_length: 46
+      transfer_encoding: []
+      trailer: {}
+      host: ""
+      remote_addr: ""
+      request_uri: ""
+      body: Action=ListRoles&MaxItems=1&Version=2010-05-08
+      form:
+        Action:
+          - ListRoles
+        MaxItems:
+          - "1"
+        Version:
+          - "2010-05-08"
+      headers:
+        Amz-Sdk-Invocation-Id:
+          - 0e011f4c-76bf-4a03-8aca-d8f504da41cc
+        Amz-Sdk-Request:
+          - attempt=1; max=3
+        Authorization:
+          - "{{OMITTED}}"
+        Content-Type:
+          - application/x-www-form-urlencoded
+        User-Agent:
+          - m/E aws-sdk-go-v2/1.32.2 os/linux lang/go#1.24.1 md/GOOS#linux md/GOARCH#amd64 api/iam#1.36.4
+        X-Amz-Date:
+          - 20241019T005546Z
+      url: https://iam.amazonaws.com/
+      method: POST
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding: []
+      trailer: {}
+      content_length: 1583
+      uncompressed: false
+      body: |
+        <ListRolesResponse xmlns="https://iam.amazonaws.com/doc/2010-05-08/">
+          <ListRolesResult>
+            <IsTruncated>true</IsTruncated>
+            <Marker>MARKER_PLACEHOLDER</Marker>
+            <Roles>
+              <member>
+                <Path>/</Path>
+                <AssumeRolePolicyDocument>%7B%22Version%22%3A%222012-10-17%22%2C%22Statement%22%3A%5B%7B%22Effect%22%3A%22Allow%22%2C%22Principal%22%3A%7B%22Federated%22%3A%22arn%3Aaws%3Aiam%3A%3A000000000000%3Asaml-provider%2FCOMPANY_A-COMPANY_B%22%7D%2C%22Action%22%3A%22sts%3AAssumeRoleWithSAML%22%2C%22Condition%22%3A%7B%22StringEquals%22%3A%7B%22SAML%3Aaud%22%3A%22https%3A%2F%2Fsignin.aws.amazon.com%2Fsaml%22%7D%7D%7D%2C%7B%22Effect%22%3A%22Allow%22%2C%22Principal%22%3A%7B%22Federated%22%3A%22arn%3Aaws%3Aiam%3A%3A000000000000%3Asaml-provider%2Fsgnl-demo.oktapreview.com%22%7D%2C%22Action%22%3A%22sts%3AAssumeRoleWithSAML%22%2C%22Condition%22%3A%7B%22StringEquals%22%3A%7B%22SAML%3Aaud%22%3A%22https%3A%2F%2Fsignin.aws.amazon.com%2Fsaml%22%7D%7D%7D%5D%7D</AssumeRolePolicyDocument>
+                <MaxSessionDuration>3600</MaxSessionDuration>
+                <RoleId>AROAXXXXXXXXXXXXXXXX1</RoleId>
+                <RoleName>AdminAccessRole</RoleName>
+                <Description/>
+                <Arn>arn:aws:iam::000000000000:role/AdminAccessRole</Arn>
+                <CreateDate>2024-10-01T13:30:36Z</CreateDate>
+              </member>
+            </Roles>
+          </ListRolesResult>
+          <ResponseMetadata>
+            <RequestId>8a6fd1e4-f569-4ace-8846-80ea14026523</RequestId>
+          </ResponseMetadata>
+        </ListRolesResponse>
+      headers:
+        Content-Length:
+          - "1583"
+        Content-Type:
+          - text/xml
+        Date:
+          - Sat, 19 Oct 2024 00:55:46 GMT
+        X-Amzn-Requestid:
+          - 8a6fd1e4-f569-4ace-8846-80ea14026523
+      status: 200 OK
+      code: 200
+      duration: 318.061842ms
+  - id: 1
+    request:
+      proto: ""
+      proto_major: 0
+      proto_minor: 0
+      content_length: 58
+      transfer_encoding: []
+      trailer: {}
+      host: ""
+      remote_addr: ""
+      request_uri: ""
+      body: Action=GetRole&RoleName=AdminAccessRole&Version=2010-05-08
+      form:
+        Action:
+          - GetRole
+        RoleName:
+          - AdminAccessRole
+        Version:
+          - "2010-05-08"
+      headers:
+        Amz-Sdk-Invocation-Id:
+          - 528d1832-d242-45dc-8975-3d75eaec3d84
+        Amz-Sdk-Request:
+          - attempt=1; max=3
+        Authorization:
+          - "{{OMITTED}}"
+        Content-Type:
+          - application/x-www-form-urlencoded
+        User-Agent:
+          - m/E aws-sdk-go-v2/1.32.2 os/linux lang/go#1.24.1 md/GOOS#linux md/GOARCH#amd64 api/iam#1.36.4
+        X-Amz-Date:
+          - 20241019T005547Z
+      url: https://iam.amazonaws.com/
+      method: POST
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding: []
+      trailer: {}
+      content_length: 1460
+      uncompressed: false
+      body: |
+        <GetRoleResponse xmlns="https://iam.amazonaws.com/doc/2010-05-08/">
+          <GetRoleResult>
+            <Role>
+              <Path>/</Path>
+              <AssumeRolePolicyDocument>%7B%22Version%22%3A%222012-10-17%22%2C%22Statement%22%3A%5B%7B%22Effect%22%3A%22Allow%22%2C%22Principal%22%3A%7B%22Federated%22%3A%22arn%3Aaws%3Aiam%3A%3A000000000000%3Asaml-provider%2FCOMPANY_A-COMPANY_B%22%7D%2C%22Action%22%3A%22sts%3AAssumeRoleWithSAML%22%2C%22Condition%22%3A%7B%22StringEquals%22%3A%7B%22SAML%3Aaud%22%3A%22https%3A%2F%2Fsignin.aws.amazon.com%2Fsaml%22%7D%7D%7D%2C%7B%22Effect%22%3A%22Allow%22%2C%22Principal%22%3A%7B%22Federated%22%3A%22arn%3Aaws%3Aiam%3A%3A000000000000%3Asaml-provider%2Fsgnl-demo.oktapreview.com%22%7D%2C%22Action%22%3A%22sts%3AAssumeRoleWithSAML%22%2C%22Condition%22%3A%7B%22StringEquals%22%3A%7B%22SAML%3Aaud%22%3A%22https%3A%2F%2Fsignin.aws.amazon.com%2Fsaml%22%7D%7D%7D%5D%7D</AssumeRolePolicyDocument>
+              <MaxSessionDuration>3600</MaxSessionDuration>
+              <RoleId>AROAXXXXXXXXXXXXXXXX1</RoleId>
+              <RoleLastUsed>
+                <LastUsedDate>2024-10-17T21:44:11Z</LastUsedDate>
+                <Region>us-east-2</Region>
+              </RoleLastUsed>
+              <RoleName>AdminAccessRole</RoleName>
+              <Description/>
+              <Arn>arn:aws:iam::000000000000:role/AdminAccessRole</Arn>
+              <CreateDate>2024-10-01T13:30:36Z</CreateDate>
+            </Role>
+          </GetRoleResult>
+          <ResponseMetadata>
+            <RequestId>cadadd5f-8c5b-4c15-922a-f04bf1b8d719</RequestId>
+          </ResponseMetadata>
+        </GetRoleResponse>
+      headers:
+        Content-Length:
+          - "1460"
+        Content-Type:
+          - text/xml
+        Date:
+          - Sat, 19 Oct 2024 00:55:46 GMT
+        X-Amzn-Requestid:
+          - cadadd5f-8c5b-4c15-922a-f04bf1b8d719
+      status: 200 OK
+      code: 200
+      duration: 110.390608ms
+  - id: 2
+    request:
+      proto: ""
+      proto_major: 0
+      proto_minor: 0
+      content_length: 86
+      transfer_encoding: []
+      trailer: {}
+      host: ""
+      remote_addr: ""
+      request_uri: ""
+      body: Action=ListAttachedRolePolicies&MaxItems=1&RoleName=AdminAccessRole&Version=2010-05-08
+      form:
+        Action:
+          - ListAttachedRolePolicies
+        MaxItems:
+          - "1"
+        RoleName:
+          - AdminAccessRole
+        Version:
+          - "2010-05-08"
+      headers:
+        Amz-Sdk-Invocation-Id:
+          - 9bec81f1-00dd-41d9-b22a-8892f9cd3ce7
+        Amz-Sdk-Request:
+          - attempt=1; max=3
+        Authorization:
+          - "{{OMITTED}}"
+        Content-Type:
+          - application/x-www-form-urlencoded
+        User-Agent:
+          - m/E aws-sdk-go-v2/1.32.2 os/linux lang/go#1.24.1 md/GOOS#linux md/GOARCH#amd64 api/iam#1.36.4
+        X-Amz-Date:
+          - 20241019T005547Z
+      url: https://iam.amazonaws.com/
+      method: POST
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding: []
+      trailer: {}
+      content_length: 542
+      uncompressed: false
+      body: |
+        <ListAttachedRolePoliciesResponse xmlns="https://iam.amazonaws.com/doc/2010-05-08/">
+          <ListAttachedRolePoliciesResult>
+            <IsTruncated>false</IsTruncated>
+            <AttachedPolicies>
+              <member>
+                <PolicyArn>arn:aws:iam::aws:policy/AdministratorAccess</PolicyArn>
+                <PolicyName>AdministratorAccess</PolicyName>
+              </member>
+            </AttachedPolicies>
+          </ListAttachedRolePoliciesResult>
+          <ResponseMetadata>
+            <RequestId>a4fd3280-b703-4dd0-b74e-0114ba8d7fed</RequestId>
+          </ResponseMetadata>
+        </ListAttachedRolePoliciesResponse>
+      headers:
+        Content-Length:
+          - "542"
+        Content-Type:
+          - text/xml
+        Date:
+          - Sat, 19 Oct 2024 00:55:46 GMT
+        X-Amzn-Requestid:
+          - a4fd3280-b703-4dd0-b74e-0114ba8d7fed
+      status: 200 OK
+      code: 200
+      duration: 100.679231ms

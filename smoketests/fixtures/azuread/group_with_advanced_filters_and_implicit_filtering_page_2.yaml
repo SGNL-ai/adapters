@@ -1,0 +1,56 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: graph.microsoft.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+        Consistencylevel:
+          - eventual
+      url: https://graph.microsoft.com/v1.0/groups?$select=id,displayName&$top=10&$filter=id+in+%28%27aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee%27%29&$count=true
+      method: GET
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"@odata.context":"https://graph.microsoft.com/v1.0/$metadata#groups(id,displayName)","value":[{"id":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee","displayName":"United States"}]}'
+      headers:
+        Cache-Control:
+          - no-cache
+        Client-Request-Id:
+          - cae049f2-2b23-4e96-94e0-34e6d4cc5348
+        Content-Type:
+          - application/json;odata.metadata=minimal;odata.streaming=true;IEEE754Compatible=false;charset=utf-8
+        Date:
+          - Wed, 04 Dec 2024 18:55:58 GMT
+        Odata-Version:
+          - "4.0"
+        Request-Id:
+          - cae049f2-2b23-4e96-94e0-34e6d4cc5348
+        Strict-Transport-Security:
+          - max-age=31536000
+        Vary:
+          - Accept-Encoding
+        X-Ms-Ags-Diagnostic:
+          - '{"ServerInfo":{"DataCenter":"West US 2","Slice":"E","Ring":"4","ScaleUnit":"002","RoleInstance":"MWH0EPF000B1E09"}}'
+        X-Ms-Resource-Unit:
+          - "1"
+      status: 200 OK
+      code: 200
+      duration: 70.688389ms

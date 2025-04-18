@@ -1,0 +1,87 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 1871
+      transfer_encoding: []
+      trailer: {}
+      host: api.us-2.crowdstrike.com
+      remote_addr: ""
+      request_uri: ""
+      body: |
+        {"query":"{\n\t\t    incidents(\n\t\t\t\tfirst: 2\n\t\t\t\tsortKey: END_TIME\n\t\t\t\tsortOrder: DESCENDING\n\t\t\t\t) {\n\t\t\t\tpageInfo {\n\t\t\t\t\thasNextPage\n\t\t\t\t\tendCursor\n\t\t\t\t}\n\t\t\t\tnodes {\n\t\t            endTime\n\t\t            incidentId\n\t\t            lifeCycleStage\n\t\t            markedAsRead\n\t\t            severity\n\t\t            startTime\n\t\t            type\n\t\t            compromisedEntities {\n\t\t                archived\n\t\t                creationTime\n\t\t                entityId\n\t\t                hasADDomainAdminRole\n\t\t                hasRole\n\t\t                learned\n\t\t                markTime\n\t\t                primaryDisplayName\n\t\t                riskScore\n\t\t                riskScoreSeverity\n\t\t                secondaryDisplayName\n\t\t                type\n\t\t                watched\n\t\t            }\n\t\t            alertEvents {\n\t\t                alertId\n\t\t                alertType\n\t\t                endTime\n\t\t                eventId\n\t\t                eventLabel\n\t\t                eventSeverity\n\t\t                eventType\n\t\t                patternId\n\t\t                resolved\n\t\t                startTime\n\t\t                timestamp\n\t\t                entities {\n\t\t                    archived\n\t\t                    creationTime\n\t\t                    entityId\n\t\t                    hasADDomainAdminRole\n\t\t                    hasRole\n\t\t                    learned\n\t\t                    markTime\n\t\t                    primaryDisplayName\n\t\t                    riskScore\n\t\t                    riskScoreSeverity\n\t\t                    secondaryDisplayName\n\t\t                    type\n\t\t                    watched\n\t\t                }\n\t\t            }\n\t\t        }\n\t\t    }\n\t\t}","variables":null}
+      form: {}
+      headers:
+        Accept:
+          - application/json; charset=utf-8
+        Authorization:
+          - Bearer {{OMITTED}}
+        Cache-Control:
+          - no-cache
+        Content-Type:
+          - application/json; charset=utf-8
+      url: https://api.us-2.crowdstrike.com/identity-protection/combined/graphql/v1
+      method: POST
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"data":{"incidents":{"pageInfo":{"hasNextPage":true,"endCursor":"eyJlbmRUaW1lIjp7IiRkYXRlIjoiMjAyNC0wOS0yMFQwMTo1NToxMC4yNzRaIn0sInNlcXVlbmNlSWQiOjE1fQ=="},"nodes":[{"endTime":"2024-09-23T13:00:26.350Z","incidentId":"INC-16","lifeCycleStage":"NEW","markedAsRead":false,"severity":"INFO","startTime":"2024-09-23T13:00:21.995Z","type":"UNUSUAL_ACTIVITY","compromisedEntities":[{"archived":false,"creationTime":"2024-05-15T15:17:19.000Z","entityId":"3c7aebb9-411b-4ee9-b481-e881f29afcc8","hasADDomainAdminRole":true,"hasRole":true,"learned":true,"markTime":null,"primaryDisplayName":"mj-dc","riskScore":0.67,"riskScoreSeverity":"MEDIUM","secondaryDisplayName":"mj-dc.corp.sgnl.ai","type":"ENDPOINT","watched":true}],"alertEvents":[{"alertId":"5c941395-4f44-465a-abdd-87b2aececfbe","alertType":"PrivilegeEscalationAlert","endTime":"2024-09-23T13:00:59.999Z","eventId":"jpppv5","eventLabel":"Privilege escalation (endpoint)","eventSeverity":"IMPORTANT","eventType":"ALERT","patternId":51131,"resolved":false,"startTime":"2024-09-23T13:00:59.999Z","timestamp":"2024-09-23T13:00:23.321Z","entities":[{"archived":false,"creationTime":"2024-05-15T15:17:19.000Z","entityId":"3c7aebb9-411b-4ee9-b481-e881f29afcc8","hasADDomainAdminRole":true,"hasRole":true,"learned":true,"markTime":null,"primaryDisplayName":"mj-dc","riskScore":0.67,"riskScoreSeverity":"MEDIUM","secondaryDisplayName":"mj-dc.corp.sgnl.ai","type":"ENDPOINT","watched":true}]}]},{"endTime":"2024-09-20T01:55:10.274Z","incidentId":"INC-15","lifeCycleStage":"NEW","markedAsRead":false,"severity":"INFO","startTime":"2024-09-20T01:49:27.080Z","type":"UNUSUAL_ACTIVITY","compromisedEntities":[{"archived":false,"creationTime":"2024-05-29T20:45:52.000Z","entityId":"60ee5bb1-805f-46d2-8f3a-9d7cadc52909","hasADDomainAdminRole":true,"hasRole":true,"learned":true,"markTime":null,"primaryDisplayName":"Alice Wu","riskScore":0.64,"riskScoreSeverity":"MEDIUM","secondaryDisplayName":"CORP.SGNL.AI\\alice","type":"USER","watched":false}],"alertEvents":[{"alertId":"f6816bcd-9e0c-4ea4-8344-03ea6ab58655","alertType":"StaleAccountUsageAlert","endTime":"2024-09-20T01:49:59.999Z","eventId":"jpppvg","eventLabel":"Use of stale user account","eventSeverity":"IMPORTANT","eventType":"ALERT","patternId":51130,"resolved":false,"startTime":"2024-09-20T01:49:59.999Z","timestamp":"2024-09-20T01:50:27.440Z","entities":[{"archived":false,"creationTime":"2024-05-29T20:45:52.000Z","entityId":"60ee5bb1-805f-46d2-8f3a-9d7cadc52909","hasADDomainAdminRole":true,"hasRole":true,"learned":true,"markTime":null,"primaryDisplayName":"Alice Wu","riskScore":0.64,"riskScoreSeverity":"MEDIUM","secondaryDisplayName":"CORP.SGNL.AI\\alice","type":"USER","watched":false}]},{"alertId":"5f1578fb-505d-448e-9d80-39dca742505b","alertType":"PrivilegeEscalationAlert","endTime":"2024-09-20T01:55:59.999Z","eventId":"jpppv2","eventLabel":"Privilege escalation (user)","eventSeverity":"IMPORTANT","eventType":"ALERT","patternId":51113,"resolved":false,"startTime":"2024-09-20T01:55:59.999Z","timestamp":"2024-09-20T01:55:10.224Z","entities":[{"archived":false,"creationTime":"2024-05-29T20:45:52.000Z","entityId":"60ee5bb1-805f-46d2-8f3a-9d7cadc52909","hasADDomainAdminRole":true,"hasRole":true,"learned":true,"markTime":null,"primaryDisplayName":"Alice Wu","riskScore":0.64,"riskScoreSeverity":"MEDIUM","secondaryDisplayName":"CORP.SGNL.AI\\alice","type":"USER","watched":false}]}]}]}},"extensions":{"runTime":43}}'
+      headers:
+        Cache-Control:
+          - no-cache
+        Connection:
+          - keep-alive
+        Content-Type:
+          - application/json; charset=utf-8
+        Date:
+          - Thu, 03 Oct 2024 23:08:33 GMT
+        Etag:
+          - W/"d66-Q8ARJFFQ4st6D5CooXT3DV/cOz0"
+        Expires:
+          - Thu, 03 Oct 2024 23:08:32 GMT
+        Pragma:
+          - no-cache
+        Server:
+          - nginx
+        Strict-Transport-Security:
+          - max-age=31536000; includeSubDomains
+          - max-age=31536000; includeSubDomains
+        X-Appliance-Date:
+          - "2024-10-03T23:08:33+00:00"
+        X-Appliance-Id:
+          - 9c052a46-40cb-450d-a593-0913074b654a
+        X-Content-Type-Options:
+          - nosniff
+        X-Cs-Region:
+          - us-2
+        X-Cs-Traceid:
+          - 23e36078-801b-4a14-845c-698f463e2273
+        X-Dns-Prefetch-Control:
+          - "off"
+        X-Download-Options:
+          - noopen
+        X-Frame-Options:
+          - SAMEORIGIN
+        X-Powered-By:
+          - Express
+        X-Preempt-Version:
+          - 5.79.66885
+        X-Ratelimit-Limit:
+          - "6000"
+        X-Ratelimit-Remaining:
+          - "5998"
+          - "5999"
+        X-Xss-Protection:
+          - 1; mode=block
+      status: 200 OK
+      code: 200
+      duration: 233.301855ms

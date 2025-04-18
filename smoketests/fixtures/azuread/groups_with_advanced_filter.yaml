@@ -1,0 +1,56 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: graph.microsoft.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+        Consistencylevel:
+          - eventual
+      url: https://graph.microsoft.com/v1.0/groups?$select=id,displayName&$top=10&$filter=startswith%28displayName%2C+%27Test%27%29&$count=true
+      method: GET
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"@odata.context":"https://graph.microsoft.com/v1.0/$metadata#groups(id,displayName)","@odata.count":4,"value":[{"id":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee","displayName":"Test Security Group 2"},{"id":"ffffffff-gggg-hhhh-iiii-jjjjjjjjjjjj","displayName":"Test Group 6"},{"id":"kkkkkkkk-llll-mmmm-nnnn-oooooooooooo","displayName":"Test Security Group"},{"id":"pppppppp-qqqq-rrrr-ssss-tttttttttttt","displayName":"Test Group 3"}]}'
+      headers:
+        Cache-Control:
+          - no-cache
+        Client-Request-Id:
+          - 30174c2d-a3a2-4bd8-b665-dbd3c358b9ba
+        Content-Type:
+          - application/json;odata.metadata=minimal;odata.streaming=true;IEEE754Compatible=false;charset=utf-8
+        Date:
+          - Mon, 18 Nov 2024 15:27:46 GMT
+        Odata-Version:
+          - "4.0"
+        Request-Id:
+          - 30174c2d-a3a2-4bd8-b665-dbd3c358b9ba
+        Strict-Transport-Security:
+          - max-age=31536000
+        Vary:
+          - Accept-Encoding
+        X-Ms-Ags-Diagnostic:
+          - '{"ServerInfo":{"DataCenter":"West US 2","Slice":"E","Ring":"4","ScaleUnit":"002","RoleInstance":"MWH0EPF00032B57"}}'
+        X-Ms-Resource-Unit:
+          - "1"
+      status: 200 OK
+      code: 200
+      duration: 131.241837ms

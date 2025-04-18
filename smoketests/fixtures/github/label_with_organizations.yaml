@@ -1,0 +1,80 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 445
+      transfer_encoding: []
+      trailer: {}
+      host: api.github.com
+      remote_addr: ""
+      request_uri: ""
+      body: '{"query":"query {\n\t\torganization (login: \"dh-test-org-2\") {\n\t\t\tid\n\t\t\trepositories (first: 1) {\n\t\t\t\tpageInfo {\n\t\t\t\t\tendCursor\n\t\t\t\t\thasNextPage\n\t\t\t\t}\n\t\t\t\tnodes {\n\t\t\t\t\tid\n\t\t\t\t\tlabels (first: 4) {\n\t\t\t\t\t\tpageInfo {\n\t\t\t\t\t\t\tendCursor\n\t\t\t\t\t\t\thasNextPage\n\t\t\t\t\t\t}\n\t\t\t\t\t\tnodes { color, createdAt, id, isDefault, name }\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}\n    }"}'
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+        Content-Type:
+          - application/json
+      url: https://api.github.com/graphql
+      method: POST
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"data":{"organization":{"id":"O_kgDOCzkBcw","repositories":{"pageInfo":{"endCursor":"Y3Vyc29yOnYyOpHONOhh5Q==","hasNextPage":true},"nodes":[{"id":"R_kgDONOhh5Q","labels":{"pageInfo":{"endCursor":"MQ","hasNextPage":false},"nodes":[{"color":"d73a4a","createdAt":"2024-11-13T03:10:57Z","id":"LA_kwDONOhh5c8AAAABzVViKA","isDefault":true,"name":"bug"}]}}]}}}}'
+      headers:
+        Access-Control-Allow-Origin:
+          - "*"
+        Access-Control-Expose-Headers:
+          - ETag, Link, Location, Retry-After, X-GitHub-OTP, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Used, X-RateLimit-Resource, X-RateLimit-Reset, X-OAuth-Scopes, X-Accepted-OAuth-Scopes, X-Poll-Interval, X-GitHub-Media-Type, X-GitHub-SSO, X-GitHub-Request-Id, Deprecation, Sunset
+        Content-Security-Policy:
+          - default-src 'none'
+        Content-Type:
+          - application/json; charset=utf-8
+        Date:
+          - Fri, 15 Nov 2024 19:25:41 GMT
+        Github-Authentication-Token-Expiration:
+          - 2024-12-15 01:29:41 UTC
+        Referrer-Policy:
+          - origin-when-cross-origin, strict-origin-when-cross-origin
+        Server:
+          - github.com
+        Strict-Transport-Security:
+          - max-age=31536000; includeSubdomains; preload
+        Vary:
+          - Accept-Encoding, Accept, X-Requested-With
+        X-Accepted-Oauth-Scopes:
+          - repo
+        X-Content-Type-Options:
+          - nosniff
+        X-Frame-Options:
+          - deny
+        X-Github-Media-Type:
+          - github.v4; format=json
+        X-Github-Request-Id:
+          - 93C0:B7C16:2208CC:41A0C9:6737A034
+        X-Oauth-Scopes:
+          - admin:enterprise, admin:gpg_key, admin:org, admin:org_hook, admin:public_key, admin:repo_hook, admin:ssh_signing_key, audit_log, codespace, copilot, delete:packages, delete_repo, gist, notifications, project, repo, user, workflow, write:discussion, write:packages
+        X-Ratelimit-Limit:
+          - "5000"
+        X-Ratelimit-Remaining:
+          - "4913"
+        X-Ratelimit-Reset:
+          - "1731699718"
+        X-Ratelimit-Resource:
+          - graphql
+        X-Ratelimit-Used:
+          - "87"
+        X-Xss-Protection:
+          - "0"
+      status: 200 OK
+      code: 200
+      duration: 387.895185ms

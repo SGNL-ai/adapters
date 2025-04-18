@@ -1,0 +1,64 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: test-instance.atlassian.net
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Basic {{OMITTED}}
+      url: https://test-instance.atlassian.net/rest/servicedeskapi/assets/workspace?startAt=0&maxResults=3
+      method: GET
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"size":1,"start":0,"limit":50,"isLastPage":true,"_links":{"self":"https://test-instance.atlassian.net/rest/servicedeskapi/assets/workspace?startAt=0&maxResults=3","base":"https://test-instance.atlassian.net","context":""},"values":[{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7"}]}'
+      headers:
+        Atl-Traceid:
+          - a6512aa78faa74e0
+        Cache-Control:
+          - no-cache, no-store, no-transform
+        Content-Type:
+          - application/json;charset=UTF-8
+        Date:
+          - Fri, 29 Sep 2023 22:20:11 GMT
+        Nel:
+          - '{"failure_fraction": 0.001, "include_subdomains": true, "max_age": 600, "report_to": "endpoint-1"}'
+        Report-To:
+          - '{"endpoints": [{"url": "https://dz8aopenkvv6s.cloudfront.net"}], "group": "endpoint-1", "include_subdomains": true, "max_age": 600}'
+        Server:
+          - AtlassianEdge
+        Set-Cookie:
+          - Path=/; SameSite=None; Secure
+        Strict-Transport-Security:
+          - max-age=63072000; includeSubDomains; preload
+        Timing-Allow-Origin:
+          - "*"
+        Vary:
+          - Accept-Encoding
+        X-Aaccountid:
+          - 712020%3Ac103e6bd-ff57-4edd-8925-b6672e9374f7
+        X-Arequestid:
+          - e5cf83a82d3860143adfbe7d8c7c070e
+        X-Content-Type-Options:
+          - nosniff
+        X-Xss-Protection:
+          - 1; mode=block
+      status: 200 OK
+      code: 200
+      duration: 285.653592ms

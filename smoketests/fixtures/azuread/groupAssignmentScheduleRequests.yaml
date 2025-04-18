@@ -1,0 +1,52 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: graph.microsoft.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+      url: https://graph.microsoft.com/v1.0/identityGovernance/privilegedAccess/group/assignmentScheduleRequests?$select=id,principalId,groupId,action&$top=3&$skip=0
+      method: GET
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"@odata.context":"https://graph.microsoft.com/v1.0/$metadata#identityGovernance/privilegedAccess/group/assignmentScheduleRequests(id,principalId,groupId,action)","value":[{"id":"example-request-1","status":"Provisioned","createdDateTime":"2023-02-07T07:05:53.7895614Z","completedDateTime":"2023-02-07T07:05:55.3404527Z","approvalId":"66666666-7777-8888-9999-000000000000","customData":null,"createdBy":{"user":{"id":"11111111-2222-3333-4444-555555555555"}},"action":"adminAssign","isValidationOnly":false,"justification":"Retrieve requests","scheduleInfo":{"startDateTime":"2023-02-07T06:57:55.6183972Z","recurrence":null,"expiration":{"type":"afterDateTime","endDateTime":"2023-02-07T19:56:00Z","duration":null}},"ticketInfo":{"ticketNumber":null,"ticketSystem":null},"principalId":"pppppppp-qqqq-rrrr-ssss-tttttttttttt","accessId":"member","groupId":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee","targetScheduleId":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee_member_66666666-7777-8888-9999-000000000000"},{"id":"example-request-2","status":"Provisioned","createdDateTime":"2023-02-07T07:05:53.7895614Z","completedDateTime":"2023-02-07T07:05:55.3404527Z","approvalId":"66666666-7777-8888-9999-000000000000","customData":null,"createdBy":{"user":{"id":"11111111-2222-3333-4444-555555555555"}},"action":"adminAssign","isValidationOnly":false,"justification":"Retrieve requests","scheduleInfo":{"startDateTime":"2023-02-07T06:57:55.6183972Z","recurrence":null,"expiration":{"type":"afterDateTime","endDateTime":"2023-02-07T19:56:00Z","duration":null}},"ticketInfo":{"ticketNumber":null,"ticketSystem":null},"principalId":"uuuuuuuu-vvvv-wwww-xxxx-yyyyyyyyyyyy","accessId":"member","groupId":"ffffffff-gggg-hhhh-iiii-jjjjjjjjjjjj","targetScheduleId":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee_member_66666666-7777-8888-9999-000000000000"},{"id":"example-request-3","status":"Provisioned","createdDateTime":"2023-02-07T07:05:53.7895614Z","completedDateTime":"2023-02-07T07:05:55.3404527Z","approvalId":"66666666-7777-8888-9999-000000000000","customData":null,"createdBy":{"user":{"id":"11111111-2222-3333-4444-555555555555"}},"action":"adminAssign","isValidationOnly":false,"justification":"Retrieve requests","scheduleInfo":{"startDateTime":"2023-02-07T06:57:55.6183972Z","recurrence":null,"expiration":{"type":"afterDateTime","endDateTime":"2023-02-07T19:56:00Z","duration":null}},"ticketInfo":{"ticketNumber":null,"ticketSystem":null},"principalId":"zzzzzzzz-aaaa-bbbb-cccc-dddddddddddd","accessId":"member","groupId":"kkkkkkkk-llll-mmmm-nnnn-oooooooooooo","targetScheduleId":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee_member_66666666-7777-8888-9999-000000000000"}]}'
+      headers:
+        Cache-Control:
+          - private
+        Client-Request-Id:
+          - 9a379e1c-3fca-4326-9fb0-25c7b5549159
+        Content-Type:
+          - application/json;odata.metadata=minimal;odata.streaming=true;IEEE754Compatible=false;charset=utf-8
+        Date:
+          - Mon, 04 Nov 2024 19:50:46 GMT
+        Odata-Version:
+          - "4.0"
+        Request-Id:
+          - 9a379e1c-3fca-4326-9fb0-25c7b5549159
+        Strict-Transport-Security:
+          - max-age=31536000
+        Vary:
+          - Accept-Encoding
+        X-Ms-Ags-Diagnostic:
+          - '{"ServerInfo":{"DataCenter":"West US 2","Slice":"E","Ring":"4","ScaleUnit":"003","RoleInstance":"CO1PEPF00004BF2"}}'
+      status: 200 OK
+      code: 200
+      duration: 217.179857ms

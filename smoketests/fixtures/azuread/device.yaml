@@ -1,0 +1,55 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: graph.microsoft.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+      url: https://graph.microsoft.com/v1.0/devices?$select=id,physicalIds,deviceId&$top=3
+      method: GET
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding:
+        - chunked
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"@odata.context":"https://graph.microsoft.com/v1.0/$metadata#devices(id,physicalIds,deviceId)","value":[{"id":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee","physicalIds":["[USER-GID]:kkkkkkkk-llll-mmmm-nnnn-oooooooooooo:1111111111111111","[GID]:g:1111111111111111","[USER-HWID]:kkkkkkkk-llll-mmmm-nnnn-oooooooooooo:2222222222222222","[HWID]:h:2222222222222222"],"deviceId":"ffffffff-gggg-hhhh-iiii-jjjjjjjjjjjj"}]}'
+      headers:
+        Cache-Control:
+          - no-cache
+        Client-Request-Id:
+          - 4530fbe6-52d4-4bdb-ac4c-6578182cd036
+        Content-Type:
+          - application/json;odata.metadata=minimal;odata.streaming=true;IEEE754Compatible=false;charset=utf-8
+        Date:
+          - Fri, 27 Oct 2023 22:08:52 GMT
+        Odata-Version:
+          - "4.0"
+        Request-Id:
+          - 4530fbe6-52d4-4bdb-ac4c-6578182cd036
+        Strict-Transport-Security:
+          - max-age=31536000
+        Vary:
+          - Accept-Encoding
+        X-Ms-Ags-Diagnostic:
+          - '{"ServerInfo":{"DataCenter":"West US 2","Slice":"E","Ring":"1","ScaleUnit":"004","RoleInstance":"MW2PEPF0000E059"}}'
+        X-Ms-Resource-Unit:
+          - "1"
+      status: 200 OK
+      code: 200
+      duration: 154.950858ms

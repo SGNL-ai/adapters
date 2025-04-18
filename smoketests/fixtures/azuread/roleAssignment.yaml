@@ -1,0 +1,54 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: graph.microsoft.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+      url: https://graph.microsoft.com/v1.0/roleManagement/directory/roleAssignments?$select=id,principalId,roleDefinitionId&$top=3
+      method: GET
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"@odata.context":"https://graph.microsoft.com/v1.0/$metadata#roleManagement/directory/roleAssignments(id,principalId,roleDefinitionId)","value":[{"id":"role-assignment-id-1","principalId":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee","roleDefinitionId":"62e90394-69f5-4237-9190-012177145e10"},{"id":"role-assignment-id-2","principalId":"ffffffff-gggg-hhhh-iiii-jjjjjjjjjjjj","roleDefinitionId":"62e90394-69f5-4237-9190-012177145e10"},{"id":"role-assignment-id-3","principalId":"kkkkkkkk-llll-mmmm-nnnn-oooooooooooo","roleDefinitionId":"62e90394-69f5-4237-9190-012177145e10"}]}'
+      headers:
+        Cache-Control:
+          - no-cache
+        Client-Request-Id:
+          - e1223249-c3f5-496e-b28d-bd724743292a
+        Content-Type:
+          - application/json;odata.metadata=minimal;odata.streaming=true;IEEE754Compatible=false;charset=utf-8
+        Date:
+          - Mon, 04 Nov 2024 18:55:34 GMT
+        Odata-Version:
+          - "4.0"
+        Request-Id:
+          - e1223249-c3f5-496e-b28d-bd724743292a
+        Strict-Transport-Security:
+          - max-age=31536000
+        Vary:
+          - Accept-Encoding
+        X-Ms-Ags-Diagnostic:
+          - '{"ServerInfo":{"DataCenter":"West US 2","Slice":"E","Ring":"4","ScaleUnit":"002","RoleInstance":"MWH0EPF0005A6B6"}}'
+        X-Ms-Resource-Unit:
+          - "1"
+      status: 200 OK
+      code: 200
+      duration: 99.306629ms

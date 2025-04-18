@@ -1,0 +1,67 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: sgnl-mock.service-now.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Basic {{OMITTED}}
+      url: https://sgnl-mock.service-now.com/api/now/v2/table/sys_user_group?sysparm_fields=sys_id,manager,default_assignee,parent,active,type,name,cost_center,include_members,sys_created_by,exclude_manager,email,sys_updated_on,roles,sys_updated_by,sys_created_on&sysparm_exclude_reference_link=true&sysparm_limit=150&sysparm_query=active%3Dtrue%5EORDERBYsys_id
+      method: GET
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding:
+        - chunked
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"result":[{"parent":"","manager":"","roles":"","active":"true","sys_updated_on":"2020-03-17 11:39:14","type":"","sys_id":"019ad92ec7230010393d265c95c260dd","sys_updated_by":"admin","cost_center":"","default_assignee":"","sys_created_on":"2020-03-17 11:39:14","name":"Analytics Settings Managers","exclude_manager":"false","include_members":"false","sys_created_by":"admin","email":""},{"parent":"","manager":"","roles":"","active":"true","sys_updated_on":"2015-06-08 20:35:14","type":"","sys_id":"0270c251c3200200be647bfaa2d3aea6","sys_updated_by":"admin","cost_center":"","default_assignee":"","sys_created_on":"2015-06-08 20:35:14","name":"Customer Service Support","exclude_manager":"false","include_members":"false","sys_created_by":"admin","email":""},{"parent":"","manager":"","roles":"","active":"true","sys_updated_on":"2019-08-10 07:15:30","type":"","sys_id":"0a92f13e73833300c5e4660c4cf6a7f4","sys_updated_by":"admin","cost_center":"","default_assignee":"","sys_created_on":"2019-08-07 15:20:41","name":"Major Incident Management_ATF","exclude_manager":"false","include_members":"false","sys_created_by":"admin","email":""},{"parent":"","manager":"","roles":"","active":"true","sys_updated_on":"2020-07-29 04:02:26","type":"1cb8ab9bff500200158bffffffffff62","sys_id":"0c5e2a7ce4001410f877ce457cda6b98","sys_updated_by":"maint","cost_center":"","default_assignee":"","sys_created_on":"2020-04-06 03:47:08","name":"Business Application Registration Approval Group","exclude_manager":"false","include_members":"false","sys_created_by":"maint","email":""},{"parent":"","manager":"","roles":"","active":"true","sys_updated_on":"2019-09-14 20:01:22","type":"","sys_id":"205f1e0753333300c722ddeeff7b1235","sys_updated_by":"admin","cost_center":"","default_assignee":"","sys_created_on":"2019-09-14 20:01:22","name":"Mobile Analytics Settings Managers","exclude_manager":"false","include_members":"false","sys_created_by":"admin","email":""},{"parent":"6327b71787dabd10b8137448dabb35e1","manager":"572d619d87634110b8137448dabb3591","roles":"","active":"true","sys_updated_on":"2023-11-10 00:58:59","type":"","sys_id":"3b47f71787dabd10b8137448dabb35e0","sys_updated_by":"marc","cost_center":"","default_assignee":"","sys_created_on":"2023-11-10 00:58:40","name":"GroupC","exclude_manager":"false","include_members":"false","sys_created_by":"marc","email":""},{"parent":"","manager":"","roles":"","active":"true","sys_updated_on":"2021-06-28 19:12:44","type":"","sys_id":"477a05d153013010b846ddeeff7b1225","sys_updated_by":"admin","cost_center":"","default_assignee":"","sys_created_on":"2021-06-28 19:12:44","name":"App Engine Admins","exclude_manager":"false","include_members":"false","sys_created_by":"admin","email":""},{"parent":"","manager":"","roles":"","active":"true","sys_updated_on":"2024-05-03 23:54:23","type":"","sys_id":"56600e04c38e46502177bc1599013116","sys_updated_by":"marc","cost_center":"","default_assignee":"","sys_created_on":"2024-05-03 23:54:23","name":"Infrastructure Support","exclude_manager":"false","include_members":"false","sys_created_by":"marc","email":""},{"parent":"","manager":"","roles":"","active":"true","sys_updated_on":"2021-03-15 18:50:37","type":"","sys_id":"58851c2353322010a480ddeeff7b12b0","sys_updated_by":"admin","cost_center":"","default_assignee":"","sys_created_on":"2021-03-15 18:50:37","name":"Report Access Request Approvers","exclude_manager":"false","include_members":"false","sys_created_by":"admin","email":""},{"parent":"6b17771787dabd10b8137448dabb3507","manager":"572d619d87634110b8137448dabb3591","roles":"","active":"true","sys_updated_on":"2023-11-10 00:58:12","type":"","sys_id":"6327b71787dabd10b8137448dabb35e1","sys_updated_by":"marc","cost_center":"","default_assignee":"","sys_created_on":"2023-11-10 00:58:12","name":"GroupB","exclude_manager":"false","include_members":"false","sys_created_by":"marc","email":""},{"parent":"","manager":"572d619d87634110b8137448dabb3591","roles":"","active":"true","sys_updated_on":"2023-11-10 00:57:57","type":"","sys_id":"6b17771787dabd10b8137448dabb3507","sys_updated_by":"marc","cost_center":"","default_assignee":"","sys_created_on":"2023-11-10 00:57:57","name":"GroupA","exclude_manager":"false","include_members":"false","sys_created_by":"marc","email":""},{"parent":"","manager":"","roles":"","active":"true","sys_updated_on":"2016-06-02 20:52:39","type":"","sys_id":"6d804419c333120071d07bfaa2d3ae85","sys_updated_by":"admin","cost_center":"","default_assignee":"","sys_created_on":"2016-06-02 20:52:39","name":"Consumer Service Support","exclude_manager":"false","include_members":"false","sys_created_by":"admin","email":""},{"parent":"","manager":"","roles":"","active":"true","sys_updated_on":"2019-08-07 15:40:30","type":"","sys_id":"9f37b5fe73833300c5e4660c4cf6a744","sys_updated_by":"admin","cost_center":"","default_assignee":"","sys_created_on":"2019-08-07 15:40:30","name":"Hadoop admin","exclude_manager":"false","include_members":"false","sys_created_by":"admin","email":""},{"parent":"","manager":"5b00ab008737c910793a97983cbb354a","roles":"","active":"true","sys_updated_on":"2023-01-04 00:05:42","type":"","sys_id":"a715cd759f2002002920bde8132e7018","sys_updated_by":"marc","cost_center":"","default_assignee":"","sys_created_on":"2015-06-10 05:32:35","name":"Change Management","exclude_manager":"false","include_members":"false","sys_created_by":"admin","email":""},{"parent":"","manager":"","roles":"","active":"true","sys_updated_on":"2011-09-30 16:30:34","type":"1cb8ab9bff500200158bffffffffff62","sys_id":"b85d44954a3623120004689b2d5dd60a","sys_updated_by":"admin","cost_center":"","default_assignee":"","sys_created_on":"2011-09-30 16:30:34","name":"CAB Approval","exclude_manager":"false","include_members":"false","sys_created_by":"admin","email":""},{"parent":"","manager":"","roles":"","active":"true","sys_updated_on":"2019-02-15 00:39:04","type":"","sys_id":"c1edeb7ab7232300e64c9489de11a9e3","sys_updated_by":"admin","cost_center":"","default_assignee":"","sys_created_on":"2019-02-15 00:39:04","name":"Recommendation Admin","exclude_manager":"false","include_members":"false","sys_created_by":"admin","email":""},{"parent":"","manager":"","roles":"","active":"true","sys_updated_on":"2016-09-08 20:54:47","type":"","sys_id":"c54de838d7b122004f1e82285e61036b","sys_updated_by":"admin","cost_center":"","default_assignee":"","sys_created_on":"2016-09-08 20:54:47","name":"Product Support","exclude_manager":"false","include_members":"false","sys_created_by":"admin","email":""},{"parent":"","manager":"","roles":"","active":"true","sys_updated_on":"2019-02-11 19:36:56","type":"2e763549d7111100828320300e61038d","sys_id":"ccd9c775872323004caf66d107cb0b20","sys_updated_by":"admin","cost_center":"","default_assignee":"","sys_created_on":"2019-02-11 19:28:08","name":"Survey Creators","exclude_manager":"false","include_members":"false","sys_created_by":"admin","email":""},{"parent":"","manager":"","roles":"","active":"true","sys_updated_on":"2013-12-01 23:47:36","type":"","sys_id":"cfcbad03d711110050f5edcb9e61038f","sys_updated_by":"admin","cost_center":"","default_assignee":"","sys_created_on":"2013-12-01 23:47:36","name":"Team Development Code Reviewers","exclude_manager":"false","include_members":"false","sys_created_by":"admin","email":""},{"parent":"","manager":"","roles":"","active":"true","sys_updated_on":"2024-12-06 19:14:49","type":"","sys_id":"d161aab1c3da56902177bc159901314b","sys_updated_by":"damon","cost_center":"","default_assignee":"","sys_created_on":"2024-12-06 19:14:49","name":"USFK","exclude_manager":"false","include_members":"false","sys_created_by":"damon","email":""},{"parent":"","manager":"","roles":"","active":"true","sys_updated_on":"2013-07-26 21:48:47","type":"","sys_id":"dc0db135c332010016194ffe5bba8f23","sys_updated_by":"admin","cost_center":"","default_assignee":"","sys_created_on":"2013-07-26 21:12:56","name":"LDAP Admins","exclude_manager":"false","include_members":"false","sys_created_by":"admin","email":""},{"parent":"","manager":"","roles":"","active":"true","sys_updated_on":"2024-02-12 11:05:32","type":"308f1100878e00107e31af1e36cb0b83","sys_id":"e0094d71870300107e31af1e36cb0ba3","sys_updated_by":"admin","cost_center":"","default_assignee":"","sys_created_on":"2024-02-12 05:55:34","name":"IT Routing Group","exclude_manager":"false","include_members":"false","sys_created_by":"admin","email":""},{"parent":"","manager":"","roles":"","active":"true","sys_updated_on":"2017-08-09 11:21:28","type":"","sys_id":"e45d9ebc3b333200fe02c9bb34efc434","sys_updated_by":"admin","cost_center":"","default_assignee":"","sys_created_on":"2017-08-09 11:21:07","name":"Major Incident Management","exclude_manager":"false","include_members":"false","sys_created_by":"admin","email":"majorincident.managers@example.com"},{"parent":"","manager":"","roles":"","active":"true","sys_updated_on":"2016-09-08 20:52:39","type":"","sys_id":"f6cc6838d7b122004f1e82285e610317","sys_updated_by":"admin","cost_center":"","default_assignee":"","sys_created_on":"2016-09-08 20:52:39","name":"Billing Support","exclude_manager":"false","include_members":"false","sys_created_by":"admin","email":""}]}'
+      headers:
+        Cache-Control:
+          - no-cache,no-store,must-revalidate,max-age=-1
+        Connection:
+          - keep-alive
+        Content-Type:
+          - application/json;charset=UTF-8
+        Date:
+          - Sat, 14 Dec 2024 00:12:18 GMT
+        Expires:
+          - "0"
+        Pragma:
+          - no-store,no-cache
+        Server:
+          - snow_adc
+        Server-Timing:
+          - sem_wait;dur=0, sesh_wait;dur=0
+        Set-Cookie:
+          - BIGipServerpool_test-instance=daf45be0355a2c98f6650da4bc98e405; httponly; secure; samesite=None; path=/
+          - glide_user=; Max-Age=0; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Path=/; HttpOnly; Secure; SameSite=None
+          - glide_user_session=; Max-Age=0; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Path=/; HttpOnly; Secure; SameSite=None
+          - glide_user_route=glide.c34880509c8ce69e2a2a69d09cbb0d66; Max-Age=2147483647; Expires=Thu, 01-Jan-2093 03:26:25 GMT; Path=/; HttpOnly; Secure; SameSite=None
+          - glide_node_id_for_js=a450009d2ba05d68d34cb99df45a7daea79b823476dca541d2b629ee55214629; Path=/; Secure; SameSite=None
+        Strict-Transport-Security:
+          - max-age=63072000; includeSubDomains
+        X-Content-Type-Options:
+          - nosniff
+        X-Is-Logged-In:
+          - "true"
+        X-Total-Count:
+          - "24"
+        X-Transaction-Id:
+          - 82a8a7cc0e69
+      status: 200 OK
+      code: 200
+      duration: 75.184655ms

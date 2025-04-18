@@ -1,0 +1,65 @@
+version: "2"
+linters:
+  default: none
+  enable:
+    - asciicheck
+    - decorder
+    - dupl
+    - dupword
+    - durationcheck
+    - forcetypeassert
+    - goconst
+    - godot
+    - goheader
+    - ineffassign
+    - lll
+    - makezero
+    - misspell
+    - nestif
+    - nilerr
+    - nlreturn
+    - prealloc
+    - predeclared
+    - promlinter
+    - reassign
+    - revive
+    # TODO Enable staticcheck
+    # - staticcheck
+    - unconvert
+    - unparam
+    - unused
+    - usestdlibvars
+    - wastedassign
+    - wsl
+  settings:
+    goheader:
+      values:
+        const:
+          COMPANY: SGNL.ai, Inc.
+      template: Copyright {{ YEAR }} {{ COMPANY }}
+    nestif:
+      min-complexity: 10
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - dupl
+        path: (.+)_test.go
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

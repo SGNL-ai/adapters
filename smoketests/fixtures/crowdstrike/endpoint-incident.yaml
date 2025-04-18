@@ -1,0 +1,215 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: api.us-2.crowdstrike.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+      url: https://api.us-2.crowdstrike.com/incidents/queries/incidents/v1?limit=1
+      method: GET
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: |-
+        {
+         "meta": {
+          "query_time": 0.005576734,
+          "pagination": {
+           "offset": 0,
+           "limit": 1,
+           "total": 2
+          },
+          "powered_by": "incident-api",
+          "trace_id": "aad0c302-b93c-42a8-9fe7-2a291bf01ebf"
+         },
+         "resources": [
+          "inc:eca21da34c934e8e95c97a4f7af1d9a5:fede7474a2634f16997504abe3d21974"
+         ],
+         "errors": []
+        }
+      headers:
+        Connection:
+          - keep-alive
+        Content-Type:
+          - application/json
+        Date:
+          - Sat, 25 Jan 2025 20:51:17 GMT
+        Server:
+          - nginx
+        Strict-Transport-Security:
+          - max-age=31536000; includeSubDomains
+          - max-age=31536000; includeSubDomains
+        X-Cs-Region:
+          - us-2
+        X-Cs-Traceid:
+          - aad0c302-b93c-42a8-9fe7-2a291bf01ebf
+        X-Ratelimit-Limit:
+          - "6000"
+        X-Ratelimit-Remaining:
+          - "5989"
+      status: 200 OK
+      code: 200
+      duration: 193.100923ms
+  - id: 1
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 81
+      transfer_encoding: []
+      trailer: {}
+      host: api.us-2.crowdstrike.com
+      remote_addr: ""
+      request_uri: ""
+      body: '{"ids":["inc:eca21da34c934e8e95c97a4f7af1d9a5:fede7474a2634f16997504abe3d21974"]}'
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+        Content-Type:
+          - application/json
+      url: https://api.us-2.crowdstrike.com/incidents/entities/incidents/GET/v1?limit=1
+      method: POST
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: |-
+        {
+         "meta": {
+          "query_time": 0.006142357,
+          "powered_by": "incident-api",
+          "trace_id": "a1002277-09f1-4472-abe3-55a26fc00140"
+         },
+         "resources": [
+          {
+           "incident_id": "inc:eca21da34c934e8e95c97a4f7af1d9a5:fede7474a2634f16997504abe3d21974",
+           "incident_type": 1,
+           "cid": "8693deb4bf134cfb8855ee118d9a0243",
+           "host_ids": [
+            "eca21da34c934e8e95c97a4f7af1d9a5"
+           ],
+           "hosts": [
+            {
+             "device_id": "eca21da34c934e8e95c97a4f7af1d9a5",
+             "cid": "8693deb4bf134cfb8855ee118d9a0243",
+             "agent_load_flags": "0",
+             "agent_local_time": "2024-12-05T02:19:45.022Z",
+             "agent_version": "7.17.18721.0",
+             "bios_manufacturer": "Microsoft Corporation",
+             "bios_version": "Hyper-V UEFI Release v4.1",
+             "config_id_base": "65994763",
+             "config_id_build": "18721",
+             "config_id_platform": "3",
+             "external_ip": "1.1.1.1",
+             "hostname": "mj-dc",
+             "first_seen": "2024-12-05T02:16:13Z",
+             "last_login_timestamp": "2024-12-05T02:20:14Z",
+             "last_login_user": "Marc",
+             "last_seen": "2024-12-05T02:20:03Z",
+             "local_ip": "1.1.1.1",
+             "mac_address": "01-01-01-01-01-01",
+             "machine_domain": "corp.sgnl.ai",
+             "major_version": "10",
+             "minor_version": "0",
+             "os_version": "Windows Server 2022",
+             "ou": [
+              "Domain Controllers"
+             ],
+             "platform_id": "0",
+             "platform_name": "Windows",
+             "product_type": "2",
+             "product_type_desc": "Domain Controller",
+             "site_name": "Default-First-Site-Name",
+             "status": "normal",
+             "system_manufacturer": "Microsoft Corporation",
+             "system_product_name": "Virtual Machine",
+             "groups": [
+              "2a8b900d486e4e9eaa024723d6f3742a"
+             ],
+             "modified_timestamp": "2024-12-05T02:20:16Z",
+             "instance_id": "4220508a-d2a1-466f-9187-40594db3256b",
+             "service_provider": "AZURE",
+             "service_provider_account_id": "{{OMITTED}}"
+            }
+           ],
+           "created": "2024-12-05T02:20:19Z",
+           "start": "2024-12-05T02:20:18Z",
+           "end": "2024-12-05T02:27:28Z",
+           "state": "closed",
+           "email_state": "START",
+           "status": 20,
+           "tactics": [
+            "Credential Access",
+            "Falcon Overwatch",
+            "Defense Evasion",
+            "Execution",
+            "Persistence"
+           ],
+           "techniques": [
+            "OS Credential Dumping",
+            "Malicious Activity",
+            "Process Hollowing",
+            "Command and Scripting Interpreter",
+            "Windows Management Instrumentation Event Subscription"
+           ],
+           "objectives": [
+            "Gain Access",
+            "Falcon Detection Method",
+            "Keep Access",
+            "Follow Through"
+           ],
+           "modified_timestamp": "2024-12-05T03:25:22.634Z",
+           "users": [
+            "jan.f",
+            "mj-dc$"
+           ],
+           "fine_score": 18
+          }
+         ],
+         "errors": []
+        }
+      headers:
+        Connection:
+          - keep-alive
+        Content-Type:
+          - application/json
+        Date:
+          - Sat, 25 Jan 2025 20:51:17 GMT
+        Server:
+          - nginx
+        Strict-Transport-Security:
+          - max-age=31536000; includeSubDomains
+          - max-age=31536000; includeSubDomains
+        X-Cs-Region:
+          - us-2
+        X-Cs-Traceid:
+          - a1002277-09f1-4472-abe3-55a26fc00140
+        X-Ratelimit-Limit:
+          - "6000"
+        X-Ratelimit-Remaining:
+          - "5988"
+      status: 200 OK
+      code: 200
+      duration: 51.054177ms

@@ -1,0 +1,125 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: test-instance.atlassian.net
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Basic {{OMITTED}}
+      url: https://test-instance.atlassian.net/rest/api/3/group/bulk?startAt=0&maxResults=1
+      method: GET
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"maxResults":1,"startAt":0,"total":12,"isLast":false,"values":[{"name":"jira-software-user-access-admins-713b7785-bfe1-44f7-aaed-80dc5ec72616","groupId":"0f1c156b-a88b-4918-ba29-35eec8fed41c"}]}'
+      headers:
+        Atl-Traceid:
+          - b91d5a0dde0c8dac
+        Cache-Control:
+          - no-cache, no-store, no-transform
+        Content-Type:
+          - application/json;charset=UTF-8
+        Date:
+          - Mon, 02 Oct 2023 15:08:03 GMT
+        Nel:
+          - '{"failure_fraction": 0.001, "include_subdomains": true, "max_age": 600, "report_to": "endpoint-1"}'
+        Report-To:
+          - '{"endpoints": [{"url": "https://dz8aopenkvv6s.cloudfront.net"}], "group": "endpoint-1", "include_subdomains": true, "max_age": 600}'
+        Server:
+          - AtlassianEdge
+        Set-Cookie:
+          - Path=/; SameSite=None; Secure
+        Strict-Transport-Security:
+          - max-age=63072000; includeSubDomains; preload
+        Timing-Allow-Origin:
+          - "*"
+        Vary:
+          - Accept-Encoding
+        X-Aaccountid:
+          - 712020%3Ac95ef8cc-fe03-43cc-8f50-c390bcb9499f
+        X-Arequestid:
+          - 0b3e3f4d73502518806e2527ed3c6178
+        X-Content-Type-Options:
+          - nosniff
+        X-Xss-Protection:
+          - 1; mode=block
+      status: 200 OK
+      code: 200
+      duration: 283.338786ms
+  - id: 1
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: test-instance.atlassian.net
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Basic {{OMITTED}}
+      url: https://test-instance.atlassian.net/rest/api/3/group/member?groupId=0f1c156b-a88b-4918-ba29-35eec8fed41c&startAt=0&maxResults=3
+      method: GET
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"self":"https://test-instance.atlassian.net/rest/api/3/group/member?includeInactiveUsers=false&maxResults=3&groupId=0f1c156b-a88b-4918-ba29-35eec8fed41c&startAt=0","maxResults":3,"startAt":0,"total":1,"isLast":true,"values":[{"self":"https://test-instance.atlassian.net/rest/api/3/user?accountId=712020%3Ac95ef8cc-fe03-43cc-8f50-c390bcb9499f","accountId":"712020:c95ef8cc-fe03-43cc-8f50-c390bcb9499f","emailAddress":"nick@sgnl.ai","avatarUrls":{},"displayName":"Nick","active":true,"timeZone":"Etc/GMT","accountType":"atlassian"}]}'
+      headers:
+        Atl-Traceid:
+          - 93175bc993ea67a8
+        Cache-Control:
+          - no-cache, no-store, no-transform
+        Content-Type:
+          - application/json;charset=UTF-8
+        Date:
+          - Mon, 02 Oct 2023 15:08:03 GMT
+        Nel:
+          - '{"failure_fraction": 0.001, "include_subdomains": true, "max_age": 600, "report_to": "endpoint-1"}'
+        Report-To:
+          - '{"endpoints": [{"url": "https://dz8aopenkvv6s.cloudfront.net"}], "group": "endpoint-1", "include_subdomains": true, "max_age": 600}'
+        Server:
+          - AtlassianEdge
+        Set-Cookie:
+          - Path=/; SameSite=None; Secure
+        Strict-Transport-Security:
+          - max-age=63072000; includeSubDomains; preload
+        Timing-Allow-Origin:
+          - "*"
+        Vary:
+          - Accept-Encoding
+        X-Aaccountid:
+          - 712020%3Ac95ef8cc-fe03-43cc-8f50-c390bcb9499f
+        X-Arequestid:
+          - 7d8223ea4f1a869f755a46d9eacf63f0
+        X-Content-Type-Options:
+          - nosniff
+        X-Xss-Protection:
+          - 1; mode=block
+      status: 200 OK
+      code: 200
+      duration: 220.566289ms

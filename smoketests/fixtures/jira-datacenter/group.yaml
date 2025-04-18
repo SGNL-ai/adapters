@@ -1,0 +1,58 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: test-instance.jiradc.ai
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Basic {{OMITTED}}
+      url: https://test-instance.jiradc.ai/rest/api/latest/groups/picker
+      method: GET
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"header":"Showing 2 of 2 matching groups","total":2,"groups":[{"name":"jira-administrators","html":"jira-administrators","labels":[{"text":"Admin","title":"Users added to this group will be given administrative access","type":"ADMIN"},{"text":"Jira Service Management","title":"Users added to this group will be given access to <strong>Jira Service Management</strong>","type":"SINGLE"}]},{"name":"jira-servicedesk-users","html":"jira-servicedesk-users","labels":[{"text":"Jira Service Management","title":"Users added to this group will be given access to <strong>Jira Service Management</strong>","type":"SINGLE"}]}]}'
+      headers:
+        Cache-Control:
+          - no-cache, no-store, no-transform
+        Content-Security-Policy:
+          - sandbox
+        Content-Type:
+          - application/json;charset=UTF-8
+        Date:
+          - Tue, 01 Apr 2025 04:55:52 GMT
+        Referrer-Policy:
+          - strict-origin-when-cross-origin
+        Server-Timing:
+          - threadId;desc=97007
+        Strict-Transport-Security:
+          - max-age=31536000
+        Vary:
+          - User-Agent
+        X-Content-Type-Options:
+          - nosniff
+        X-Frame-Options:
+          - SAMEORIGIN
+        X-Seraph-Loginreason:
+          - OK
+        X-Xss-Protection:
+          - 1; mode=block
+      status: 200 OK
+      code: 200
+      duration: 187.867948ms

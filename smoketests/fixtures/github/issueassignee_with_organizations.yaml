@@ -1,0 +1,80 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 633
+      transfer_encoding: []
+      trailer: {}
+      host: api.github.com
+      remote_addr: ""
+      request_uri: ""
+      body: '{"query":"query {\n\t\torganization (login: \"my-comp-1\") {\n\t\t\tid\n\t\t\trepositories (first: 1) {\n\t\t\t\tpageInfo {\n\t\t\t\t\tendCursor\n\t\t\t\t\thasNextPage\n\t\t\t\t}\n\t\t\t\tnodes {\n\t\t\t\t\tid\n\t\t\t\t\tissues (first: 1) {\n\t\t\t\t\t\tpageInfo {\n\t\t\t\t\t\t\tendCursor\n\t\t\t\t\t\t\thasNextPage\n\t\t\t\t\t\t}\n\t\t\t\t\t\tnodes {\n\t\t\t\t\t\t\tid\n\t\t\t\t\t\t\tassignees (first: 2) {\n\t\t\t\t\t\t\t\tpageInfo {\n\t\t\t\t\t\t\t\t\tendCursor\n\t\t\t\t\t\t\t\t\thasNextPage\n\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t\tnodes { id, login }\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}\n    }"}'
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+        Content-Type:
+          - application/json
+      url: https://api.github.com/graphql
+      method: POST
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"data":{"organization":{"id":"O_kgDOCyN8bw","repositories":{"pageInfo":{"endCursor":"Y3Vyc29yOnYyOpHONOhZIQ==","hasNextPage":false},"nodes":[{"id":"R_kgDONOhZIQ","issues":{"pageInfo":{"endCursor":"Y3Vyc29yOnYyOpK5MjAyNC0xMS0xNVQxMzozMDoyNS0wODowMM6evVu-","hasNextPage":false},"nodes":[{"id":"I_kwDONOhZIc6evVu-","assignees":{"pageInfo":{"endCursor":"Mg","hasNextPage":false},"nodes":[{"id":"U_kgDOBwOdDw","login":"dhanya-sgnl"},{"id":"U_kgDOCuFvAA","login":"leminhtri2805"}]}}]}}]}}}}'
+      headers:
+        Access-Control-Allow-Origin:
+          - "*"
+        Access-Control-Expose-Headers:
+          - ETag, Link, Location, Retry-After, X-GitHub-OTP, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Used, X-RateLimit-Resource, X-RateLimit-Reset, X-OAuth-Scopes, X-Accepted-OAuth-Scopes, X-Poll-Interval, X-GitHub-Media-Type, X-GitHub-SSO, X-GitHub-Request-Id, Deprecation, Sunset
+        Content-Security-Policy:
+          - default-src 'none'
+        Content-Type:
+          - application/json; charset=utf-8
+        Date:
+          - Mon, 18 Nov 2024 14:38:33 GMT
+        Github-Authentication-Token-Expiration:
+          - 2024-12-15 01:29:41 UTC
+        Referrer-Policy:
+          - origin-when-cross-origin, strict-origin-when-cross-origin
+        Server:
+          - github.com
+        Strict-Transport-Security:
+          - max-age=31536000; includeSubdomains; preload
+        Vary:
+          - Accept-Encoding, Accept, X-Requested-With
+        X-Accepted-Oauth-Scopes:
+          - repo
+        X-Content-Type-Options:
+          - nosniff
+        X-Frame-Options:
+          - deny
+        X-Github-Media-Type:
+          - github.v4; format=json
+        X-Github-Request-Id:
+          - 0810:11A9B5:106B0C8:108C8D7:673B5169
+        X-Oauth-Scopes:
+          - admin:enterprise, admin:gpg_key, admin:org, admin:org_hook, admin:public_key, admin:repo_hook, admin:ssh_signing_key, audit_log, codespace, copilot, delete:packages, delete_repo, gist, notifications, project, repo, user, workflow, write:discussion, write:packages
+        X-Ratelimit-Limit:
+          - "5000"
+        X-Ratelimit-Remaining:
+          - "4987"
+        X-Ratelimit-Reset:
+          - "1731944183"
+        X-Ratelimit-Resource:
+          - graphql
+        X-Ratelimit-Used:
+          - "13"
+        X-Xss-Protection:
+          - "0"
+      status: 200 OK
+      code: 200
+      duration: 348.293138ms

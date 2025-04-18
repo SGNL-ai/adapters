@@ -1,0 +1,57 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: test-instance.duosecurity.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Basic {{OMITTED}}
+        Content-Type:
+          - application/x-www-form-urlencoded
+        Date:
+          - Wed, 31 Jan 2024 20:14:13 +0000
+      url: https://test-instance.duosecurity.com/admin/v1/phones?limit=1&offset=0
+      method: GET
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding:
+        - chunked
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"metadata": {"next_offset": 1, "total_objects": 3}, "response": [{"activated": false, "capabilities": ["sms"], "encrypted": "Encrypted", "extension": "", "fingerprint": "Unknown", "last_seen": "", "model": "Unknown", "name": "", "number": "+11111111111", "phone_id": "DPFL36P8Z8LZANN1FFEZ", "platform": "Apple iOS", "screenlock": "Unknown", "sms_passcodes_sent": false, "tampered": "Unknown", "type": "Mobile", "users": [{"alias1": null, "alias2": null, "alias3": null, "alias4": null, "aliases": {}, "created": 1706041056, "email": "user1@example.com", "firstname": null, "is_enrolled": false, "last_directory_sync": null, "last_login": null, "lastname": null, "notes": "", "realname": "Test User 1", "status": "active", "user_id": "DUYC8O4O953VBGGKLHAL", "username": "user1"}, {"alias1": null, "alias2": null, "alias3": null, "alias4": null, "aliases": {}, "created": 1706041057, "email": "user10@example.com", "firstname": null, "is_enrolled": false, "last_directory_sync": null, "last_login": null, "lastname": null, "notes": "", "realname": "Test User 10", "status": "active", "user_id": "DUG1B8MRABMVKYVCFO8H", "username": "user10"}, {"alias1": null, "alias2": null, "alias3": null, "alias4": null, "aliases": {}, "created": 1706041056, "email": "user2@example.com", "firstname": null, "is_enrolled": false, "last_directory_sync": null, "last_login": null, "lastname": null, "notes": "", "realname": "Test User 2", "status": "active", "user_id": "DUHUTX7KGB6D15WTD3VY", "username": "user2"}, {"alias1": null, "alias2": null, "alias3": null, "alias4": null, "aliases": {}, "created": 1706041056, "email": "user3@example.com", "firstname": null, "is_enrolled": false, "last_directory_sync": null, "last_login": null, "lastname": null, "notes": "", "realname": "Test User 3", "status": "active", "user_id": "DUEL2SL4CWLP04CE71SL", "username": "user3"}, {"alias1": null, "alias2": null, "alias3": null, "alias4": null, "aliases": {}, "created": 1706041056, "email": "user4@example.com", "firstname": null, "is_enrolled": false, "last_directory_sync": null, "last_login": null, "lastname": null, "notes": "", "realname": "Test User 4", "status": "active", "user_id": "DUB3BH17CE2V7B744RLI", "username": "user4"}, {"alias1": null, "alias2": null, "alias3": null, "alias4": null, "aliases": {}, "created": 1706041056, "email": "user5@example.com", "firstname": null, "is_enrolled": false, "last_directory_sync": null, "last_login": null, "lastname": null, "notes": "", "realname": "Test User 5", "status": "active", "user_id": "DUWC7NXJX7IM9I7J26AT", "username": "user5"}, {"alias1": null, "alias2": null, "alias3": null, "alias4": null, "aliases": {}, "created": 1706041057, "email": "user7@example.com", "firstname": null, "is_enrolled": false, "last_directory_sync": null, "last_login": null, "lastname": null, "notes": "", "realname": "Test User 7", "status": "active", "user_id": "DU9SRK429IRM2J7OEDCP", "username": "user7"}, {"alias1": null, "alias2": null, "alias3": null, "alias4": null, "aliases": {}, "created": 1706041057, "email": "user9@example.com", "firstname": null, "is_enrolled": false, "last_directory_sync": null, "last_login": null, "lastname": null, "notes": "", "realname": "Test User 9", "status": "active", "user_id": "DU2T7B5VIC0RSCN1A13W", "username": "user9"}]}], "stat": "OK"}'
+      headers:
+        Cache-Control:
+          - no-store
+        Connection:
+          - keep-alive
+        Content-Security-Policy:
+          - default-src 'self'; frame-src 'self' ; img-src 'self'  ; connect-src 'self'
+        Content-Type:
+          - application/json
+        Date:
+          - Wed, 31 Jan 2024 20:14:13 GMT
+        Etag:
+          - W/"57b1ffc5ad72ffe0dabb432113dd38737c0f3a13"
+        Pragma:
+          - no-cache
+        Server:
+          - Duo/1.0
+        Strict-Transport-Security:
+          - max-age=31536000
+      status: 200 OK
+      code: 200
+      duration: 137.4409ms

@@ -1,0 +1,56 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: example-tenant.example-domain.com:8080
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Basic {{OMITTED}}
+        Content-Type:
+          - application/scim+json
+      url: https://example-tenant.example-domain.com:8080/identityiq/scim/v2/Users?startIndex=1&count=1
+      method: GET
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding: []
+      trailer: {}
+      content_length: 1149
+      uncompressed: false
+      body: '{"totalResults":354,"startIndex":1,"itemsPerPage":1,"schemas":["urn:ietf:params:scim:api:messages:2.0:ListResponse"],"Resources":[{"urn:ietf:params:scim:schemas:sailpoint:1.0:User":{"lifecycleState":"Active","administrator":{},"capabilities":["SystemAdministrator"],"lastRefresh":"2022-05-16T13:46:24.527-05:00","costCenter":[],"isManager":false,"accounts":[],"riskScore":0},"emails":[{"type":"work","primary":true}],"displayName":"The Administrator","meta":{"created":"2022-05-16T13:11:18.912-05:00","location":"http://example-tenant.example-domain.com:8080/identityiq/scim/v2/Users/0a0000fa80ce10c68180ce11410000ff","lastModified":"2023-10-18T14:48:10.384-05:00","version":"W/\"1697658490384\"","resourceType":"User"},"schemas":["urn:ietf:params:scim:schemas:sailpoint:1.0:User","urn:ietf:params:scim:schemas:core:2.0:User","urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"],"name":{"formatted":"The Administrator","familyName":"Administrator","givenName":"The"},"active":true,"id":"0a0000fa80ce10c68180ce11410000ff","userName":"spadmin","urn:ietf:params:scim:schemas:extension:enterprise:2.0:User":{"manager":{}}}]}'
+      headers:
+        Cache-Control:
+          - no-store
+        Cf-Cache-Status:
+          - DYNAMIC
+        Cf-Ray:
+          - 81834c1b9aefc39f-SEA
+        Connection:
+          - keep-alive
+        Content-Length:
+          - "1149"
+        Content-Type:
+          - application/scim+json;charset=UTF-8
+        Date:
+          - Wed, 18 Oct 2023 19:48:10 GMT
+        Pragma:
+          - no-cache
+        Server:
+          - cloudflare
+        Set-Cookie:
+          - JSESSIONID={{OMITTED}}; Path=/identityiq; HttpOnly
+      status: 200 OK
+      code: 200
+      duration: 472.31168ms

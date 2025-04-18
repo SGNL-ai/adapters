@@ -1,0 +1,55 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: graph.microsoft.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+      url: https://graph.microsoft.com/v1.0/users?$select=id,displayName&$expand=manager($select=id)&$top=3&$filter=startswith%28displayName%2C%27N%27%29
+      method: GET
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding:
+        - chunked
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"@odata.context":"https://graph.microsoft.com/v1.0/$metadata#users(id,displayName,manager(id))","@odata.nextLink":"https://graph.microsoft.com/v1.0/users?$select=id%2cdisplayName&$expand=manager(%24select%3did)&$top=3&$filter=startswith(displayName%2c%27N%27)&$skiptoken=NEXTLINK_TOKEN_PLACEHOLDER","value":[{"id":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee","displayName":"Nancy Barr"},{"id":"ffffffff-gggg-hhhh-iiii-jjjjjjjjjjjj","displayName":"Nancy Barton"},{"id":"kkkkkkkk-llll-mmmm-nnnn-oooooooooooo","displayName":"Nancy Bean","manager":{"@odata.type": "#microsoft.graph.user","id": "pppppppp-qqqq-rrrr-ssss-tttttttttttt"}}]}'
+      headers:
+        Cache-Control:
+          - no-cache
+        Client-Request-Id:
+          - 7cd060e0-6b85-45af-84b8-d11ce1e27b01
+        Content-Type:
+          - application/json;odata.metadata=minimal;odata.streaming=true;IEEE754Compatible=false;charset=utf-8
+        Date:
+          - Fri, 27 Oct 2023 21:06:52 GMT
+        Odata-Version:
+          - "4.0"
+        Request-Id:
+          - 7cd060e0-6b85-45af-84b8-d11ce1e27b01
+        Strict-Transport-Security:
+          - max-age=31536000
+        Vary:
+          - Accept-Encoding
+        X-Ms-Ags-Diagnostic:
+          - '{"ServerInfo":{"DataCenter":"West US 2","Slice":"E","Ring":"1","ScaleUnit":"005","RoleInstance":"MWH0EPF0009ACA8"}}'
+        X-Ms-Resource-Unit:
+          - "1"
+      status: 200 OK
+      code: 200
+      duration: 99.304374ms

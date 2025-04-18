@@ -1,0 +1,64 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: test-instance.atlassian.net
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Basic {{OMITTED}}
+      url: https://test-instance.atlassian.net/rest/api/3/group/bulk?startAt=0&maxResults=3
+      method: GET
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"maxResults":3,"startAt":0,"total":12,"isLast":false,"values":[{"name":"jira-software-user-access-admins-713b7785-bfe1-44f7-aaed-80dc5ec72616","groupId":"0f1c156b-a88b-4918-ba29-35eec8fed41c"},{"name":"atlassian-addons-admin","groupId":"114e2bfb-5281-4bae-8b5c-100999f0580d"},{"name":"jira-admins-713b7785-bfe1-44f7-aaed-80dc5ec72616","groupId":"3bbab507-d2c6-481c-918e-36722af115d3"}]}'
+      headers:
+        Atl-Traceid:
+          - 802913844a118d3f
+        Cache-Control:
+          - no-cache, no-store, no-transform
+        Content-Type:
+          - application/json;charset=UTF-8
+        Date:
+          - Fri, 29 Sep 2023 22:09:56 GMT
+        Nel:
+          - '{"failure_fraction": 0.001, "include_subdomains": true, "max_age": 600, "report_to": "endpoint-1"}'
+        Report-To:
+          - '{"endpoints": [{"url": "https://dz8aopenkvv6s.cloudfront.net"}], "group": "endpoint-1", "include_subdomains": true, "max_age": 600}'
+        Server:
+          - AtlassianEdge
+        Set-Cookie:
+          - Path=/; SameSite=None; Secure
+        Strict-Transport-Security:
+          - max-age=63072000; includeSubDomains; preload
+        Timing-Allow-Origin:
+          - "*"
+        Vary:
+          - Accept-Encoding
+        X-Aaccountid:
+          - 712020%3Ac95ef8cc-fe03-43cc-8f50-c390bcb9499f
+        X-Arequestid:
+          - b63e335b13933b92a2387dc39f3794dc
+        X-Content-Type-Options:
+          - nosniff
+        X-Xss-Protection:
+          - 1; mode=block
+      status: 200 OK
+      code: 200
+      duration: 381.208961ms

@@ -1,0 +1,77 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: api.pagerduty.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Token token={{OMITTED}}
+      url: https://api.pagerduty.com/users?offset=0&limit=3
+      method: GET
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"users":[{"name":"John Doe","email":"jdoe@test.com","time_zone":"America/Denver","color":"red","avatar_url":"","billed":false,"role":"read_only_limited_user","description":null,"invitation_sent":true,"job_title":null,"teams":[],"contact_methods":[{"id":"P3LZNYI","type":"email_contact_method_reference","summary":"Default","self":"https://api.pagerduty.com/users/PT9HH3C/contact_methods/P3LZNYI","html_url":null}],"notification_rules":[{"id":"P9754QN","type":"assignment_notification_rule_reference","summary":"0 minutes: channel P3LZNYI","self":"https://api.pagerduty.com/users/PT9HH3C/notification_rules/P9754QN","html_url":null},{"id":"PPGT52A","type":"assignment_notification_rule_reference","summary":"0 minutes: channel P3LZNYI","self":"https://api.pagerduty.com/users/PT9HH3C/notification_rules/PPGT52A","html_url":null}],"coordinated_incidents":[],"id":"PT9HH3C","type":"user","summary":"John Doe","self":"https://api.pagerduty.com/users/PT9HH3C","html_url":"https://nick.pagerduty.com/users/PT9HH3C"},{"name":"Nick","email":"nick@sgnl.ai","time_zone":"America/Denver","color":"purple","avatar_url":"","billed":true,"role":"owner","description":null,"invitation_sent":false,"job_title":null,"teams":[],"contact_methods":[{"id":"P1COZ0Z","type":"email_contact_method_reference","summary":"Default","self":"https://api.pagerduty.com/users/P2U4KPO/contact_methods/P1COZ0Z","html_url":null}],"notification_rules":[{"id":"PSWTGNI","type":"assignment_notification_rule_reference","summary":"0 minutes: channel P1COZ0Z","self":"https://api.pagerduty.com/users/P2U4KPO/notification_rules/PSWTGNI","html_url":null},{"id":"PW5EH08","type":"assignment_notification_rule_reference","summary":"0 minutes: channel P1COZ0Z","self":"https://api.pagerduty.com/users/P2U4KPO/notification_rules/PW5EH08","html_url":null}],"coordinated_incidents":[],"id":"P2U4KPO","type":"user","summary":"Nick","self":"https://api.pagerduty.com/users/P2U4KPO","html_url":"https://nick.pagerduty.com/users/P2U4KPO"},{"name":"Owen Smith","email":"osmith@test.com","time_zone":"America/Denver","color":"green","avatar_url":"","billed":false,"role":"read_only_limited_user","description":null,"invitation_sent":true,"job_title":null,"teams":[],"contact_methods":[{"id":"P0PO9JV","type":"email_contact_method_reference","summary":"Default","self":"https://api.pagerduty.com/users/PPAWGRP/contact_methods/P0PO9JV","html_url":null}],"notification_rules":[{"id":"P1LW2LX","type":"assignment_notification_rule_reference","summary":"0 minutes: channel P0PO9JV","self":"https://api.pagerduty.com/users/PPAWGRP/notification_rules/P1LW2LX","html_url":null},{"id":"P5XH3AK","type":"assignment_notification_rule_reference","summary":"0 minutes: channel P0PO9JV","self":"https://api.pagerduty.com/users/PPAWGRP/notification_rules/P5XH3AK","html_url":null}],"coordinated_incidents":[],"id":"PPAWGRP","type":"user","summary":"Owen Smith","self":"https://api.pagerduty.com/users/PPAWGRP","html_url":"https://nick.pagerduty.com/users/PPAWGRP"}],"limit":3,"offset":0,"total":null,"more":false}'
+      headers:
+        Access-Control-Allow-Headers:
+          - Authorization, Content-Type, AuthorizationOauth, X-EARLY-ACCESS, From
+        Access-Control-Allow-Methods:
+          - GET, POST, PUT, DELETE, OPTIONS
+        Access-Control-Allow-Origin:
+          - "*"
+        Access-Control-Expose-Headers:
+          - ""
+        Access-Control-Max-Age:
+          - "1728000"
+        Cache-Control:
+          - max-age=0, private, must-revalidate
+        Content-Type:
+          - application/json
+        Date:
+          - Fri, 29 Sep 2023 22:46:43 GMT
+        Etag:
+          - W/"614923758d131dc2910481905cc86b69"
+        Feature-Policy:
+          - accelerometer 'none'; camera 'none'; geolocation 'none'; gyroscope 'none'; magnetometer 'none'; microphone 'none'; payment 'none'; usb 'none'
+        Referrer-Policy:
+          - strict-origin-when-cross-origin
+          - strict-origin-when-cross-origin
+        Server:
+          - nginx
+        Strict-Transport-Security:
+          - max-age=31536000; includeSubDomains
+        Vary:
+          - Accept-Encoding
+        X-Content-Type-Options:
+          - nosniff
+          - nosniff
+        X-Download-Options:
+          - noopen
+        X-Frame-Options:
+          - SAMEORIGIN
+        X-Permitted-Cross-Domain-Policies:
+          - none
+        X-Request-Id:
+          - 3a1baa25cf7042b068949994378d303b
+        X-Xss-Protection:
+          - 1; mode=block
+          - 1; mode=block
+      status: 200 OK
+      code: 200
+      duration: 177.695809ms

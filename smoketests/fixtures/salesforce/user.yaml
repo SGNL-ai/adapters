@@ -1,0 +1,59 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: test-instance.my.salesforce.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+        Sforce-Query-Options:
+          - batchSize=200
+      url: https://test-instance.my.salesforce.com/services/data/v58.0/query?q=SELECT+Id,Name+FROM+User+ORDER+BY+Id+ASC
+      method: GET
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding:
+        - chunked
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"totalSize":3,"done":true,"records":[{"attributes":{"type":"User","url":"/services/data/v58.0/sobjects/User/0058Z000008hrrgQAA"},"Id":"0058Z000008hrrgQAA","Name":"SGNL Integration"},{"attributes":{"type":"User","url":"/services/data/v58.0/sobjects/User/0058Z000008opHuQAI"},"Id":"0058Z000008opHuQAI","Name":"Nick"},{"attributes":{"type":"User","url":"/services/data/v58.0/sobjects/User/0058Z000008szVuQAI"},"Id":"0058Z000008szVuQAI","Name":"Integration User"}]}'
+      headers:
+        Cache-Control:
+          - no-cache,must-revalidate,max-age=0,no-store,private
+        Content-Type:
+          - application/json;charset=UTF-8
+        Date:
+          - Mon, 16 Oct 2023 16:56:54 GMT
+        Set-Cookie:
+          - CookieConsentPolicy=0:1; path=/; expires=Tue, 15-Oct-2024 16:56:54 GMT; Max-Age=31536000
+          - LSKey-c$CookieConsentPolicy=0:1; path=/; expires=Tue, 15-Oct-2024 16:56:54 GMT; Max-Age=31536000
+          - BrowserId=AkoilGxFEe6gnO-68BDM3A; domain=.salesforce.com; path=/; expires=Tue, 15-Oct-2024 16:56:54 GMT; Max-Age=31536000
+        Sforce-Limit-Info:
+          - api-usage=13/15000
+        Strict-Transport-Security:
+          - max-age=63072000; includeSubDomains
+        Vary:
+          - Accept-Encoding
+        X-Content-Type-Options:
+          - nosniff
+        X-Robots-Tag:
+          - none
+        X-Xss-Protection:
+          - 1; mode=block
+      status: 200 OK
+      code: 200
+      duration: 145.813154ms

@@ -1,0 +1,154 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: admin.googleapis.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+      url: https://admin.googleapis.com/admin/directory/v1/groups?domain=sgnldemos.com&maxResults=1&pageToken=Q2lvd0xDSmxiWEIwZVdkeWIzVndRSE5uYm14a1pXMXZjeTVqYjIwaUxERXdOVGMyTVRnek1EWXhNemxJQTJDOG11U2lCQT09
+      method: GET
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: |
+        {
+          "kind": "admin#directory#groups",
+          "etag": "\"OgGr5k3K9Y5ATXvRGH2u3OKSYpWBthUtvh8XRXQHGKs/6N4IK3UYxu0dY4kKeb-nhAS-UJ0\"",
+          "groups": [
+            {
+              "kind": "admin#directory#group",
+              "id": "048pi1tg0qf1f8g",
+              "etag": "\"OgGr5k3K9Y5ATXvRGH2u3OKSYpWBthUtvh8XRXQHGKs/n5phxV9NHrbJaK4QhiAp3pDR21k\"",
+              "email": "group2@sgnldemos.com",
+              "name": "Group2",
+              "directMembersCount": "3",
+              "description": "",
+              "adminCreated": true,
+              "nonEditableAliases": [
+                "group2@sgnldemos.com.test-google-a.com"
+              ]
+            }
+          ],
+          "nextPageToken": "Q2lVd0xDSm5jbTkxY0RKQWMyZHViR1JsYlc5ekxtTnZiU0lzTnpVM05EWTFNVFExTVRnMFNBTmdoNWJnNmY3X19fX19BUT09"
+        }
+      headers:
+        Alt-Svc:
+          - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+        Cache-Control:
+          - private
+        Content-Type:
+          - application/json; charset=UTF-8
+        Date:
+          - Tue, 23 Apr 2024 15:20:53 GMT
+        Etag:
+          - '"OgGr5k3K9Y5ATXvRGH2u3OKSYpWBthUtvh8XRXQHGKs/6N4IK3UYxu0dY4kKeb-nhAS-UJ0"'
+        Server:
+          - ESF
+        Vary:
+          - Origin
+          - X-Origin
+          - Referer
+        X-Content-Type-Options:
+          - nosniff
+        X-Frame-Options:
+          - SAMEORIGIN
+        X-Xss-Protection:
+          - "0"
+      status: 200 OK
+      code: 200
+      duration: 303.8258ms
+  - id: 1
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: admin.googleapis.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+      url: https://admin.googleapis.com/admin/directory/v1/groups/048pi1tg0qf1f8g/members?domain=sgnldemos.com&maxResults=2
+      method: GET
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: |
+        {
+          "kind": "admin#directory#members",
+          "etag": "\"OgGr5k3K9Y5ATXvRGH2u3OKSYpWBthUtvh8XRXQHGKs/Vk5BaXyT_vbk_bqt6oxXydC4hGU\"",
+          "members": [
+            {
+              "kind": "admin#directory#member",
+              "etag": "\"OgGr5k3K9Y5ATXvRGH2u3OKSYpWBthUtvh8XRXQHGKs/1pVaKo8kmZjl-_gkcKlCYvYBPjA\"",
+              "id": "USER987654321",
+              "email": "user1@sgnldemos.com",
+              "role": "MEMBER",
+              "type": "USER",
+              "status": "ACTIVE"
+            },
+            {
+              "kind": "admin#directory#member",
+              "etag": "\"OgGr5k3K9Y5ATXvRGH2u3OKSYpWBthUtvh8XRXQHGKs/4j9E51Yhqt_d3t65g3OEza89nps\"",
+              "id": "102475661842232156723",
+              "email": "user2@sgnldemos.com",
+              "role": "OWNER",
+              "type": "USER",
+              "status": "ACTIVE"
+            }
+          ],
+          "nextPageToken": "CjRJaDhLSFFqSXZNaWZ6Z0VTRW0xaGNtTkFjMmR1YkdSbGJXOXpMbU52YlJnQllKeUppTThFIh8KHQjIvMifzgESEm1hcmNAc2dubGRlbW9zLmNvbRgBYJyJiM8E"
+        }
+      headers:
+        Alt-Svc:
+          - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+        Cache-Control:
+          - private
+        Content-Type:
+          - application/json; charset=UTF-8
+        Date:
+          - Tue, 23 Apr 2024 15:20:53 GMT
+        Etag:
+          - '"OgGr5k3K9Y5ATXvRGH2u3OKSYpWBthUtvh8XRXQHGKs/Vk5BaXyT_vbk_bqt6oxXydC4hGU"'
+        Server:
+          - ESF
+        Vary:
+          - Origin
+          - X-Origin
+          - Referer
+        X-Content-Type-Options:
+          - nosniff
+        X-Frame-Options:
+          - SAMEORIGIN
+        X-Xss-Protection:
+          - "0"
+      status: 200 OK
+      code: 200
+      duration: 142.1081ms

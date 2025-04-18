@@ -1,0 +1,133 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: test-instance.atlassian.net
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Basic {{OMITTED}}
+      url: https://test-instance.atlassian.net/rest/servicedeskapi/assets/workspace?startAt=0&maxResults=1
+      method: GET
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"size":1,"start":0,"limit":50,"isLastPage":true,"_links":{"self":"https://test-instance.atlassian.net/rest/servicedeskapi/assets/workspace?startAt=0&maxResults=1","base":"https://test-instance.atlassian.net","context":""},"values":[{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7"}]}'
+      headers:
+        Atl-Traceid:
+          - a33f4b9900a9d320
+        Cache-Control:
+          - no-cache, no-store, no-transform
+        Content-Type:
+          - application/json;charset=UTF-8
+        Date:
+          - Mon, 02 Oct 2023 14:56:25 GMT
+        Nel:
+          - '{"failure_fraction": 0.001, "include_subdomains": true, "max_age": 600, "report_to": "endpoint-1"}'
+        Report-To:
+          - '{"endpoints": [{"url": "https://dz8aopenkvv6s.cloudfront.net"}], "group": "endpoint-1", "include_subdomains": true, "max_age": 600}'
+        Server:
+          - AtlassianEdge
+        Set-Cookie:
+          - Path=/; SameSite=None; Secure
+        Strict-Transport-Security:
+          - max-age=63072000; includeSubDomains; preload
+        Timing-Allow-Origin:
+          - "*"
+        Vary:
+          - Accept-Encoding
+        X-Aaccountid:
+          - 712020%3Ac103e6bd-ff57-4edd-8925-b6672e9374f7
+        X-Arequestid:
+          - bcd1bbebb608ba4df3863c4b197118ae
+        X-Content-Type-Options:
+          - nosniff
+        X-Xss-Protection:
+          - 1; mode=block
+      status: 200 OK
+      code: 200
+      duration: 210.891819ms
+  - id: 1
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 35
+      transfer_encoding: []
+      trailer: {}
+      host: api.atlassian.com
+      remote_addr: ""
+      request_uri: ""
+      body: '{"qlQuery":"objectType = Customer"}'
+      form: {}
+      headers:
+        Authorization:
+          - Basic {{OMITTED}}
+        Content-Type:
+          - application/json
+      url: https://api.atlassian.com/jsm/assets/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/object/aql?includeAttributes=true&startAt=0&maxResults=3
+      method: POST
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"startAt":0,"maxResults":3,"total":5,"values":[{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","globalId":"10c19baf-1ce3-4558-ad80-47bc4494ded7:4","id":"4","label":"Customer 4","objectKey":"CUS-4","avatar":{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","url16":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/objecttype/5/icon.png?size=16","url48":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/objecttype/5/icon.png?size=48","url72":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/objecttype/5/icon.png?size=72","url144":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/objecttype/5/icon.png?size=144","url288":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/objecttype/5/icon.png?size=288","objectId":"4","mediaClientConfig":{"clientId":"b4b4a42e-d778-4930-8c00-dc4847271d78","issuer":"micros-group/jsm-cmdb","mediaBaseUrl":"https://api.media.atlassian.com","mediaJwtToken":"{{OMITTED}}","fileId":"c96be981-b0c2-41e7-a9f0-4c5f541da203","tokenLifespanInMinutes":60}},"objectType":{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","globalId":"10c19baf-1ce3-4558-ad80-47bc4494ded7:5","id":"5","name":"Customer","type":0,"description":"","icon":{"id":"30","name":"Customer","url16":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/objecttype/5/icon.png?size=16","url48":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/objecttype/5/icon.png?size=48"},"position":3,"created":"2023-08-09T15:37:59.450Z","updated":"2023-08-09T15:37:59.450Z","objectCount":0,"objectSchemaId":"2","inherited":false,"abstractObjectType":false,"parentObjectTypeInherited":false},"created":"2023-08-09T16:51:27.199Z","updated":"2023-08-09T16:51:27.199Z","hasAvatar":false,"timestamp":1691599887199,"attributes":[{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","globalId":"10c19baf-1ce3-4558-ad80-47bc4494ded7:19","id":"19","objectTypeAttributeId":"37","objectAttributeValues":[{"value":"CUS-4","displayValue":"CUS-4","searchValue":"CUS-4","referencedType":false}],"objectId":"4"},{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","globalId":"10c19baf-1ce3-4558-ad80-47bc4494ded7:22","id":"22","objectTypeAttributeId":"38","objectAttributeValues":[{"value":"Customer 4","displayValue":"Customer 4","searchValue":"Customer 4","referencedType":false}],"objectId":"4"},{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","globalId":"10c19baf-1ce3-4558-ad80-47bc4494ded7:20","id":"20","objectTypeAttributeId":"39","objectAttributeValues":[{"value":"2023-08-09T16:51:27.195Z","displayValue":"09/Aug/23 4:51 PM","searchValue":"2023-08-09T16:51:27.195Z","referencedType":false}],"objectId":"4"},{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","globalId":"10c19baf-1ce3-4558-ad80-47bc4494ded7:21","id":"21","objectTypeAttributeId":"40","objectAttributeValues":[{"value":"2023-08-09T16:51:27.195Z","displayValue":"09/Aug/23 4:51 PM","searchValue":"2023-08-09T16:51:27.195Z","referencedType":false}],"objectId":"4"},{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","globalId":"10c19baf-1ce3-4558-ad80-47bc4494ded7:23","id":"23","objectTypeAttributeId":"41","objectAttributeValues":[{"value":"2","displayValue":"2","searchValue":"2","referencedType":false}],"objectId":"4"}],"_links":{"self":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/object/4"},"name":"Customer 4"},{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","globalId":"10c19baf-1ce3-4558-ad80-47bc4494ded7:3","id":"3","label":"Customer 3","objectKey":"CUS-3","avatar":{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","url16":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/objecttype/5/icon.png?size=16","url48":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/objecttype/5/icon.png?size=48","url72":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/objecttype/5/icon.png?size=72","url144":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/objecttype/5/icon.png?size=144","url288":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/objecttype/5/icon.png?size=288","objectId":"3","mediaClientConfig":{"clientId":"b4b4a42e-d778-4930-8c00-dc4847271d78","issuer":"micros-group/jsm-cmdb","mediaBaseUrl":"https://api.media.atlassian.com","mediaJwtToken":"{{OMITTED}}","tokenLifespanInMinutes":60}},"objectType":{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","globalId":"10c19baf-1ce3-4558-ad80-47bc4494ded7:5","id":"5","name":"Customer","type":0,"description":"","icon":{"id":"30","name":"Customer","url16":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/objecttype/5/icon.png?size=16","url48":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/objecttype/5/icon.png?size=48"},"position":3,"created":"2023-08-09T15:37:59.450Z","updated":"2023-08-09T15:37:59.450Z","objectCount":0,"objectSchemaId":"2","inherited":false,"abstractObjectType":false,"parentObjectTypeInherited":false},"created":"2023-08-09T16:51:12.988Z","updated":"2023-08-09T16:51:12.988Z","hasAvatar":false,"timestamp":1691599872988,"attributes":[{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","globalId":"10c19baf-1ce3-4558-ad80-47bc4494ded7:14","id":"14","objectTypeAttributeId":"37","objectAttributeValues":[{"value":"CUS-3","displayValue":"CUS-3","searchValue":"CUS-3","referencedType":false}],"objectId":"3"},{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","globalId":"10c19baf-1ce3-4558-ad80-47bc4494ded7:17","id":"17","objectTypeAttributeId":"38","objectAttributeValues":[{"value":"Customer 3","displayValue":"Customer 3","searchValue":"Customer 3","referencedType":false}],"objectId":"3"},{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","globalId":"10c19baf-1ce3-4558-ad80-47bc4494ded7:15","id":"15","objectTypeAttributeId":"39","objectAttributeValues":[{"value":"2023-08-09T16:51:12.970Z","displayValue":"09/Aug/23 4:51 PM","searchValue":"2023-08-09T16:51:12.970Z","referencedType":false}],"objectId":"3"},{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","globalId":"10c19baf-1ce3-4558-ad80-47bc4494ded7:16","id":"16","objectTypeAttributeId":"40","objectAttributeValues":[{"value":"2023-08-09T16:51:12.970Z","displayValue":"09/Aug/23 4:51 PM","searchValue":"2023-08-09T16:51:12.970Z","referencedType":false}],"objectId":"3"},{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","globalId":"10c19baf-1ce3-4558-ad80-47bc4494ded7:18","id":"18","objectTypeAttributeId":"41","objectAttributeValues":[{"value":"1","displayValue":"1","searchValue":"1","referencedType":false}],"objectId":"3"}],"_links":{"self":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/object/3"},"name":"Customer 3"},{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","globalId":"10c19baf-1ce3-4558-ad80-47bc4494ded7:6","id":"6","label":"Customer 6","objectKey":"CUS-6","avatar":{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","url16":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/objecttype/5/icon.png?size=16","url48":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/objecttype/5/icon.png?size=48","url72":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/objecttype/5/icon.png?size=72","url144":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/objecttype/5/icon.png?size=144","url288":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/objecttype/5/icon.png?size=288","objectId":"6","mediaClientConfig":{"clientId":"b4b4a42e-d778-4930-8c00-dc4847271d78","issuer":"micros-group/jsm-cmdb","mediaBaseUrl":"https://api.media.atlassian.com","mediaJwtToken":"{{OMITTED}}","fileId":"c96be981-b0c2-41e7-a9f0-4c5f541da203","tokenLifespanInMinutes":60}},"objectType":{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","globalId":"10c19baf-1ce3-4558-ad80-47bc4494ded7:5","id":"5","name":"Customer","type":0,"description":"","icon":{"id":"30","name":"Customer","url16":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/objecttype/5/icon.png?size=16","url48":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/objecttype/5/icon.png?size=48"},"position":3,"created":"2023-08-09T15:37:59.450Z","updated":"2023-08-09T15:37:59.450Z","objectCount":0,"objectSchemaId":"2","inherited":false,"abstractObjectType":false,"parentObjectTypeInherited":false},"created":"2023-08-09T17:03:08.321Z","updated":"2023-08-09T17:03:08.321Z","hasAvatar":false,"timestamp":1691600588321,"attributes":[{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","globalId":"10c19baf-1ce3-4558-ad80-47bc4494ded7:29","id":"29","objectTypeAttributeId":"37","objectAttributeValues":[{"value":"CUS-6","displayValue":"CUS-6","searchValue":"CUS-6","referencedType":false}],"objectId":"6"},{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","globalId":"10c19baf-1ce3-4558-ad80-47bc4494ded7:32","id":"32","objectTypeAttributeId":"38","objectAttributeValues":[{"value":"Customer 6","displayValue":"Customer 6","searchValue":"Customer 6","referencedType":false}],"objectId":"6"},{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","globalId":"10c19baf-1ce3-4558-ad80-47bc4494ded7:30","id":"30","objectTypeAttributeId":"39","objectAttributeValues":[{"value":"2023-08-09T17:03:08.317Z","displayValue":"09/Aug/23 5:03 PM","searchValue":"2023-08-09T17:03:08.317Z","referencedType":false}],"objectId":"6"},{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","globalId":"10c19baf-1ce3-4558-ad80-47bc4494ded7:31","id":"31","objectTypeAttributeId":"40","objectAttributeValues":[{"value":"2023-08-09T17:03:08.317Z","displayValue":"09/Aug/23 5:03 PM","searchValue":"2023-08-09T17:03:08.317Z","referencedType":false}],"objectId":"6"},{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","globalId":"10c19baf-1ce3-4558-ad80-47bc4494ded7:33","id":"33","objectTypeAttributeId":"41","objectAttributeValues":[{"value":"3","displayValue":"3","searchValue":"3","referencedType":false}],"objectId":"6"}],"_links":{"self":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/object/6"},"name":"Customer 6"}],"objectTypeAttributes":[{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","globalId":"10c19baf-1ce3-4558-ad80-47bc4494ded7:37","id":"37","objectType":{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","globalId":"10c19baf-1ce3-4558-ad80-47bc4494ded7:5","id":"5","name":"Customer","type":0,"description":"","icon":{"id":"30","name":"Customer","url16":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/objecttype/5/icon.png?size=16","url48":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/objecttype/5/icon.png?size=48"},"position":3,"created":"2023-08-09T15:37:59.450Z","updated":"2023-08-09T15:37:59.450Z","objectCount":0,"objectSchemaId":"2","inherited":false,"abstractObjectType":false,"parentObjectTypeInherited":false},"name":"Key","label":false,"type":0,"defaultType":{"id":0,"name":"Text"},"editable":false,"system":true,"sortable":true,"summable":false,"indexed":true,"minimumCardinality":1,"maximumCardinality":1,"removable":false,"hidden":false,"includeChildObjectTypes":false,"uniqueAttribute":false,"options":"","position":0},{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","globalId":"10c19baf-1ce3-4558-ad80-47bc4494ded7:38","id":"38","objectType":{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","globalId":"10c19baf-1ce3-4558-ad80-47bc4494ded7:5","id":"5","name":"Customer","type":0,"description":"","icon":{"id":"30","name":"Customer","url16":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/objecttype/5/icon.png?size=16","url48":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/objecttype/5/icon.png?size=48"},"position":3,"created":"2023-08-09T15:37:59.450Z","updated":"2023-08-09T15:37:59.450Z","objectCount":0,"objectSchemaId":"2","inherited":false,"abstractObjectType":false,"parentObjectTypeInherited":false},"name":"Name","label":true,"type":0,"description":"The name of the Customer","defaultType":{"id":0,"name":"Text"},"editable":true,"system":false,"sortable":true,"summable":false,"indexed":true,"minimumCardinality":1,"maximumCardinality":1,"removable":false,"hidden":false,"includeChildObjectTypes":false,"uniqueAttribute":false,"options":"","position":1},{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","globalId":"10c19baf-1ce3-4558-ad80-47bc4494ded7:39","id":"39","objectType":{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","globalId":"10c19baf-1ce3-4558-ad80-47bc4494ded7:5","id":"5","name":"Customer","type":0,"description":"","icon":{"id":"30","name":"Customer","url16":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/objecttype/5/icon.png?size=16","url48":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/objecttype/5/icon.png?size=48"},"position":3,"created":"2023-08-09T15:37:59.450Z","updated":"2023-08-09T15:37:59.450Z","objectCount":0,"objectSchemaId":"2","inherited":false,"abstractObjectType":false,"parentObjectTypeInherited":false},"name":"Created","label":false,"type":0,"defaultType":{"id":6,"name":"DateTime"},"editable":false,"system":true,"sortable":true,"summable":false,"indexed":true,"minimumCardinality":1,"maximumCardinality":1,"removable":false,"hidden":false,"includeChildObjectTypes":false,"uniqueAttribute":false,"options":"","position":2},{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","globalId":"10c19baf-1ce3-4558-ad80-47bc4494ded7:40","id":"40","objectType":{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","globalId":"10c19baf-1ce3-4558-ad80-47bc4494ded7:5","id":"5","name":"Customer","type":0,"description":"","icon":{"id":"30","name":"Customer","url16":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/objecttype/5/icon.png?size=16","url48":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/objecttype/5/icon.png?size=48"},"position":3,"created":"2023-08-09T15:37:59.450Z","updated":"2023-08-09T15:37:59.450Z","objectCount":0,"objectSchemaId":"2","inherited":false,"abstractObjectType":false,"parentObjectTypeInherited":false},"name":"Updated","label":false,"type":0,"defaultType":{"id":6,"name":"DateTime"},"editable":false,"system":true,"sortable":true,"summable":false,"indexed":true,"minimumCardinality":1,"maximumCardinality":1,"removable":false,"hidden":false,"includeChildObjectTypes":false,"uniqueAttribute":false,"options":"","position":3},{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","globalId":"10c19baf-1ce3-4558-ad80-47bc4494ded7:41","id":"41","objectType":{"workspaceId":"10c19baf-1ce3-4558-ad80-47bc4494ded7","globalId":"10c19baf-1ce3-4558-ad80-47bc4494ded7:5","id":"5","name":"Customer","type":0,"description":"","icon":{"id":"30","name":"Customer","url16":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/objecttype/5/icon.png?size=16","url48":"https://api.atlassian.com/jsm/insight/workspace/10c19baf-1ce3-4558-ad80-47bc4494ded7/v1/objecttype/5/icon.png?size=48"},"position":3,"created":"2023-08-09T15:37:59.450Z","updated":"2023-08-09T15:37:59.450Z","objectCount":0,"objectSchemaId":"2","inherited":false,"abstractObjectType":false,"parentObjectTypeInherited":false},"name":"Customer_ID","label":false,"type":0,"description":"The ID of the Customer","defaultType":{"id":1,"name":"Integer"},"editable":true,"system":false,"sortable":true,"summable":false,"indexed":true,"minimumCardinality":0,"maximumCardinality":1,"removable":true,"hidden":false,"includeChildObjectTypes":false,"uniqueAttribute":false,"options":"","position":4}],"last":false,"isLast":false}'
+      headers:
+        Atl-Traceid:
+          - 9b5e764787abf8a5
+        Cache-Control:
+          - no-cache, no-store, max-age=0, must-revalidate
+        Content-Type:
+          - application/json
+        Date:
+          - Mon, 02 Oct 2023 14:56:26 GMT
+        Expires:
+          - "0"
+        Nel:
+          - '{"failure_fraction": 0.001, "include_subdomains": true, "max_age": 600, "report_to": "endpoint-1"}'
+        Pragma:
+          - no-cache
+        Report-To:
+          - '{"endpoints": [{"url": "https://dz8aopenkvv6s.cloudfront.net"}], "group": "endpoint-1", "include_subdomains": true, "max_age": 600}'
+        Server:
+          - AtlassianEdge
+        Strict-Transport-Security:
+          - max-age=63072000; preload
+        Vary:
+          - Accept-Encoding
+        X-Computation-Group-Id:
+          - insight-mt-172d82bd-0a90-4a3f-958a-1bad3bccddee
+        X-Content-Type-Options:
+          - nosniff
+        X-Frame-Options:
+          - SameOrigin
+        X-Monolith-Alive:
+          - "true"
+        X-Pod-Type:
+          - multi-tenant
+        X-Trace-Id:
+          - 9b5e764787abf8a5
+        X-Xss-Protection:
+          - 1; mode=block
+      status: 200 OK
+      code: 200
+      duration: 390.164023ms

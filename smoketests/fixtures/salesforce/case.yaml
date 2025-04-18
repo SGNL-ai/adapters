@@ -1,0 +1,59 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: test-instance.my.salesforce.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+        Sforce-Query-Options:
+          - batchSize=200
+      url: https://test-instance.my.salesforce.com/services/data/v58.0/query?q=SELECT+Id,CaseNumber+FROM+Case+ORDER+BY+Id+ASC
+      method: GET
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding:
+        - chunked
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"totalSize":3,"done":true,"records":[{"attributes":{"type":"Case","url":"/services/data/v58.0/sobjects/Case/5008Z00001xKVNCQA4"},"Id":"5008Z00001xKVNCQA4","CaseNumber":"00001001"},{"attributes":{"type":"Case","url":"/services/data/v58.0/sobjects/Case/5008Z00001xKVNDQA4"},"Id":"5008Z00001xKVNDQA4","CaseNumber":"00001000"},{"attributes":{"type":"Case","url":"/services/data/v58.0/sobjects/Case/5008Z00001xKVNEQA4"},"Id":"5008Z00001xKVNEQA4","CaseNumber":"00001002"}]}'
+      headers:
+        Cache-Control:
+          - no-cache,must-revalidate,max-age=0,no-store,private
+        Content-Type:
+          - application/json;charset=UTF-8
+        Date:
+          - Mon, 16 Oct 2023 16:56:53 GMT
+        Set-Cookie:
+          - CookieConsentPolicy=0:1; path=/; expires=Tue, 15-Oct-2024 16:56:53 GMT; Max-Age=31536000
+          - LSKey-c$CookieConsentPolicy=0:1; path=/; expires=Tue, 15-Oct-2024 16:56:53 GMT; Max-Age=31536000
+          - BrowserId=AeGcN2xFEe6nZQGng3nYoA; domain=.salesforce.com; path=/; expires=Tue, 15-Oct-2024 16:56:53 GMT; Max-Age=31536000
+        Sforce-Limit-Info:
+          - api-usage=13/15000
+        Strict-Transport-Security:
+          - max-age=63072000; includeSubDomains
+        Vary:
+          - Accept-Encoding
+        X-Content-Type-Options:
+          - nosniff
+        X-Robots-Tag:
+          - none
+        X-Xss-Protection:
+          - 1; mode=block
+      status: 200 OK
+      code: 200
+      duration: 531.638104ms

@@ -1,0 +1,89 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: admin.googleapis.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+      url: https://admin.googleapis.com/admin/directory/v1/groups?domain=sgnldemos.com&maxResults=2
+      method: GET
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: |
+        {
+          "kind": "admin#directory#groups",
+          "etag": "\"OgGr5k3K9Y5ATXvRGH2u3OKSYpWBthUtvh8XRXQHGKs/WqWiNlGA_9bfJvbD22E2dN372Eo\"",
+          "groups": [
+            {
+              "kind": "admin#directory#group",
+              "id": "01qoc8b13vgdlqb",
+              "etag": "\"OgGr5k3K9Y5ATXvRGH2u3OKSYpWBthUtvh8XRXQHGKs/jegUmo9HAPpclSc2UeC_v9oHm2E\"",
+              "email": "emptygroup@sgnldemos.com",
+              "name": "Empty Group",
+              "directMembersCount": "0",
+              "description": "",
+              "adminCreated": true,
+              "nonEditableAliases": [
+                "emptygroup@sgnldemos.com.test-google-a.com"
+              ]
+            },
+            {
+              "kind": "admin#directory#group",
+              "id": "048pi1tg0qf1f8g",
+              "etag": "\"OgGr5k3K9Y5ATXvRGH2u3OKSYpWBthUtvh8XRXQHGKs/n5phxV9NHrbJaK4QhiAp3pDR21k\"",
+              "email": "group2@sgnldemos.com",
+              "name": "Group2",
+              "directMembersCount": "3",
+              "description": "",
+              "adminCreated": true,
+              "nonEditableAliases": [
+                "group2@sgnldemos.com.test-google-a.com"
+              ]
+            }
+          ],
+          "nextPageToken": "Q2lVd0xDSm5jbTkxY0RKQWMyZHViR1JsYlc5ekxtTnZiU0lzTnpVM05EWTFNVFExTVRnMFNBTmdoNWJnNmY3X19fX19BUT09"
+        }
+      headers:
+        Alt-Svc:
+          - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+        Cache-Control:
+          - private
+        Content-Type:
+          - application/json; charset=UTF-8
+        Date:
+          - Tue, 23 Apr 2024 15:07:14 GMT
+        Etag:
+          - '"OgGr5k3K9Y5ATXvRGH2u3OKSYpWBthUtvh8XRXQHGKs/WqWiNlGA_9bfJvbD22E2dN372Eo"'
+        Server:
+          - ESF
+        Vary:
+          - Origin
+          - X-Origin
+          - Referer
+        X-Content-Type-Options:
+          - nosniff
+        X-Frame-Options:
+          - SAMEORIGIN
+        X-Xss-Protection:
+          - "0"
+      status: 200 OK
+      code: 200
+      duration: 428.3847ms

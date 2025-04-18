@@ -1,0 +1,54 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: test-instance.api.identitynow-demo.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+        Content-Type:
+          - application/json
+      url: https://test-instance.api.identitynow-demo.com/v3/accounts?limit=3&offset=0
+      method: GET
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: false
+      body: '[{"authoritative":false,"systemAccount":false,"uncorrelated":true,"features":"SEARCH, UNLOCK, SYNC_PROVISIONING, PASSWORD, GROUP_PROVISIONING, ENABLE, PROVISIONING","uuid":null,"nativeIdentity":"0e826bf03710200044e0bfc8bcbe5d85","description":null,"disabled":false,"locked":false,"manuallyCorrelated":false,"hasEntitlements":false,"sourceId":"1fb19cd2dcd440b09711aca31dabf616","sourceName":"ServiceNow test-instance","identityId":"0017c13884f348c2bca7433480b7a68a","identity":{"type":"IDENTITY","id":"0017c13884f348c2bca7433480b7a68a","name":"cyril.behen"},"attributes":{"calendar_integration":"Outlook","gender":"Male","user_name":"cyril.behen","sys_updated_on":"2022-09-10 12:46:42","sys_class_name":"User","notification":"Enable","sys_id":"0e826bf03710200044e0bfc8bcbe5d85","sys_updated_by":"system","sys_created_on":"2012-02-17 19:04:50","sys_domain":"global","company":"ACME North America","department":"Development","vip":"false","first_name":"Cyril","email":"cyril.behen@example.com","idNowDescription":"a300f8ca5d6cdf45c4b75622602c886ca2f6d8fca4bf9dfd9284856fc7a32e6a","sys_created_by":"admin","locked_out":"false","sys_mod_count":"5","active":"true","last_name":"Behen","cost_center":"Engineering","name":"Cyril Behen","location":"OMITTED","password_needs_reset":"false"},"id":"1a1bb825eb7e4f76b72fbecb27699b31","name":"cyril.behen","created":"2023-09-22T16:46:54.250Z","modified":"2023-09-22T16:46:54.325Z"},{"authoritative":false,"systemAccount":false,"uncorrelated":true,"features":"SEARCH, UNLOCK, SYNC_PROVISIONING, PASSWORD, GROUP_PROVISIONING, ENABLE, PROVISIONING","uuid":null,"nativeIdentity":"e46393fb1bd0b5509a55631e6e4bcbf7","description":null,"disabled":false,"locked":false,"manuallyCorrelated":false,"hasEntitlements":true,"sourceId":"1fb19cd2dcd440b09711aca31dabf616","sourceName":"ServiceNow test-instance","identityId":"0017db102a20473ab350a537a4037009","identity":{"type":"IDENTITY","id":"0017db102a20473ab350a537a4037009","name":"James.Grogg"},"attributes":{"calendar_integration":"Outlook","user_name":"James.Grogg","roles":["e098ecf6c0a80165002aaec84d906014"],"sys_updated_on":"2023-08-03 18:33:00","title":"ED Nurse","sys_class_name":"User","notification":"Enable","sys_id":"e46393fb1bd0b5509a55631e6e4bcbf7","sys_updated_by":"admin","sys_created_on":"2023-08-03 18:33:00","sys_domain":"global","vip":"false","first_name":"James","email":"james.grogg@248.sailpointtechnologies.com","idNowDescription":"77dbd87c31d4c34978af9f2bb4ba0af6165dd9b419353c067af057d4766b3126","sys_created_by":"admin","locked_out":"false","sys_mod_count":"0","active":"true","groups":["5b3c2f56db45e01061a5a5bb1396197f"],"last_name":"Grogg","phone":"+11111111111","name":"James Grogg","password_needs_reset":"false"},"id":"ba699287e60b4014bcc4319f30e9b59e","name":"James.Grogg","created":"2023-09-22T16:47:35.702Z","modified":"2023-09-22T16:47:35.797Z"},{"authoritative":false,"systemAccount":false,"uncorrelated":true,"features":"SEARCH, UNLOCK, SYNC_PROVISIONING, PASSWORD, GROUP_PROVISIONING, ENABLE, PROVISIONING","uuid":null,"nativeIdentity":"c4d78986dba8255020e7a6dc13961915","description":null,"disabled":false,"locked":false,"manuallyCorrelated":false,"hasEntitlements":true,"sourceId":"1fb19cd2dcd440b09711aca31dabf616","sourceName":"ServiceNow test-instance","identityId":"001cc9a80fd54633ba6c1b3f7b4a4052","identity":{"type":"IDENTITY","id":"001cc9a80fd54633ba6c1b3f7b4a4052","name":"Beth.Kalb"},"attributes":{"calendar_integration":"Outlook","user_name":"Beth.Kalb","roles":["e098ecf6c0a80165002aaec84d906014"],"sys_updated_on":"2023-01-23 10:58:23","title":"ED Nurse","sys_class_name":"User","notification":"Enable","sys_id":"c4d78986dba8255020e7a6dc13961915","sys_updated_by":"spadmin","sys_created_on":"2023-01-23 10:58:23","sys_domain":"global","vip":"false","first_name":"Beth","email":"@248.sailpointtechnologies.com","idNowDescription":"2826887c0f753f086ddb7019aa87a69bc49452c2f274e50ff019061223fcbffe","sys_created_by":"spadmin","locked_out":"false","sys_mod_count":"0","active":"true","groups":["5b3c2f56db45e01061a5a5bb1396197f"],"last_name":"Kalb","phone":"+11111111111","name":"Beth Kalb","password_needs_reset":"false"},"id":"08f557fac4f441e59cbe3b15c1989ffe","name":"Beth.Kalb","created":"2023-09-22T16:47:29.910Z","modified":"2023-09-22T16:47:30.043Z"}]'
+      headers:
+        Access-Control-Expose-Headers:
+          - Retry-After,Connection,SLPT-Request-ID,Content-Length,Date,X-Zuul-ServiceId,Content-Type
+        Cache-Control:
+          - no-cache, no-store, must-revalidate
+        Content-Type:
+          - application/json;charset=utf-8
+        Date:
+          - Wed, 06 Dec 2023 18:42:03 GMT
+        Server:
+          - nginx
+        Slpt-Request-Id:
+          - 5f9a9a077b6c41688b91571523fd4407
+        Vary:
+          - Origin
+          - Access-Control-Request-Method
+          - Access-Control-Request-Headers
+        X-Robots-Tag:
+          - noindex
+      status: 200 OK
+      code: 200
+      duration: 409.048912ms

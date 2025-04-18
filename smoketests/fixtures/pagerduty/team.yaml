@@ -1,0 +1,77 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: api.pagerduty.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Token token={{OMITTED}}
+      url: https://api.pagerduty.com/teams?offset=0&limit=3
+      method: GET
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: 776
+      uncompressed: false
+      body: '{"teams":[{"id":"PHKRHH4","name":"Admins","description":null,"type":"team","summary":"Admins","self":"https://api.pagerduty.com/teams/PHKRHH4","html_url":"https://nick.pagerduty.com/teams/PHKRHH4","default_role":"manager","parent":null},{"id":"PLWCIWU","name":"Developers","description":null,"type":"team","summary":"Developers","self":"https://api.pagerduty.com/teams/PLWCIWU","html_url":"https://nick.pagerduty.com/teams/PLWCIWU","default_role":"manager","parent":null},{"id":"PEO3H4E","name":"Marketing","description":null,"type":"team","summary":"Marketing","self":"https://api.pagerduty.com/teams/PEO3H4E","html_url":"https://nick.pagerduty.com/teams/PEO3H4E","default_role":"manager","parent":null}],"limit":3,"offset":0,"total":null,"more":true}'
+      headers:
+        Access-Control-Allow-Headers:
+          - Authorization, Content-Type, AuthorizationOauth, X-EARLY-ACCESS, From
+        Access-Control-Allow-Methods:
+          - GET, POST, PUT, DELETE, OPTIONS
+        Access-Control-Allow-Origin:
+          - "*"
+        Access-Control-Expose-Headers:
+          - ""
+        Access-Control-Max-Age:
+          - "1728000"
+        Cache-Control:
+          - max-age=0, private, must-revalidate
+        Content-Length:
+          - "776"
+        Content-Type:
+          - application/json
+        Date:
+          - Fri, 29 Sep 2023 22:49:11 GMT
+        Etag:
+          - W/"ef0553beca74a8270fb2332b854d3e98"
+        Feature-Policy:
+          - accelerometer 'none'; camera 'none'; geolocation 'none'; gyroscope 'none'; magnetometer 'none'; microphone 'none'; payment 'none'; usb 'none'
+        Referrer-Policy:
+          - strict-origin-when-cross-origin
+          - strict-origin-when-cross-origin
+        Server:
+          - nginx
+        Strict-Transport-Security:
+          - max-age=31536000; includeSubDomains
+        X-Content-Type-Options:
+          - nosniff
+          - nosniff
+        X-Download-Options:
+          - noopen
+        X-Frame-Options:
+          - SAMEORIGIN
+        X-Permitted-Cross-Domain-Policies:
+          - none
+        X-Request-Id:
+          - 9612e2a854ef4145ee31abff0145db1f
+        X-Xss-Protection:
+          - 1; mode=block
+          - 1; mode=block
+      status: 200 OK
+      code: 200
+      duration: 142.85666ms

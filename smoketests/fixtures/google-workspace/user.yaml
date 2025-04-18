@@ -1,0 +1,152 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: admin.googleapis.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+      url: https://admin.googleapis.com/admin/directory/v1/users?domain=sgnldemos.com&maxResults=2
+      method: GET
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: |
+        {
+          "kind": "admin#directory#users",
+          "etag": "\"OgGr5k3K9Y5ATXvRGH2u3OKSYpWBthUtvh8XRXQHGKs/vzcIYIl1rfwQ9T1bT40VOf0B3zQ\"",
+          "users": [
+            {
+              "kind": "admin#directory#user",
+              "id": "USER987654321",
+              "etag": "\"OgGr5k3K9Y5ATXvRGH2u3OKSYpWBthUtvh8XRXQHGKs/HFAgBzXOF0pogUtDLHSgZQ9lvls\"",
+              "primaryEmail": "user1@sgnldemos.com",
+              "name": {
+                "givenName": "user1",
+                "familyName": "user1",
+                "fullName": "user1 user1"
+              },
+              "isAdmin": true,
+              "isDelegatedAdmin": false,
+              "lastLoginTime": "2024-02-02T23:30:53.000Z",
+              "creationTime": "2024-02-02T23:30:06.000Z",
+              "agreedToTerms": true,
+              "suspended": false,
+              "archived": false,
+              "changePasswordAtNextLogin": false,
+              "ipWhitelisted": false,
+              "emails": [
+                {
+                  "address": "user1@sgnldemos.com",
+                  "primary": true
+                },
+                {
+                  "address": "user1@sgnldemos.com.test-google-a.com"
+                }
+              ],
+              "languages": [
+                {
+                  "languageCode": "en",
+                  "preference": "preferred"
+                }
+              ],
+              "nonEditableAliases": [
+                "user1@sgnldemos.com.test-google-a.com"
+              ],
+              "customerId": "CUST123456",
+              "orgUnitPath": "/",
+              "isMailboxSetup": true,
+              "isEnrolledIn2Sv": false,
+              "isEnforcedIn2Sv": false,
+              "includeInGlobalAddressList": true,
+              "recoveryEmail": "user1@sgnl.ai"
+            },
+            {
+              "kind": "admin#directory#user",
+              "id": "102475661842232156723",
+              "etag": "\"OgGr5k3K9Y5ATXvRGH2u3OKSYpWBthUtvh8XRXQHGKs/VaUMmgVxJHqNreIe-pK6XVo-Kyk\"",
+              "primaryEmail": "user2@sgnldemos.com",
+              "name": {
+                "givenName": "user2",
+                "familyName": "user2",
+                "fullName": "user2 user2"
+              },
+              "isAdmin": true,
+              "isDelegatedAdmin": false,
+              "lastLoginTime": "2024-04-22T15:33:41.000Z",
+              "creationTime": "2024-02-02T23:55:44.000Z",
+              "agreedToTerms": true,
+              "suspended": false,
+              "archived": false,
+              "changePasswordAtNextLogin": false,
+              "ipWhitelisted": false,
+              "emails": [
+                {
+                  "address": "user2@sgnldemos.com",
+                  "primary": true
+                },
+                {
+                  "address": "user2@sgnldemos.com.test-google-a.com"
+                }
+              ],
+              "languages": [
+                {
+                  "languageCode": "en",
+                  "preference": "preferred"
+                }
+              ],
+              "nonEditableAliases": [
+                "user2@sgnldemos.com.test-google-a.com"
+              ],
+              "customerId": "CUST123456",
+              "orgUnitPath": "/",
+              "isMailboxSetup": true,
+              "isEnrolledIn2Sv": false,
+              "isEnforcedIn2Sv": false,
+              "includeInGlobalAddressList": true
+            }
+          ],
+          "nextPageToken": "Q0FFUzhRSUJrUHpWQUVQZGkxVHRNVWU2Vm9GM3BuVGkyNWduYWlVRlFBRU5TNUZucG1uZVA0R1J2T0thRlgwUCtmZE5Qb1VGZzZuR3NJV1paazlqNlQ1R1VJT0pwbzRPZjFYL0tIMHcvOVdxUllWczB6V3lEaXhQYmtudndOeWo2ckVaYWM5aXJrS0M4MWJaN1M2ZHZHNGw4WElIeXVoTzA5UGk1bXZjaUg1T3IzSUwzN3BxVmlYbGJVUkhzWlNYYzNlekdHWS83R3laUThsU1FBdFIxTWFjL3psVlJLRVJHWklkL09IdXYrM1k2Y3c2WmZKWVVzT1Q5OHpSdXJ4M2pENzRsQmNCcnJjaDdrSjUwL0xLZEY4SjJUcTZnSzFNcytoWGdmaUREWTdvS2RYR2lrRzJTcDkzUUxBMEptQzdQSGJ1aUwvM1YyMTREYUthR09QTzVjcC8zQ2NzU3JkbFNpb2hnQ3hYZHRMeFdzNlJQVlhlelJpMDh5MTUrSCt6WVBZWjdYL2pLeE9jSmNDRUg5YkNBWUlVWkI3Uld4b3ZmTlFyZ3ZrcUxqS0daak4yRC9pQmVTU283WHMvU2QwbDVIdEpmV2pMY1l2SkNGWEVjRHEzbHV4a0NqbnJuc3ZZck0xVVFYYkl0enFVV250emRLTT0="
+        }
+      headers:
+        Alt-Svc:
+          - h3=":443"; ma=2592000,h3-29=":443"; ma=2592000
+        Cache-Control:
+          - private
+        Content-Type:
+          - application/json; charset=UTF-8
+        Date:
+          - Tue, 23 Apr 2024 08:25:17 GMT
+        Etag:
+          - '"OgGr5k3K9Y5ATXvRGH2u3OKSYpWBthUtvh8XRXQHGKs/vzcIYIl1rfwQ9T1bT40VOf0B3zQ"'
+        Server:
+          - ESF
+        Vary:
+          - Origin
+          - X-Origin
+          - Referer
+        X-Content-Type-Options:
+          - nosniff
+        X-Frame-Options:
+          - SAMEORIGIN
+        X-Xss-Protection:
+          - "0"
+      status: 200 OK
+      code: 200
+      duration: 341.1212ms

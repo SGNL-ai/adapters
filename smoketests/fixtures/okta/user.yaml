@@ -1,0 +1,77 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: test-instance.okta.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - SSWS {{OMITTED}}
+        Content-Type:
+          - application/json;okta-response=omitCredentials,omitCredentialsLinks
+      url: https://test-instance.okta.com/api/v1/users?limit=3
+      method: GET
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '[{"id":"00uabig334Y6bdCWr5d7","status":"STAGED","created":"2023-07-10T23:22:23.000Z","activated":null,"statusChanged":null,"lastLogin":null,"lastUpdated":"2023-07-10T23:22:23.000Z","passwordChanged":null,"type":{"id":"oty9gusvclZCIBrRV5d7"},"profile":{"firstName":"Micheal","lastName":"Scott","mobilePhone":null,"secondEmail":null,"login":"nick+mscott@sgnl.ai","email":"nick+mscott@sgnl.ai"},"_links":{"self":{"href":"https://test-instance.okta.com/api/v1/users/00uabig334Y6bdCWr5d7"}}},{"id":"00ucwpv0gzdQNHACm5d7","status":"STAGED","created":"2023-10-23T20:56:25.000Z","activated":null,"statusChanged":null,"lastLogin":null,"lastUpdated":"2023-10-23T20:56:25.000Z","passwordChanged":null,"type":{"id":"oty9gusvclZCIBrRV5d7"},"profile":{"firstName":"John","lastName":"Doe","mobilePhone":null,"secondEmail":null,"login":"nick+jdoe@sgnl.ai","email":"nick+jdoe@sgnl.ai"},"_links":{"self":{"href":"https://test-instance.okta.com/api/v1/users/00ucwpv0gzdQNHACm5d7"}}},{"id":"00uabigku0fl1RxTT5d7","status":"PROVISIONED","created":"2023-07-10T23:22:39.000Z","activated":"2023-07-10T23:22:39.000Z","statusChanged":"2023-07-10T23:22:39.000Z","lastLogin":null,"lastUpdated":"2023-07-11T14:14:13.000Z","passwordChanged":null,"type":{"id":"oty9gusvclZCIBrRV5d7"},"profile":{"firstName":"Pam","lastName":"Beasly","manager":"nick+mscott@sgnl.ai","mobilePhone":null,"secondEmail":null,"managerId":"00uabig334Y6bdCWr5d7","login":"nick+pbeasly@sgnl.ai","email":"nick+pbeasly@sgnl.ai"},"_links":{"self":{"href":"https://test-instance.okta.com/api/v1/users/00uabigku0fl1RxTT5d7"}}}]'
+      headers:
+        Cache-Control:
+          - no-cache, no-store
+        Content-Security-Policy:
+          - frame-ancestors 'self'
+        Content-Type:
+          - application/json
+        Date:
+          - Mon, 23 Oct 2023 20:57:45 GMT
+        Expires:
+          - "0"
+        Link:
+          - <https://test-instance.okta.com/api/v1/users?limit=3>; rel="self"
+          - <https://test-instance.okta.com/api/v1/users?after=2&limit=3>; rel="next"
+        P3p:
+          - CP="HONK"
+        Pragma:
+          - no-cache
+        Public-Key-Pins-Report-Only:
+          - pin-sha256="r5EfzZxQVvQpKo3AgYRaT7X2bDO/kj3ACwmxfdT2zt8="; pin-sha256="MaqlcUgk2mvY/RFSGeSwBRkI+rZ6/dxe/DuQfBT/vnQ="; pin-sha256="72G5IEvDEWn+EThf3qjR7/bQSWaS2ZSLqolhnO6iyJI="; pin-sha256="rrV6CLCCvqnk89gWibYT0JO6fNQ8cCit7GGoiVTjCOg="; max-age=60; report-uri="https://okta.report-uri.com/r/default/hpkp/reportOnly"
+        Server:
+          - nginx
+        Set-Cookie:
+          - sid="";Version=1;Path=/;Max-Age=0
+          - autolaunch_triggered=""; Expires=Thu, 01-Jan-1970 00:00:10 GMT; Path=/
+          - JSESSIONID={{OMITTED}}; Path=/; Secure; HttpOnly
+        Strict-Transport-Security:
+          - max-age=315360000; includeSubDomains
+        Vary:
+          - Accept-Encoding
+        X-Content-Type-Options:
+          - nosniff
+        X-Okta-Request-Id:
+          - ZTbeSWEzoCnMYUa3sMt5WwAACbM
+        X-Rate-Limit-Limit:
+          - "50"
+        X-Rate-Limit-Remaining:
+          - "49"
+        X-Rate-Limit-Reset:
+          - "1698094725"
+        X-Xss-Protection:
+          - "0"
+      status: 200 OK
+      code: 200
+      duration: 466.813767ms

@@ -1,0 +1,76 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 340
+      transfer_encoding: []
+      trailer: {}
+      host: api.github.com
+      remote_addr: ""
+      request_uri: ""
+      body: '{"query":"query {\n\t\torganization (login: \"dh-test-org-2\") {\n\t\t\tid\n\t\t\trepositories (first: 1) {\n\t\t\t\tpageInfo {\n\t\t\t\t\tendCursor\n\t\t\t\t\thasNextPage\n\t\t\t\t}\n\t\t\t\tnodes { allowUpdateBranch, collaborators { edges { node { id }, permission } }, createdAt, databaseId, id, name, pushedAt }\n\t\t\t}\n\t\t}\n    }"}'
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+        Content-Type:
+          - application/json
+      url: https://api.github.com/graphql
+      method: POST
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"data":{"organization":{"id":"O_kgDOCzkBcw","repositories":{"pageInfo":{"endCursor":"Y3Vyc29yOnYyOpHONOhh5Q==","hasNextPage":false},"nodes":[{"allowUpdateBranch":false,"collaborators":{"edges":[{"node":{"id":"U_kgDOBwOdDw"},"permission":"ADMIN"}]},"createdAt":"2024-11-13T03:10:55Z","databaseId":887644645,"id":"R_kgDONOhh5Q","name":"repo-1","pushedAt":"2024-11-13T03:11:44Z"}]}}}}'
+      headers:
+        Access-Control-Allow-Origin:
+          - "*"
+        Access-Control-Expose-Headers:
+          - ETag, Link, Location, Retry-After, X-GitHub-OTP, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Used, X-RateLimit-Resource, X-RateLimit-Reset, X-OAuth-Scopes, X-Accepted-OAuth-Scopes, X-Poll-Interval, X-GitHub-Media-Type, X-GitHub-SSO, X-GitHub-Request-Id, Deprecation, Sunset
+        Content-Security-Policy:
+          - default-src 'none'
+        Content-Type:
+          - application/json; charset=utf-8
+        Date:
+          - Wed, 13 Nov 2024 03:13:40 GMT
+        Github-Authentication-Token-Expiration:
+          - 2025-02-10 14:50:30 -0800
+        Referrer-Policy:
+          - origin-when-cross-origin, strict-origin-when-cross-origin
+        Server:
+          - github.com
+        Strict-Transport-Security:
+          - max-age=31536000; includeSubdomains; preload
+        Vary:
+          - Accept-Encoding, Accept, X-Requested-With
+        X-Content-Type-Options:
+          - nosniff
+        X-Frame-Options:
+          - deny
+        X-Github-Media-Type:
+          - github.v4; format=json
+        X-Github-Request-Id:
+          - 6428:15BB11:34CC268:35271BF:67341964
+        X-Ratelimit-Limit:
+          - "5000"
+        X-Ratelimit-Remaining:
+          - "4900"
+        X-Ratelimit-Reset:
+          - "1731468164"
+        X-Ratelimit-Resource:
+          - graphql
+        X-Ratelimit-Used:
+          - "100"
+        X-Xss-Protection:
+          - "0"
+      status: 200 OK
+      code: 200
+      duration: 360.178064ms
