@@ -694,10 +694,10 @@ func StringAttrValuesToRequestedType(attr *ldap_v3.EntryAttribute, isList bool,
 	}
 }
 
-func ResultCodeToHTTPStatusCode(ldapError *ldap_v3.Error) int {
-	logger := log.New(os.Stdout, "adapter", log.Lmicroseconds|log.LUTC|log.Lshortfile)
-
-	ldapToHTTP := map[uint16]int{
+// See https://github.com/go-ldap/ldap/blob/e80f029a818542002267960a6b8dae32d79d0994/v3/error.go#L10-L93
+// for all the LDAP releated error codes.
+var (
+	ldapToHTTPErrorCodes = map[uint16]int{
 		2:   http.StatusBadRequest, // invalid page result cookie
 		32:  http.StatusNotFound,
 		34:  http.StatusBadRequest,
@@ -708,15 +708,19 @@ func ResultCodeToHTTPStatusCode(ldapError *ldap_v3.Error) int {
 		50:  http.StatusForbidden,
 		12:  http.StatusNotImplemented,
 		201: http.StatusBadRequest,
-		999: http.StatusInternalServerError, // Default value for unknown LDAP result codes
 	}
-	if httpStatusCode, ok := ldapToHTTP[ldapError.ResultCode]; ok {
+)
+
+func ResultCodeToHTTPStatusCode(ldapError *ldap_v3.Error) int {
+	logger := log.New(os.Stdout, "adapter", log.Lmicroseconds|log.LUTC|log.Lshortfile)
+
+	if httpStatusCode, ok := ldapToHTTPErrorCodes[ldapError.ResultCode]; ok {
 		return httpStatusCode
 	}
 
 	logger.Printf("Unknown LDAP result code received: %v \t %v\n", ldapError.ResultCode, ldapError.Err.Error())
 
-	return ldapToHTTP[999]
+	return http.StatusInternalServerError // default error code
 }
 
 func DecodePageInfo(cursor *string) (*PageInfo, *framework.Error) {
