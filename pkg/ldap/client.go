@@ -30,7 +30,7 @@ type ConnectionParams struct {
 	IsLDAPS bool `json:"isLDAPS"`
 
 	// CertificateChain contains certificate chain to use for ldaps connection
-	CertificateChain string `json:"cretificateChain,omitempty"`
+	CertificateChain string `json:"certificateChain,omitempty"`
 }
 
 // Request is a request to the datasource.

@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/sgnl-ai/adapter-framework/pkg/connector"
-	v1proxy "github.com/sgnl-ai/adapter-framework/pkg/grpc_proxy/v1"
+	grpc_proxy_v1 "github.com/sgnl-ai/adapter-framework/pkg/grpc_proxy/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
 )
@@ -19,10 +19,11 @@ type TestProxyServer struct {
 	ResponseErrStr *string
 	Response       *string
 	Ci             *connector.ConnectorInfo
-	v1proxy.UnimplementedProxyServiceServer
+	grpc_proxy_v1.UnimplementedProxyServiceServer
 }
 
-func (s *TestProxyServer) ProxyRequest(_ context.Context, req *v1proxy.ProxyRequestMessage) (*v1proxy.Response, error) {
+func (s *TestProxyServer) ProxyRequest(_ context.Context, req *grpc_proxy_v1.ProxyRequestMessage,
+) (*grpc_proxy_v1.Response, error) {
 	if s.Ci != nil {
 		if req.ClientId != s.Ci.ClientID {
 			return nil, fmt.Errorf("Expected %v, got %v client id", req.ClientId, s.Ci.ClientID)
@@ -40,30 +41,30 @@ func (s *TestProxyServer) ProxyRequest(_ context.Context, req *v1proxy.ProxyRequ
 
 	// return error as part of the response payload
 	if s.ResponseErrStr != nil {
-		return &v1proxy.Response{
-			ResponseType: &v1proxy.Response_LdapSearchResponse{
-				LdapSearchResponse: &v1proxy.LDAPSearchResponse{
+		return &grpc_proxy_v1.Response{
+			ResponseType: &grpc_proxy_v1.Response_LdapSearchResponse{
+				LdapSearchResponse: &grpc_proxy_v1.LDAPSearchResponse{
 					Error: *s.ResponseErrStr,
 				},
 			}}, nil
 	}
 
 	// return valid response payload
-	return &v1proxy.Response{
-		ResponseType: &v1proxy.Response_LdapSearchResponse{
-			LdapSearchResponse: &v1proxy.LDAPSearchResponse{
+	return &grpc_proxy_v1.Response{
+		ResponseType: &grpc_proxy_v1.Response_LdapSearchResponse{
+			LdapSearchResponse: &grpc_proxy_v1.LDAPSearchResponse{
 				Response: *s.Response,
 			},
 		}}, nil
 }
 
-func ProxyTestCommonSetup(t *testing.T, proxy *TestProxyServer) (v1proxy.ProxyServiceClient, func()) {
+func ProxyTestCommonSetup(t *testing.T, proxy *TestProxyServer) (grpc_proxy_v1.ProxyServiceClient, func()) {
 	// Create in-memory listener
 	lis := bufconn.Listen(1024 * 1024)
 
 	// Create gRPC test server and serve from the in-memory listener
 	srv := grpc.NewServer()
-	v1proxy.RegisterProxyServiceServer(srv, proxy)
+	grpc_proxy_v1.RegisterProxyServiceServer(srv, proxy)
 
 	go srv.Serve(lis)
 
@@ -77,7 +78,7 @@ func ProxyTestCommonSetup(t *testing.T, proxy *TestProxyServer) (v1proxy.ProxySe
 		t.Fatalf("Failed to dial: %v", err)
 	}
 
-	client := v1proxy.NewProxyServiceClient(conn)
+	client := grpc_proxy_v1.NewProxyServiceClient(conn)
 
 	return client, func() {
 		conn.Close()

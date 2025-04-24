@@ -24,7 +24,7 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	"github.com/sgnl-ai/adapter-framework/pkg/connector"
-	v1proxy "github.com/sgnl-ai/adapter-framework/pkg/grpc_proxy/v1"
+	grpc_proxy_v1 "github.com/sgnl-ai/adapter-framework/pkg/grpc_proxy/v1"
 	customerror "github.com/sgnl-ai/adapters/pkg/errors"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 	"google.golang.org/grpc/status"
@@ -36,12 +36,13 @@ type Datasource struct {
 }
 
 type Dispatcher interface {
-	ProxyRequest(ctx context.Context, ci *connector.ConnectorInfo, request *Request) (*Response, *framework.Error)
+	ProxyRequest(ctx context.Context, ci *connector.ConnectorInfo,
+		request *Request) (*Response, *framework.Error)
 	Request(ctx context.Context, request *Request) (*Response, *framework.Error)
 }
 
 // NewClient returns a Client to query the datasource.
-func NewClient(proxy v1proxy.ProxyServiceClient) Client {
+func NewClient(proxy grpc_proxy_v1.ProxyServiceClient) Client {
 	return &Datasource{
 		Client: &ldapClient{
 			proxyClient: proxy,
@@ -49,32 +50,34 @@ func NewClient(proxy v1proxy.ProxyServiceClient) Client {
 	}
 }
 
-// LDAPClient for making LDAP search request directly to a publicly accessible LDAP server,
-// or for using a proxy client to access an on-premises LDAP server via the on-premises SGNL connector.
+// ldapClient for making LDAP search request directly to a publicly accessible LDAP server,
+// or for using a proxy client to access an on-premises LDAP server via the on-premises SGNL
+// connector.
 type ldapClient struct {
-	proxyClient v1proxy.ProxyServiceClient
+	proxyClient grpc_proxy_v1.ProxyServiceClient
 }
 
-// ProxyRequest proxies an LDAP adapter's request to a remote connector by sending a LdapSearchRequest
-// containing serialized request data.
-// The connector responds with the serialize, processed response.
-func (c *ldapClient) ProxyRequest(ctx context.Context, ci *connector.ConnectorInfo, request *Request) (
-	*Response, *framework.Error) {
+// ProxyRequest proxies an LDAP adapter's request to a remote connector by sending a
+// LdapSearchRequest containing serialized request data.
+// The connector responds with the serialized, processed response.
+func (c *ldapClient) ProxyRequest(
+	ctx context.Context, ci *connector.ConnectorInfo, request *Request,
+) (*Response, *framework.Error) {
 	data, err := json.Marshal(request)
 	if err != nil {
 		return nil, &framework.Error{
-			Message: fmt.Sprintf("Failed to proxy ldap request, %v", err),
+			Message: fmt.Sprintf("Failed to proxy LDAP request: %v", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		}
 	}
 
-	r := &v1proxy.ProxyRequestMessage{
+	r := &grpc_proxy_v1.ProxyRequestMessage{
 		ConnectorId: ci.ID,
 		ClientId:    ci.ClientID,
 		TenantId:    ci.TenantID,
-		Request: &v1proxy.Request{
-			RequestType: &v1proxy.Request_LdapSearchRequest{
-				LdapSearchRequest: &v1proxy.LDAPSearchRequest{
+		Request: &grpc_proxy_v1.Request{
+			RequestType: &grpc_proxy_v1.Request_LdapSearchRequest{
+				LdapSearchRequest: &grpc_proxy_v1.LDAPSearchRequest{
 					Request: string(data),
 				},
 			},
@@ -92,11 +95,14 @@ func (c *ldapClient) ProxyRequest(ctx context.Context, ci *connector.ConnectorIn
 			return response, nil
 		}
 
-		return nil, customerror.UpdateError(&framework.Error{
-			Message: fmt.Sprintf("Error searching LDAP server: - %v.", err),
-			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
-		},
-			customerror.WithRequestTimeoutMessage(err, request.RequestTimeoutSeconds),
+		return nil, customerror.UpdateError(
+			&framework.Error{
+				Message: fmt.Sprintf("Error searching LDAP server: %v", err),
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+			},
+			customerror.WithRequestTimeoutMessage(
+				err, request.RequestTimeoutSeconds,
+			),
 		)
 	}
 
@@ -111,7 +117,7 @@ func (c *ldapClient) ProxyRequest(ctx context.Context, ci *connector.ConnectorIn
 
 	if err = json.Unmarshal([]byte(ldapResp.Response), response); err != nil {
 		return nil, &framework.Error{
-			Message: fmt.Sprintf("Error unmarshalling ldap response from the proxy, %v.", err),
+			Message: fmt.Sprintf("Error unmarshalling LDAP response from the proxy: %v", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		}
 	}
@@ -119,35 +125,36 @@ func (c *ldapClient) ProxyRequest(ctx context.Context, ci *connector.ConnectorIn
 	return response, nil
 }
 
-// Request sends a paginated search query directly to an LDAP server and returns the processed response.
-func (c *ldapClient) Request(_ context.Context, request *Request) (*Response, *framework.Error) {
-	tlsConfig, sgnlErr := GetTLSConfig(request)
-	if sgnlErr != nil {
-		return nil, sgnlErr
+// Request sends a paginated search query directly to an LDAP server and returns the
+// processed response.
+func (c *ldapClient) Request(_ context.Context, request *Request,
+) (*Response, *framework.Error) {
+	tlsConfig, configErr := GetTLSConfig(request)
+	if configErr != nil {
+		return nil, configErr
 	}
 
 	conn, err := ldap_v3.DialURL(request.BaseURL, ldap_v3.DialWithTLSConfig(tlsConfig))
 	if err != nil {
 		return nil, &framework.Error{
-			Message: fmt.Sprintf("Failed to dial ldap server - %v", err),
+			Message: fmt.Sprintf("Failed to dial LDAP server: %v", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		}
 	}
 
-	// Bind credentials with connection
 	err = conn.Bind(request.BindDN, request.BindPassword)
 	if err != nil {
 		return nil, &framework.Error{
-			Message: fmt.Sprintf("Failed to bind credentials - %v", err),
+			Message: fmt.Sprintf("Failed to bind credentials: %v", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_AUTHENTICATION_FAILED,
 		}
 	}
 	defer conn.Close()
 
 	// Set cursor from the request (if exists)
-	pageControl, ferr := SetPageControl(request)
-	if err != nil {
-		return nil, ferr
+	pageControl, pageErr := setPageControl(request)
+	if pageErr != nil {
+		return nil, pageErr
 	}
 
 	filters, filterErr := SetFilters(request)
@@ -155,7 +162,7 @@ func (c *ldapClient) Request(_ context.Context, request *Request) (*Response, *f
 		return nil, filterErr
 	}
 
-	attributes := []string{}
+	attributes := make([]string, 0, len(request.Attributes))
 
 	for _, attr := range request.Attributes {
 		attributes = append(attributes, attr.ExternalId)
@@ -187,11 +194,14 @@ func (c *ldapClient) Request(_ context.Context, request *Request) (*Response, *f
 			return response, nil
 		}
 
-		return nil, customerror.UpdateError(&framework.Error{
-			Message: fmt.Sprintf("Error searching LDAP server: - %v.", err),
-			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
-		},
-			customerror.WithRequestTimeoutMessage(err, request.RequestTimeoutSeconds),
+		return nil, customerror.UpdateError(
+			&framework.Error{
+				Message: fmt.Sprintf("Error searching LDAP server: %v", err),
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+			},
+			customerror.WithRequestTimeoutMessage(
+				err, request.RequestTimeoutSeconds,
+			),
 		)
 	} else if (searchResult == nil || len(searchResult.Entries) == 0) &&
 		(request.Cursor == nil || request.Cursor.CollectionID == nil) {
@@ -221,7 +231,7 @@ func GetTLSConfig(request *Request) (*tls.Config, *framework.Error) {
 	decodedCertChain, err := base64.StdEncoding.DecodeString(request.CertificateChain)
 	if err != nil {
 		return nil, &framework.Error{
-			Message: fmt.Sprintf("Failed to load certificates - %v", err),
+			Message: fmt.Sprintf("Failed to load certificates: %v", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
 		}
 	}
@@ -236,9 +246,9 @@ func GetTLSConfig(request *Request) (*tls.Config, *framework.Error) {
 	}, nil
 }
 
-// SetPageControl for setting up the page control cookie based upon the
+// setPageControl for setting up the page control cookie based upon the
 // cursor value in the request.
-func SetPageControl(request *Request) (*ldap_v3.ControlPaging, *framework.Error) {
+func setPageControl(request *Request) (*ldap_v3.ControlPaging, *framework.Error) {
 	// Set cursor from the request (if exists)
 	pageControl := ldap_v3.NewControlPaging(uint32(request.PageSize))
 
@@ -251,7 +261,7 @@ func SetPageControl(request *Request) (*ldap_v3.ControlPaging, *framework.Error)
 		cookie, err := OctetStringToBytes(*pageInfo.NextPageCursor)
 		if err != nil {
 			return nil, &framework.Error{
-				Message: fmt.Sprintf("Failed to parse cursor value - %v", err),
+				Message: fmt.Sprintf("Failed to parse cursor value: %v", err),
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			}
 		}
@@ -402,8 +412,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		return nil, validationErr
 	}
 
-	ci, ok := connector.FromContext(ctx)
-	if ok {
+	if ci, ok := connector.FromContext(ctx); ok {
 		return d.Client.ProxyRequest(ctx, &ci, request)
 	}
 
@@ -432,7 +441,7 @@ func ProcessLDAPSearchResult(result *ldap_v3.SearchResult, response *Response, r
 		b, marshalErr := json.Marshal(pageInfo)
 		if marshalErr != nil {
 			return &framework.Error{
-				Message: fmt.Sprintf("Failed to create updated cursor: %v.", marshalErr),
+				Message: fmt.Sprintf("Failed to create updated cursor: %v", marshalErr),
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			}
 		}

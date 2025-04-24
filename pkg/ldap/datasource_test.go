@@ -18,7 +18,6 @@ import (
 	"github.com/sgnl-ai/adapter-framework/pkg/connector"
 	customerror "github.com/sgnl-ai/adapters/pkg/errors"
 	ldap "github.com/sgnl-ai/adapters/pkg/ldap"
-	ldap_adapter "github.com/sgnl-ai/adapters/pkg/ldap"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 	"google.golang.org/genproto/googleapis/rpc/code"
 	"google.golang.org/grpc/codes"
@@ -134,7 +133,7 @@ var (
 			BindPassword: "asdasd",
 			BaseDN:       "dc=example,dc=org",
 		},
-		EntityConfigMap: map[string]*ldap_adapter.EntityConfig{
+		EntityConfigMap: map[string]*ldap.EntityConfig{
 			"Person": {
 				Query: "(&(objectClass=person))",
 			},
@@ -255,7 +254,7 @@ func TestGivenRequestWithConnectorContextWhenProxyServiceReturnEmptyResponseThen
 
 func TestGivenRequestWithConnectorContextWhenProxyServiceReturnValidResponseThenGetPageReturnsHttpOkWithCorrectResponse(t *testing.T) {
 	// Arrange
-	testResponse := &ldap_adapter.Response{
+	testResponse := &ldap.Response{
 		StatusCode: http.StatusOK,
 		Objects:    []map[string]any{{"a": "b"}, {"c": "d"}},
 	}

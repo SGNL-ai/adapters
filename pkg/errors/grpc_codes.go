@@ -11,9 +11,10 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// Refer: https://pkg.go.dev/google.golang.org/grpc/codes?utm_source=godoc for
+// all the GRPC status codes.
 var (
 	GRPCStatusCodeToHTTP = map[code.Code]int{
-		//		code.Code_CANCELLED:           , // Client cancelled the request
 		code.Code_UNKNOWN:             http.StatusInternalServerError,
 		code.Code_INVALID_ARGUMENT:    http.StatusBadRequest,
 		code.Code_DEADLINE_EXCEEDED:   http.StatusGatewayTimeout,
