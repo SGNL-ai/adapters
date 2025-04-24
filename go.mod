@@ -18,7 +18,7 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
 	github.com/machinebox/graphql v0.2.2
-	github.com/sgnl-ai/adapter-framework v0.16.0
+	github.com/sgnl-ai/adapter-framework v0.16.1-0.20250424152901-90c73f04d529
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.36.0
 	google.golang.org/grpc v1.71.1
@@ -161,6 +161,6 @@ require (
 	google.golang.org/api v0.202.0 // indirect
 	google.golang.org/genproto v0.0.0-20241015192408-796eee8c2d53 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250106144421-5f5ef82da422 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250115164207-1a7da9e5054f // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250115164207-1a7da9e5054f
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
