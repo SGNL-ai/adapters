@@ -80,7 +80,7 @@ type testProxyClient struct {
 	proxiedRequest bool
 }
 
-func (c *testProxyClient) ProxyRequest(ctx context.Context, ci *connector.ConnectorInfo, req *ldap.Request) (*ldap.Response, *framework.Error) {
+func (c *testProxyClient) ProxyRequest(_ context.Context, ci *connector.ConnectorInfo, _ *ldap.Request) (*ldap.Response, *framework.Error) {
 	if !c.proxiedRequest {
 		return nil, &framework.Error{
 			Message: "Request is not supposed to be proxied",
@@ -101,7 +101,7 @@ func (c *testProxyClient) ProxyRequest(ctx context.Context, ci *connector.Connec
 	}, nil
 }
 
-func (c *testProxyClient) Request(ctx context.Context, req *ldap.Request) (*ldap.Response, *framework.Error) {
+func (c *testProxyClient) Request(_ context.Context, _ *ldap.Request) (*ldap.Response, *framework.Error) {
 	if c.proxiedRequest {
 		return nil, &framework.Error{}
 	}
@@ -157,6 +157,7 @@ func TestGivenRequestWithoutConnectorContextWhenGetPageRequestedThenLdapResponse
 	if err != nil {
 		t.Errorf("Error when requesting GetPage() for a datasource, %v", err)
 	}
+
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Expected %v, got %v http status code", http.StatusOK, resp.StatusCode)
 	}
@@ -186,6 +187,7 @@ func TestGivenRequestWithConnectorContextWhenGetPageRequestedThenLdapResponseSta
 	if err != nil {
 		t.Errorf("Error when requesting GetPage() for a datasource, %v", err)
 	}
+
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Expected %v, got %v http status code", http.StatusOK, resp.StatusCode)
 	}
@@ -197,7 +199,6 @@ var (
 		ClientID: "test-client-id",
 		TenantID: "test-tenant-id",
 	}
-	connectorConnFailedErrStr = "connector connection failed"
 )
 
 func TestGivenRequestWithConnectorContextWhenProxyServiceConnectionFailsWithGrpcErrThenGetPageReturnsResponseWithCorrectHttpErrCode(t *testing.T) {
@@ -228,6 +229,7 @@ func TestGivenRequestWithConnectorContextWhenProxyServiceConnectionFailsWithGrpc
 func TestGivenRequestWithConnectorContextWhenProxyServiceReturnEmptyResponseThenGetPageReturnsInternalError(t *testing.T) {
 	// Arrange
 	emptyResponse := ""
+
 	client, cleanup := testutil.ProxyTestCommonSetup(t, &testutil.TestProxyServer{
 		Ci:       &testConnectorInfo,
 		Response: &emptyResponse,
@@ -281,6 +283,7 @@ func TestGivenRequestWithConnectorContextWhenProxyServiceReturnValidResponseThen
 		t.Errorf("failed to match the error code, expected %v, got %v",
 			http.StatusOK, resp.StatusCode)
 	}
+
 	if diff := cmp.Diff(testResponse, resp); diff != "" {
 		t.Errorf("response payload mismatch (-want +got):%s", diff)
 	}

@@ -101,8 +101,8 @@ func (c *ldapClient) ProxyRequest(ctx context.Context, ci *connector.ConnectorIn
 	}
 
 	ldapResp := proxyResp.GetLdapSearchResponse()
-	if ldapResp == nil {
 
+	if ldapResp == nil {
 		return nil, &framework.Error{
 			Message: "Error received nil response from the proxy",
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
@@ -110,7 +110,6 @@ func (c *ldapClient) ProxyRequest(ctx context.Context, ci *connector.ConnectorIn
 	}
 
 	if err = json.Unmarshal([]byte(ldapResp.Response), response); err != nil {
-
 		return nil, &framework.Error{
 			Message: fmt.Sprintf("Error unmarshalling ldap response from the proxy, %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
@@ -213,7 +212,7 @@ func (c *ldapClient) Request(_ context.Context, request *Request) (*Response, *f
 	return response, nil
 }
 
-// GetTLSConfig creates a TLS config useing certchain from the request.
+// GetTLSConfig creates a TLS config using certchain from the request.
 func GetTLSConfig(request *Request) (*tls.Config, *framework.Error) {
 	if !request.IsLDAPS {
 		return &tls.Config{}, nil
@@ -226,7 +225,9 @@ func GetTLSConfig(request *Request) (*tls.Config, *framework.Error) {
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
 		}
 	}
+
 	caCertPool := x509.NewCertPool()
+
 	caCertPool.AppendCertsFromPEM(decodedCertChain)
 
 	return &tls.Config{
