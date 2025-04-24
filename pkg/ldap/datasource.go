@@ -32,10 +32,10 @@ import (
 
 // Datasource directly implements a Client interface to allow querying an external datasource.
 type Datasource struct {
-	Client LdapClient
+	Client Dispatcher
 }
 
-type LdapClient interface {
+type Dispatcher interface {
 	ProxyRequest(ctx context.Context, ci *connector.ConnectorInfo, request *Request) (*Response, *framework.Error)
 	Request(ctx context.Context, request *Request) (*Response, *framework.Error)
 }
@@ -58,7 +58,8 @@ type ldapClient struct {
 // ProxyRequest proxies an LDAP adapter's request to a remote connector by sending a LdapSearchRequest
 // containing serialized request data.
 // The connector responds with the serialize, processed response.
-func (c *ldapClient) ProxyRequest(ctx context.Context, ci *connector.ConnectorInfo, request *Request) (*Response, *framework.Error) {
+func (c *ldapClient) ProxyRequest(ctx context.Context, ci *connector.ConnectorInfo, request *Request) (
+	*Response, *framework.Error) {
 	data, err := json.Marshal(request)
 	if err != nil {
 		return nil, &framework.Error{
@@ -90,6 +91,7 @@ func (c *ldapClient) ProxyRequest(ctx context.Context, ci *connector.ConnectorIn
 
 			return response, nil
 		}
+
 		return nil, customerror.UpdateError(&framework.Error{
 			Message: fmt.Sprintf("Error searching LDAP server: - %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
@@ -119,7 +121,7 @@ func (c *ldapClient) ProxyRequest(ctx context.Context, ci *connector.ConnectorIn
 }
 
 // Request sends a paginated search query directly to an LDAP server and returns the processed response.
-func (c *ldapClient) Request(ctx context.Context, request *Request) (*Response, *framework.Error) {
+func (c *ldapClient) Request(_ context.Context, request *Request) (*Response, *framework.Error) {
 	tlsConfig, sgnlErr := GetTLSConfig(request)
 	if sgnlErr != nil {
 		return nil, sgnlErr
@@ -211,6 +213,7 @@ func (c *ldapClient) Request(ctx context.Context, request *Request) (*Response, 
 	return response, nil
 }
 
+// GetTLSConfig creates a TLS config useing certchain from the request.
 func GetTLSConfig(request *Request) (*tls.Config, *framework.Error) {
 	if !request.IsLDAPS {
 		return &tls.Config{}, nil
@@ -225,12 +228,15 @@ func GetTLSConfig(request *Request) (*tls.Config, *framework.Error) {
 	}
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM(decodedCertChain)
+
 	return &tls.Config{
 		RootCAs:    caCertPool,
 		ServerName: request.Host,
 	}, nil
 }
 
+// SetPageControl for setting up the page control cookie based upon the
+// cursor value in the request.
 func SetPageControl(request *Request) (*ldap_v3.ControlPaging, *framework.Error) {
 	// Set cursor from the request (if exists)
 	pageControl := ldap_v3.NewControlPaging(uint32(request.PageSize))
@@ -395,13 +401,12 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		return nil, validationErr
 	}
 
-	// TODO
 	ci, ok := connector.FromContext(ctx)
 	if ok {
 		return d.Client.ProxyRequest(ctx, &ci, request)
-	} else {
-		return d.Client.Request(ctx, request)
 	}
+
+	return d.Client.Request(ctx, request)
 }
 
 func ProcessLDAPSearchResult(result *ldap_v3.SearchResult, response *Response, request *Request) *framework.Error {
@@ -492,6 +497,7 @@ func ProcessLDAPSearchResult(result *ldap_v3.SearchResult, response *Response, r
 	}
 
 	response.Objects = objects
+
 	return nil
 }
 

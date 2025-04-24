@@ -1,3 +1,5 @@
+// Copyright 2025 SGNL.ai, Inc.
+
 package testutil
 
 import (
@@ -20,7 +22,7 @@ type TestProxyServer struct {
 	v1proxy.UnimplementedProxyServiceServer
 }
 
-func (s *TestProxyServer) ProxyRequest(ctx context.Context, req *v1proxy.ProxyRequestMessage) (*v1proxy.Response, error) {
+func (s *TestProxyServer) ProxyRequest(_ context.Context, req *v1proxy.ProxyRequestMessage) (*v1proxy.Response, error) {
 	if s.Ci != nil {
 		if req.ClientId != s.Ci.ClientID {
 			return nil, fmt.Errorf("Expected %v, got %v client id", req.ClientId, s.Ci.ClientID)
@@ -66,7 +68,7 @@ func ProxyTestCommonSetup(t *testing.T, proxy *TestProxyServer) (v1proxy.ProxySe
 	go srv.Serve(lis)
 
 	conn, err := grpc.DialContext(context.Background(), "bufnet",
-		grpc.WithContextDialer(func(ctx context.Context, _ string) (net.Conn, error) {
+		grpc.WithContextDialer(func(_ context.Context, _ string) (net.Conn, error) {
 			return lis.Dial()
 		}),
 		grpc.WithInsecure(),
