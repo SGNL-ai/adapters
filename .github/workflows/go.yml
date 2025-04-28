@@ -7,7 +7,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  ORGANIZATION: sgnl-ai
   CODE_COVERAGE_THRESHOLD: 60
   GOLANG_IMAGE: golang:1.24-bookworm
 
@@ -51,7 +50,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.ORGANIZATION }}/${{ github.event.repository.name }}
+          images: ${{ env.REGISTRY }}/${{ github.repository }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
             type=raw,value={{branch}}-{{sha}},enable={{is_default_branch}}
@@ -64,13 +63,13 @@ jobs:
         with:
           target: build
           context: .
-          tags: ${{ env.REGISTRY }}/${{ env.ORGANIZATION }}/${{ github.event.repository.name }}-test:${{ github.sha }}
+          tags: ${{ env.REGISTRY }}/${{ github.repository }}-test:${{ github.sha }}
           build-args: |
             GITHUB_USERNAME=sgnl-robot
             GITHUB_PAT=${{ secrets.SGNL_ROBOT_PAT }}
 
       - name: Run tests and code coverage 🧪
-        run: docker run --rm --network="host" -v /var/run/docker.sock:/var/run/docker.sock -v ${{ github.workspace }}/:/app/ ${{ env.REGISTRY }}/${{ env.ORGANIZATION }}/${{ github.event.repository.name }}-test:${{ github.sha }} go test -coverprofile=coverage.txt -covermode=atomic -v ./...
+        run: docker run --rm --network="host" -v /var/run/docker.sock:/var/run/docker.sock -v ${{ github.workspace }}/:/app/ ${{ env.REGISTRY }}/${{ github.repository }}-test:${{ github.sha }} go test -coverprofile=coverage.txt -covermode=atomic -v ./...
 
       # CodeCov
       - name: Upload coverage reports to Codecov
@@ -93,7 +92,7 @@ jobs:
       - name: Run Trivy image vulnerability scanner on run image 🔍
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.ORGANIZATION }}/${{ github.event.repository.name }}:${{ steps.meta.outputs.version }}
+          image-ref: ${{ env.REGISTRY }}/${{ github.repository }}:${{ steps.meta.outputs.version }}
           format: "table"
           exit-code: "1"
           ignore-unfixed: true
