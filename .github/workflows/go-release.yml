@@ -30,6 +30,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Prepare repository name
+        id: repo-name
+        run: |
+          echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
       # Get the 7 char commit SHA: https://github.com/benjlevesque/short-sha
       - uses: benjlevesque/short-sha@v3.0
         name: short-sha
@@ -41,14 +46,14 @@ jobs:
       - name: Pull main image
         id: pull-main-image
         run: |
-          echo "Pulling image: ${{ env.REGISTRY }}/${{ github.repository }}:main-${{ steps.short-sha.outputs.sha }}"
-          docker pull ${{ env.REGISTRY }}/${{ github.repository }}:main-${{ steps.short-sha.outputs.sha }}
+          echo "Pulling image: ${{ env.REGISTRY }}/${{ env.REPO_LC }}:main-${{ steps.short-sha.outputs.sha }}"
+          docker pull ${{ env.REGISTRY }}/${{ env.REPO_LC }}:main-${{ steps.short-sha.outputs.sha }}
 
       - name: Extract metadata (tags, labels) for sgnl-ai/adapters 🏷️
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}
+          images: ${{ env.REGISTRY }}/${{ env.REPO_LC }}
           flavor: |
             latest=false
           tags: |
@@ -58,8 +63,8 @@ jobs:
       - name: Tag and push the image on release
         id: tag-push-image
         run: |
-          echo "Old tag: ${{ env.REGISTRY }}/${{ github.repository }}:main-${{ steps.short-sha.outputs.sha }}"
+          echo "Old tag: ${{ env.REGISTRY }}/${{ env.REPO_LC }}:main-${{ steps.short-sha.outputs.sha }}"
           echo "New tag: ${{ steps.meta.outputs.tags }}"
-          docker tag ${{ env.REGISTRY }}/${{ github.repository }}:main-${{ steps.short-sha.outputs.sha }} ${{ steps.meta.outputs.tags }}
+          docker tag ${{ env.REGISTRY }}/${{ env.REPO_LC }}:main-${{ steps.short-sha.outputs.sha }} ${{ steps.meta.outputs.tags }}
           echo "Pushing new image: ${{ steps.meta.outputs.tags }}"
           docker push ${{ steps.meta.outputs.tags }}
