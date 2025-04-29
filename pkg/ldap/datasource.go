@@ -36,8 +36,7 @@ type Datasource struct {
 }
 
 type Dispatcher interface {
-	ProxyRequest(ctx context.Context, ci *connector.ConnectorInfo,
-		request *Request) (*Response, *framework.Error)
+	ProxyRequest(ctx context.Context, ci *connector.ConnectorInfo, request *Request) (*Response, *framework.Error)
 	Request(ctx context.Context, request *Request) (*Response, *framework.Error)
 }
 
@@ -66,7 +65,7 @@ func (c *ldapClient) ProxyRequest(
 	data, err := json.Marshal(request)
 	if err != nil {
 		return nil, &framework.Error{
-			Message: fmt.Sprintf("Failed to proxy LDAP request: %v", err),
+			Message: fmt.Sprintf("Failed to proxy LDAP request: %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		}
 	}
@@ -89,15 +88,14 @@ func (c *ldapClient) ProxyRequest(
 	proxyResp, err := c.proxyClient.ProxyRequest(ctx, r)
 	if err != nil {
 		if st, ok := status.FromError(err); ok {
-			code := customerror.GRPCStatusCodeToHTTPStatusCode(st, err)
-			response.StatusCode = code
+			response.StatusCode = customerror.GRPCErrStatusToHTTPStatusCode(st, err)
 
 			return response, nil
 		}
 
 		return nil, customerror.UpdateError(
 			&framework.Error{
-				Message: fmt.Sprintf("Error searching LDAP server: %v", err),
+				Message: fmt.Sprintf("Error searching LDAP server: %v.", err),
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			},
 			customerror.WithRequestTimeoutMessage(
@@ -117,7 +115,7 @@ func (c *ldapClient) ProxyRequest(
 
 	if err = json.Unmarshal([]byte(ldapResp.Response), response); err != nil {
 		return nil, &framework.Error{
-			Message: fmt.Sprintf("Error unmarshalling LDAP response from the proxy: %v", err),
+			Message: fmt.Sprintf("Error unmarshalling LDAP response from the proxy: %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		}
 	}
@@ -127,8 +125,7 @@ func (c *ldapClient) ProxyRequest(
 
 // Request sends a paginated search query directly to an LDAP server and returns the
 // processed response.
-func (c *ldapClient) Request(_ context.Context, request *Request,
-) (*Response, *framework.Error) {
+func (c *ldapClient) Request(_ context.Context, request *Request) (*Response, *framework.Error) {
 	tlsConfig, configErr := GetTLSConfig(request)
 	if configErr != nil {
 		return nil, configErr
@@ -137,7 +134,7 @@ func (c *ldapClient) Request(_ context.Context, request *Request,
 	conn, err := ldap_v3.DialURL(request.BaseURL, ldap_v3.DialWithTLSConfig(tlsConfig))
 	if err != nil {
 		return nil, &framework.Error{
-			Message: fmt.Sprintf("Failed to dial LDAP server: %v", err),
+			Message: fmt.Sprintf("Failed to dial LDAP server: %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		}
 	}
@@ -145,7 +142,7 @@ func (c *ldapClient) Request(_ context.Context, request *Request,
 	err = conn.Bind(request.BindDN, request.BindPassword)
 	if err != nil {
 		return nil, &framework.Error{
-			Message: fmt.Sprintf("Failed to bind credentials: %v", err),
+			Message: fmt.Sprintf("Failed to bind credentials: %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_AUTHENTICATION_FAILED,
 		}
 	}
@@ -188,7 +185,7 @@ func (c *ldapClient) Request(_ context.Context, request *Request,
 	if err != nil {
 		// Extract LDAP result code from the error
 		if ldapErr, ok := err.(*ldap_v3.Error); ok {
-			statusCode := ResultCodeToHTTPStatusCode(ldapErr)
+			statusCode := ldapErrToHTTPStatusCode(ldapErr)
 			response.StatusCode = statusCode
 
 			return response, nil
@@ -196,18 +193,22 @@ func (c *ldapClient) Request(_ context.Context, request *Request,
 
 		return nil, customerror.UpdateError(
 			&framework.Error{
-				Message: fmt.Sprintf("Error searching LDAP server: %v", err),
+				Message: fmt.Sprintf("Error searching LDAP server: %v.", err),
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			},
 			customerror.WithRequestTimeoutMessage(
 				err, request.RequestTimeoutSeconds,
 			),
 		)
-	} else if (searchResult == nil || len(searchResult.Entries) == 0) &&
-		(request.Cursor == nil || request.Cursor.CollectionID == nil) {
-		response.StatusCode = http.StatusNotFound
+	} else {
+		isEmptyResult := searchResult == nil || len(searchResult.Entries) == 0
+		isEmptyCursor := request.Cursor == nil || request.Cursor.CollectionID == nil
 
-		return response, nil
+		if isEmptyResult && isEmptyCursor {
+			response.StatusCode = http.StatusNotFound
+
+			return response, nil
+		}
 	}
 
 	// Indicating a successful LDAP search operation.
@@ -231,7 +232,7 @@ func GetTLSConfig(request *Request) (*tls.Config, *framework.Error) {
 	decodedCertChain, err := base64.StdEncoding.DecodeString(request.CertificateChain)
 	if err != nil {
 		return nil, &framework.Error{
-			Message: fmt.Sprintf("Failed to load certificates: %v", err),
+			Message: fmt.Sprintf("Failed to load certificates: %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
 		}
 	}
@@ -261,7 +262,7 @@ func setPageControl(request *Request) (*ldap_v3.ControlPaging, *framework.Error)
 		cookie, err := OctetStringToBytes(*pageInfo.NextPageCursor)
 		if err != nil {
 			return nil, &framework.Error{
-				Message: fmt.Sprintf("Failed to parse cursor value: %v", err),
+				Message: fmt.Sprintf("Failed to parse cursor value: %v.", err),
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			}
 		}
@@ -441,7 +442,7 @@ func ProcessLDAPSearchResult(result *ldap_v3.SearchResult, response *Response, r
 		b, marshalErr := json.Marshal(pageInfo)
 		if marshalErr != nil {
 			return &framework.Error{
-				Message: fmt.Sprintf("Failed to create updated cursor: %v", marshalErr),
+				Message: fmt.Sprintf("Failed to create updated cursor: %v.", marshalErr),
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			}
 		}
@@ -645,7 +646,7 @@ func StringAttrValuesToRequestedType(attr *ldap_v3.EntryAttribute, isList bool,
 			sddl, err := parser.SecurityDescriptorToString(attr.ByteValues[0])
 			if err != nil {
 				return nil, &framework.Error{
-					Message: fmt.Sprintf("Failed to parse a String(NT-Sec-Desc) syntax attribute: %s", attr.Name),
+					Message: fmt.Sprintf("Failed to parse a String(NT-Sec-Desc) syntax attribute: %s.", attr.Name),
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ATTRIBUTE_TYPE,
 				}
 			}
@@ -727,7 +728,7 @@ var (
 	}
 )
 
-func ResultCodeToHTTPStatusCode(ldapError *ldap_v3.Error) int {
+func ldapErrToHTTPStatusCode(ldapError *ldap_v3.Error) int {
 	logger := log.New(os.Stdout, "adapter", log.Lmicroseconds|log.LUTC|log.Lshortfile)
 
 	if httpStatusCode, ok := ldapToHTTPErrorCodes[ldapError.ResultCode]; ok {
