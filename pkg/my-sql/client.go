@@ -29,6 +29,9 @@ type Request struct {
 	// The external ID should match the table name on the MySQL database.
 	EntityExternalID string
 
+	// A filter to apply to the MySQL request when pulling data for the current entity.
+	Filter *string
+
 	// Cursor identifies the first object of the page to return, as returned by
 	// the last request for the entity.
 	// nil in the request for the first page.

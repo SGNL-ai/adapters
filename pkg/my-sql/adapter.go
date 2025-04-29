@@ -38,7 +38,7 @@ func (a *Adapter) GetPage(ctx context.Context, request *framework.Request[Config
 func (a *Adapter) RequestPageFromDatasource(
 	ctx context.Context, request *framework.Request[Config],
 ) framework.Response {
-	mySQLReq := &Request{
+	req := &Request{
 		Username:         request.Auth.Basic.Username,
 		Password:         request.Auth.Basic.Password,
 		BaseURL:          request.Address,
@@ -50,19 +50,25 @@ func (a *Adapter) RequestPageFromDatasource(
 	if request.Cursor != "" {
 		cursor, err := strconv.ParseInt(request.Cursor, 10, 64)
 		if err == nil {
-			mySQLReq.Cursor = &cursor
+			req.Cursor = &cursor
 		}
 	}
 
 	for _, attribute := range request.Entity.Attributes {
 		if attribute.UniqueId {
-			mySQLReq.UniqueAttributeExternalID = attribute.ExternalId
+			req.UniqueAttributeExternalID = attribute.ExternalId
 
 			break
 		}
 	}
 
-	resp, err := a.MySQLClient.GetPage(ctx, mySQLReq)
+	if request.Config.Filters != nil {
+		if curFilter, ok := request.Config.Filters[request.Entity.ExternalId]; ok {
+			req.Filter = &curFilter
+		}
+	}
+
+	resp, err := a.MySQLClient.GetPage(ctx, req)
 	if err != nil {
 		return framework.NewGetPageResponseError(err)
 	}

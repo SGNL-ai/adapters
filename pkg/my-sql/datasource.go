@@ -56,9 +56,16 @@ func (d *Datasource) GetPage(_ context.Context, request *Request) (*Response, *f
 		}
 	}
 
+	var filter string
+
+	if request.Filter != nil {
+		filter = *request.Filter
+	}
+
 	query := fmt.Sprintf(
-		"SELECT *, CAST(? as CHAR(50)) as str_id FROM %s ORDER BY str_id ASC LIMIT ? OFFSET ?",
+		"SELECT *, CAST(? as CHAR(50)) as str_id FROM %s %s ORDER BY str_id ASC LIMIT ? OFFSET ?",
 		request.EntityExternalID,
+		filter,
 	)
 
 	args := []any{

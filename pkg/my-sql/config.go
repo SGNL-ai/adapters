@@ -13,9 +13,13 @@ import (
 // nolint: godot
 /*
 {
-    "requestTimeoutSeconds": 10,
-    "localTimeZoneOffset": 43200,
-    "database": "sgnl"
+"re	questTimeoutSeconds": 10,
+	"localTimeZoneOffset": 43200,
+	"database": "sgnl",
+	"filters": {
+		"users": "WHERE active = true",
+		"groups": "WHERE x = y"
+	}
 }
 */
 type Config struct {
@@ -23,6 +27,8 @@ type Config struct {
 
 	// MySQL database to connect to.
 	Database string `json:"database,omitempty"`
+
+	Filters map[string]string `json:"filters,omitempty"`
 }
 
 // ValidateConfig validates that a Config received in a GetPage call is valid.
