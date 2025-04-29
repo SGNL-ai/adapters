@@ -191,25 +191,18 @@ func TestGivenRequestWithConnectorContextWhenGetPageRequestedThenLdapResponseSta
 	}
 }
 
-var (
-	testConnectorInfo = connector.ConnectorInfo{
-		ID:       "test-connector-id",
-		ClientID: "test-client-id",
-		TenantID: "test-tenant-id",
-	}
-)
-
 func TestGivenRequestWithConnectorContextWhenProxyServiceConnectionFailsWithGrpcErrThenGetPageReturnsResponseWithCorrectHttpErrCode(t *testing.T) {
 	// Arrange
 	client, cleanup := testutil.ProxyTestCommonSetup(t, &testutil.TestProxyServer{
-		Ci:      &testConnectorInfo,
-		GrpcErr: status.Errorf(codes.Unavailable, "aborted request"),
+		Ci:             &testutil.TestConnectorInfo,
+		GrpcErr:        status.Errorf(codes.Unavailable, "aborted request"),
+		IsLDAPResponse: true,
 	})
 	defer cleanup()
 
 	ds := ldap.NewClient(client)
 
-	ctx, _ := connector.WithContext(context.Background(), testConnectorInfo)
+	ctx, _ := connector.WithContext(context.Background(), testutil.TestConnectorInfo)
 
 	// Act
 	resp, ferr := ds.GetPage(ctx, testRequest)
@@ -229,14 +222,15 @@ func TestGivenRequestWithConnectorContextWhenProxyServiceReturnEmptyResponseThen
 	emptyResponse := ""
 
 	client, cleanup := testutil.ProxyTestCommonSetup(t, &testutil.TestProxyServer{
-		Ci:       &testConnectorInfo,
-		Response: &emptyResponse,
+		Ci:             &testutil.TestConnectorInfo,
+		Response:       &emptyResponse,
+		IsLDAPResponse: true,
 	})
 	defer cleanup()
 
 	ds := ldap.NewClient(client)
 
-	ctx, _ := connector.WithContext(context.Background(), testConnectorInfo)
+	ctx, _ := connector.WithContext(context.Background(), testutil.TestConnectorInfo)
 
 	// Act
 	resp, ferr := ds.GetPage(ctx, testRequest)
@@ -261,14 +255,15 @@ func TestGivenRequestWithConnectorContextWhenProxyServiceReturnValidResponseThen
 	respData := string(data)
 
 	client, cleanup := testutil.ProxyTestCommonSetup(t, &testutil.TestProxyServer{
-		Ci:       &testConnectorInfo,
-		Response: &respData,
+		Ci:             &testutil.TestConnectorInfo,
+		Response:       &respData,
+		IsLDAPResponse: true,
 	})
 	defer cleanup()
 
 	ds := ldap.NewClient(client)
 
-	ctx, _ := connector.WithContext(context.Background(), testConnectorInfo)
+	ctx, _ := connector.WithContext(context.Background(), testutil.TestConnectorInfo)
 
 	// Act
 	resp, ferr := ds.GetPage(ctx, testRequest)

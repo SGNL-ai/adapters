@@ -288,7 +288,7 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
-					Message: "Failed to connect to datasource: failed to connect to mock sql service",
+					Message: "Failed to connect to datasource: failed to connect to mock sql service.",
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
 				},
 			},
@@ -334,7 +334,7 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
-					Message: "Failed to query datasource: failed to query mock sql service",
+					Message: "Failed to query datasource: failed to query mock sql service.",
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
 				},
 			},
