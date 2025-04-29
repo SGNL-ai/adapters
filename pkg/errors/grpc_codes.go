@@ -11,6 +11,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// Refer: https://pkg.go.dev/google.golang.org/grpc/codes?utm_source=godoc for
+// all the GRPC status codes.
 var (
 	GRPCStatusCodeToHTTP = map[codes.Code]int{
 		codes.Unknown:            http.StatusInternalServerError,
