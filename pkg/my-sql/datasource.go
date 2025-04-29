@@ -35,12 +35,12 @@ func NewClient(client SQLClient) Client {
 }
 
 // ProxyRequest sends serialized SQL query request to the on-premises connector.
-func (d *Datasource) ProxyRequest(ctx context.Context, request *Request,
-	ci *connector.ConnectorInfo) (*Response, *framework.Error) {
+func (d *Datasource) ProxyRequest(ctx context.Context, request *Request, ci *connector.ConnectorInfo,
+) (*Response, *framework.Error) {
 	data, err := json.Marshal(request)
 	if err != nil {
 		return nil, &framework.Error{
-			Message: fmt.Sprintf("Failed to proxy sql request, %v", err),
+			Message: fmt.Sprintf("Failed to proxy sql request, %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		}
 	}
@@ -63,14 +63,14 @@ func (d *Datasource) ProxyRequest(ctx context.Context, request *Request,
 	proxyResp, err := d.Client.Proxy(ctx, proxyRequest)
 	if err != nil {
 		if st, ok := status.FromError(err); ok {
-			code := customerror.GRPCStatusCodeToHTTPStatusCode(st, err)
+			code := customerror.GRPCErrStatusToHTTPStatusCode(st, err)
 			response.StatusCode = code
 
 			return response, nil
 		}
 
 		return nil, &framework.Error{
-			Message: fmt.Sprintf("Error querying SQL server: - %v.", err),
+			Message: fmt.Sprintf("Error querying SQL server: %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		}
 	}
@@ -85,7 +85,7 @@ func (d *Datasource) ProxyRequest(ctx context.Context, request *Request,
 
 	if err = json.Unmarshal([]byte(resp.Response), response); err != nil {
 		return nil, &framework.Error{
-			Message: fmt.Sprintf("Error unmarshalling SQL response from the proxy: %v", err),
+			Message: fmt.Sprintf("Error unmarshalling SQL response from the proxy: %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		}
 	}
@@ -95,15 +95,14 @@ func (d *Datasource) ProxyRequest(ctx context.Context, request *Request,
 
 // Request function to directly connect to the SQL datasource and execute a query
 // to fetch data.
-func (d *Datasource) Request(_ context.Context, request *Request,
-) (*Response, *framework.Error) {
+func (d *Datasource) Request(_ context.Context, request *Request) (*Response, *framework.Error) {
 	if err := request.SimpleSQLValidation(); err != nil {
 		return nil, err
 	}
 
 	if err := d.Client.Connect(request.DatasourceName()); err != nil {
 		return nil, &framework.Error{
-			Message: fmt.Sprintf("Failed to connect to datasource: %v", err),
+			Message: fmt.Sprintf("Failed to connect to datasource: %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
 		}
 	}
@@ -128,7 +127,7 @@ func (d *Datasource) Request(_ context.Context, request *Request,
 	rows, err := d.Client.Query(query, args...)
 	if err != nil {
 		return nil, &framework.Error{
-			Message: fmt.Sprintf("Failed to query datasource: %v", err),
+			Message: fmt.Sprintf("Failed to query datasource: %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
 		}
 	}
@@ -160,8 +159,7 @@ func (d *Datasource) Request(_ context.Context, request *Request,
 }
 
 // GetPage for requesting data from a datasource.
-func (d *Datasource) GetPage(ctx context.Context, request *Request,
-) (*Response, *framework.Error) {
+func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, *framework.Error) {
 	ci, ok := connector.FromContext(ctx)
 	if ok {
 		return d.ProxyRequest(ctx, request, &ci)
@@ -171,8 +169,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request,
 }
 
 // ParseResponse for parsing the SQL query response.
-func ParseResponse(rows *sql.Rows, request *Request,
-) ([]map[string]any, *framework.Error) {
+func ParseResponse(rows *sql.Rows, request *Request) ([]map[string]any, *framework.Error) {
 	objects := make([]map[string]any, 0)
 
 	// Get column names present in provided rows.
@@ -239,9 +236,8 @@ func ParseResponse(rows *sql.Rows, request *Request,
 				// so parse all numeric types as floats here.
 				// TODO [sc-42217]: Split out the logic to parse ints into a separate
 				// case once we add support for providing ints to the action framework.
-				case "DECIMAL", "NUMERIC", "FLOAT", "DOUBLE", "SMALLINT", "MEDIUMINT",
-					"INT", "INTEGER", "BIGINT", "UNSIGNED SMALLINT", "UNSIGNED MEDIUMINT",
-					"UNSIGNED INT", "UNSIGNED INTEGER", "UNSIGNED BIGINT":
+				case "DECIMAL", "NUMERIC", "FLOAT", "DOUBLE", "SMALLINT", "MEDIUMINT", "INT", "INTEGER", "BIGINT",
+					"UNSIGNED SMALLINT", "UNSIGNED MEDIUMINT", "UNSIGNED INT", "UNSIGNED INTEGER", "UNSIGNED BIGINT":
 					objects[idx][cols[i]], castErr = strconv.ParseFloat(str, 64)
 				case "BIT", "TINYINT", "BOOL", "BOOLEAN":
 					objects[idx][cols[i]], castErr = strconv.ParseBool(str)

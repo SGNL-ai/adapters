@@ -30,7 +30,7 @@ var (
 	}
 )
 
-func GRPCStatusCodeToHTTPStatusCode(s *status.Status, err error) int {
+func GRPCErrStatusToHTTPStatusCode(s *status.Status, err error) int {
 	logger := log.New(os.Stdout, "adapter", log.Lmicroseconds|log.LUTC|log.Lshortfile)
 
 	if httpStatusCode, ok := GRPCStatusCodeToHTTP[s.Code()]; ok {

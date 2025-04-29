@@ -36,11 +36,11 @@ func (s *TestProxyServer) ProxyRequest(_ context.Context, req *grpc_proxy_v1.Pro
 ) (*grpc_proxy_v1.Response, error) {
 	if s.Ci != nil {
 		if req.ClientId != s.Ci.ClientID {
-			return nil, fmt.Errorf("Expected %v, got %v client id", req.ClientId, s.Ci.ClientID)
+			return nil, fmt.Errorf("expected %v, got %v client id", req.ClientId, s.Ci.ClientID)
 		} else if req.ConnectorId != s.Ci.ID {
-			return nil, fmt.Errorf("Expected %v, got %v connector id", req.ConnectorId, s.Ci.ID)
+			return nil, fmt.Errorf("expected %v, got %v connector id", req.ConnectorId, s.Ci.ID)
 		} else if req.TenantId != s.Ci.TenantID {
-			return nil, fmt.Errorf("Expected %v, got %v tenant id", req.TenantId, s.Ci.TenantID)
+			return nil, fmt.Errorf("expected %v, got %v tenant id", req.TenantId, s.Ci.TenantID)
 		}
 	}
 
