@@ -40,6 +40,10 @@ type Request struct {
 	// UniqueAttributeExternalID is used to specify the unique ID that should be used when ordering results from
 	// the specified table.
 	UniqueAttributeExternalID string
+
+	// CastIntegersToStrings is a temporary configuration option to allow casting all integers to strings. This
+	// will be removed when the Adapter Framework is updated to allow non-string Unique IDs.
+	CastIntegersToStrings bool
 }
 
 // Response is a response returned by the datasource.

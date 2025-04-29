@@ -15,7 +15,7 @@ import (
 	_ "github.com/go-sql-driver/mysql" // Go MySQL Driver is an implementation of Go's database/sql/driver interface.
 )
 
-var validSQLTableName = regexp.MustCompile(`^[a-zA-Z0-9$_]*$`)
+var validSQLIdentifier = regexp.MustCompile(`^[a-zA-Z0-9$_]*$`)
 
 type Datasource struct {
 	Client SQLClient
@@ -49,20 +49,27 @@ func (d *Datasource) GetPage(_ context.Context, request *Request) (*Response, *f
 
 	// Perform simple validation on the table name to prevent SQL Ingestion attacks, since we can't use table
 	// names in prepared queries which leaves us vulnerable.
-	if valid := validSQLTableName.MatchString(request.EntityExternalID); !valid {
+	if valid := validSQLIdentifier.MatchString(request.EntityExternalID); !valid {
 		return nil, &framework.Error{
 			Message: "SQL table name validation failed: unsupported characters found.",
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
 		}
 	}
 
+	if valid := validSQLIdentifier.MatchString(request.UniqueAttributeExternalID); !valid {
+		return nil, &framework.Error{
+			Message: "SQL unique attribute validation failed: unsupported characters found.",
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
+		}
+	}
+
 	query := fmt.Sprintf(
-		"SELECT *, CAST(? as CHAR(50)) as str_id FROM %s ORDER BY str_id ASC LIMIT ? OFFSET ?",
+		"SELECT *, CAST(%s as CHAR(50)) as str_id FROM %s ORDER BY str_id ASC LIMIT ? OFFSET ?",
+		request.UniqueAttributeExternalID,
 		request.EntityExternalID,
 	)
 
 	args := []any{
-		request.UniqueAttributeExternalID,
 		request.PageSize,
 		cursor,
 	}
@@ -165,9 +172,13 @@ func ParseResponse(rows *sql.Rows, request *Request) ([]map[string]any, *framewo
 				switch types[i].DatabaseTypeName() {
 				// The adapter framework expects all numbers to be passed as floats, so parse all
 				// numeric types as floats here.
-				// TODO [sc-42217]: Split out the logic to parse ints into a separate case once we add
-				// support for providing ints to the action framework.
-				case "DECIMAL", "NUMERIC", "FLOAT", "DOUBLE", "SMALLINT", "MEDIUMINT", "INT", "INTEGER", "BIGINT", "UNSIGNED SMALLINT", "UNSIGNED MEDIUMINT", "UNSIGNED INT", "UNSIGNED INTEGER", "UNSIGNED BIGINT":
+				case "SMALLINT", "MEDIUMINT", "INT", "INTEGER", "BIGINT", "UNSIGNED SMALLINT", "UNSIGNED MEDIUMINT", "UNSIGNED INT", "UNSIGNED INTEGER", "UNSIGNED BIGINT":
+					if request.CastIntegersToStrings {
+						objects[idx][cols[i]] = str
+					} else {
+						objects[idx][cols[i]], castErr = strconv.ParseFloat(str, 64)
+					}
+				case "DECIMAL", "NUMERIC", "FLOAT", "DOUBLE":
 					objects[idx][cols[i]], castErr = strconv.ParseFloat(str, 64)
 				case "BIT", "TINYINT", "BOOL", "BOOLEAN":
 					objects[idx][cols[i]], castErr = strconv.ParseBool(str)

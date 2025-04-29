@@ -39,12 +39,13 @@ func (a *Adapter) RequestPageFromDatasource(
 	ctx context.Context, request *framework.Request[Config],
 ) framework.Response {
 	mySQLReq := &Request{
-		Username:         request.Auth.Basic.Username,
-		Password:         request.Auth.Basic.Password,
-		BaseURL:          request.Address,
-		PageSize:         request.PageSize,
-		EntityExternalID: request.Entity.ExternalId,
-		Database:         request.Config.Database,
+		Username:              request.Auth.Basic.Username,
+		Password:              request.Auth.Basic.Password,
+		BaseURL:               request.Address,
+		PageSize:              request.PageSize,
+		EntityExternalID:      request.Entity.ExternalId,
+		Database:              request.Config.Database,
+		CastIntegersToStrings: request.Config.CastIntegersToStrings,
 	}
 
 	if request.Cursor != "" {
