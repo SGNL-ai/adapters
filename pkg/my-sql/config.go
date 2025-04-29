@@ -9,16 +9,24 @@ import (
 )
 
 // Config is the configuration passed in each GetPage calls to the adapter.
+//
+// WARNING: In order to allow flexibility with filtering, we do NOT validate the provided filters. This effectively
+// means that any user with access to configure this SoR has access to execute any command on the database due to
+// SQL injection.
+//
+// Reasonable precautions should be made to ensure only authorized users have permission to configure this SoR / the
+// provided credentials only have the required privileges assigned (e.g. read access scoped to a specific table).
+//
 // Adapter configuration example:
 // nolint: godot
 /*
 {
-"re	questTimeoutSeconds": 10,
+	"requestTimeoutSeconds": 10,
 	"localTimeZoneOffset": 43200,
 	"database": "sgnl",
 	"filters": {
-		"users": "WHERE active = true",
-		"groups": "WHERE x = y"
+		"users": "(age > 18 AND country = 'USA') OR verified = TRUE",
+		"groups": "country IN ('USA', 'Canada')"
 	}
 }
 */
