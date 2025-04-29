@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
-	"strings"
 
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
@@ -57,21 +56,7 @@ func (d *Datasource) GetPage(_ context.Context, request *Request) (*Response, *f
 		}
 	}
 
-	var sb strings.Builder
-
-	sb.Grow(45 + 37 + len(request.EntityExternalID))
-
-	sb.WriteString("SELECT *, CAST(? as CHAR(50)) as str_id FROM ") // len=45
-	sb.WriteString(request.EntityExternalID)
-
-	if request.Filter != nil {
-		sb.Grow(7 + len(*request.Filter))
-
-		sb.WriteString(" WHERE ") // len=7
-		sb.WriteString(*request.Filter)
-	}
-
-	sb.WriteString(" ORDER BY str_id ASC LIMIT ? OFFSET ?") // len=37
+	query := ConstructQuery(request)
 
 	args := []any{
 		request.UniqueAttributeExternalID,
@@ -79,7 +64,7 @@ func (d *Datasource) GetPage(_ context.Context, request *Request) (*Response, *f
 		cursor,
 	}
 
-	rows, err := d.Client.Query(sb.String(), args...)
+	rows, err := d.Client.Query(query, args...)
 	if err != nil {
 		return nil, &framework.Error{
 			Message: fmt.Sprintf("Failed to query datasource: %v", err),

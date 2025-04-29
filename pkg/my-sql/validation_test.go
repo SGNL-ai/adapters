@@ -1,5 +1,4 @@
 // Copyright 2025 SGNL.ai, Inc.
-
 package mysql_test
 
 import (
