@@ -200,15 +200,15 @@ func (c *ldapClient) Request(_ context.Context, request *Request) (*Response, *f
 				err, request.RequestTimeoutSeconds,
 			),
 		)
-	} else {
-		isEmptyResult := searchResult == nil || len(searchResult.Entries) == 0
-		isEmptyCursor := request.Cursor == nil || request.Cursor.CollectionID == nil
+	}
 
-		if isEmptyResult && isEmptyCursor {
-			response.StatusCode = http.StatusNotFound
+	isEmptyResult := searchResult == nil || len(searchResult.Entries) == 0
+	isEmptyCursor := request.Cursor == nil || request.Cursor.CollectionID == nil
 
-			return response, nil
-		}
+	if isEmptyResult && isEmptyCursor {
+		response.StatusCode = http.StatusNotFound
+
+		return response, nil
 	}
 
 	// Indicating a successful LDAP search operation.

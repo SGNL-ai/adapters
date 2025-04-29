@@ -22,7 +22,8 @@ type TestProxyServer struct {
 	grpc_proxy_v1.UnimplementedProxyServiceServer
 }
 
-func (s *TestProxyServer) ProxyRequest(_ context.Context, req *grpc_proxy_v1.ProxyRequestMessage) (*grpc_proxy_v1.Response, error) {
+func (s *TestProxyServer) ProxyRequest(_ context.Context, req *grpc_proxy_v1.ProxyRequestMessage,
+) (*grpc_proxy_v1.Response, error) {
 	if s.Ci != nil {
 		if req.ClientId != s.Ci.ClientID {
 			return nil, fmt.Errorf("expected %v, got %v client id", req.ClientId, s.Ci.ClientID)
