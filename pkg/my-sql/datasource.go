@@ -261,7 +261,7 @@ func ParseResponse(rows *sql.Rows, request *Request) ([]map[string]any, *framewo
 
 	if err := rows.Err(); err != nil {
 		return nil, &framework.Error{
-			Message: fmt.Sprintf("Error when processing rows: %s.", err.Error()),
+			Message: fmt.Sprintf("Failed to process rows: %s.", err.Error()),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		}
 	}
