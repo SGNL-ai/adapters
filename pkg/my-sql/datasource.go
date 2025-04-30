@@ -224,6 +224,11 @@ func ParseResponse(rows *sql.Rows, request *Request) ([]map[string]any, *framewo
 				}
 			}
 
+			// If no data is returned for the current value, skip and don't return a value for this attribute.
+			if len(*b) == 0 {
+				continue
+			}
+
 			str := string(*b)
 
 			var castErr error

@@ -517,12 +517,7 @@ func TestAdapterGetPage(t *testing.T) {
 				Success: &framework.Page{
 					Objects: []framework.Object{
 						{
-							"active":          false,
-							"employee_number": 0,
-							"id":              "9cf5a596-0df2-4510-a403-9b514fd500b8",
-							"last_modified":   time.Date(0, 0, 0, 0, 0, 00, 00, time.UTC),
-							"name":            "",
-							"risk_score":      0,
+							"id": "9cf5a596-0df2-4510-a403-9b514fd500b8",
 						},
 					},
 				},
