@@ -176,7 +176,7 @@ func ParseResponse(rows *sql.Rows, request *Request) ([]map[string]any, *framewo
 	cols, err := rows.Columns()
 	if err != nil {
 		return nil, &framework.Error{
-			Message: err.Error(),
+			Message: fmt.Sprintf("Failed to retrieve column names: %s.", err.Error()),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
 		}
 	}
@@ -194,7 +194,7 @@ func ParseResponse(rows *sql.Rows, request *Request) ([]map[string]any, *framewo
 		err := rows.Scan(vals...)
 		if err != nil {
 			return nil, &framework.Error{
-				Message: err.Error(),
+				Message: fmt.Sprintf("Failed to scan current row: %s.", err.Error()),
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
 			}
 		}
@@ -222,7 +222,7 @@ func ParseResponse(rows *sql.Rows, request *Request) ([]map[string]any, *framewo
 			b, ok := v.(*sql.RawBytes)
 			if !ok || b == nil {
 				return nil, &framework.Error{
-					Message: "Failed to cast value to sql.RawBytes",
+					Message: "Failed to cast value to sql.RawBytes.",
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 				}
 			}
@@ -250,7 +250,7 @@ func ParseResponse(rows *sql.Rows, request *Request) ([]map[string]any, *framewo
 
 			if castErr != nil {
 				return nil, &framework.Error{
-					Message: fmt.Sprintf("Failed to parse attribute: (%s) %v", columnName, castErr),
+					Message: fmt.Sprintf("Failed to parse attribute: (%s) %v.", columnName, castErr),
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ATTRIBUTE_TYPE,
 				}
 			}
@@ -261,7 +261,7 @@ func ParseResponse(rows *sql.Rows, request *Request) ([]map[string]any, *framewo
 
 	if err := rows.Err(); err != nil {
 		return nil, &framework.Error{
-			Message: err.Error(),
+			Message: fmt.Sprintf("Error when processing rows: %s.", err.Error()),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		}
 	}
