@@ -520,6 +520,9 @@ func TestAdapterGetPage(t *testing.T) {
 							"id": "9cf5a596-0df2-4510-a403-9b514fd500b8",
 						},
 						{
+							"id": "8f678b7c-2571-45fe-ba01-a6cad31b02de",
+						},
+						{
 							"active":          true,
 							"employee_number": int64(1),
 							"id":              "a20bab52-52e3-46c2-bd6a-2ad1512f713f",
