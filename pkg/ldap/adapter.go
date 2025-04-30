@@ -24,7 +24,7 @@ type Adapter struct {
 // NewAdapter instantiates a new Adapter.
 func NewAdapter() framework.Adapter[Config] {
 	return &Adapter{
-		ADClient: &Datasource{},
+		ADClient: NewClient(nil),
 	}
 }
 
