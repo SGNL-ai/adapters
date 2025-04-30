@@ -4,10 +4,13 @@ package mysql
 import (
 	"context"
 	"fmt"
+	"regexp"
 
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 )
+
+var validSQLIdentifier = regexp.MustCompile(`^[a-zA-Z0-9$_]{1,128}$`)
 
 type Client interface {
 	GetPage(ctx context.Context, request *Request) (*Response, *framework.Error)

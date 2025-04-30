@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"regexp"
 	"strconv"
 
 	framework "github.com/sgnl-ai/adapter-framework"
@@ -20,8 +19,6 @@ import (
 
 	_ "github.com/go-sql-driver/mysql" // Go MySQL Driver is an implementation of Go's database/sql/driver interface.
 )
-
-var validSQLIdentifier = regexp.MustCompile(`^[a-zA-Z0-9$_]{1,128}$`)
 
 type Datasource struct {
 	Client SQLClient
