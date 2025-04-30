@@ -56,7 +56,7 @@ func (r *Request) DatasourceName() string {
 func (r *Request) SimpleSQLValidation() *framework.Error {
 	if valid := validSQLTableName.MatchString(r.EntityExternalID); !valid {
 		return &framework.Error{
-			Message: "SQL table name validation failed: unsupported characters found.",
+			Message: "SQL table name validation failed: unsupported characters found, or its len is < 1 or > 128.",
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
 		}
 	}

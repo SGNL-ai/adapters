@@ -21,7 +21,7 @@ import (
 	_ "github.com/go-sql-driver/mysql" // Go MySQL Driver is an implementation of Go's database/sql/driver interface.
 )
 
-var validSQLTableName = regexp.MustCompile(`^[a-zA-Z0-9$_]*$`)
+var validSQLTableName = regexp.MustCompile(`^[a-zA-Z0-9$_]{1,128}$`)
 
 type Datasource struct {
 	Client SQLClient
@@ -78,7 +78,7 @@ func (d *Datasource) ProxyRequest(ctx context.Context, request *Request, ci *con
 	resp := proxyResp.GetSqlQueryResponse()
 	if resp == nil {
 		return nil, &framework.Error{
-			Message: "Error received nil response from the proxy",
+			Message: "Error received nil response from the proxy.",
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		}
 	}

@@ -15,8 +15,7 @@ type SQLRow map[string]string
 type SQLColumnTypes map[string]string
 
 type SQLClient interface {
-	Proxy(ctx context.Context, req *grpc_proxy_v1.ProxyRequestMessage,
-	) (*grpc_proxy_v1.Response, error)
+	Proxy(ctx context.Context, req *grpc_proxy_v1.ProxyRequestMessage) (*grpc_proxy_v1.Response, error)
 	Connect(dataSourceName string) error
 	Query(query string, args ...any) (*sql.Rows, error)
 }
@@ -31,7 +30,7 @@ func NewDefaultSQLClient() SQLClient {
 }
 
 // Connect opens a database connection to the provided datasource.
-// The database is safe for concurrent use by multiplegoroutines and
+// The database is safe for concurrent use by multiple goroutines and
 // maintains its own pool of idle connections. Thus, the Connect function
 // should be called just once.
 //
@@ -77,7 +76,7 @@ func (c *defaultSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 	return rows, nil
 }
 
-func (c *defaultSQLClient) Proxy(ctx context.Context,
-	req *grpc_proxy_v1.ProxyRequestMessage) (*grpc_proxy_v1.Response, error) {
+func (c *defaultSQLClient) Proxy(ctx context.Context, req *grpc_proxy_v1.ProxyRequestMessage,
+) (*grpc_proxy_v1.Response, error) {
 	return c.proxy.ProxyRequest(ctx, req)
 }
