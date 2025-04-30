@@ -2,6 +2,7 @@
 package mysql
 
 import (
+	"context"
 	"database/sql"
 	"database/sql/driver"
 	"errors"
@@ -9,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	grpc_proxy_v1 "github.com/sgnl-ai/adapter-framework/pkg/grpc_proxy/v1"
 )
 
 type MockSQLClient struct {
@@ -20,8 +22,12 @@ func NewMockSQLClient() *MockSQLClient {
 	return &MockSQLClient{}
 }
 
+const (
+	TestDatasourceForConnectFailure = "test.connect.failure"
+)
+
 func (c *MockSQLClient) Connect(datasourceName string) error {
-	if strings.Contains(datasourceName, "testconnectfailure") {
+	if strings.Contains(datasourceName, TestDatasourceForConnectFailure) {
 		return errors.New("failed to connect to mock sql service")
 	}
 
@@ -192,4 +198,9 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 	}
 
 	return rows, nil
+}
+
+func (c *MockSQLClient) Proxy(_ context.Context, _ *grpc_proxy_v1.ProxyRequestMessage,
+) (*grpc_proxy_v1.Response, error) {
+	return nil, nil
 }

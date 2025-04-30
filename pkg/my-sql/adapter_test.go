@@ -280,7 +280,7 @@ func TestAdapterGetPage(t *testing.T) {
 						RequestTimeoutSeconds: testutil.GenPtr(10),
 						LocalTimeZoneOffset:   -18000, // UTC−05:00 (EST)
 					},
-					Database: "testconnectfailure",
+					Database: mysql.TestDatasourceForConnectFailure,
 				},
 				Ordered:  true,
 				PageSize: 5,
@@ -288,7 +288,7 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
-					Message: "Failed to connect to datasource: failed to connect to mock sql service",
+					Message: "Failed to connect to datasource: failed to connect to mock sql service.",
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
 				},
 			},
@@ -334,7 +334,7 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
-					Message: "Failed to query datasource: failed to query mock sql service",
+					Message: "Failed to query datasource: failed to query mock sql service.",
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
 				},
 			},
@@ -491,7 +491,7 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
-					Message: "SQL table name validation failed: unsupported characters found.",
+					Message: "SQL table name validation failed: unsupported characters found, or its len is < 1 or > 128.",
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
 				},
 			},
