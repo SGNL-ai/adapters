@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"regexp"
 	"strconv"
 
 	framework "github.com/sgnl-ai/adapter-framework"
@@ -20,8 +19,6 @@ import (
 
 	_ "github.com/go-sql-driver/mysql" // Go MySQL Driver is an implementation of Go's database/sql/driver interface.
 )
-
-var validSQLTableName = regexp.MustCompile(`^[a-zA-Z0-9$_]{1,128}$`)
 
 type Datasource struct {
 	Client SQLClient
@@ -114,12 +111,12 @@ func (d *Datasource) Request(_ context.Context, request *Request) (*Response, *f
 	}
 
 	query := fmt.Sprintf(
-		"SELECT *, CAST(? as CHAR(50)) as str_id FROM %s ORDER BY str_id ASC LIMIT ? OFFSET ?",
-		request.EntityExternalID,
+		"SELECT *, CAST(%s as CHAR(50)) as str_id FROM %s ORDER BY str_id ASC LIMIT ? OFFSET ?",
+		request.UniqueAttributeExternalID,
+		request.EntityConfig.ExternalId,
 	)
 
 	args := []any{
-		request.UniqueAttributeExternalID,
 		request.PageSize,
 		cursor,
 	}
@@ -176,16 +173,7 @@ func ParseResponse(rows *sql.Rows, request *Request) ([]map[string]any, *framewo
 	cols, err := rows.Columns()
 	if err != nil {
 		return nil, &framework.Error{
-			Message: err.Error(),
-			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
-		}
-	}
-
-	// Get column types present in provided rows.
-	types, err := rows.ColumnTypes()
-	if err != nil {
-		return nil, &framework.Error{
-			Message: err.Error(),
+			Message: fmt.Sprintf("Failed to retrieve column names: %s.", err.Error()),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
 		}
 	}
@@ -203,12 +191,27 @@ func ParseResponse(rows *sql.Rows, request *Request) ([]map[string]any, *framewo
 		err := rows.Scan(vals...)
 		if err != nil {
 			return nil, &framework.Error{
-				Message: err.Error(),
+				Message: fmt.Sprintf("Failed to scan current row: %s.", err.Error()),
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
 			}
 		}
 
 		for i, v := range vals {
+			columnName := cols[i]
+
+			var attribute *framework.AttributeConfig
+
+			for _, curAttribute := range request.EntityConfig.Attributes {
+				if curAttribute != nil && curAttribute.ExternalId == columnName {
+					attribute = curAttribute
+				}
+			}
+
+			// Skipping current attribute since this wasn't requested.
+			if attribute == nil {
+				continue
+			}
+
 			if len(objects) < idx+1 {
 				objects = append(objects, map[string]any{})
 			}
@@ -216,7 +219,7 @@ func ParseResponse(rows *sql.Rows, request *Request) ([]map[string]any, *framewo
 			b, ok := v.(*sql.RawBytes)
 			if !ok || b == nil {
 				return nil, &framework.Error{
-					Message: "Failed to cast value to sql.RawBytes",
+					Message: "Failed to cast value to sql.RawBytes.",
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 				}
 			}
@@ -225,33 +228,27 @@ func ParseResponse(rows *sql.Rows, request *Request) ([]map[string]any, *framewo
 
 			var castErr error
 
-			// The unique attribute always needs to be cast as a string (due to
-			// ingestion scheduler validation).
-			if cols[i] == request.UniqueAttributeExternalID {
-				objects[idx][cols[i]] = str
-			} else {
-				// Otherwise, cast each value based on the type.
-				switch types[i].DatabaseTypeName() {
-				// The adapter framework expects all numbers to be passed as floats,
-				// so parse all numeric types as floats here.
-				// TODO [sc-42217]: Split out the logic to parse ints into a separate
-				// case once we add support for providing ints to the action framework.
-				case "DECIMAL", "NUMERIC", "FLOAT", "DOUBLE", "SMALLINT", "MEDIUMINT", "INT", "INTEGER", "BIGINT",
-					"UNSIGNED SMALLINT", "UNSIGNED MEDIUMINT", "UNSIGNED INT", "UNSIGNED INTEGER", "UNSIGNED BIGINT":
-					objects[idx][cols[i]], castErr = strconv.ParseFloat(str, 64)
-				case "BIT", "TINYINT", "BOOL", "BOOLEAN":
-					objects[idx][cols[i]], castErr = strconv.ParseBool(str)
-				// Default to casting any other values
-				// (VARCHAR, TEXT, NVARCHAR, DATETIME, etc) as strings.
-				default:
-					objects[idx][cols[i]] = str
+			// Attempt to cast each attribute based on the requested type.
+			switch attribute.Type {
+			case framework.AttributeTypeBool:
+				objects[idx][columnName], castErr = strconv.ParseBool(str)
+			// The adapter framework expects all numbers to be passed as floats, so parse all
+			// numeric types as floats here.
+			case framework.AttributeTypeDouble, framework.AttributeTypeInt64:
+				objects[idx][columnName], castErr = strconv.ParseFloat(str, 64)
+			case framework.AttributeTypeString, framework.AttributeTypeDuration, framework.AttributeTypeDateTime:
+				objects[idx][columnName] = str
+			default:
+				return nil, &framework.Error{
+					Message: "Unsupported attribute type provided.",
+					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ATTRIBUTE_TYPE,
 				}
 			}
 
 			if castErr != nil {
 				return nil, &framework.Error{
-					Message: castErr.Error(),
-					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
+					Message: fmt.Sprintf("Failed to parse attribute: (%s) %v.", columnName, castErr),
+					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ATTRIBUTE_TYPE,
 				}
 			}
 		}
@@ -261,7 +258,7 @@ func ParseResponse(rows *sql.Rows, request *Request) ([]map[string]any, *framewo
 
 	if err := rows.Err(); err != nil {
 		return nil, &framework.Error{
-			Message: err.Error(),
+			Message: fmt.Sprintf("Failed to process rows: %s.", err.Error()),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		}
 	}

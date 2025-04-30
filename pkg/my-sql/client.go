@@ -4,10 +4,13 @@ package mysql
 import (
 	"context"
 	"fmt"
+	"regexp"
 
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 )
+
+var validSQLIdentifier = regexp.MustCompile(`^[a-zA-Z0-9$_]{1,128}$`)
 
 type Client interface {
 	GetPage(ctx context.Context, request *Request) (*Response, *framework.Error)
@@ -27,9 +30,8 @@ type Request struct {
 	// PageSize is the maximum number of objects to return from the entity.
 	PageSize int64 `json:"pageSize,omitempty"`
 
-	// EntityExternalID is the external ID of the entity.
-	// The external ID should match the table name on the MySQL database.
-	EntityExternalID string `json:"entityExternalID"`
+	// EntityConfig contains the entity configuration for the current request.
+	EntityConfig framework.EntityConfig
 
 	// Cursor identifies the first object of the page to return, as returned by
 	// the last request for the entity.
@@ -51,12 +53,19 @@ func (r *Request) DatasourceName() string {
 	)
 }
 
-// SimpleSQLValidation performs simple validation on the table name to prevent SQL Ingestion attacks,
-// since we can't use table names in prepared queries which leaves us vulnerable.
+// SimpleSQLValidation performs simple validation on specific fields to prevent SQL Ingestion attacks,
+// since we can't use table names or column names in prepared queries which leaves us vulnerable.
 func (r *Request) SimpleSQLValidation() *framework.Error {
-	if valid := validSQLTableName.MatchString(r.EntityExternalID); !valid {
+	if valid := validSQLIdentifier.MatchString(r.EntityConfig.ExternalId); !valid {
 		return &framework.Error{
-			Message: "SQL table name validation failed: unsupported characters found, or its len is < 1 or > 128.",
+			Message: "SQL table name validation failed: unsupported characters found or length is not in range 1-128.",
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
+		}
+	}
+
+	if valid := validSQLIdentifier.MatchString(r.UniqueAttributeExternalID); !valid {
+		return &framework.Error{
+			Message: "SQL unique attribute validation failed: unsupported characters found or length is not in range 1-128.",
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
 		}
 	}

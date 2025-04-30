@@ -11,6 +11,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/go-cmp/cmp"
+	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	"github.com/sgnl-ai/adapter-framework/pkg/connector"
 	grpc_proxy_v1 "github.com/sgnl-ai/adapter-framework/pkg/grpc_proxy/v1"
@@ -91,7 +92,7 @@ func TestGivenRequestWithoutConnectorCtxWhenGetPageRequestedThenSQLResponseStatu
 	db, mock, _ := sqlmock.New()
 	mockQuery := func(query string, _ ...any) (*sql.Rows, error) {
 		mock.ExpectQuery(
-			`SELECT \*, CAST\(\? as CHAR\(50\)\) as str_id FROM users ORDER BY str_id ASC LIMIT \? OFFSET \?`).
+			`SELECT \*, CAST\(id as CHAR\(50\)\) as str_id FROM users ORDER BY str_id ASC LIMIT \? OFFSET \?`).
 			WillReturnRows(sqlRows)
 
 		return db.Query(query)
@@ -104,7 +105,10 @@ func TestGivenRequestWithoutConnectorCtxWhenGetPageRequestedThenSQLResponseStatu
 
 	// Act
 	resp, err := ds.GetPage(context.Background(), &Request{
-		EntityExternalID: "users",
+		EntityConfig: framework.EntityConfig{
+			ExternalId: "users",
+		},
+		UniqueAttributeExternalID: "id",
 	})
 
 	// Assert

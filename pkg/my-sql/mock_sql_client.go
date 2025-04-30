@@ -44,26 +44,21 @@ func (c *MockSQLClient) Connect(datasourceName string) error {
 
 // nolint: lll
 func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
-	if len(args) != 3 {
+	if len(args) != 2 {
 		return nil, errors.New("mock sql client called with unsupported number of args")
 	}
 
-	_, ok := args[0].(string)
-	if !ok {
-		return nil, errors.New("mock sql client called with invalid arg[0], unable to cast `uniqueAttributeExternalID` to string")
-	}
-
-	pageSize, ok := args[1].(int64)
+	pageSize, ok := args[0].(int64)
 	if !ok {
 		return nil, errors.New("mock sql client called with invalid arg[1], unable to cast `pageSize` to int64")
 	}
 
-	cursor, ok := args[2].(int64)
+	cursor, ok := args[1].(int64)
 	if !ok {
 		return nil, errors.New("mock sql client called with invalid arg[2], unable to cast `cursor` to int64")
 	}
 
-	if query != "SELECT *, CAST(? as CHAR(50)) as str_id FROM users ORDER BY str_id ASC LIMIT ? OFFSET ?" {
+	if query != "SELECT *, CAST(id as CHAR(50)) as str_id FROM users ORDER BY str_id ASC LIMIT ? OFFSET ?" {
 		return nil, errors.New("mock sql client called with unsupported query")
 	}
 
@@ -92,7 +87,7 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 			values = append(values, driver.Value(arg))
 		}
 
-		c.Mock.ExpectQuery(`SELECT \*, CAST\(\? as CHAR\(50\)\) as str_id FROM users ORDER BY str_id ASC LIMIT \? OFFSET \?`).
+		c.Mock.ExpectQuery(`SELECT \*, CAST\(id as CHAR\(50\)\) as str_id FROM users ORDER BY str_id ASC LIMIT \? OFFSET \?`).
 			WithArgs(values...).
 			WillReturnRows(mockRows)
 
@@ -120,7 +115,7 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 			values = append(values, driver.Value(arg))
 		}
 
-		c.Mock.ExpectQuery(`SELECT \*, CAST\(\? as CHAR\(50\)\) as str_id FROM users ORDER BY str_id ASC LIMIT \? OFFSET \?`).
+		c.Mock.ExpectQuery(`SELECT \*, CAST\(id as CHAR\(50\)\) as str_id FROM users ORDER BY str_id ASC LIMIT \? OFFSET \?`).
 			WithArgs(values...).
 			WillReturnRows(mockRows)
 
@@ -145,7 +140,7 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 			values = append(values, driver.Value(arg))
 		}
 
-		c.Mock.ExpectQuery(`SELECT \*, CAST\(\? as CHAR\(50\)\) as str_id FROM users ORDER BY str_id ASC LIMIT \? OFFSET \?`).
+		c.Mock.ExpectQuery(`SELECT \*, CAST\(id as CHAR\(50\)\) as str_id FROM users ORDER BY str_id ASC LIMIT \? OFFSET \?`).
 			WithArgs(values...).
 			WillReturnRows(mockRows)
 
@@ -178,7 +173,7 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 			values = append(values, driver.Value(arg))
 		}
 
-		c.Mock.ExpectQuery(`SELECT \*, CAST\(\? as CHAR\(50\)\) as str_id FROM users ORDER BY str_id ASC LIMIT \? OFFSET \?`).
+		c.Mock.ExpectQuery(`SELECT \*, CAST\(id as CHAR\(50\)\) as str_id FROM users ORDER BY str_id ASC LIMIT \? OFFSET \?`).
 			WithArgs(values...).
 			WillReturnRows(mockRows)
 
