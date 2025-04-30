@@ -459,7 +459,7 @@ func TestAdapterGetPage(t *testing.T) {
 				},
 			},
 		},
-		"empty_values": {
+		"null_values": {
 			request: &framework.Request[mysql.Config]{
 				Address: "127.0.0.1",
 				Auth: &framework.DatasourceAuthCredentials{
@@ -518,6 +518,14 @@ func TestAdapterGetPage(t *testing.T) {
 					Objects: []framework.Object{
 						{
 							"id": "9cf5a596-0df2-4510-a403-9b514fd500b8",
+						},
+						{
+							"active":          true,
+							"employee_number": int64(1),
+							"id":              "a20bab52-52e3-46c2-bd6a-2ad1512f713f",
+							"last_modified":   time.Date(2025, 2, 12, 22, 38, 00, 00, time.UTC),
+							"name":            "Ernesto Gregg",
+							"risk_score":      float64(1),
 						},
 					},
 				},
