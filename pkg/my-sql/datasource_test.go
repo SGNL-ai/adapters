@@ -92,7 +92,7 @@ func TestGivenRequestWithoutConnectorCtxWhenGetPageRequestedThenSQLResponseStatu
 	db, mock, _ := sqlmock.New()
 	mockQuery := func(query string, _ ...any) (*sql.Rows, error) {
 		mock.ExpectQuery(
-			`SELECT \*, CAST\(\? as CHAR\(50\)\) as str_id FROM users ORDER BY str_id ASC LIMIT \? OFFSET \?`).
+			`SELECT \*, CAST\(id as CHAR\(50\)\) as str_id FROM users ORDER BY str_id ASC LIMIT \? OFFSET \?`).
 			WillReturnRows(sqlRows)
 
 		return db.Query(query)
@@ -108,6 +108,7 @@ func TestGivenRequestWithoutConnectorCtxWhenGetPageRequestedThenSQLResponseStatu
 		EntityConfig: framework.EntityConfig{
 			ExternalId: "users",
 		},
+		UniqueAttributeExternalID: "id",
 	})
 
 	// Assert

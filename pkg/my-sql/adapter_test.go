@@ -528,7 +528,7 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
-					Message: "SQL unique attribute validation failed: unsupported characters found.",
+					Message: "SQL unique attribute validation failed: unsupported characters found or length is not in range 1-128.",
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
 				},
 			},
