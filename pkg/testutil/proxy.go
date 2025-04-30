@@ -14,11 +14,21 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 )
 
+var (
+	TestConnectorInfo = connector.ConnectorInfo{
+		ID:       "test-connector-id",
+		ClientID: "test-client-id",
+		TenantID: "test-tenant-id",
+	}
+)
+
 type TestProxyServer struct {
 	GrpcErr        error
 	ResponseErrStr *string
 	Response       *string
 	Ci             *connector.ConnectorInfo
+	IsLDAPResponse bool
+	IsSQLResponse  bool
 	grpc_proxy_v1.UnimplementedProxyServiceServer
 }
 
@@ -41,21 +51,43 @@ func (s *TestProxyServer) ProxyRequest(_ context.Context, req *grpc_proxy_v1.Pro
 
 	// return error as part of the response payload
 	if s.ResponseErrStr != nil {
+		if s.IsLDAPResponse {
+			return &grpc_proxy_v1.Response{
+				ResponseType: &grpc_proxy_v1.Response_LdapSearchResponse{
+					LdapSearchResponse: &grpc_proxy_v1.LDAPSearchResponse{
+						Error: *s.ResponseErrStr,
+					},
+				}}, nil
+		} else if s.IsSQLResponse {
+			return &grpc_proxy_v1.Response{
+				ResponseType: &grpc_proxy_v1.Response_SqlQueryResponse{
+					SqlQueryResponse: &grpc_proxy_v1.SQLQueryResponse{
+						Error: *s.ResponseErrStr,
+					},
+				}}, nil
+		}
+
+		return nil, nil // default, even if ResponseErrStr is set.
+	}
+
+	// return valid response payload
+	if s.IsLDAPResponse {
 		return &grpc_proxy_v1.Response{
 			ResponseType: &grpc_proxy_v1.Response_LdapSearchResponse{
 				LdapSearchResponse: &grpc_proxy_v1.LDAPSearchResponse{
-					Error: *s.ResponseErrStr,
+					Response: *s.Response,
+				},
+			}}, nil
+	} else if s.IsSQLResponse {
+		return &grpc_proxy_v1.Response{
+			ResponseType: &grpc_proxy_v1.Response_SqlQueryResponse{
+				SqlQueryResponse: &grpc_proxy_v1.SQLQueryResponse{
+					Response: *s.Response,
 				},
 			}}, nil
 	}
 
-	// return valid response payload
-	return &grpc_proxy_v1.Response{
-		ResponseType: &grpc_proxy_v1.Response_LdapSearchResponse{
-			LdapSearchResponse: &grpc_proxy_v1.LDAPSearchResponse{
-				Response: *s.Response,
-			},
-		}}, nil
+	return nil, nil // default, even if ResponseErrStr is set.
 }
 
 func ProxyTestCommonSetup(t *testing.T, proxy *TestProxyServer) (grpc_proxy_v1.ProxyServiceClient, func()) {

@@ -19,7 +19,6 @@ import (
 	customerror "github.com/sgnl-ai/adapters/pkg/errors"
 	ldap "github.com/sgnl-ai/adapters/pkg/ldap"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
-	"google.golang.org/genproto/googleapis/rpc/code"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -192,25 +191,18 @@ func TestGivenRequestWithConnectorContextWhenGetPageRequestedThenLdapResponseSta
 	}
 }
 
-var (
-	testConnectorInfo = connector.ConnectorInfo{
-		ID:       "test-connector-id",
-		ClientID: "test-client-id",
-		TenantID: "test-tenant-id",
-	}
-)
-
 func TestGivenRequestWithConnectorContextWhenProxyServiceConnectionFailsWithGrpcErrThenGetPageReturnsResponseWithCorrectHttpErrCode(t *testing.T) {
 	// Arrange
 	client, cleanup := testutil.ProxyTestCommonSetup(t, &testutil.TestProxyServer{
-		Ci:      &testConnectorInfo,
-		GrpcErr: status.Errorf(codes.Unavailable, "aborted request"),
+		Ci:             &testutil.TestConnectorInfo,
+		GrpcErr:        status.Errorf(codes.Unavailable, "aborted request"),
+		IsLDAPResponse: true,
 	})
 	defer cleanup()
 
 	ds := ldap.NewClient(client)
 
-	ctx, _ := connector.WithContext(context.Background(), testConnectorInfo)
+	ctx, _ := connector.WithContext(context.Background(), testutil.TestConnectorInfo)
 
 	// Act
 	resp, ferr := ds.GetPage(ctx, testRequest)
@@ -219,9 +211,9 @@ func TestGivenRequestWithConnectorContextWhenProxyServiceConnectionFailsWithGrpc
 	}
 
 	// Assert
-	if customerror.GRPCStatusCodeToHTTP[code.Code_UNAVAILABLE] != resp.StatusCode {
+	if customerror.GRPCStatusCodeToHTTP[codes.Unavailable] != resp.StatusCode {
 		t.Errorf("failed to match the error code, expected %v, got %v",
-			customerror.GRPCStatusCodeToHTTP[code.Code_UNAVAILABLE], resp.StatusCode)
+			customerror.GRPCStatusCodeToHTTP[codes.Unavailable], resp.StatusCode)
 	}
 }
 
@@ -230,14 +222,15 @@ func TestGivenRequestWithConnectorContextWhenProxyServiceReturnEmptyResponseThen
 	emptyResponse := ""
 
 	client, cleanup := testutil.ProxyTestCommonSetup(t, &testutil.TestProxyServer{
-		Ci:       &testConnectorInfo,
-		Response: &emptyResponse,
+		Ci:             &testutil.TestConnectorInfo,
+		Response:       &emptyResponse,
+		IsLDAPResponse: true,
 	})
 	defer cleanup()
 
 	ds := ldap.NewClient(client)
 
-	ctx, _ := connector.WithContext(context.Background(), testConnectorInfo)
+	ctx, _ := connector.WithContext(context.Background(), testutil.TestConnectorInfo)
 
 	// Act
 	resp, ferr := ds.GetPage(ctx, testRequest)
@@ -262,14 +255,15 @@ func TestGivenRequestWithConnectorContextWhenProxyServiceReturnValidResponseThen
 	respData := string(data)
 
 	client, cleanup := testutil.ProxyTestCommonSetup(t, &testutil.TestProxyServer{
-		Ci:       &testConnectorInfo,
-		Response: &respData,
+		Ci:             &testutil.TestConnectorInfo,
+		Response:       &respData,
+		IsLDAPResponse: true,
 	})
 	defer cleanup()
 
 	ds := ldap.NewClient(client)
 
-	ctx, _ := connector.WithContext(context.Background(), testConnectorInfo)
+	ctx, _ := connector.WithContext(context.Background(), testutil.TestConnectorInfo)
 
 	// Act
 	resp, ferr := ds.GetPage(ctx, testRequest)

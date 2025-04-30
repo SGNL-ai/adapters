@@ -1,9 +1,11 @@
 // Copyright 2025 SGNL.ai, Inc.
+
 package mysql
 
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -11,11 +13,15 @@ import (
 
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
+	"github.com/sgnl-ai/adapter-framework/pkg/connector"
+	grpc_proxy_v1 "github.com/sgnl-ai/adapter-framework/pkg/grpc_proxy/v1"
+	customerror "github.com/sgnl-ai/adapters/pkg/errors"
+	"google.golang.org/grpc/status"
 
 	_ "github.com/go-sql-driver/mysql" // Go MySQL Driver is an implementation of Go's database/sql/driver interface.
 )
 
-var validSQLIdentifier = regexp.MustCompile(`^[a-zA-Z0-9$_]*$`)
+var validSQLIdentifier = regexp.MustCompile(`^[a-zA-Z0-9$_]{1,128}$`)
 
 type Datasource struct {
 	Client SQLClient
@@ -28,15 +34,75 @@ func NewClient(client SQLClient) Client {
 	}
 }
 
-func (d *Datasource) GetPage(_ context.Context, request *Request) (*Response, *framework.Error) {
-	datasourceName := fmt.Sprintf(
-		"%s:%s@tcp(%s)/%s",
-		request.Username, request.Password, request.BaseURL, request.Database,
-	)
-
-	if err := d.Client.Connect(datasourceName); err != nil {
+// ProxyRequest sends serialized SQL query request to the on-premises connector.
+func (d *Datasource) ProxyRequest(ctx context.Context, request *Request, ci *connector.ConnectorInfo,
+) (*Response, *framework.Error) {
+	data, err := json.Marshal(request)
+	if err != nil {
 		return nil, &framework.Error{
-			Message: fmt.Sprintf("Failed to connect to datasource: %v", err),
+			Message: fmt.Sprintf("Failed to proxy sql request, %v.", err),
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}
+	}
+
+	proxyRequest := &grpc_proxy_v1.ProxyRequestMessage{
+		ConnectorId: ci.ID,
+		ClientId:    ci.ClientID,
+		TenantId:    ci.TenantID,
+		Request: &grpc_proxy_v1.Request{
+			RequestType: &grpc_proxy_v1.Request_SqlQueryReq{
+				SqlQueryReq: &grpc_proxy_v1.SQLQueryRequest{
+					Request: string(data),
+				},
+			},
+		},
+	}
+
+	response := &Response{}
+
+	proxyResp, err := d.Client.Proxy(ctx, proxyRequest)
+	if err != nil {
+		if st, ok := status.FromError(err); ok {
+			code := customerror.GRPCErrStatusToHTTPStatusCode(st, err)
+			response.StatusCode = code
+
+			return response, nil
+		}
+
+		return nil, &framework.Error{
+			Message: fmt.Sprintf("Error querying SQL server: %v.", err),
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}
+	}
+
+	resp := proxyResp.GetSqlQueryResponse()
+	if resp == nil {
+		return nil, &framework.Error{
+			Message: "Error received nil response from the proxy.",
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}
+	}
+
+	if err = json.Unmarshal([]byte(resp.Response), response); err != nil {
+		return nil, &framework.Error{
+			Message: fmt.Sprintf("Error unmarshalling SQL response from the proxy: %v.", err),
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}
+	}
+
+	return response, nil
+}
+
+// Request function to directly connect to the SQL datasource and execute a query
+// to fetch data.
+func (d *Datasource) Request(_ context.Context, request *Request) (*Response, *framework.Error) {
+	if err := request.SimpleSQLValidation(); err != nil {
+		return nil, err
+	}
+
+	if err := d.Client.Connect(request.DatasourceName()); err != nil {
+		return nil, &framework.Error{
+			Message: fmt.Sprintf("Failed to connect to datasource: %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
 		}
 	}
@@ -45,22 +111,6 @@ func (d *Datasource) GetPage(_ context.Context, request *Request) (*Response, *f
 
 	if request.Cursor != nil {
 		cursor = *request.Cursor
-	}
-
-	// Perform simple validation on the table name to prevent SQL Ingestion attacks, since we can't use table
-	// names in prepared queries which leaves us vulnerable.
-	if valid := validSQLIdentifier.MatchString(request.EntityConfig.ExternalId); !valid {
-		return nil, &framework.Error{
-			Message: "SQL table name validation failed: unsupported characters found.",
-			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
-		}
-	}
-
-	if valid := validSQLIdentifier.MatchString(request.UniqueAttributeExternalID); !valid {
-		return nil, &framework.Error{
-			Message: "SQL unique attribute validation failed: unsupported characters found.",
-			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
-		}
 	}
 
 	query := fmt.Sprintf(
@@ -77,7 +127,7 @@ func (d *Datasource) GetPage(_ context.Context, request *Request) (*Response, *f
 	rows, err := d.Client.Query(query, args...)
 	if err != nil {
 		return nil, &framework.Error{
-			Message: fmt.Sprintf("Failed to query datasource: %v", err),
+			Message: fmt.Sprintf("Failed to query datasource: %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
 		}
 	}
@@ -93,7 +143,8 @@ func (d *Datasource) GetPage(_ context.Context, request *Request) (*Response, *f
 		Objects:    objs,
 	}
 
-	// If we have less objects than the current PageSize, this is the last page and we should not set a NextCursor.
+	// If we have less objects than the current PageSize, this is the last page and
+	// we should not set a NextCursor.
 	if len(objs) == int(request.PageSize) {
 		if request.Cursor == nil {
 			response.NextCursor = &request.PageSize
@@ -107,7 +158,17 @@ func (d *Datasource) GetPage(_ context.Context, request *Request) (*Response, *f
 	return response, nil
 }
 
-// nolint: lll
+// GetPage for requesting data from a datasource.
+func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, *framework.Error) {
+	ci, ok := connector.FromContext(ctx)
+	if ok {
+		return d.ProxyRequest(ctx, request, &ci)
+	}
+
+	return d.Request(ctx, request)
+}
+
+// ParseResponse for parsing the SQL query response.
 func ParseResponse(rows *sql.Rows, request *Request) ([]map[string]any, *framework.Error) {
 	objects := make([]map[string]any, 0)
 
@@ -182,7 +243,7 @@ func ParseResponse(rows *sql.Rows, request *Request) ([]map[string]any, *framewo
 				objects[idx][columnName] = str
 			default:
 				return nil, &framework.Error{
-					Message: "Unsupported attribute type provided",
+					Message: "Unsupported attribute type provided.",
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ATTRIBUTE_TYPE,
 				}
 			}

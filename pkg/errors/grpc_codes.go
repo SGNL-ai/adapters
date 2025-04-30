@@ -7,35 +7,35 @@ import (
 	"net/http"
 	"os"
 
-	"google.golang.org/genproto/googleapis/rpc/code"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 // Refer: https://pkg.go.dev/google.golang.org/grpc/codes?utm_source=godoc for
 // all the GRPC status codes.
 var (
-	GRPCStatusCodeToHTTP = map[code.Code]int{
-		code.Code_UNKNOWN:             http.StatusInternalServerError,
-		code.Code_INVALID_ARGUMENT:    http.StatusBadRequest,
-		code.Code_DEADLINE_EXCEEDED:   http.StatusGatewayTimeout,
-		code.Code_NOT_FOUND:           http.StatusNotFound,
-		code.Code_ALREADY_EXISTS:      http.StatusConflict,
-		code.Code_PERMISSION_DENIED:   http.StatusForbidden,
-		code.Code_RESOURCE_EXHAUSTED:  http.StatusTooManyRequests,
-		code.Code_FAILED_PRECONDITION: http.StatusBadRequest,
-		code.Code_ABORTED:             http.StatusConflict,
-		code.Code_OUT_OF_RANGE:        http.StatusBadRequest,
-		code.Code_UNIMPLEMENTED:       http.StatusNotImplemented,
-		code.Code_INTERNAL:            http.StatusInternalServerError,
-		code.Code_UNAVAILABLE:         http.StatusServiceUnavailable,
-		code.Code_DATA_LOSS:           http.StatusInternalServerError,
+	GRPCStatusCodeToHTTP = map[codes.Code]int{
+		codes.Unknown:            http.StatusInternalServerError,
+		codes.InvalidArgument:    http.StatusBadRequest,
+		codes.DeadlineExceeded:   http.StatusGatewayTimeout,
+		codes.NotFound:           http.StatusNotFound,
+		codes.AlreadyExists:      http.StatusConflict,
+		codes.PermissionDenied:   http.StatusForbidden,
+		codes.ResourceExhausted:  http.StatusTooManyRequests,
+		codes.FailedPrecondition: http.StatusBadRequest,
+		codes.Aborted:            http.StatusConflict,
+		codes.OutOfRange:         http.StatusBadRequest,
+		codes.Unimplemented:      http.StatusNotImplemented,
+		codes.Internal:           http.StatusInternalServerError,
+		codes.Unavailable:        http.StatusServiceUnavailable,
+		codes.DataLoss:           http.StatusInternalServerError,
 	}
 )
 
 func GRPCErrStatusToHTTPStatusCode(s *status.Status, err error) int {
 	logger := log.New(os.Stdout, "adapter", log.Lmicroseconds|log.LUTC|log.Lshortfile)
 
-	if httpStatusCode, ok := GRPCStatusCodeToHTTP[code.Code(s.Code())]; ok {
+	if httpStatusCode, ok := GRPCStatusCodeToHTTP[s.Code()]; ok {
 		return httpStatusCode
 	}
 
