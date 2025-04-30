@@ -50,12 +50,19 @@ func (r *Request) DatasourceName() string {
 	)
 }
 
-// SimpleSQLValidation performs simple validation on the table name to prevent SQL Ingestion attacks,
-// since we can't use table names in prepared queries which leaves us vulnerable.
+// SimpleSQLValidation performs simple validation on specific fields to prevent SQL Ingestion attacks,
+// since we can't use table names or column names in prepared queries which leaves us vulnerable.
 func (r *Request) SimpleSQLValidation() *framework.Error {
-	if valid := validSQLTableName.MatchString(r.EntityExternalID); !valid {
+	if valid := validSQLIdentifier.MatchString(r.EntityConfig.ExternalId); !valid {
 		return &framework.Error{
-			Message: "SQL table name validation failed: unsupported characters found, or its len is < 1 or > 128.",
+			Message: "SQL table name validation failed: unsupported characters found or length is not in range 1-128.",
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
+		}
+	}
+
+	if valid := validSQLIdentifier.MatchString(r.UniqueAttributeExternalID); !valid {
+		return &framework.Error{
+			Message: "SQL unique attribute validation failed: unsupported characters found.",
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
 		}
 	}

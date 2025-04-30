@@ -491,7 +491,7 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
-					Message: "SQL table name validation failed: unsupported characters found, or its len is < 1 or > 128.",
+					Message: "SQL table name validation failed: unsupported characters found or length is not in range 1-128.",
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
 				},
 			},
