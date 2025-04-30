@@ -280,7 +280,7 @@ func TestAdapterGetPage(t *testing.T) {
 						RequestTimeoutSeconds: testutil.GenPtr(10),
 						LocalTimeZoneOffset:   -18000, // UTC−05:00 (EST)
 					},
-					Database: mysql.TestDatasourceForConnectFalure,
+					Database: mysql.TestDatasourceForConnectFailure,
 				},
 				Ordered:  true,
 				PageSize: 5,

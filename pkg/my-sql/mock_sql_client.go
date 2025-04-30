@@ -23,11 +23,11 @@ func NewMockSQLClient() *MockSQLClient {
 }
 
 const (
-	TestDatasourceForConnectFalure = "test.connect.failure"
+	TestDatasourceForConnectFailure = "test.connect.failure"
 )
 
 func (c *MockSQLClient) Connect(datasourceName string) error {
-	if strings.Contains(datasourceName, TestDatasourceForConnectFalure) {
+	if strings.Contains(datasourceName, TestDatasourceForConnectFailure) {
 		return errors.New("failed to connect to mock sql service")
 	}
 
