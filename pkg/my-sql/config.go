@@ -15,8 +15,7 @@ import (
 {
     "requestTimeoutSeconds": 10,
     "localTimeZoneOffset": 43200,
-    "database": "sgnl",
-	"castIntegersToStrings": true,
+    "database": "sgnl"
 }
 */
 type Config struct {
@@ -24,10 +23,6 @@ type Config struct {
 
 	// MySQL database to connect to.
 	Database string `json:"database,omitempty"`
-
-	// CastIntegersToStrings is a temporary configuration option to allow casting all integers to strings. This
-	// will be removed when the Adapter Framework is updated to allow non-string Unique IDs.
-	CastIntegersToStrings bool `json:"castIntegersToStrings,omitempty"`
 }
 
 // ValidateConfig validates that a Config received in a GetPage call is valid.
