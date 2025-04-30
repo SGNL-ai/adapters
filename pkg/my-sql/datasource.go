@@ -49,7 +49,7 @@ func (d *Datasource) GetPage(_ context.Context, request *Request) (*Response, *f
 
 	// Perform simple validation on the table name to prevent SQL Ingestion attacks, since we can't use table
 	// names in prepared queries which leaves us vulnerable.
-	if valid := validSQLIdentifier.MatchString(request.EntityExternalID); !valid {
+	if valid := validSQLIdentifier.MatchString(request.EntityConfig.ExternalId); !valid {
 		return nil, &framework.Error{
 			Message: "SQL table name validation failed: unsupported characters found.",
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
@@ -66,7 +66,7 @@ func (d *Datasource) GetPage(_ context.Context, request *Request) (*Response, *f
 	query := fmt.Sprintf(
 		"SELECT *, CAST(%s as CHAR(50)) as str_id FROM %s ORDER BY str_id ASC LIMIT ? OFFSET ?",
 		request.UniqueAttributeExternalID,
-		request.EntityExternalID,
+		request.EntityConfig.ExternalId,
 	)
 
 	args := []any{
@@ -120,15 +120,6 @@ func ParseResponse(rows *sql.Rows, request *Request) ([]map[string]any, *framewo
 		}
 	}
 
-	// Get column types present in provided rows.
-	types, err := rows.ColumnTypes()
-	if err != nil {
-		return nil, &framework.Error{
-			Message: err.Error(),
-			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
-		}
-	}
-
 	// Create an array with the length of cols. This is used when scanning each row.
 	vals := make([]any, len(cols))
 	for i := range cols {
@@ -148,6 +139,21 @@ func ParseResponse(rows *sql.Rows, request *Request) ([]map[string]any, *framewo
 		}
 
 		for i, v := range vals {
+			columnName := cols[i]
+
+			var attribute *framework.AttributeConfig
+
+			for _, curAttribute := range request.EntityConfig.Attributes {
+				if curAttribute != nil && curAttribute.ExternalId == columnName {
+					attribute = curAttribute
+				}
+			}
+
+			// Skipping current attribute since this wasn't requested.
+			if attribute == nil {
+				continue
+			}
+
 			if len(objects) < idx+1 {
 				objects = append(objects, map[string]any{})
 			}
@@ -164,34 +170,27 @@ func ParseResponse(rows *sql.Rows, request *Request) ([]map[string]any, *framewo
 
 			var castErr error
 
-			// The unique attribute always needs to be cast as a string (due to ingestion scheduler validation).
-			if cols[i] == request.UniqueAttributeExternalID {
-				objects[idx][cols[i]] = str
-			} else {
-				// Otherwise, cast each value based on the type.
-				switch types[i].DatabaseTypeName() {
-				// The adapter framework expects all numbers to be passed as floats, so parse all
-				// numeric types as floats here.
-				case "SMALLINT", "MEDIUMINT", "INT", "INTEGER", "BIGINT", "UNSIGNED SMALLINT", "UNSIGNED MEDIUMINT", "UNSIGNED INT", "UNSIGNED INTEGER", "UNSIGNED BIGINT":
-					if request.CastIntegersToStrings {
-						objects[idx][cols[i]] = str
-					} else {
-						objects[idx][cols[i]], castErr = strconv.ParseFloat(str, 64)
-					}
-				case "DECIMAL", "NUMERIC", "FLOAT", "DOUBLE":
-					objects[idx][cols[i]], castErr = strconv.ParseFloat(str, 64)
-				case "BIT", "TINYINT", "BOOL", "BOOLEAN":
-					objects[idx][cols[i]], castErr = strconv.ParseBool(str)
-				// Default to casting any other values (VARCHAR, TEXT, NVARCHAR, DATETIME, etc) as strings.
-				default:
-					objects[idx][cols[i]] = str
+			// Attempt to cast each attribute based on the requested type.
+			switch attribute.Type {
+			case framework.AttributeTypeBool:
+				objects[idx][columnName], castErr = strconv.ParseBool(str)
+			// The adapter framework expects all numbers to be passed as floats, so parse all
+			// numeric types as floats here.
+			case framework.AttributeTypeDouble, framework.AttributeTypeInt64:
+				objects[idx][columnName], castErr = strconv.ParseFloat(str, 64)
+			case framework.AttributeTypeString, framework.AttributeTypeDuration, framework.AttributeTypeDateTime:
+				objects[idx][columnName] = str
+			default:
+				return nil, &framework.Error{
+					Message: "Unsupported attribute type provided",
+					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ATTRIBUTE_TYPE,
 				}
 			}
 
 			if castErr != nil {
 				return nil, &framework.Error{
-					Message: castErr.Error(),
-					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
+					Message: fmt.Sprintf("Failed to parse attribute: (%s) %v", columnName, castErr),
+					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ATTRIBUTE_TYPE,
 				}
 			}
 		}

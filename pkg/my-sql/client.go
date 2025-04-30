@@ -25,9 +25,8 @@ type Request struct {
 	// PageSize is the maximum number of objects to return from the entity.
 	PageSize int64
 
-	// EntityExternalID is the external ID of the entity.
-	// The external ID should match the table name on the MySQL database.
-	EntityExternalID string
+	// EntityConfig contains the entity configuration for the current request.
+	EntityConfig framework.EntityConfig
 
 	// Cursor identifies the first object of the page to return, as returned by
 	// the last request for the entity.
