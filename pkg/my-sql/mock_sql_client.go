@@ -26,6 +26,10 @@ const (
 	TestDatasourceForConnectFailure = "test.connect.failure"
 )
 
+func (c *MockSQLClient) IsProxied() bool {
+	return false
+}
+
 func (c *MockSQLClient) Connect(datasourceName string) error {
 	if strings.Contains(datasourceName, TestDatasourceForConnectFailure) {
 		return errors.New("failed to connect to mock sql service")

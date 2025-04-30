@@ -36,6 +36,7 @@ type Datasource struct {
 }
 
 type Dispatcher interface {
+	IsProxied() bool
 	ProxyRequest(ctx context.Context, ci *connector.ConnectorInfo, request *Request) (*Response, *framework.Error)
 	Request(ctx context.Context, request *Request) (*Response, *framework.Error)
 }
@@ -54,6 +55,10 @@ func NewClient(proxy grpc_proxy_v1.ProxyServiceClient) Client {
 // connector.
 type ldapClient struct {
 	proxyClient grpc_proxy_v1.ProxyServiceClient
+}
+
+func (c *ldapClient) IsProxied() bool {
+	return c.proxyClient != nil
 }
 
 // ProxyRequest proxies an LDAP adapter's request to a remote connector by sending a
@@ -413,8 +418,11 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		return nil, validationErr
 	}
 
-	if ci, ok := connector.FromContext(ctx); ok {
-		return d.Client.ProxyRequest(ctx, &ci, request)
+	// Make sure if the connector context is set and client can proxy the request.
+	if d.Client.IsProxied() {
+		if ci, ok := connector.FromContext(ctx); ok {
+			return d.Client.ProxyRequest(ctx, &ci, request)
+		}
 	}
 
 	return d.Client.Request(ctx, request)

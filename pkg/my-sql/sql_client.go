@@ -15,6 +15,7 @@ type SQLRow map[string]string
 type SQLColumnTypes map[string]string
 
 type SQLClient interface {
+	IsProxied() bool
 	Proxy(ctx context.Context, req *grpc_proxy_v1.ProxyRequestMessage) (*grpc_proxy_v1.Response, error)
 	Connect(dataSourceName string) error
 	Query(query string, args ...any) (*sql.Rows, error)
@@ -25,8 +26,15 @@ type defaultSQLClient struct {
 	DB    *sql.DB
 }
 
-func NewDefaultSQLClient() SQLClient {
-	return &defaultSQLClient{}
+func NewDefaultSQLClient(client grpc_proxy_v1.ProxyServiceClient) SQLClient {
+	return &defaultSQLClient{
+		proxy: client,
+	}
+}
+
+// IsProxied returns true if the client is proxied.
+func (c *defaultSQLClient) IsProxied() bool {
+	return c.proxy != nil
 }
 
 // Connect opens a database connection to the provided datasource.
