@@ -23,9 +23,10 @@ func TestConstructQuery(t *testing.T) {
 				EntityConfig: framework.EntityConfig{
 					ExternalId: "users",
 				},
-				Filter: nil,
+				Filter:                    nil,
+				UniqueAttributeExternalID: "id",
 			},
-			wantQuery: "SELECT *, CAST(? as CHAR(50)) as str_id FROM users ORDER BY str_id ASC LIMIT ? OFFSET ?",
+			wantQuery: "SELECT *, CAST(id as CHAR(50)) as str_id FROM users ORDER BY str_id ASC LIMIT ? OFFSET ?",
 		},
 		{
 			name: "simple_with_filter",
@@ -33,9 +34,10 @@ func TestConstructQuery(t *testing.T) {
 				EntityConfig: framework.EntityConfig{
 					ExternalId: "groups",
 				},
-				Filter: testutil.GenPtr("status = 'active'"),
+				Filter:                    testutil.GenPtr("status = 'active'"),
+				UniqueAttributeExternalID: "groupId",
 			},
-			wantQuery: "SELECT *, CAST(? as CHAR(50)) as str_id FROM groups WHERE status = 'active' ORDER BY str_id ASC LIMIT ? OFFSET ?",
+			wantQuery: "SELECT *, CAST(groupId as CHAR(50)) as str_id FROM groups WHERE status = 'active' ORDER BY str_id ASC LIMIT ? OFFSET ?",
 		},
 		{
 			name: "simple_with_complex_filter",
@@ -43,9 +45,10 @@ func TestConstructQuery(t *testing.T) {
 				EntityConfig: framework.EntityConfig{
 					ExternalId: "users",
 				},
-				Filter: testutil.GenPtr("(age > 18 AND country = 'USA') OR verified = TRUE"),
+				Filter:                    testutil.GenPtr("(age > 18 AND country = 'USA') OR verified = TRUE"),
+				UniqueAttributeExternalID: "id",
 			},
-			wantQuery: "SELECT *, CAST(? as CHAR(50)) as str_id FROM users WHERE (age > 18 AND country = 'USA') OR verified = TRUE ORDER BY str_id ASC LIMIT ? OFFSET ?",
+			wantQuery: "SELECT *, CAST(id as CHAR(50)) as str_id FROM users WHERE (age > 18 AND country = 'USA') OR verified = TRUE ORDER BY str_id ASC LIMIT ? OFFSET ?",
 		},
 		{
 			name: "query_empty_filter",
@@ -53,9 +56,10 @@ func TestConstructQuery(t *testing.T) {
 				EntityConfig: framework.EntityConfig{
 					ExternalId: "users",
 				},
-				Filter: testutil.GenPtr(""),
+				Filter:                    testutil.GenPtr(""),
+				UniqueAttributeExternalID: "id",
 			},
-			wantQuery: "SELECT *, CAST(? as CHAR(50)) as str_id FROM users ORDER BY str_id ASC LIMIT ? OFFSET ?",
+			wantQuery: "SELECT *, CAST(id as CHAR(50)) as str_id FROM users ORDER BY str_id ASC LIMIT ? OFFSET ?",
 		},
 		{
 			name:         "nil_request",

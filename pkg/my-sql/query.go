@@ -9,9 +9,11 @@ func ConstructQuery(request *Request) string {
 
 	var sb strings.Builder
 
-	sb.Grow(45 + 37 + len(request.EntityConfig.ExternalId))
+	sb.Grow(15 + 29 + 37 + len(request.EntityConfig.ExternalId) + len(request.UniqueAttributeExternalID))
 
-	sb.WriteString("SELECT *, CAST(? as CHAR(50)) as str_id FROM ") // len=45
+	sb.WriteString("SELECT *, CAST(") // len=15
+	sb.WriteString(request.UniqueAttributeExternalID)
+	sb.WriteString(" as CHAR(50)) as str_id FROM ") // len=29
 	sb.WriteString(request.EntityConfig.ExternalId)
 
 	if request.Filter != nil && *request.Filter != "" {
