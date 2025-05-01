@@ -26,6 +26,10 @@ type defaultSQLClient struct {
 	DB    *sql.DB
 }
 
+// NewDefaultSQLClient creates a new SQLClient instance.
+// It is used to connect to a SQL database and execute queries.
+// The client is not proxied by default. If you want to use a proxied client,
+// you need to provide a grpc_proxy_v1.ProxyServiceClient instance.
 func NewDefaultSQLClient(client grpc_proxy_v1.ProxyServiceClient) SQLClient {
 	return &defaultSQLClient{
 		proxy: client,
