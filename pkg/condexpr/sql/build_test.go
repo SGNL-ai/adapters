@@ -1,4 +1,4 @@
-package mysql
+package sql
 
 import (
 	"errors"
@@ -97,7 +97,7 @@ func TestBuild(t *testing.T) {
 				Operator: "LIKE",
 				Value:    "%active%",
 			},
-			wantError: errors.New("unsupported operator: LIKE"),
+			wantError: errors.New(`unsupported operator: "LIKE"`),
 		},
 		{
 			name: "Missing field",
@@ -130,7 +130,7 @@ func TestBuild(t *testing.T) {
 				Operator: "INVALID",
 				Value:    "active",
 			},
-			wantError: errors.New("unsupported operator: INVALID"),
+			wantError: errors.New(`unsupported operator: "INVALID"`),
 		},
 		{
 			name: "AND condition with invalid sub-condition",
@@ -140,7 +140,7 @@ func TestBuild(t *testing.T) {
 					{Operator: "=", Value: "John"},
 				},
 			},
-			wantError: errors.New("missing required field"),
+			wantError: errors.New("failed to build AND condition: missing required field"),
 		},
 		{
 			name: "OR condition with invalid sub-condition",
@@ -150,7 +150,7 @@ func TestBuild(t *testing.T) {
 					{Field: "name"},
 				},
 			},
-			wantError: errors.New("missing required value"),
+			wantError: errors.New("failed to build OR condition: missing required value"),
 		},
 		{
 			name: "Invalid chars in field",
@@ -161,13 +161,39 @@ func TestBuild(t *testing.T) {
 			},
 			wantError: errors.New("field validation failed: unsupported characters found or length is not in range 1-128"),
 		},
+		{
+			name: "OR condition with invalid sub-condition",
+			condition: condexpr.Condition{
+				Field:    "age",
+				Operator: ">",
+				Value:    21,
+				Or: []condexpr.Condition{
+					{Field: "age", Operator: ">", Value: 21},
+					{Field: "verified", Operator: "=", Value: true},
+				},
+				And: []condexpr.Condition{
+					{Field: "age", Operator: ">", Value: 21},
+					{Field: "verified", Operator: "=", Value: true},
+				},
+			},
+			wantExpr: goqu.And(
+				goqu.C("age").Gt(21),
+				goqu.C("verified").Eq(true),
+			),
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotExpr, gotErr := Build(tt.condition)
+			builder := NewSQLConditionBuilder()
+			gotExpr, gotErr := builder.Build(tt.condition)
 
-			assert.Equal(t, tt.wantError, gotErr)
+			if tt.wantError != nil {
+				assert.EqualError(t, gotErr, tt.wantError.Error())
+			} else {
+				assert.NoError(t, gotErr)
+			}
+
 			assert.Equal(t, tt.wantExpr, gotExpr)
 		})
 	}

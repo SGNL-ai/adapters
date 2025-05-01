@@ -19,7 +19,8 @@ func ConstructQuery(request *Request) (string, []any, error) {
 	expr := dialect.Select("*", goqu.Cast(goqu.I(request.UniqueAttributeExternalID), "CHAR(50)").As("str_id")).From(request.EntityConfig.ExternalId)
 
 	if request.Filter != nil {
-		whereExpr, err := condexprsql.Build(*request.Filter)
+		builder := condexprsql.NewSQLConditionBuilder()
+		whereExpr, err := builder.Build(*request.Filter)
 		if err != nil {
 			return "", nil, err
 		}
@@ -30,6 +31,10 @@ func ConstructQuery(request *Request) (string, []any, error) {
 	expr = expr.Order(goqu.I("str_id").Asc()).Limit(uint(request.PageSize))
 
 	if request.Cursor != nil {
+		if *request.Cursor < 0 {
+			return "", nil, errors.New("invalid negative cursor provided")
+		}
+
 		expr = expr.Offset(uint(*request.Cursor))
 	}
 
