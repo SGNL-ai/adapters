@@ -8,6 +8,7 @@ import (
 
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
+	"github.com/sgnl-ai/adapters/pkg/condexpr"
 )
 
 var validSQLIdentifier = regexp.MustCompile(`^[a-zA-Z0-9$_]{1,128}$`)
@@ -34,7 +35,7 @@ type Request struct {
 	EntityConfig framework.EntityConfig
 
 	// A filter to apply to the MySQL request when pulling data for the current entity.
-	Filter *string
+	Filter *condexpr.Condition
 
 	// Cursor identifies the first object of the page to return, as returned by
 	// the last request for the entity.

@@ -5,17 +5,11 @@ import (
 	"context"
 	"errors"
 
+	"github.com/sgnl-ai/adapters/pkg/condexpr"
 	"github.com/sgnl-ai/adapters/pkg/config"
 )
 
 // Config is the configuration passed in each GetPage calls to the adapter.
-//
-// WARNING: In order to allow flexibility with filtering, we do NOT validate the provided filters. This effectively
-// means that any user with access to configure this SoR has access to execute any command on the database due to
-// SQL injection.
-//
-// Reasonable precautions should be made to ensure only authorized users have permission to configure this SoR / the
-// provided credentials only have the required privileges assigned (e.g. read access scoped to a specific table).
 //
 // Adapter configuration example:
 // nolint: godot
@@ -25,8 +19,34 @@ import (
 	"localTimeZoneOffset": 43200,
 	"database": "sgnl",
 	"filters": {
-		"users": "(age > 18 AND country = 'USA') OR verified = TRUE",
-		"groups": "country IN ('USA', 'Canada')"
+		"users": {
+			"or": [
+				{
+					"and": [
+						{
+							"field": "age",
+							"op": ">",
+							"value": 18,
+						},
+						{
+							"field": "country",
+							"op": "=",
+							"value": "USA",
+						},
+					]
+				},
+				{
+					"field": "verified",
+					"op": "=",
+					"value": true,
+				}
+			]
+		},
+		"groups": {
+			"field": "country",
+			"op": "IN",
+			"value": {"active", "inactive"},
+		}
 	}
 }
 */
@@ -36,7 +56,7 @@ type Config struct {
 	// MySQL database to connect to.
 	Database string `json:"database,omitempty"`
 
-	Filters map[string]string `json:"filters,omitempty"`
+	Filters map[string]condexpr.Condition `json:"filters,omitempty"`
 }
 
 // ValidateConfig validates that a Config received in a GetPage call is valid.

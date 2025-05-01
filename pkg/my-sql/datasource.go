@@ -110,7 +110,14 @@ func (d *Datasource) Request(_ context.Context, request *Request) (*Response, *f
 		cursor = *request.Cursor
 	}
 
-	query := ConstructQuery(request)
+	// TODO: User attrs
+	query, _, err := ConstructQuery(request)
+	if err != nil {
+		return nil, &framework.Error{
+			Message: fmt.Sprintf("Failed to construct query: %v.", err),
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
+		}
+	}
 
 	args := []any{
 		request.PageSize,

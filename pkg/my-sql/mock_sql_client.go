@@ -7,6 +7,7 @@ import (
 	"database/sql/driver"
 	"errors"
 	"math"
+	"regexp"
 	"strings"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -58,10 +59,6 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 		return nil, errors.New("mock sql client called with invalid arg[2], unable to cast `cursor` to int64")
 	}
 
-	if query != "SELECT *, CAST(id as CHAR(50)) as str_id FROM users ORDER BY str_id ASC LIMIT ? OFFSET ?" {
-		return nil, errors.New("mock sql client called with unsupported query")
-	}
-
 	switch {
 	// First page of users.
 	case pageSize == 5 && cursor == 0:
@@ -87,9 +84,9 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 			values = append(values, driver.Value(arg))
 		}
 
-		c.Mock.ExpectQuery(`SELECT \*, CAST\(id as CHAR\(50\)\) as str_id FROM users ORDER BY str_id ASC LIMIT \? OFFSET \?`).
-			WithArgs(values...).
-			WillReturnRows(mockRows)
+		c.Mock.ExpectQuery(
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT 5"),
+		).WithArgs(values...).WillReturnRows(mockRows)
 
 	// Second (middle) page of users. Tests providing BOOLs as TINYINT.
 	case pageSize == 5 && cursor == 5:
@@ -115,9 +112,9 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 			values = append(values, driver.Value(arg))
 		}
 
-		c.Mock.ExpectQuery(`SELECT \*, CAST\(id as CHAR\(50\)\) as str_id FROM users ORDER BY str_id ASC LIMIT \? OFFSET \?`).
-			WithArgs(values...).
-			WillReturnRows(mockRows)
+		c.Mock.ExpectQuery(
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT 5 OFFSET 5"),
+		).WithArgs(values...).WillReturnRows(mockRows)
 
 	// Third (last) page of users.
 	case pageSize == 5 && cursor == 10:
@@ -140,9 +137,9 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 			values = append(values, driver.Value(arg))
 		}
 
-		c.Mock.ExpectQuery(`SELECT \*, CAST\(id as CHAR\(50\)\) as str_id FROM users ORDER BY str_id ASC LIMIT \? OFFSET \?`).
-			WithArgs(values...).
-			WillReturnRows(mockRows)
+		c.Mock.ExpectQuery(
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT 5 OFFSET 10"),
+		).WithArgs(values...).WillReturnRows(mockRows)
 
 	// Test: Failed to query datasource
 	case pageSize == 1 && cursor == 101:
@@ -173,9 +170,9 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 			values = append(values, driver.Value(arg))
 		}
 
-		c.Mock.ExpectQuery(`SELECT \*, CAST\(id as CHAR\(50\)\) as str_id FROM users ORDER BY str_id ASC LIMIT \? OFFSET \?`).
-			WithArgs(values...).
-			WillReturnRows(mockRows)
+		c.Mock.ExpectQuery(
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT 5 OFFSET 202"),
+		).WithArgs(values...).WillReturnRows(mockRows)
 
 	// Test: Edge case with empty values
 	case pageSize == 5 && cursor == 203:
@@ -199,9 +196,9 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 			values = append(values, driver.Value(arg))
 		}
 
-		c.Mock.ExpectQuery(`SELECT \*, CAST\(id as CHAR\(50\)\) as str_id FROM users ORDER BY str_id ASC LIMIT \? OFFSET \?`).
-			WithArgs(values...).
-			WillReturnRows(mockRows)
+		c.Mock.ExpectQuery(
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT 5 OFFSET 203"),
+		).WithArgs(values...).WillReturnRows(mockRows)
 
 	default:
 		return nil, errors.New("mock sql client called with unsupported args")
