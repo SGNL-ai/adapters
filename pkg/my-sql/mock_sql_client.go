@@ -181,6 +181,32 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 			WithArgs(values...).
 			WillReturnRows(mockRows)
 
+	// Test: Edge case with empty values
+	case pageSize == 5 && cursor == 203:
+		columns := []*sqlmock.Column{
+			sqlmock.NewColumn("id").OfType("VARCHAR", ""),
+			sqlmock.NewColumn("name").OfType("VARCHAR", ""),
+			sqlmock.NewColumn("active").OfType("BOOL", ""),
+			sqlmock.NewColumn("employee_number").OfType("BIGINT", ""),
+			sqlmock.NewColumn("risk_score").OfType("FLOAT", ""),
+			sqlmock.NewColumn("last_modified").OfType("DATETIME", ""),
+		}
+
+		mockRows := sqlmock.NewRowsWithColumnDefinition(columns...).
+			AddRow("9cf5a596-0df2-4510-a403-9b514fd500b8", nil, nil, nil, nil, nil).
+			AddRow("8f678b7c-2571-45fe-ba01-a6cad31b02de", "", "", "", "", "").
+			AddRow("a20bab52-52e3-46c2-bd6a-2ad1512f713f", "Ernesto Gregg", true, 1, 1.0, "2025-02-12T22:38:00+00:00")
+
+		values := []driver.Value{}
+
+		for _, arg := range args {
+			values = append(values, driver.Value(arg))
+		}
+
+		c.Mock.ExpectQuery(`SELECT \*, CAST\(id as CHAR\(50\)\) as str_id FROM users ORDER BY str_id ASC LIMIT \? OFFSET \?`).
+			WithArgs(values...).
+			WillReturnRows(mockRows)
+
 	default:
 		return nil, errors.New("mock sql client called with unsupported args")
 	}
