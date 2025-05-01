@@ -39,12 +39,12 @@ func (a *Adapter) RequestPageFromDatasource(
 	ctx context.Context, request *framework.Request[Config],
 ) framework.Response {
 	req := &Request{
-		Username:         request.Auth.Basic.Username,
-		Password:         request.Auth.Basic.Password,
-		BaseURL:          request.Address,
-		PageSize:         request.PageSize,
-		EntityExternalID: request.Entity.ExternalId,
-		Database:         request.Config.Database,
+		Username:     request.Auth.Basic.Username,
+		Password:     request.Auth.Basic.Password,
+		BaseURL:      request.Address,
+		PageSize:     request.PageSize,
+		EntityConfig: request.Entity,
+		Database:     request.Config.Database,
 	}
 
 	if request.Cursor != "" {

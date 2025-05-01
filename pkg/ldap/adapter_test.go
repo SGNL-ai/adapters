@@ -92,7 +92,7 @@ func (s *LDAPTestSuite) Test_AdapterGetPage() {
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
-					Message: "Failed to bind credentials - LDAP Result Code 49 \"Invalid Credentials\": ",
+					Message: "Failed to bind credentials: LDAP Result Code 49 \"Invalid Credentials\": .",
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_AUTHENTICATION_FAILED,
 				},
 			},
