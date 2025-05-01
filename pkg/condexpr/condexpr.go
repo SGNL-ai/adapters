@@ -5,35 +5,17 @@
 // This package is designed for use across services that require programmatic filtering logic.
 // It is not tied to a specific database or schema and can be extended to support additional
 // operators or target languages.
-//
-// Example:
-//
-//	cond := Condition{
-//		And: []Condition{
-//			{
-//				Field: "age",
-//				Operator: ">",
-//				Value: 18
-//			},
-//			{
-//				Field: "status",
-//				Operator: "=",
-//				Value: "active"
-//			},
-//		},
-//	}
 package condexpr
 
 import "fmt"
 
-// Condition represents a filter expression that can be either a leaf comparison
-// or a logical combination of other conditions.
+// Condition represents a filter expression that can be either a leaf condition
+// or a logical composite condition.
 type Condition struct {
 	// Field is the name of the field to compare. Only used for leaf conditions.
 	Field string `json:"field,omitempty"`
 
-	// Operator is the comparison operator (e.g., "=", ">", "!="). Only used for leaf conditions.
-	// Must be one of the supported operators.
+	// Operator is the comparison operator. Only used for leaf conditions.
 	Operator string `json:"op,omitempty"`
 
 	// Value is the value to compare against. Only used for leaf conditions.
@@ -58,17 +40,17 @@ type ConditionBuilder[T any] interface {
 	BuildLeafCondition(cond Condition) (T, error)
 }
 
-// DefaultBuild provides generic default processing and validation for types implementing
+// DefaultBuild provides generic default processing and validation functionality for types implementing
 // the ConditionBuilder.Build function.
 //
 // It processes a given Condition and determines whether it represents a composite AND condition,
-// a composite OR condition, or a valid leaf condition. Based on the type of condition, it delegates
-// the construction to the appropriate method of the ConditionBuilder.
+// a composite OR condition, or a valid leaf condition. Based on the type, it delegates the construction
+// to the appropriate method of the ConditionBuilder.
 //
 // The function also enforces that the Condition must specify exactly one of the following:
 // - An AND condition (non-empty `And` field).
 // - An OR condition (non-empty `Or` field).
-// - A valid leaf condition (non-empty `Field`, `Operator`, and `Value` fields).
+// - A valid leaf condition (non-empty `Field`, `Operator`, or `Value` fields).
 func DefaultBuild[T any, CB ConditionBuilder[T]](cb CB, cond Condition) (out T, err error) {
 	// Validate that the condition specifies only one field: And, Or, or a valid leaf condition
 	isAnd := len(cond.And) > 0
