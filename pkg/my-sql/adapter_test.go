@@ -459,6 +459,81 @@ func TestAdapterGetPage(t *testing.T) {
 				},
 			},
 		},
+		"null_values": {
+			request: &framework.Request[mysql.Config]{
+				Address: "127.0.0.1",
+				Auth: &framework.DatasourceAuthCredentials{
+					Basic: &framework.BasicAuthCredentials{
+						Username: "testusername",
+						Password: "testpassword",
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "users",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "id",
+							Type:       framework.AttributeTypeString,
+							UniqueId:   true,
+						},
+						{
+							ExternalId: "name",
+							Type:       framework.AttributeTypeString,
+						},
+						{
+							ExternalId: "missing_field",
+							Type:       framework.AttributeTypeString,
+						},
+						{
+							ExternalId: "active",
+							Type:       framework.AttributeTypeBool,
+						},
+						{
+							ExternalId: "employee_number",
+							Type:       framework.AttributeTypeInt64,
+						},
+						{
+							ExternalId: "risk_score",
+							Type:       framework.AttributeTypeDouble,
+						},
+						{
+							ExternalId: "last_modified",
+							Type:       framework.AttributeTypeDateTime,
+						},
+					},
+				},
+				Config: &mysql.Config{
+					CommonConfig: &config.CommonConfig{
+						RequestTimeoutSeconds: testutil.GenPtr(10),
+						LocalTimeZoneOffset:   -18000, // UTC−05:00 (EST)
+					},
+					Database: "sgnl",
+				},
+				Ordered:  true,
+				PageSize: 5,
+				Cursor:   "203",
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"id": "9cf5a596-0df2-4510-a403-9b514fd500b8",
+						},
+						{
+							"id": "8f678b7c-2571-45fe-ba01-a6cad31b02de",
+						},
+						{
+							"active":          true,
+							"employee_number": int64(1),
+							"id":              "a20bab52-52e3-46c2-bd6a-2ad1512f713f",
+							"last_modified":   time.Date(2025, 2, 12, 22, 38, 00, 00, time.UTC),
+							"name":            "Ernesto Gregg",
+							"risk_score":      float64(1),
+						},
+					},
+				},
+			},
+		},
 		"validation_prevent_sql_injection_table": {
 			request: &framework.Request[mysql.Config]{
 				Address: "127.0.0.1",
