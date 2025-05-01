@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"errors"
+	"math"
 
 	"github.com/doug-martin/goqu/v9"
 	condexprsql "github.com/sgnl-ai/adapters/pkg/condexpr/sql"
@@ -28,11 +29,27 @@ func ConstructQuery(request *Request) (string, []any, error) {
 		expr = expr.Where(whereExpr)
 	}
 
+	if request.PageSize < 0 {
+		return "", nil, errors.New("invalid negative pageSize provided")
+	}
+
+	// MaxUint will either be equal to MaxUint32 or MaxUint64, depending on the system.
+	// For consistency between systems, we'll assert that the cursor is less than MaxUint32.
+	if request.PageSize > math.MaxUint32 {
+		return "", nil, errors.New("pageSize value exceeds maximum allowed value")
+	}
+
 	expr = expr.Order(goqu.I("str_id").Asc()).Limit(uint(request.PageSize))
 
 	if request.Cursor != nil {
 		if *request.Cursor < 0 {
 			return "", nil, errors.New("invalid negative cursor provided")
+		}
+
+		// MaxUint will either be equal to MaxUint32 or MaxUint64, depending on the system.
+		// For consistency between systems, we'll assert that the cursor is less than MaxUint32.
+		if *request.Cursor > math.MaxUint32 {
+			return "", nil, errors.New("cursor value exceeds maximum allowed value")
 		}
 
 		expr = expr.Offset(uint(*request.Cursor))
