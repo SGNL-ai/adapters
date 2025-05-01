@@ -73,7 +73,7 @@ func main() {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		logger.Printf("Failed to create a grpc client to the connector service: %v", err)
+		logger.Fatalf("Failed to create a grpc client to the connector service: %v", err)
 	}
 
 	// Initialize the client to fetch data from AWS S3.
