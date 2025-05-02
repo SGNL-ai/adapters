@@ -26,26 +26,26 @@ import (
 						{
 							"field": "age",
 							"op": ">",
-							"value": 18,
+							"value": 18
 						},
 						{
 							"field": "country",
 							"op": "=",
-							"value": "USA",
-						},
+							"value": "USA"
+						}
 					]
 				},
 				{
 					"field": "verified",
 					"op": "=",
-					"value": true,
+					"value": true
 				}
 			]
 		},
 		"groups": {
 			"field": "country",
 			"op": "IN",
-			"value": {"active", "inactive"},
+			"value": ["active", "inactive"]
 		}
 	}
 }
