@@ -34,6 +34,14 @@ type mockSQLClient struct {
 	) (*grpc_proxy_v1.Response, error)
 }
 
+func (c *mockSQLClient) IsProxied() bool {
+	if c.mockProxy != nil || c.proxyResp != "" {
+		return true
+	}
+
+	return false
+}
+
 func (c *mockSQLClient) Connect(name string) error {
 	if c.connectErr != nil {
 		return c.connectErr
@@ -123,6 +131,42 @@ func TestGivenRequestWithoutConnectorCtxWhenGetPageRequestedThenSQLResponseStatu
 	}
 }
 
+func TestGivenRequestWithConnectorCtxAndWithoutProxyWhenGetPageRequestedThenSQLResponseStatusIsOk(t *testing.T) {
+	// Arrange
+	db, mock, _ := sqlmock.New()
+	mockQuery := func(query string, _ ...any) (*sql.Rows, error) {
+		mock.ExpectQuery(
+			`SELECT \*, CAST\(id as CHAR\(50\)\) as str_id FROM users ORDER BY str_id ASC LIMIT \? OFFSET \?`).
+			WillReturnRows(sqlRows)
+
+		return db.Query(query)
+	}
+	ds := Datasource{
+		Client: &mockSQLClient{
+			mockQuery: mockQuery,
+		},
+	}
+
+	ctx, _ := connector.WithContext(context.Background(), connector.ConnectorInfo{})
+
+	// Act
+	resp, err := ds.GetPage(ctx, &Request{
+		EntityConfig: framework.EntityConfig{
+			ExternalId: "users",
+		},
+		UniqueAttributeExternalID: "id",
+	})
+
+	// Assert
+	if err != nil {
+		t.Errorf("Error when requesting GetPage() for a datasource, %v", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("Expected %v, got %v http status code", http.StatusOK, resp.StatusCode)
+	}
+}
+
 func TestGivenRequestWithConnectorCtxWhenGetPageRequestedThenSQLResponseStatusIsOk(t *testing.T) {
 	// Arrange
 	ds := Datasource{
@@ -131,8 +175,9 @@ func TestGivenRequestWithConnectorCtxWhenGetPageRequestedThenSQLResponseStatusIs
 		},
 	}
 
-	// Act
 	ctx, _ := connector.WithContext(context.Background(), connector.ConnectorInfo{})
+
+	// Act
 	resp, err := ds.GetPage(ctx, &Request{})
 
 	// Assert

@@ -50,7 +50,7 @@ func (s *LDAPTestSuite) TearDownSuite() {
 }
 
 func (s *LDAPTestSuite) Test_AdapterGetPage() {
-	adapter := ldap_adapter.NewAdapter()
+	adapter := ldap_adapter.NewAdapter(nil)
 
 	tests := map[string]struct {
 		ctx                context.Context
@@ -187,7 +187,7 @@ func (s *LDAPTestSuite) Test_AdapterGetPage() {
 }
 
 func (s *LDAPTestSuite) Test_AdapterGetUserPage() {
-	adapter := ldap_adapter.NewAdapter()
+	adapter := ldap_adapter.NewAdapter(nil)
 	tests := map[string]struct {
 		ctx                context.Context
 		request            *framework.Request[ldap_adapter.Config]
@@ -341,7 +341,7 @@ func (s *LDAPTestSuite) Test_AdapterGetUserPage() {
 }
 
 func (s *LDAPTestSuite) Test_AdapterGetGroupPage() {
-	adapter := ldap_adapter.NewAdapter()
+	adapter := ldap_adapter.NewAdapter(nil)
 	tests := map[string]struct {
 		ctx                context.Context
 		request            *framework.Request[ldap_adapter.Config]
@@ -447,7 +447,7 @@ func (s *LDAPTestSuite) Test_AdapterGetGroupPage() {
 }
 
 func (s *LDAPTestSuite) Test_AdapterGetGroupMemberPage() {
-	adapter := ldap_adapter.NewAdapter()
+	adapter := ldap_adapter.NewAdapter(nil)
 	tests := map[string]struct {
 		ctx                context.Context
 		request            *framework.Request[ldap_adapter.Config]
