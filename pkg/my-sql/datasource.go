@@ -157,9 +157,11 @@ func (d *Datasource) Request(_ context.Context, request *Request) (*Response, *f
 
 // GetPage for requesting data from a datasource.
 func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, *framework.Error) {
-	ci, ok := connector.FromContext(ctx)
-	if ok {
-		return d.ProxyRequest(ctx, request, &ci)
+	// Make sure if the connector context is set and client can proxy the request.
+	if d.Client.IsProxied() {
+		if ci, ok := connector.FromContext(ctx); ok {
+			return d.ProxyRequest(ctx, request, &ci)
+		}
 	}
 
 	return d.Request(ctx, request)

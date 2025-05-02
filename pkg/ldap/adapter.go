@@ -10,6 +10,7 @@ import (
 
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
+	grpc_proxy_v1 "github.com/sgnl-ai/adapter-framework/pkg/grpc_proxy/v1"
 	"github.com/sgnl-ai/adapter-framework/web"
 	"github.com/sgnl-ai/adapters/pkg/config"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
@@ -22,9 +23,12 @@ type Adapter struct {
 }
 
 // NewAdapter instantiates a new Adapter.
-func NewAdapter() framework.Adapter[Config] {
+// It is used to connect to a LDAP server and execute search queries.
+// The client is not proxied by default. If you want to use a proxied client,
+// you need to provide a grpc_proxy_v1.ProxyServiceClient instance.
+func NewAdapter(client grpc_proxy_v1.ProxyServiceClient) framework.Adapter[Config] {
 	return &Adapter{
-		ADClient: NewClient(nil),
+		ADClient: NewClient(client),
 	}
 }
 

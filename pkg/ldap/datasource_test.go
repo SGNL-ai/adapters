@@ -79,12 +79,6 @@ type testProxyClient struct {
 }
 
 func (c *testProxyClient) ProxyRequest(_ context.Context, ci *connector.ConnectorInfo, _ *ldap.Request) (*ldap.Response, *framework.Error) {
-	if !c.proxiedRequest {
-		return nil, &framework.Error{
-			Message: "Request is not supposed to be proxied",
-		}
-	}
-
 	// Ensure connector info matches the configured value.
 	if c.ci != nil {
 		if diff := cmp.Diff(c.ci, ci); diff != "" {
@@ -107,6 +101,10 @@ func (c *testProxyClient) Request(_ context.Context, _ *ldap.Request) (*ldap.Res
 	return &ldap.Response{
 		StatusCode: http.StatusOK,
 	}, nil
+}
+
+func (c *testProxyClient) IsProxied() bool {
+	return c.proxiedRequest
 }
 
 var (
@@ -150,6 +148,36 @@ func TestGivenRequestWithoutConnectorContextWhenGetPageRequestedThenLdapResponse
 
 	// Act
 	resp, err := ds.GetPage(context.Background(), testRequest)
+
+	// Assert
+	if err != nil {
+		t.Errorf("Error when requesting GetPage() for a datasource, %v", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("Expected %v, got %v http status code", http.StatusOK, resp.StatusCode)
+	}
+}
+
+func TestGivenRequestWithConnectorAndWithoutProxyContextWhenGetPageRequestedThenLdapResponseStatusIsOk(t *testing.T) {
+	// Arrange
+	ci := connector.ConnectorInfo{
+		ID:       "test-connector-id",
+		ClientID: "test-client-id",
+		TenantID: "test-tenant-id",
+	}
+
+	ds := ldap.Datasource{
+		Client: &testProxyClient{
+			ci:             &ci,
+			proxiedRequest: false,
+		},
+	}
+
+	ctx, _ := connector.WithContext(context.Background(), ci)
+
+	// Act
+	resp, err := ds.GetPage(ctx, testRequest)
 
 	// Assert
 	if err != nil {
