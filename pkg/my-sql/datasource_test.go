@@ -136,8 +136,8 @@ func TestGivenRequestWithConnectorCtxAndWithoutProxyWhenGetPageRequestedThenSQLR
 	db, mock, _ := sqlmock.New()
 	mockQuery := func(query string, _ ...any) (*sql.Rows, error) {
 		mock.ExpectQuery(
-			`SELECT \*, CAST\(id as CHAR\(50\)\) as str_id FROM users ORDER BY str_id ASC LIMIT \? OFFSET \?`).
-			WillReturnRows(sqlRows)
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC"),
+		).WillReturnRows(sqlRows)
 
 		return db.Query(query)
 	}
