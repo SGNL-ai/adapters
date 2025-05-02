@@ -14,6 +14,7 @@ import (
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 )
 
+// nolint: lll
 func TestConstructQuery(t *testing.T) {
 	tests := []struct {
 		name         string

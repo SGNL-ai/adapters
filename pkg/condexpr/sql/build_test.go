@@ -1,3 +1,5 @@
+// Copyright 2025 SGNL.ai, Inc.
+
 package sql
 
 import (
@@ -185,7 +187,7 @@ func TestBuild(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			builder := NewSQLConditionBuilder()
+			builder := NewConditionBuilder()
 			gotExpr, gotErr := builder.Build(tt.condition)
 
 			if tt.wantError != nil {

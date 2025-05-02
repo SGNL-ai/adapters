@@ -1,3 +1,5 @@
+// Copyright 2025 SGNL.ai, Inc.
+
 // Package condexpr defines a simple DSL for building structured, nested filter expressions.
 // It supports logical operators (AND, OR) and standard comparison operators (=, !=, >, <, etc.).
 // The expressions can be evaluated directly or translated into other languages such as SQL.
@@ -59,6 +61,7 @@ func DefaultBuild[T any, CB ConditionBuilder[T]](cb CB, cond Condition) (out T, 
 
 	if (isAnd && isOr) || (isAnd && isLeaf) || (isOr && isLeaf) || (!isAnd && !isOr && !isLeaf) {
 		err = fmt.Errorf("invalid condition: specify exactly one of And, Or, or a valid leaf condition")
+
 		return
 	}
 

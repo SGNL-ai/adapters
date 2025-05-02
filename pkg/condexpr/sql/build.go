@@ -1,3 +1,5 @@
+// Copyright 2025 SGNL.ai, Inc.
+
 // Package sql provides utilities for building SQL expressions from conditional expressions.
 // This package is designed to work with the goqu library to construct SQL queries dynamically.
 //
@@ -40,8 +42,8 @@ import (
 
 var (
 	// validSQLIdentifier checks if a string is a valid SQL identifier:
-	// - Contains only alphanumeric characters, $ and _
-	// - Length between 1-128 characters
+	// - Contains only alphanumeric characters, $ and _.
+	// - Length between 1-128 characters.
 	validSQLIdentifier = regexp.MustCompile(`^[a-zA-Z0-9$_]{1,128}$`)
 
 	errMissingValue    = errors.New("missing required value")
@@ -49,41 +51,47 @@ var (
 	errMissingOperator = errors.New("missing required operator")
 )
 
-type SQLConditionBuilder struct{}
+type ConditionBuilder struct{}
 
-func NewSQLConditionBuilder() *SQLConditionBuilder {
-	return &SQLConditionBuilder{}
+func NewConditionBuilder() *ConditionBuilder {
+	return &ConditionBuilder{}
 }
 
-func (cb SQLConditionBuilder) Build(cond condexpr.Condition) (goqu.Expression, error) {
+func (cb ConditionBuilder) Build(cond condexpr.Condition) (goqu.Expression, error) {
 	return condexpr.DefaultBuild(cb, cond)
 }
 
-func (cb SQLConditionBuilder) BuildCompositeAnd(cond condexpr.Condition) (goqu.Expression, error) {
+func (cb ConditionBuilder) BuildCompositeAnd(cond condexpr.Condition) (goqu.Expression, error) {
 	exprs := make([]goqu.Expression, 0, len(cond.And))
+
 	for _, c := range cond.And {
 		expr, err := cb.Build(c)
 		if err != nil {
 			return nil, fmt.Errorf("failed to build AND condition: %w", err)
 		}
+
 		exprs = append(exprs, expr)
 	}
+
 	return goqu.And(exprs...), nil
 }
 
-func (cb SQLConditionBuilder) BuildCompositeOr(cond condexpr.Condition) (goqu.Expression, error) {
+func (cb ConditionBuilder) BuildCompositeOr(cond condexpr.Condition) (goqu.Expression, error) {
 	exprs := make([]goqu.Expression, 0, len(cond.Or))
+
 	for _, c := range cond.Or {
 		expr, err := cb.Build(c)
 		if err != nil {
 			return nil, fmt.Errorf("failed to build OR condition: %w", err)
 		}
+
 		exprs = append(exprs, expr)
 	}
+
 	return goqu.Or(exprs...), nil
 }
 
-func (cb SQLConditionBuilder) BuildLeafCondition(cond condexpr.Condition) (goqu.Expression, error) {
+func (cb ConditionBuilder) BuildLeafCondition(cond condexpr.Condition) (goqu.Expression, error) {
 	// Validate leaf condition
 	if cond.Value == nil {
 		return nil, errMissingValue
@@ -103,6 +111,7 @@ func (cb SQLConditionBuilder) BuildLeafCondition(cond condexpr.Condition) (goqu.
 
 	// Build leaf condition (Field, Operator, Value)
 	col := goqu.C(cond.Field)
+
 	switch cond.Operator {
 	case "=":
 		return col.Eq(cond.Value), nil

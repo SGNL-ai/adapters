@@ -1,3 +1,5 @@
+// Copyright 2025 SGNL.ai, Inc.
+
 package mysql
 
 import (
@@ -7,7 +9,7 @@ import (
 	"github.com/doug-martin/goqu/v9"
 	condexprsql "github.com/sgnl-ai/adapters/pkg/condexpr/sql"
 
-	_ "github.com/doug-martin/goqu/v9/dialect/mysql"
+	_ "github.com/doug-martin/goqu/v9/dialect/mysql" // goqu MySQL Dialect required for use constructing queries.
 )
 
 func ConstructQuery(request *Request) (string, []any, error) {
@@ -17,10 +19,14 @@ func ConstructQuery(request *Request) (string, []any, error) {
 
 	dialect := goqu.Dialect("mysql")
 
-	expr := dialect.Select("*", goqu.Cast(goqu.I(request.UniqueAttributeExternalID), "CHAR(50)").As("str_id")).From(request.EntityConfig.ExternalId)
+	expr := dialect.Select(
+		"*",
+		goqu.Cast(goqu.I(request.UniqueAttributeExternalID), "CHAR(50)").As("str_id"),
+	).From(request.EntityConfig.ExternalId)
 
 	if request.Filter != nil {
-		builder := condexprsql.NewSQLConditionBuilder()
+		builder := condexprsql.NewConditionBuilder()
+
 		whereExpr, err := builder.Build(*request.Filter)
 		if err != nil {
 			return "", nil, err
