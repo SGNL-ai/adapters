@@ -43,8 +43,8 @@ github.com/Azure/azure-sdk-for-go/sdk/storage/azdatalake v1.2.0 h1:gXpwp0sGZz2FY
 github.com/Azure/azure-sdk-for-go/sdk/storage/azdatalake v1.2.0/go.mod h1:K+OqH/n5xyCEvbenN5OtZMycqHRCeoHh0whMoRjWYK4=
 github.com/Azure/azure-sdk-for-go/sdk/storage/azfile v1.3.0 h1:VIM+5hiNPIOmFy2Rax2VW+v7C8lbGEzgd25pnOBR0kY=
 github.com/Azure/azure-sdk-for-go/sdk/storage/azfile v1.3.0/go.mod h1:amxdkUcI+5PQTRqJCPqWXf1CBMh/q3YGuFwyqpwAwd4=
-github.com/Azure/azure-storage-azcopy/v10 v10.28.1 h1:HgZ0xJ/4tvBHHP8I5DW+LslKtEcFObUU9J/9P59kSl4=
-github.com/Azure/azure-storage-azcopy/v10 v10.28.1/go.mod h1:stB4ihMRSpgPL9ctIKSIult+4zsB8+R1+hR7Ik/JKqo=
+github.com/Azure/azure-storage-azcopy/v10 v10.29.0 h1:HERjpYcyYAS5RXSQVhtL7N3XTpAvFyDIsATXVvS4/Iw=
+github.com/Azure/azure-storage-azcopy/v10 v10.29.0/go.mod h1:KPlgMc5Y/eBYwvK2g9Ue/kPtB+GgIH3K8HDng9AI2ro=
 github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 h1:UQHMgLO+TxOElx5B5HZ4hJQsoJ/PvUvKRhJHDQXO8P8=
 github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1/go.mod h1:xomTg63KZ2rFqZQzSB4Vz2SUXa1BpHTVz9L5PTmPC4E=
 github.com/Azure/go-autorest v14.2.0+incompatible h1:V5VMDjClD3GiElqLWO7mz2MxNAK/vTfRHdAubSIPRgs=
@@ -55,8 +55,8 @@ github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358 h1:mFRzDkZVAjdal+
 github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358/go.mod h1:chxPXzSsl7ZWRAuOIE23GDNzjWuZquvFlgA8xmpunjU=
 github.com/AzureAD/microsoft-authentication-extensions-for-go/cache v0.1.1 h1:WJTmL004Abzc5wDB5VtZG2PJk5ndYDgVacGqfirKxjM=
 github.com/AzureAD/microsoft-authentication-extensions-for-go/cache v0.1.1/go.mod h1:tCcJZ0uHAmvjsVYzEFivsRTN00oz5BEsRgQHu5JZ9WE=
-github.com/AzureAD/microsoft-authentication-library-for-go v1.2.2 h1:XHOnouVk1mxXfQidrMEnLlPk9UMeRtyBTnEFtxkV0kU=
-github.com/AzureAD/microsoft-authentication-library-for-go v1.2.2/go.mod h1:wP83P5OoQ5p6ip3ScPr0BAq0BvuPAvacpEuSzyouqAI=
+github.com/AzureAD/microsoft-authentication-library-for-go v1.4.1 h1:8BKxhZZLX/WosEeoCvWysmKUscfa9v8LIPEEU0JjE2o=
+github.com/AzureAD/microsoft-authentication-library-for-go v1.4.1/go.mod h1:wP83P5OoQ5p6ip3ScPr0BAq0BvuPAvacpEuSzyouqAI=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/DATA-DOG/go-sqlmock v1.5.0/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
 github.com/DATA-DOG/go-sqlmock v1.5.2 h1:OcvFkGmslmlZibjAjaHm3L//6LiuBgolP7OputlJIzU=
