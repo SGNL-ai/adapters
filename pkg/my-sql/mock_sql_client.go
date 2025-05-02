@@ -49,7 +49,6 @@ func (c *MockSQLClient) Connect(datasourceName string) error {
 
 // nolint: lll
 func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
-
 	var (
 		pageSize int64
 		cursor   int64
