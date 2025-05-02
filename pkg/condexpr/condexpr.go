@@ -65,16 +65,13 @@ func DefaultBuild[T any, CB ConditionBuilder[T]](cb CB, cond Condition) (out T, 
 		return
 	}
 
-	// Handle AND condition
 	if isAnd {
 		return cb.BuildCompositeAnd(cond)
 	}
 
-	// Handle OR condition
 	if isOr {
 		return cb.BuildCompositeOr(cond)
 	}
 
-	// Handle leaf condition
 	return cb.BuildLeafCondition(cond)
 }
