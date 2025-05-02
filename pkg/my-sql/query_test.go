@@ -16,16 +16,14 @@ import (
 
 // nolint: lll
 func TestConstructQuery(t *testing.T) {
-	tests := []struct {
-		name         string
+	tests := map[string]struct {
 		inputRequest *mysql.Request
 
 		wantQuery string
 		wantAttrs []any
 		wantErr   error
 	}{
-		{
-			name: "simple",
+		"simple": {
 			inputRequest: &mysql.Request{
 				EntityConfig: framework.EntityConfig{
 					ExternalId: "users",
@@ -41,8 +39,7 @@ func TestConstructQuery(t *testing.T) {
 				int64(500),
 			},
 		},
-		{
-			name: "simple_with_filter",
+		"simple_with_filter": {
 			inputRequest: &mysql.Request{
 				EntityConfig: framework.EntityConfig{
 					ExternalId: "groups",
@@ -61,8 +58,7 @@ func TestConstructQuery(t *testing.T) {
 				int64(100),
 			},
 		},
-		{
-			name: "simple_with_complex_filter",
+		"simple_with_complex_filter": {
 			inputRequest: &mysql.Request{
 				EntityConfig: framework.EntityConfig{
 					ExternalId: "users",
@@ -98,8 +94,7 @@ func TestConstructQuery(t *testing.T) {
 				"USA",
 			},
 		},
-		{
-			name: "query_empty_filter",
+		"query_empty_filter": {
 			inputRequest: &mysql.Request{
 				EntityConfig: framework.EntityConfig{
 					ExternalId: "users",
@@ -109,8 +104,7 @@ func TestConstructQuery(t *testing.T) {
 			},
 			wantErr: errors.New("invalid condition: specify exactly one of And, Or, or a valid leaf condition"),
 		},
-		{
-			name: "invalid_condition_structure",
+		"invalid_condition_structure": {
 			inputRequest: &mysql.Request{
 				EntityConfig: framework.EntityConfig{
 					ExternalId: "groups",
@@ -132,13 +126,11 @@ func TestConstructQuery(t *testing.T) {
 			},
 			wantErr: errors.New("invalid condition: specify exactly one of And, Or, or a valid leaf condition"),
 		},
-		{
-			name:         "nil_request",
+		"nil_request": {
 			inputRequest: nil,
 			wantErr:      errors.New("nil request provided"),
 		},
-		{
-			name: "valid_large_cursor",
+		"valid_large_cursor": {
 			inputRequest: &mysql.Request{
 				EntityConfig: framework.EntityConfig{
 					ExternalId: "users",
@@ -154,8 +146,7 @@ func TestConstructQuery(t *testing.T) {
 				int64(4294967295),
 			},
 		},
-		{
-			name: "invalid_cursor_too_large",
+		"invalid_cursor_too_large": {
 			inputRequest: &mysql.Request{
 				EntityConfig: framework.EntityConfig{
 					ExternalId: "users",
@@ -167,8 +158,7 @@ func TestConstructQuery(t *testing.T) {
 			},
 			wantErr: errors.New("cursor value exceeds maximum allowed value"),
 		},
-		{
-			name: "invalid_cursor_negative",
+		"invalid_cursor_negative": {
 			inputRequest: &mysql.Request{
 				EntityConfig: framework.EntityConfig{
 					ExternalId: "users",
@@ -180,8 +170,7 @@ func TestConstructQuery(t *testing.T) {
 			},
 			wantErr: errors.New("invalid negative cursor provided"),
 		},
-		{
-			name: "invalid_page_size_too_large",
+		"invalid_page_size_too_large": {
 			inputRequest: &mysql.Request{
 				EntityConfig: framework.EntityConfig{
 					ExternalId: "users",
@@ -192,8 +181,7 @@ func TestConstructQuery(t *testing.T) {
 			},
 			wantErr: errors.New("pageSize value exceeds maximum allowed value"),
 		},
-		{
-			name: "invalid_cursor_negative",
+		"invalid_page_size_negative": {
 			inputRequest: &mysql.Request{
 				EntityConfig: framework.EntityConfig{
 					ExternalId: "users",
@@ -204,8 +192,7 @@ func TestConstructQuery(t *testing.T) {
 			},
 			wantErr: errors.New("invalid negative pageSize provided"),
 		},
-		{
-			name: "validation_prevents_sql_injection_via_filter_value",
+		"validation_prevents_sql_injection_via_filter_value": {
 			inputRequest: &mysql.Request{
 				EntityConfig: framework.EntityConfig{
 					ExternalId: "users",
@@ -226,8 +213,7 @@ func TestConstructQuery(t *testing.T) {
 				int64(500),
 			},
 		},
-		{
-			name: "filter_all_types_anded",
+		"filter_all_types_anded": {
 			inputRequest: &mysql.Request{
 				EntityConfig: framework.EntityConfig{
 					ExternalId: "groups",
@@ -314,8 +300,8 @@ func TestConstructQuery(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
 			gotQuery, gotAttrs, gotErr := mysql.ConstructQuery(tt.inputRequest)
 
 			assert.Equal(t, tt.wantQuery, gotQuery)

@@ -9,7 +9,7 @@
 // operators or target languages.
 package condexpr
 
-import "fmt"
+import "errors"
 
 // Condition represents a filter expression that can be either a leaf condition
 // or a logical composite condition.
@@ -60,7 +60,7 @@ func DefaultBuild[T any, CB ConditionBuilder[T]](cb CB, cond Condition) (out T, 
 	isLeaf := cond.Field != "" || cond.Operator != "" || cond.Value != nil
 
 	if (isAnd && isOr) || (isAnd && isLeaf) || (isOr && isLeaf) || (!isAnd && !isOr && !isLeaf) {
-		err = fmt.Errorf("invalid condition: specify exactly one of And, Or, or a valid leaf condition")
+		err = errors.New("invalid condition: specify exactly one of And, Or, or a valid leaf condition")
 
 		return
 	}

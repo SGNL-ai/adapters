@@ -64,10 +64,10 @@ func (cb ConditionBuilder) Build(cond condexpr.Condition) (goqu.Expression, erro
 func (cb ConditionBuilder) BuildCompositeAnd(cond condexpr.Condition) (goqu.Expression, error) {
 	exprs := make([]goqu.Expression, 0, len(cond.And))
 
-	for _, c := range cond.And {
+	for idx, c := range cond.And {
 		expr, err := cb.Build(c)
 		if err != nil {
-			return nil, fmt.Errorf("failed to build AND condition: %w", err)
+			return nil, fmt.Errorf("failed to build AND condition at index %d: %w", idx, err)
 		}
 
 		exprs = append(exprs, expr)
@@ -79,10 +79,10 @@ func (cb ConditionBuilder) BuildCompositeAnd(cond condexpr.Condition) (goqu.Expr
 func (cb ConditionBuilder) BuildCompositeOr(cond condexpr.Condition) (goqu.Expression, error) {
 	exprs := make([]goqu.Expression, 0, len(cond.Or))
 
-	for _, c := range cond.Or {
+	for idx, c := range cond.Or {
 		expr, err := cb.Build(c)
 		if err != nil {
-			return nil, fmt.Errorf("failed to build OR condition: %w", err)
+			return nil, fmt.Errorf("failed to build OR condition at index %d: %w", idx, err)
 		}
 
 		exprs = append(exprs, expr)
@@ -106,7 +106,10 @@ func (cb ConditionBuilder) BuildLeafCondition(cond condexpr.Condition) (goqu.Exp
 	}
 
 	if valid := validSQLIdentifier.MatchString(cond.Field); !valid {
-		return nil, fmt.Errorf("field validation failed: unsupported characters found or length is not in range 1-128")
+		return nil, fmt.Errorf(
+			"field validation failed for '%s': unsupported characters found or length is not in range 1-128",
+			cond.Field,
+		)
 	}
 
 	// Build leaf condition (Field, Operator, Value)

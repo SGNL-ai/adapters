@@ -12,14 +12,12 @@ import (
 )
 
 func TestBuild(t *testing.T) {
-	tests := []struct {
-		name      string
+	tests := map[string]struct {
 		condition condexpr.Condition
 		wantExpr  goqu.Expression
 		wantError error
 	}{
-		{
-			name: "Simple equality condition",
+		"simple_eq_condition": {
 			condition: condexpr.Condition{
 				Field:    "status",
 				Operator: "=",
@@ -27,8 +25,7 @@ func TestBuild(t *testing.T) {
 			},
 			wantExpr: goqu.C("status").Eq("active"),
 		},
-		{
-			name: "Simple greater than condition",
+		"simple_gt_condition": {
 			condition: condexpr.Condition{
 				Field:    "age",
 				Operator: ">",
@@ -36,8 +33,7 @@ func TestBuild(t *testing.T) {
 			},
 			wantExpr: goqu.C("age").Gt(30),
 		},
-		{
-			name: "AND condition with valid sub-conditions",
+		"and_condition_w_valid_subconditions": {
 			condition: condexpr.Condition{
 				And: []condexpr.Condition{
 					{Field: "age", Operator: ">", Value: 30},
@@ -49,8 +45,7 @@ func TestBuild(t *testing.T) {
 				goqu.C("status").Eq("active"),
 			),
 		},
-		{
-			name: "OR condition with valid sub-conditions",
+		"or_condition_w_valid_subconditions": {
 			condition: condexpr.Condition{
 				Or: []condexpr.Condition{
 					{Field: "age", Operator: "<", Value: 20},
@@ -62,8 +57,7 @@ func TestBuild(t *testing.T) {
 				goqu.C("status").Eq("inactive"),
 			),
 		},
-		{
-			name: "Nested AND/OR condition",
+		"nested_and_or_conditions": {
 			condition: condexpr.Condition{
 				And: []condexpr.Condition{
 					{
@@ -83,8 +77,7 @@ func TestBuild(t *testing.T) {
 				goqu.C("country").Eq("US"),
 			),
 		},
-		{
-			name: "IN operator with valid values",
+		"in_op_with_valid_values": {
 			condition: condexpr.Condition{
 				Field:    "status",
 				Operator: "IN",
@@ -92,8 +85,15 @@ func TestBuild(t *testing.T) {
 			},
 			wantExpr: goqu.C("status").In([]string{"active", "inactive"}),
 		},
-		{
-			name: "Unsupported operator",
+		"in_op_with_single_value": {
+			condition: condexpr.Condition{
+				Field:    "status",
+				Operator: "IN",
+				Value:    "active",
+			},
+			wantExpr: goqu.C("status").In("active"),
+		},
+		"unsupported_op": {
 			condition: condexpr.Condition{
 				Field:    "status",
 				Operator: "LIKE",
@@ -101,32 +101,28 @@ func TestBuild(t *testing.T) {
 			},
 			wantError: errors.New(`unsupported operator: "LIKE"`),
 		},
-		{
-			name: "Missing field",
+		"missing_field": {
 			condition: condexpr.Condition{
 				Operator: "=",
 				Value:    "active",
 			},
 			wantError: errors.New("missing required field"),
 		},
-		{
-			name: "Missing operator",
+		"missing_op": {
 			condition: condexpr.Condition{
 				Field: "status",
 				Value: "active",
 			},
 			wantError: errors.New("missing required operator"),
 		},
-		{
-			name: "Missing value",
+		"missing_value": {
 			condition: condexpr.Condition{
 				Field:    "status",
 				Operator: "=",
 			},
 			wantError: errors.New("missing required value"),
 		},
-		{
-			name: "Invalid operator",
+		"invalid_op": {
 			condition: condexpr.Condition{
 				Field:    "status",
 				Operator: "INVALID",
@@ -134,37 +130,33 @@ func TestBuild(t *testing.T) {
 			},
 			wantError: errors.New(`unsupported operator: "INVALID"`),
 		},
-		{
-			name: "AND condition with invalid sub-condition",
+		"and_condition_with_invalid_subconditions": {
 			condition: condexpr.Condition{
 				And: []condexpr.Condition{
 					{Field: "age", Operator: ">", Value: 30},
 					{Operator: "=", Value: "John"},
 				},
 			},
-			wantError: errors.New("failed to build AND condition: missing required field"),
+			wantError: errors.New("failed to build AND condition at index 1: missing required field"),
 		},
-		{
-			name: "OR condition with invalid sub-condition",
+		"or_condition_with_invalid_subconditions": {
 			condition: condexpr.Condition{
 				Or: []condexpr.Condition{
 					{Field: "age", Operator: "<", Value: 20},
 					{Field: "name"},
 				},
 			},
-			wantError: errors.New("failed to build OR condition: missing required value"),
+			wantError: errors.New("failed to build OR condition at index 1: missing required value"),
 		},
-		{
-			name: "Invalid chars in field",
+		"invalid_chars_in_field": {
 			condition: condexpr.Condition{
 				Field:    "id; DROP TABLE Users;",
 				Operator: "=",
 				Value:    "active",
 			},
-			wantError: errors.New("field validation failed: unsupported characters found or length is not in range 1-128"),
+			wantError: errors.New("field validation failed for 'id; DROP TABLE Users;': unsupported characters found or length is not in range 1-128"),
 		},
-		{
-			name: "Invalid condition",
+		"invalid_condition": {
 			condition: condexpr.Condition{
 				Field:    "age",
 				Operator: ">",
@@ -182,8 +174,8 @@ func TestBuild(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
 			builder := NewConditionBuilder()
 			gotExpr, gotErr := builder.Build(tt.condition)
 
