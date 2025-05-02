@@ -9,7 +9,7 @@ import (
 	"github.com/doug-martin/goqu/v9"
 	condexprsql "github.com/sgnl-ai/adapters/pkg/condexpr/sql"
 
-	_ "github.com/doug-martin/goqu/v9/dialect/mysql" // goqu MySQL Dialect required for use constructing queries.
+	_ "github.com/doug-martin/goqu/v9/dialect/mysql" // goqu MySQL Dialect required for constructing correct queries.
 )
 
 func ConstructQuery(request *Request) (string, []any, error) {
