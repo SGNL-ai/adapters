@@ -192,6 +192,77 @@ func TestConstructQuery(t *testing.T) {
 			},
 			wantErr: errors.New("invalid negative pageSize provided"),
 		},
+		{
+			name: "filter_all_types_anded",
+			inputRequest: &mysql.Request{
+				EntityConfig: framework.EntityConfig{
+					ExternalId: "groups",
+				},
+				Filter: testutil.GenPtr(condexpr.Condition{
+					And: []condexpr.Condition{
+						{
+							Field:    "age",
+							Operator: ">",
+							Value:    21,
+						},
+						{
+							Field:    "age",
+							Operator: "<",
+							Value:    100,
+						},
+						{
+							Field:    "balance",
+							Operator: ">=",
+							Value:    1.234,
+						},
+						{
+							Field:    "balance",
+							Operator: "<=",
+							Value:    123.4,
+						},
+						{
+							Field:    "status",
+							Operator: "=",
+							Value:    "active",
+						},
+						{
+							Field:    "riskScore",
+							Operator: "!=",
+							Value:    "HIGH",
+						},
+						{
+							Field:    "verified",
+							Operator: "=",
+							Value:    true,
+						},
+						{
+							Field:    "enabled",
+							Operator: "!=",
+							Value:    false,
+						},
+						{
+							Field:    "countryCode",
+							Operator: "IN",
+							Value:    []string{"US", "CA", "MX"},
+						},
+						{
+							Field:    "assignedCases",
+							Operator: "IN",
+							Value:    []int{1, 2, 3},
+						},
+						{
+							Field:    "status",
+							Operator: "IN",
+							Value:    "enabled",
+						},
+					},
+				}),
+				UniqueAttributeExternalID: "groupId",
+				PageSize:                  100,
+			},
+			wantQuery: "SELECT *, CAST(`groupId` AS CHAR(50)) AS `str_id` FROM `groups` WHERE ((`age` > 21) AND (`age` < 100) AND (`balance` >= 1.234) AND (`balance` <= 123.4) AND (`status` = 'active') AND (`riskScore` != 'HIGH') AND (`verified` IS TRUE) AND (`enabled` IS NOT FALSE) AND (`countryCode` IN ('US', 'CA', 'MX')) AND (`assignedCases` IN (1, 2, 3)) AND (`status` IN ('enabled'))) ORDER BY `str_id` ASC LIMIT 100",
+			wantAttrs: []any{},
+		},
 	}
 
 	for _, tt := range tests {
