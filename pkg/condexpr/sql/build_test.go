@@ -164,7 +164,7 @@ func TestBuild(t *testing.T) {
 			wantError: errors.New("field validation failed: unsupported characters found or length is not in range 1-128"),
 		},
 		{
-			name: "OR condition with invalid sub-condition",
+			name: "Invalid condition",
 			condition: condexpr.Condition{
 				Field:    "age",
 				Operator: ">",
@@ -178,10 +178,7 @@ func TestBuild(t *testing.T) {
 					{Field: "verified", Operator: "=", Value: true},
 				},
 			},
-			wantExpr: goqu.And(
-				goqu.C("age").Gt(21),
-				goqu.C("verified").Eq(true),
-			),
+			wantError: errors.New("invalid condition: specify exactly one of And, Or, or a valid leaf condition"),
 		},
 	}
 
