@@ -62,6 +62,12 @@ func (a *Adapter) RequestPageFromDatasource(
 		}
 	}
 
+	if request.Config.Filters != nil {
+		if curFilter, ok := request.Config.Filters[request.Entity.ExternalId]; ok {
+			req.Filter = &curFilter
+		}
+	}
+
 	resp, err := a.MySQLClient.GetPage(ctx, req)
 	if err != nil {
 		return framework.NewGetPageResponseError(err)
