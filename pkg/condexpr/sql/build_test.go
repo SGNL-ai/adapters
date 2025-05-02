@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// nolint: lll
 func TestBuild(t *testing.T) {
 	tests := map[string]struct {
 		condition condexpr.Condition
