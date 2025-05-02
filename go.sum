@@ -330,8 +330,8 @@ github.com/redis/go-redis/v9 v9.6.1 h1:HHDteefn6ZkTtY5fGUE8tj8uy85AHk6zP7CpzIAM0
 github.com/redis/go-redis/v9 v9.6.1/go.mod h1:0C0c6ycQsdpVNQpxb1njEQIqkx5UcsM8FJCQLgE9+RA=
 github.com/rogpeppe/go-internal v1.13.1 h1:KvO1DLK/DRN07sQ1LQKScxyZJuNnedQ5/wKSR38lUII=
 github.com/rogpeppe/go-internal v1.13.1/go.mod h1:uMEvuHeurkdAXX61udpOXGD/AzZDWNMNyH2VO9fmH0o=
-github.com/sgnl-ai/adapter-framework v0.16.1-0.20250424152901-90c73f04d529 h1:fdQvNYBcyn59cY6zmbnvGmUYiDJ9VlOyxHox+vDSvVA=
-github.com/sgnl-ai/adapter-framework v0.16.1-0.20250424152901-90c73f04d529/go.mod h1:amJmdefLSkN6XjE/EI1S2DlvmSl66B/nW5cRPEjVNYc=
+github.com/sgnl-ai/adapter-framework v0.17.1-0.20250501192649-a28f1e5b6962 h1:rYzoezWn8wcd6/bTz2FO5cEAzvh7F/K8RVcr2kNwrfQ=
+github.com/sgnl-ai/adapter-framework v0.17.1-0.20250501192649-a28f1e5b6962/go.mod h1:amJmdefLSkN6XjE/EI1S2DlvmSl66B/nW5cRPEjVNYc=
 github.com/shirou/gopsutil/v4 v4.25.1 h1:QSWkTc+fu9LTAWfkZwZ6j8MSUk4A2LV7rbH0ZqmLjXs=
 github.com/shirou/gopsutil/v4 v4.25.1/go.mod h1:RoUCUpndaJFtT+2zsZzzmhvbfGoDCJ7nFXKJf8GqJbI=
 github.com/shopspring/decimal v1.3.1/go.mod h1:DKyhrW/HYNuLGql+MJL6WCR6knT2jwCFRcu2hWCYk4o=
