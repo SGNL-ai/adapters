@@ -45,18 +45,31 @@ func (c *MockSQLClient) Connect(datasourceName string) error {
 
 // nolint: lll
 func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
-	if len(args) != 2 {
-		return nil, errors.New("mock sql client called with unsupported number of args")
-	}
 
-	pageSize, ok := args[0].(int64)
-	if !ok {
-		return nil, errors.New("mock sql client called with invalid arg[1], unable to cast `pageSize` to int64")
-	}
+	var (
+		pageSize int64
+		cursor   int64
+		ok       bool
+	)
 
-	cursor, ok := args[1].(int64)
-	if !ok {
-		return nil, errors.New("mock sql client called with invalid arg[2], unable to cast `cursor` to int64")
+	switch {
+	case len(args) == 0:
+		return nil, errors.New("mock sql client called with invalid arg length `0`")
+	case len(args) == 1:
+		pageSize, ok = args[0].(int64)
+		if !ok {
+			return nil, errors.New("mock sql client called with invalid arg[1], unable to cast `pageSize` to int64")
+		}
+	default:
+		pageSize, ok = args[len(args)-2].(int64)
+		if !ok {
+			return nil, errors.New("mock sql client called with invalid arg[1], unable to cast `pageSize` to int64")
+		}
+
+		cursor, ok = args[len(args)-1].(int64)
+		if !ok {
+			return nil, errors.New("mock sql client called with invalid arg[2], unable to cast `cursor` to int64")
+		}
 	}
 
 	switch {
@@ -198,6 +211,31 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 
 		c.Mock.ExpectQuery(
 			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT ? OFFSET ?"),
+		).WithArgs(values...).WillReturnRows(mockRows)
+
+	// Test: First page of users filtered active only and risk > 2
+	case pageSize == 5 && cursor == 204:
+		columns := []*sqlmock.Column{
+			sqlmock.NewColumn("id").OfType("VARCHAR", ""),
+			sqlmock.NewColumn("name").OfType("VARCHAR", ""),
+			sqlmock.NewColumn("active").OfType("BOOL", ""),
+			sqlmock.NewColumn("employee_number").OfType("INT", ""),
+			sqlmock.NewColumn("risk_score").OfType("FLOAT", ""),
+			sqlmock.NewColumn("last_modified").OfType("DATETIME", ""),
+		}
+
+		mockRows := sqlmock.NewRowsWithColumnDefinition(columns...).
+			AddRow("62c74831-be4a-4cad-88fa-4e02640269d2", "Chris Griffin", true, 3, 4.23, "2025-02-12T22:38:00+00:00").
+			AddRow("6598acf9-cccc-48c9-ab9b-754bbe9ad146", "Helen Gray", true, 5, 3.25, "2025-02-12T22:38:00+00:00")
+
+		values := []driver.Value{}
+
+		for _, arg := range args {
+			values = append(values, driver.Value(arg))
+		}
+
+		c.Mock.ExpectQuery(
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE ((`active` IS TRUE) AND (`risk_score` > ?)) ORDER BY `str_id` ASC LIMIT ? OFFSET ?"),
 		).WithArgs(values...).WillReturnRows(mockRows)
 
 	default:

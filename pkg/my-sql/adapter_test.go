@@ -13,6 +13,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
+	"github.com/sgnl-ai/adapters/pkg/condexpr"
 	"github.com/sgnl-ai/adapters/pkg/config"
 	mysql "github.com/sgnl-ai/adapters/pkg/my-sql"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
@@ -762,6 +763,99 @@ func TestAdapterGetPage(t *testing.T) {
 						},
 					},
 					NextCursor: "5",
+				},
+			},
+		},
+		"valid_request_first_page_filtered": {
+			request: &framework.Request[mysql.Config]{
+				Address: "127.0.0.1",
+				Auth: &framework.DatasourceAuthCredentials{
+					Basic: &framework.BasicAuthCredentials{
+						Username: "testusername",
+						Password: "testpassword",
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "users",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "id",
+							Type:       framework.AttributeTypeString,
+							UniqueId:   true,
+						},
+						{
+							ExternalId: "name",
+							Type:       framework.AttributeTypeString,
+						},
+						{
+							ExternalId: "missing_field",
+							Type:       framework.AttributeTypeString,
+						},
+						{
+							ExternalId: "active",
+							Type:       framework.AttributeTypeBool,
+						},
+						{
+							ExternalId: "employee_number",
+							Type:       framework.AttributeTypeInt64,
+						},
+						{
+							ExternalId: "risk_score",
+							Type:       framework.AttributeTypeDouble,
+						},
+						{
+							ExternalId: "last_modified",
+							Type:       framework.AttributeTypeDateTime,
+						},
+					},
+				},
+				Config: &mysql.Config{
+					CommonConfig: &config.CommonConfig{
+						RequestTimeoutSeconds: testutil.GenPtr(10),
+						LocalTimeZoneOffset:   -18000, // UTC−05:00 (EST)
+					},
+					Database: "sgnl",
+					Filters: map[string]condexpr.Condition{
+						"users": {
+							And: []condexpr.Condition{
+								{
+									Field:    "active",
+									Operator: "=",
+									Value:    true,
+								},
+								{
+									Field:    "risk_score",
+									Operator: ">",
+									Value:    2.0,
+								},
+							},
+						},
+					},
+				},
+				Ordered:  true,
+				PageSize: 5,
+				Cursor:   "204",
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"active":          true,
+							"employee_number": int64(3),
+							"id":              "62c74831-be4a-4cad-88fa-4e02640269d2",
+							"last_modified":   time.Date(2025, 2, 12, 22, 38, 00, 00, time.UTC),
+							"name":            "Chris Griffin",
+							"risk_score":      float64(4.23),
+						},
+						{
+							"active":          true,
+							"employee_number": int64(5),
+							"id":              "6598acf9-cccc-48c9-ab9b-754bbe9ad146",
+							"last_modified":   time.Date(2025, 2, 12, 22, 38, 00, 00, time.UTC),
+							"name":            "Helen Gray",
+							"risk_score":      float64(3.25),
+						},
+					},
 				},
 			},
 		},
