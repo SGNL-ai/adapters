@@ -22,7 +22,7 @@ func ConstructQuery(request *Request) (string, []any, error) {
 	expr := dialect.Select(
 		"*",
 		goqu.Cast(goqu.I(request.UniqueAttributeExternalID), "CHAR(50)").As("str_id"),
-	).From(request.EntityConfig.ExternalId)
+	).From(request.EntityConfig.ExternalId).Prepared(true)
 
 	if request.Filter != nil {
 		builder := condexprsql.NewConditionBuilder()

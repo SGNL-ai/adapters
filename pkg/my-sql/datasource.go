@@ -110,7 +110,6 @@ func (d *Datasource) Request(_ context.Context, request *Request) (*Response, *f
 		cursor = *request.Cursor
 	}
 
-	// TODO: Use attrs
 	query, _, err := ConstructQuery(request)
 	if err != nil {
 		return nil, &framework.Error{

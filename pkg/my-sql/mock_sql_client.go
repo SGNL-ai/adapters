@@ -85,7 +85,7 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 		}
 
 		c.Mock.ExpectQuery(
-			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT 5"),
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT ?"),
 		).WithArgs(values...).WillReturnRows(mockRows)
 
 	// Second (middle) page of users. Tests providing BOOLs as TINYINT.
@@ -113,7 +113,7 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 		}
 
 		c.Mock.ExpectQuery(
-			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT 5 OFFSET 5"),
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT ? OFFSET ?"),
 		).WithArgs(values...).WillReturnRows(mockRows)
 
 	// Third (last) page of users.
@@ -138,7 +138,7 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 		}
 
 		c.Mock.ExpectQuery(
-			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT 5 OFFSET 10"),
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT ? OFFSET ?"),
 		).WithArgs(values...).WillReturnRows(mockRows)
 
 	// Test: Failed to query datasource
@@ -171,7 +171,7 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 		}
 
 		c.Mock.ExpectQuery(
-			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT 5 OFFSET 202"),
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT ? OFFSET ?"),
 		).WithArgs(values...).WillReturnRows(mockRows)
 
 	// Test: Edge case with empty values
@@ -197,7 +197,7 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 		}
 
 		c.Mock.ExpectQuery(
-			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT 5 OFFSET 203"),
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT ? OFFSET ?"),
 		).WithArgs(values...).WillReturnRows(mockRows)
 
 	default:

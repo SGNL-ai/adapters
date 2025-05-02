@@ -93,7 +93,7 @@ func TestGivenRequestWithoutConnectorCtxWhenGetPageRequestedThenSQLResponseStatu
 	db, mock, _ := sqlmock.New()
 	mockQuery := func(query string, _ ...any) (*sql.Rows, error) {
 		mock.ExpectQuery(
-			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT 100"),
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT ?"),
 		).WillReturnRows(sqlRows)
 
 		return db.Query(query)

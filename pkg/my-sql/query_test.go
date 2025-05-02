@@ -35,8 +35,11 @@ func TestConstructQuery(t *testing.T) {
 				PageSize:                  100,
 				Cursor:                    testutil.GenPtr(int64(500)),
 			},
-			wantQuery: "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT 100 OFFSET 500",
-			wantAttrs: []any{},
+			wantQuery: "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT ? OFFSET ?",
+			wantAttrs: []any{
+				int64(100),
+				int64(500),
+			},
 		},
 		{
 			name: "simple_with_filter",
@@ -52,8 +55,11 @@ func TestConstructQuery(t *testing.T) {
 				UniqueAttributeExternalID: "groupId",
 				PageSize:                  100,
 			},
-			wantQuery: "SELECT *, CAST(`groupId` AS CHAR(50)) AS `str_id` FROM `groups` WHERE (`status` = 'active') ORDER BY `str_id` ASC LIMIT 100",
-			wantAttrs: []any{},
+			wantQuery: "SELECT *, CAST(`groupId` AS CHAR(50)) AS `str_id` FROM `groups` WHERE (`status` = ?) ORDER BY `str_id` ASC LIMIT ?",
+			wantAttrs: []any{
+				"active",
+				int64(100),
+			},
 		},
 		{
 			name: "simple_with_complex_filter",
@@ -86,8 +92,11 @@ func TestConstructQuery(t *testing.T) {
 				}),
 				UniqueAttributeExternalID: "id",
 			},
-			wantQuery: "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE (((`age` > 18) AND (`country` = 'USA')) OR (`verified` IS TRUE)) ORDER BY `str_id` ASC",
-			wantAttrs: []any{},
+			wantQuery: "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE (((`age` > ?) AND (`country` = ?)) OR (`verified` IS TRUE)) ORDER BY `str_id` ASC",
+			wantAttrs: []any{
+				int64(18),
+				"USA",
+			},
 		},
 		{
 			name: "query_empty_filter",
@@ -139,8 +148,11 @@ func TestConstructQuery(t *testing.T) {
 				PageSize:                  100,
 				Cursor:                    testutil.GenPtr(int64(math.MaxUint32)),
 			},
-			wantQuery: "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT 100 OFFSET 4294967295",
-			wantAttrs: []any{},
+			wantQuery: "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT ? OFFSET ?",
+			wantAttrs: []any{
+				int64(100),
+				int64(4294967295),
+			},
 		},
 		{
 			name: "invalid_cursor_too_large",
@@ -191,6 +203,28 @@ func TestConstructQuery(t *testing.T) {
 				PageSize:                  int64(-1),
 			},
 			wantErr: errors.New("invalid negative pageSize provided"),
+		},
+		{
+			name: "validation_prevents_sql_injection_via_filter_value",
+			inputRequest: &mysql.Request{
+				EntityConfig: framework.EntityConfig{
+					ExternalId: "users",
+				},
+				Filter: testutil.GenPtr(condexpr.Condition{
+					Field:    "status",
+					Operator: "=",
+					Value:    "active';DROP sampletable;--",
+				}),
+				UniqueAttributeExternalID: "id",
+				PageSize:                  100,
+				Cursor:                    testutil.GenPtr(int64(500)),
+			},
+			wantQuery: "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE (`status` = ?) ORDER BY `str_id` ASC LIMIT ? OFFSET ?",
+			wantAttrs: []any{
+				"active';DROP sampletable;--",
+				int64(100),
+				int64(500),
+			},
 		},
 		{
 			name: "filter_all_types_anded",
@@ -260,8 +294,23 @@ func TestConstructQuery(t *testing.T) {
 				UniqueAttributeExternalID: "groupId",
 				PageSize:                  100,
 			},
-			wantQuery: "SELECT *, CAST(`groupId` AS CHAR(50)) AS `str_id` FROM `groups` WHERE ((`age` > 21) AND (`age` < 100) AND (`balance` >= 1.234) AND (`balance` <= 123.4) AND (`status` = 'active') AND (`riskScore` != 'HIGH') AND (`verified` IS TRUE) AND (`enabled` IS NOT FALSE) AND (`countryCode` IN ('US', 'CA', 'MX')) AND (`assignedCases` IN (1, 2, 3)) AND (`status` IN ('enabled'))) ORDER BY `str_id` ASC LIMIT 100",
-			wantAttrs: []any{},
+			wantQuery: "SELECT *, CAST(`groupId` AS CHAR(50)) AS `str_id` FROM `groups` WHERE ((`age` > ?) AND (`age` < ?) AND (`balance` >= ?) AND (`balance` <= ?) AND (`status` = ?) AND (`riskScore` != ?) AND (`verified` IS TRUE) AND (`enabled` IS NOT FALSE) AND (`countryCode` IN (?, ?, ?)) AND (`assignedCases` IN (?, ?, ?)) AND (`status` IN (?))) ORDER BY `str_id` ASC LIMIT ?",
+			wantAttrs: []any{
+				int64(21),
+				int64(100),
+				float64(1.234),
+				float64(123.4),
+				"active",
+				"HIGH",
+				"US",
+				"CA",
+				"MX",
+				int64(1),
+				int64(2),
+				int64(3),
+				"enabled",
+				int64(100),
+			},
 		},
 	}
 
