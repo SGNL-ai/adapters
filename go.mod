@@ -13,12 +13,13 @@ require (
 	github.com/aws/smithy-go v1.22.3
 	github.com/bwmarrin/go-objectsid v0.0.0-20191126144531-5fee401a2f37
 	github.com/docker/go-connections v0.5.0
+	github.com/doug-martin/goqu/v9 v9.19.0
 	github.com/go-ldap/ldap/v3 v3.4.11
 	github.com/go-sql-driver/mysql v1.9.2
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
 	github.com/machinebox/graphql v0.2.2
-	github.com/sgnl-ai/adapter-framework v0.16.1-0.20250424152901-90c73f04d529
+	github.com/sgnl-ai/adapter-framework v0.17.1-0.20250501192649-a28f1e5b6962
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.36.0
 	google.golang.org/grpc v1.71.1

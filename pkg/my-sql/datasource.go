@@ -104,21 +104,12 @@ func (d *Datasource) Request(_ context.Context, request *Request) (*Response, *f
 		}
 	}
 
-	var cursor int64
-
-	if request.Cursor != nil {
-		cursor = *request.Cursor
-	}
-
-	query := fmt.Sprintf(
-		"SELECT *, CAST(%s as CHAR(50)) as str_id FROM %s ORDER BY str_id ASC LIMIT ? OFFSET ?",
-		request.UniqueAttributeExternalID,
-		request.EntityConfig.ExternalId,
-	)
-
-	args := []any{
-		request.PageSize,
-		cursor,
+	query, args, err := ConstructQuery(request)
+	if err != nil {
+		return nil, &framework.Error{
+			Message: fmt.Sprintf("Failed to construct query: %v.", err),
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
+		}
 	}
 
 	rows, err := d.Client.Query(query, args...)

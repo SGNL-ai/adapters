@@ -341,6 +341,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	entityConfig := request.EntityConfigMap[request.EntityExternalID]
 	memberOf := entityConfig.MemberOf
 
+	// nolint: nestif
 	if memberOf != nil {
 		// Update required attribute for [Member] Entity
 		request.Attributes = append(request.Attributes, &framework.AttributeConfig{
@@ -403,13 +404,15 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 				int, string, []map[string]any, *pagination.CompositeCursor[string], *framework.Error,
 			) {
 				resp, err := d.GetPage(ctx, memberOfReq)
-				if err != nil {
+				if err != nil || resp == nil {
 					return 0, "", nil, nil, err
 				}
 
-				if collectionID, ok := resp.Objects[0][*collectionAttribute].(string); ok {
-					query := entityConfig.Query
-					entityConfig.Query = strings.Replace(query, "{{CollectionId}}", collectionID, -1)
+				if len(resp.Objects) > 0 {
+					if collectionID, ok := resp.Objects[0][*collectionAttribute].(string); ok {
+						query := entityConfig.Query
+						entityConfig.Query = strings.Replace(query, "{{CollectionId}}", collectionID, -1)
+					}
 				}
 
 				return resp.StatusCode, resp.RetryAfterHeader, resp.Objects, resp.NextCursor, nil
@@ -625,8 +628,11 @@ func attrIDToConfig(attrConfig []*framework.AttributeConfig) map[string]*framewo
 	return result
 }
 
-func StringAttrValuesToRequestedType(attr *ldap_v3.EntryAttribute, isList bool,
-	attrType framework.AttributeType) (any, *framework.Error) {
+func StringAttrValuesToRequestedType(
+	attr *ldap_v3.EntryAttribute,
+	isList bool,
+	attrType framework.AttributeType,
+) (any, *framework.Error) {
 	if isList {
 		if len(attr.Values) == 0 { // empty values
 			return attr.Values, nil
@@ -659,8 +665,12 @@ func StringAttrValuesToRequestedType(attr *ldap_v3.EntryAttribute, isList bool,
 			guid, err := uuid.Parse(hex.EncodeToString(attr.ByteValues[0]))
 			if err != nil {
 				return nil, &framework.Error{
-					Message: fmt.Sprintf(ErrorMsgAttributeTypeDoesNotMatchFmt,
-						attr.Name, reflect.TypeOf(attr.Values[0]), "string"),
+					Message: fmt.Sprintf(
+						ErrorMsgAttributeTypeDoesNotMatchFmt,
+						attr.Name,
+						reflect.TypeOf(attr.Values[0]),
+						"string",
+					),
 					Code: api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ATTRIBUTE_TYPE,
 				}
 			}
