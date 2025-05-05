@@ -36,9 +36,9 @@ type LDAPProxy interface {
 	ProxyRequest(ctx context.Context, ci *connector.ConnectorInfo, request *Request) (*Response, *framework.Error)
 }
 
-// LDAPRequester is an interface for LDAP requests.
+// LDAPClient is an interface for LDAP requests.
 // It is used to send LDAP requests directly to a publicly accessible LDAP server.
-type LDAPRequester interface {
+type LDAPClient interface {
 	Request(ctx context.Context, request *Request) (*Response, *framework.Error)
 }
 
@@ -56,18 +56,18 @@ type Datasource struct {
 	Client Dispatcher
 }
 
-// Dispatcher is an interface that combines LDAPProxy and LDAPRequester.
+// Dispatcher is an interface that combines LDAPProxy and LDAPClient.
 // It is used to determine if the LDAP request should be proxied or sent directly to the LDAP server.
 // The IsProxied method checks if the LDAP request is proxied.
 type Dispatcher interface {
 	IsProxied() bool
 	LDAPProxy
-	LDAPRequester
+	LDAPClient
 }
 
-// NewLDAPRequester creates a new LDAPRequester instance.
+// NewLDAPClient creates a new LDAPRequester instance.
 // It is used to create a new LDAP client for making LDAP search requests.
-func NewLDAPRequester() LDAPRequester {
+func NewLDAPClient() LDAPClient {
 	return &ldapClient{}
 }
 
