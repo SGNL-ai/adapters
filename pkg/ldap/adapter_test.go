@@ -516,7 +516,6 @@ func (s *LDAPTestSuite) Test_AdapterGetGroupMemberPage() {
 				},
 			},
 		},
-		// Assert the existing error (e.g. this panics before the fix).
 		"valid_request_no_parent_objects": {
 			ctx: context.Background(),
 			request: &framework.Request[ldap_adapter.Config]{
