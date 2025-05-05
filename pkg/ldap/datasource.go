@@ -320,6 +320,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	entityConfig := request.EntityConfigMap[request.EntityExternalID]
 	memberOf := entityConfig.MemberOf
 
+	// nolint: nestif
 	if memberOf != nil {
 		// Update required attribute for [Member] Entity
 		request.Attributes = append(request.Attributes, &framework.AttributeConfig{
