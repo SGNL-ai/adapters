@@ -516,6 +516,57 @@ func (s *LDAPTestSuite) Test_AdapterGetGroupMemberPage() {
 				},
 			},
 		},
+		// Assert the existing error (e.g. this panics before the fix).
+		"valid_request_no_parent_objects": {
+			ctx: context.Background(),
+			request: &framework.Request[ldap_adapter.Config]{
+				Address: s.ldapHost,
+				Auth:    validAuthCredentials,
+				Config: &ldap_adapter.Config{
+					BaseDN: "dc=example,dc=org",
+					EntityConfigMap: map[string]*ldap_adapter.EntityConfig{
+						"Group": {
+							Query: "(objectClass=missing)",
+						},
+						"GroupMember": {
+							MemberOf:                  testutil.GenPtr("Group"),
+							CollectionAttribute:       testutil.GenPtr("dn"),
+							Query:                     "(&(memberOf={{CollectionId}}))",
+							MemberUniqueIDAttribute:   testutil.GenPtr("dn"),
+							MemberOfUniqueIDAttribute: testutil.GenPtr("dn"),
+						},
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "GroupMember",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "id",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+							UniqueId:   true,
+						},
+						{
+							ExternalId: "group_dn",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+						{
+							ExternalId: "member_dn",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+					},
+				},
+				PageSize: 2,
+			},
+			wantResponse: framework.Response{
+				Error: &framework.Error{
+					Message: "Datasource rejected request, returned status code: 404.",
+					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+				},
+			},
+		},
 	}
 
 	for name, tt := range tests {
