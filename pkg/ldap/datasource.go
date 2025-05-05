@@ -30,14 +30,15 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// Datasource directly implements a Client interface to allow querying an external datasource.
-type Datasource struct {
-	Client Dispatcher
+// LDAPProxy is an interface for LDAP proxy requests.
+// It is used to send LDAP requests to a remote connector via the SGNL connector proxy.
+type LDAPProxy interface {
+	ProxyRequest(ctx context.Context, ci *connector.ConnectorInfo, request *Request) (*Response, *framework.Error)
 }
 
-type Dispatcher interface {
-	IsProxied() bool
-	ProxyRequest(ctx context.Context, ci *connector.ConnectorInfo, request *Request) (*Response, *framework.Error)
+// LDAPRequester is an interface for LDAP requests.
+// It is used to send LDAP requests directly to a publicly accessible LDAP server.
+type LDAPRequester interface {
 	Request(ctx context.Context, request *Request) (*Response, *framework.Error)
 }
 
@@ -48,6 +49,26 @@ func NewClient(proxy grpc_proxy_v1.ProxyServiceClient) Client {
 			proxyClient: proxy,
 		},
 	}
+}
+
+// Datasource directly implements a Client interface to allow querying an external datasource.
+type Datasource struct {
+	Client Dispatcher
+}
+
+// Dispatcher is an interface that combines LDAPProxy and LDAPRequester.
+// It is used to determine if the LDAP request should be proxied or sent directly to the LDAP server.
+// The IsProxied method checks if the LDAP request is proxied.
+type Dispatcher interface {
+	IsProxied() bool
+	LDAPProxy
+	LDAPRequester
+}
+
+// NewLDAPRequester creates a new LDAPRequester instance.
+// It is used to create a new LDAP client for making LDAP search requests.
+func NewLDAPRequester() LDAPRequester {
+	return &ldapClient{}
 }
 
 // ldapClient for making LDAP search request directly to a publicly accessible LDAP server,
