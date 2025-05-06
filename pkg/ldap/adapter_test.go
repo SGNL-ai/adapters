@@ -50,7 +50,7 @@ func (s *LDAPTestSuite) TearDownSuite() {
 }
 
 func (s *LDAPTestSuite) Test_AdapterGetPage() {
-	adapter := ldap_adapter.NewAdapter()
+	adapter := ldap_adapter.NewAdapter(nil)
 
 	tests := map[string]struct {
 		ctx                context.Context
@@ -92,7 +92,7 @@ func (s *LDAPTestSuite) Test_AdapterGetPage() {
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
-					Message: "Failed to bind credentials - LDAP Result Code 49 \"Invalid Credentials\": ",
+					Message: "Failed to bind credentials: LDAP Result Code 49 \"Invalid Credentials\": .",
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_AUTHENTICATION_FAILED,
 				},
 			},
@@ -187,7 +187,7 @@ func (s *LDAPTestSuite) Test_AdapterGetPage() {
 }
 
 func (s *LDAPTestSuite) Test_AdapterGetUserPage() {
-	adapter := ldap_adapter.NewAdapter()
+	adapter := ldap_adapter.NewAdapter(nil)
 	tests := map[string]struct {
 		ctx                context.Context
 		request            *framework.Request[ldap_adapter.Config]
@@ -341,7 +341,7 @@ func (s *LDAPTestSuite) Test_AdapterGetUserPage() {
 }
 
 func (s *LDAPTestSuite) Test_AdapterGetGroupPage() {
-	adapter := ldap_adapter.NewAdapter()
+	adapter := ldap_adapter.NewAdapter(nil)
 	tests := map[string]struct {
 		ctx                context.Context
 		request            *framework.Request[ldap_adapter.Config]
@@ -447,7 +447,7 @@ func (s *LDAPTestSuite) Test_AdapterGetGroupPage() {
 }
 
 func (s *LDAPTestSuite) Test_AdapterGetGroupMemberPage() {
-	adapter := ldap_adapter.NewAdapter()
+	adapter := ldap_adapter.NewAdapter(nil)
 	tests := map[string]struct {
 		ctx                context.Context
 		request            *framework.Request[ldap_adapter.Config]
@@ -513,6 +513,56 @@ func (s *LDAPTestSuite) Test_AdapterGetGroupMemberPage() {
 						},
 					},
 					NextCursor: "eyJjb2xsZWN0aW9uSWQiOiJjbj1BZG1pbmlzdHJhdG9yLG91PUdyb3VwcyxkYz1leGFtcGxlLGRjPW9yZyIsImNvbGxlY3Rpb25DdXJzb3IiOiJleUpqYjJ4c1pXTjBhVzl1SWpwN0ltUnVJam9pWTI0OVFXUnRhVzVwYzNSeVlYUnZjaXh2ZFQxSGNtOTFjSE1zWkdNOVpYaGhiWEJzWlN4a1l6MXZjbWNpZlN3aWJtVjRkRkJoWjJWRGRYSnpiM0lpT2lKRVFVRkJRVUZCUVVGQlFUMGlmUT09In0=",
+				},
+			},
+		},
+		"valid_request_no_parent_objects": {
+			ctx: context.Background(),
+			request: &framework.Request[ldap_adapter.Config]{
+				Address: s.ldapHost,
+				Auth:    validAuthCredentials,
+				Config: &ldap_adapter.Config{
+					BaseDN: "dc=example,dc=org",
+					EntityConfigMap: map[string]*ldap_adapter.EntityConfig{
+						"Group": {
+							Query: "(objectClass=missing)",
+						},
+						"GroupMember": {
+							MemberOf:                  testutil.GenPtr("Group"),
+							CollectionAttribute:       testutil.GenPtr("dn"),
+							Query:                     "(&(memberOf={{CollectionId}}))",
+							MemberUniqueIDAttribute:   testutil.GenPtr("dn"),
+							MemberOfUniqueIDAttribute: testutil.GenPtr("dn"),
+						},
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "GroupMember",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "id",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+							UniqueId:   true,
+						},
+						{
+							ExternalId: "group_dn",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+						{
+							ExternalId: "member_dn",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+					},
+				},
+				PageSize: 2,
+			},
+			wantResponse: framework.Response{
+				Error: &framework.Error{
+					Message: "Datasource rejected request, returned status code: 404.",
+					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 				},
 			},
 		},

@@ -10,12 +10,13 @@ import (
 	"time"
 
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
+	"github.com/sgnl-ai/adapter-framework/pkg/connector/client"
+	grpc_proxy_v1 "github.com/sgnl-ai/adapter-framework/pkg/grpc_proxy/v1"
 	"github.com/sgnl-ai/adapter-framework/server"
 	aws "github.com/sgnl-ai/adapters/pkg/aws"
 	aws_s3 "github.com/sgnl-ai/adapters/pkg/aws-s3"
 	"github.com/sgnl-ai/adapters/pkg/azuread"
 	"github.com/sgnl-ai/adapters/pkg/bamboohr"
-	"github.com/sgnl-ai/adapters/pkg/client"
 	"github.com/sgnl-ai/adapters/pkg/crowdstrike"
 	"github.com/sgnl-ai/adapters/pkg/duo"
 	"github.com/sgnl-ai/adapters/pkg/github"
@@ -34,6 +35,7 @@ import (
 	"github.com/sgnl-ai/adapters/pkg/workday"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 var (
@@ -45,6 +47,9 @@ var (
 
 	// MaxConcurrency is the number of goroutines run concurrently in AWS adapter.
 	MaxConcurrency = flag.Int("max_concurrency", 20, "The number of goroutines run concurrently in AWS adapter")
+
+	// ConnectorServiceURL is the URL of the connector service.
+	ConnectorServiceURL = flag.String("connector_service_url", "", "The URL of the connector service")
 )
 
 func main() {
@@ -63,15 +68,28 @@ func main() {
 	stop := make(chan struct{})
 	adapterServer := server.New(stop)
 
+	connectorServiceClient, err := grpc.NewClient(
+		*ConnectorServiceURL,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		logger.Printf("Failed to create a grpc client to the connector service: %v", err)
+	}
+
 	// Initialize the client to fetch data from AWS S3.
-	s3Client, err := aws_s3.NewClient(client.NewSGNLHttpClient(timeout, "sgnl-S3/1.0.0"), nil)
+	s3Client, err := aws_s3.NewClient(
+		client.NewSGNLHTTPClientWithProxy(timeout, "sgnl-S3/1.0.0",
+			grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
+		), nil)
 	if err != nil {
 		logger.Fatalf("Failed to create a datasource to query AWS S3: %v", err)
 	}
 
 	// Initialize the client to fetch data from AWS.
 	awsClient, err := aws.NewClient(
-		client.NewSGNLHttpClient(timeout, "sgnl-AWS/1.0.0"), nil, *MaxConcurrency,
+		client.NewSGNLHTTPClientWithProxy(timeout, "sgnl-AWS/1.0.0",
+			grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
+		), nil, *MaxConcurrency,
 	)
 	if err != nil {
 		logger.Fatalf("Failed to create a datasource to query AWS: %v", err)
@@ -82,95 +100,128 @@ func main() {
 	server.RegisterAdapter(
 		adapterServer,
 		"AzureAD-1.0.1",
-		azuread.NewAdapter(azuread.NewClient(client.NewSGNLHttpClient(timeout, "sgnl-AzureAD/1.0.1"))),
+		azuread.NewAdapter(azuread.NewClient(
+			client.NewSGNLHTTPClientWithProxy(timeout, "sgnl-AzureAD/1.0.1",
+				grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
+			),
+		)),
 	)
 	server.RegisterAdapter(
 		adapterServer,
 		"BambooHR-1.0.0",
-		bamboohr.NewAdapter(bamboohr.NewClient(client.NewSGNLHttpClient(timeout, "sgnl-BambooHR/1.0.0"))),
+		bamboohr.NewAdapter(bamboohr.NewClient(client.NewSGNLHTTPClientWithProxy(timeout, "sgnl-BambooHR/1.0.0",
+			grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
+		))),
 	)
 	server.RegisterAdapter(
 		adapterServer,
 		"CrowdStrike-1.0.0",
 		crowdstrike.NewAdapter(
-			crowdstrike.NewClient(client.NewSGNLHttpClient(timeout, "sgnl-CrowdStrike/1.0.0")),
+			crowdstrike.NewClient(client.NewSGNLHTTPClientWithProxy(timeout, "sgnl-CrowdStrike/1.0.0",
+				grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
+			)),
 		),
 	)
 	server.RegisterAdapter(
 		adapterServer,
 		"Duo-1.0.0",
-		duo.NewAdapter(duo.NewClient(client.NewSGNLHttpClient(timeout, "sgnl-Duo/1.0.0"))),
+		duo.NewAdapter(duo.NewClient(client.NewSGNLHTTPClientWithProxy(timeout, "sgnl-Duo/1.0.0",
+			grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
+		))),
 	)
 	server.RegisterAdapter(
 		adapterServer,
 		"GitHub-1.0.0",
-		github.NewAdapter(github.NewClient(client.NewSGNLHttpClient(timeout, "sgnl-GitHub/1.0.0"))),
+		github.NewAdapter(github.NewClient(client.NewSGNLHTTPClientWithProxy(timeout, "sgnl-GitHub/1.0.0",
+			grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
+		))),
 	)
 	server.RegisterAdapter(
 		adapterServer,
 		"GoogleWorkspace-1.0.0",
 		googleworkspace.NewAdapter(
-			googleworkspace.NewClient(client.NewSGNLHttpClient(timeout, "sgnl-GoogleWorkspace/1.0.0")),
+			googleworkspace.NewClient(client.NewSGNLHTTPClientWithProxy(timeout, "sgnl-GoogleWorkspace/1.0.0",
+				grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
+			)),
 		),
 	)
 	server.RegisterAdapter(
 		adapterServer,
 		"HashiCorpBoundary-1.0.0",
 		hashicorp.NewAdapter(
-			hashicorp.NewClient(client.NewSGNLHttpClient(timeout, "sgnl-HashiCorpBoundary/1.0.0")),
+			hashicorp.NewClient(client.NewSGNLHTTPClientWithProxy(timeout, "sgnl-HashiCorpBoundary/1.0.0",
+				grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
+			)),
 		),
 	)
 	server.RegisterAdapter(
 		adapterServer,
 		"IdentityNow-1.0.0",
 		identitynow.NewAdapter(identitynow.NewClient(
-			client.NewSGNLHttpClient(timeout, "sgnl-IdentityNow/1.0.0"),
-			identitynow.DefaultAccountCollectionPageSize,
+			client.NewSGNLHTTPClientWithProxy(timeout, "sgnl-IdentityNow/1.0.0",
+				grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
+			), identitynow.DefaultAccountCollectionPageSize,
 		)),
 	)
 	server.RegisterAdapter(
 		adapterServer,
 		"Jira-1.0.0",
-		jira.NewAdapter(jira.NewClient(client.NewSGNLHttpClient(timeout, "sgnl-Jira/1.0.0"))),
+		jira.NewAdapter(jira.NewClient(client.NewSGNLHTTPClientWithProxy(timeout, "sgnl-Jira/1.0.0",
+			grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
+		))),
 	)
 	server.RegisterAdapter(
 		adapterServer,
 		"JiraDatacenter-1.0.0",
-		jiradatacenter.NewAdapter(jiradatacenter.NewClient(client.NewSGNLHttpClient(timeout, "sgnl-JiraDatacenter/1.0.0"))),
+		jiradatacenter.NewAdapter(jiradatacenter.NewClient(
+			client.NewSGNLHTTPClientWithProxy(timeout, "sgnl-JiraDatacenter/1.0.0",
+				grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
+			),
+		)),
 	)
 	server.RegisterAdapter(
 		adapterServer,
 		"LDAP-1.0.0",
-		ldap.NewAdapter(),
+		ldap.NewAdapter(grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient)),
 	)
 	server.RegisterAdapter(
 		adapterServer,
 		"MySQL-0.0.1-alpha",
-		mysql.NewAdapter(mysql.NewClient(mysql.NewDefaultSQLClient())),
+		mysql.NewAdapter(mysql.NewClient(mysql.NewDefaultSQLClient(
+			grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
+		))),
 	)
 	server.RegisterAdapter(
 		adapterServer,
 		"Okta-1.0.1",
-		okta.NewAdapter(okta.NewClient(client.NewSGNLHttpClient(timeout, "sgnl-Okta/1.0.1"))),
+		okta.NewAdapter(okta.NewClient(client.NewSGNLHTTPClientWithProxy(timeout, "sgnl-Okta/1.0.1",
+			grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
+		))),
 	)
 	server.RegisterAdapter(
 		adapterServer,
 		"PagerDuty-1.0.0",
 		pagerduty.NewAdapter(pagerduty.NewClient(
-			client.NewSGNLHttpClient(timeout, "sgnl-PagerDuty/1.0.0")),
+			client.NewSGNLHTTPClientWithProxy(timeout, "sgnl-PagerDuty/1.0.0",
+				grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
+			)),
 		),
 	)
 	server.RegisterAdapter(
 		adapterServer,
 		"Salesforce-1.0.1",
 		salesforce.NewAdapter(salesforce.NewClient(
-			client.NewSGNLHttpClient(timeout, "sgnl-Salesforce/1.0.1")),
+			client.NewSGNLHTTPClientWithProxy(timeout, "sgnl-Salesforce/1.0.1",
+				grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
+			)),
 		),
 	)
 	server.RegisterAdapter(
 		adapterServer,
 		"SCIM2.0-1.0.0",
-		scim.NewAdapter(scim.NewClient(client.NewSGNLHttpClient(timeout, "sgnl-SCIM2.0/1.0.0"))),
+		scim.NewAdapter(scim.NewClient(client.NewSGNLHTTPClientWithProxy(timeout, "sgnl-SCIM2.0/1.0.0",
+			grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
+		))),
 	)
 	server.RegisterAdapter(
 		adapterServer,
@@ -181,13 +232,19 @@ func main() {
 		adapterServer,
 		"ServiceNow-1.0.1",
 		servicenow.NewAdapter(servicenow.NewClient(
-			client.NewSGNLHttpClient(timeout, "sgnl-ServiceNow/1.0.1")),
-		),
+			client.NewSGNLHTTPClientWithProxy(timeout, "sgnl-ServiceNow/1.0.1",
+				grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
+			),
+		)),
 	)
 	server.RegisterAdapter(
 		adapterServer,
 		"Workday-1.0.0",
-		workday.NewAdapter(workday.NewClient(client.NewSGNLHttpClient(timeout, "sgnl-Workday/1.0.0"))),
+		workday.NewAdapter(workday.NewClient(
+			client.NewSGNLHTTPClientWithProxy(timeout, "sgnl-Workday/1.0.0",
+				grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
+			),
+		)),
 	)
 
 	api_adapter_v1.RegisterAdapterServer(s, adapterServer)
