@@ -182,8 +182,6 @@ func (s *LDAPTestSuite) Test_AdapterGetPage() {
 					t.Errorf("gotCursor: %v, wantCursor: %v", gotCursor, tt.wantCursor)
 				}
 			}
-
-			return
 		})
 	}
 }
@@ -338,8 +336,6 @@ func (s *LDAPTestSuite) Test_AdapterGetUserPage() {
 					t.Errorf("gotCursor: %v, wantCursor: %v", gotCursor, tt.wantCursor)
 				}
 			}
-
-			return
 		})
 	}
 }
@@ -446,8 +442,6 @@ func (s *LDAPTestSuite) Test_AdapterGetGroupPage() {
 					t.Errorf("gotCursor: %v, wantCursor: %v", gotCursor, tt.wantCursor)
 				}
 			}
-
-			return
 		})
 	}
 }
@@ -625,8 +619,6 @@ func (s *LDAPTestSuite) Test_AdapterGetGroupMemberPage() {
 					t.Errorf("gotCursor: %v, wantCursor: %v", gotCursor, tt.wantCursor)
 				}
 			}
-
-			return
 		})
 	}
 }
