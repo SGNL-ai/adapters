@@ -264,12 +264,17 @@ func GetTLSConfig(request *Request) (*tls.Config, *framework.Error) {
 	}
 
 	caCertPool := x509.NewCertPool()
-
 	caCertPool.AppendCertsFromPEM(decodedCertChain)
+
+	// Extract hostname without port for certificate validation
+	hostname := request.Host
+	if strings.Contains(hostname, ":") {
+		hostname = strings.Split(hostname, ":")[0]
+	}
 
 	return &tls.Config{
 		RootCAs:    caCertPool,
-		ServerName: request.Host,
+		ServerName: hostname,
 	}, nil
 }
 

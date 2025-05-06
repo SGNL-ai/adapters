@@ -21,6 +21,7 @@ import (
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"crypto/tls"
 )
 
 func TestBytesToOctetString(t *testing.T) {
@@ -307,5 +308,81 @@ func TestGivenRequestWithConnectorContextWhenProxyServiceReturnValidResponseThen
 
 	if diff := cmp.Diff(testResponse, resp); diff != "" {
 		t.Errorf("response payload mismatch (-want +got):%s", diff)
+	}
+}
+
+func TestGetTLSConfig(t *testing.T) {
+	tests := []struct {
+		name           string
+		request        *ldap.Request
+		expectedError  *framework.Error
+		expectedConfig *tls.Config
+	}{
+		{
+			name: "non_ldaps_connection",
+			request: &ldap.Request{
+				IsLDAPS: false,
+			},
+			expectedConfig: &tls.Config{},
+		},
+		{
+			name: "invalid_certificate_chain",
+			request: &ldap.Request{
+				IsLDAPS:          true,
+				CertificateChain: "invalid-base64",
+			},
+			expectedError: &framework.Error{
+				Message: "Failed to load certificates: illegal base64 data at input byte 7.",
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
+			},
+		},
+		{
+			name: "valid_certificate_chain_with_hostname",
+			request: &ldap.Request{
+				IsLDAPS:          true,
+				Host:             "ldap.example.com",
+				CertificateChain: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUNzRENDQWhtZ0F3SUJBZ0lKQUx3enJKRUlCT2FlTUEwR0NTcUdTSWIzRFFFQkJRVUFNRVV4Q3pBSkJnTlYKQkFZVEFrRlZNUk13RVFZRFZRUUlFd3BUYjIxbExWTjBZWFJsTVNFd0h3WURWUVFLRXhoSmJuUmxjbTVsZENCWAphV1JuYVhSeklGQjBlU0JNZEdRd0hoY05NVEV3T1RNd01UVXlOak0yV2hjTk1qRXdPVEkzTVRVeU5qTTJXakJGCk1Rc3dDUVlEVlFRR0V3SkJWVEVUTUJFR0ExVUVDQk1LVTI5dFpTMVRkR0YwWlRFaE1COEdBMVVFQ2hNWVNXNTAKWlhKdVpYUWdWMmxrWjJsMGN5QlFkSGtnVEhSa01JR2ZNQTBHQ1NxR1NJYjNEUUVCQVFVQUE0R05BRENCaVFLQgpnUUM4OENrd3J1OVZSMnAyS0oxV1F5cWVzTHpyOTV0YU5iaGtZZnNkMGo4VGwwTUdZNWgrZGN6Q2FNUXowWVkzCnhIWHVVNXlBUVFUWmppa3MrRDNLQTNjeCtpS0RmMnAxcTc3b1h4UWN4NUNrclhCV1R hWDJvcVZ0SG0zYVgyM0IKQUlPUkd1UGswMGI0clQzY2xkN1ZoY0VGbXpSTmJ5STBFcUxNQXhJd2NlVUtTUUlEQVFBQm80R25NSUdrTUIwRwpBMVVkRGdRV0JCU0dtT2R2U1hLWGNsaWM1VU9LUFczNUpMTUVFakIxQmdOVkhTTUViakJzZ0JTR21PZHZTWEtYCmNsaWM1VU9LUFczNUpMTUVFcUZKcEVjd1JURUxNQWtHQTFVRUJoTUNRVlV4RXpBUkJnTlZCQWdUQ2xOdmJXVXQKVTNSaGRHVXhJVEFmQmdOVkJBb1RHRWx1ZEdWeWJtVjBJRmRwWkdkcGRITWdVSFI1SUV4MFpJSUpBTHd6ckpFSQpCT2FlTUF3R0ExVWRFd1FGTUFNQkFmOHdEUVlKS29aSWh2Y05BUUVGQlFBRGdZRUFjUGZXbjQ5cGdBWDU0amk1ClNpVVBGRk5DdVFHU1NUSGgySStUTXJzMUcxTWIzYTBYMWRWNUNOTFJ5WHl1VnhzcWhpTS9IMnZlRm5UejJRNFUKd2RZL2tQeEUxOUF1d2N6OUF2Q2t3N29sMUxJbExmSnZCemp6T2pFcFpKTnRrWFR4OFJPU29vTnJEZUpsM0h5TgpjY2lTNWhmODBYeklGcXdoemFWUzlnbWl5TTg9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=",
+			},
+			expectedConfig: &tls.Config{
+				ServerName: "ldap.example.com",
+			},
+		},
+		{
+			name: "valid_certificate_chain_with_hostname_and_port",
+			request: &ldap.Request{
+				IsLDAPS:          true,
+				Host:             "ldap.example.com:636",
+				CertificateChain: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUNzRENDQWhtZ0F3SUJBZ0lKQUx3enJKRUlCT2FlTUEwR0NTcUdTSWIzRFFFQkJRVUFNRVV4Q3pBSkJnTlYKQkFZVEFrRlZNUk13RVFZRFZRUUlFd3BUYjIxbExWTjBZWFJsTVNFd0h3WURWUVFLRXhoSmJuUmxjbTVsZENCWAphV1JuYVhSeklGQjBlU0JNZEdRd0hoY05NVEV3T1RNd01UVXlOak0yV2hjTk1qRXdPVEkzTVRVeU5qTTJXakJGCk1Rc3dDUVlEVlFRR0V3SkJWVEVUTUJFR0ExVUVDQk1LVTI5dFpTMVRkR0YwWlRFaE1COEdBMVVFQ2hNWVNXNTAKWlhKdVpYUWdWMmxrWjJsMGN5QlFkSGtnVEhSa01JR2ZNQTBHQ1NxR1NJYjNEUUVCQVFVQUE0R05BRENCaVFLQgpnUUM4OENrd3J1OVZSMnAyS0oxV1F5cWVzTHpyOTV0YU5iaGtZZnNkMGo4VGwwTUdZNWgrZGN6Q2FNUXowWVkzCnhIWHVVNXlBUVFUWmppa3MrRDNLQTNjeCtpS0RmMnAxcTc3b1h4UWN4NUNrclhCV1R hWDJvcVZ0SG0zYVgyM0IKQUlPUkd1UGswMGI0clQzY2xkN1ZoY0VGbXpSTmJ5STBFcUxNQXhJd2NlVUtTUUlEQVFBQm80R25NSUdrTUIwRwpBMVVkRGdRV0JCU0dtT2R2U1hLWGNsaWM1VU9LUFczNUpMTUVFakIxQmdOVkhTTUViakJzZ0JTR21PZHZTWEtYCmNsaWM1VU9LUFczNUpMTUVFcUZKcEVjd1JURUxNQWtHQTFVRUJoTUNRVlV4RXpBUkJnTlZCQWdUQ2xOdmJXVXQKVTNSaGRHVXhJVEFmQmdOVkJBb1RHRWx1ZEdWeWJtVjBJRmRwWkdkcGRITWdVSFI1SUV4MFpJSUpBTHd6ckpFSQpCT2FlTUF3R0ExVWRFd1FGTUFNQkFmOHdEUVlKS29aSWh2Y05BUUVGQlFBRGdZRUFjUGZXbjQ5cGdBWDU0amk1ClNpVVBGRk5DdVFHU1NUSGgySStUTXJzMUcxTWIzYTBYMWRWNUNOTFJ5WHl1VnhzcWhpTS9IMnZlRm5UejJRNFUKd2RZL2tQeEUxOUF1d2N6OUF2Q2t3N29sMUxJbExmSnZCemp6T2pFcFpKTnRrWFR4OFJPU29vTnJEZUpsM0h5TgpjY2lTNWhmODBYeklGcXdoemFWUzlnbWl5TTg9Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0=",
+			},
+			expectedConfig: &tls.Config{
+				ServerName: "ldap.example.com:636",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config, err := ldap.GetTLSConfig(tt.request)
+			if tt.expectedError != nil {
+				if err == nil {
+					t.Errorf("expected error %v, got nil", tt.expectedError)
+					return
+				}
+				if err.Message != tt.expectedError.Message {
+					t.Errorf("expected error message %v, got %v", tt.expectedError.Message, err.Message)
+				}
+				if err.Code != tt.expectedError.Code {
+					t.Errorf("expected error code %v, got %v", tt.expectedError.Code, err.Code)
+				}
+				return
+			}
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+				return
+			}
+			if config.ServerName != tt.expectedConfig.ServerName {
+				t.Errorf("expected server name %v, got %v", tt.expectedConfig.ServerName, config.ServerName)
+			}
+		})
 	}
 }

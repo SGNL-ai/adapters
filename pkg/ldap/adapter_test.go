@@ -622,3 +622,85 @@ func (s *LDAPTestSuite) Test_AdapterGetGroupMemberPage() {
 		})
 	}
 }
+
+func (s *LDAPTestSuite) Test_HostnameValidation() {
+	adapter := ldap_adapter.NewAdapter(nil)
+
+	tests := map[string]struct {
+		ctx         context.Context
+		request     *framework.Request[ldap_adapter.Config]
+		wantErrCode api_adapter_v1.ErrorCode
+	}{
+		"invalid_hostname_with_port": {
+			ctx: context.Background(),
+			request: &framework.Request[ldap_adapter.Config]{
+				Address: "ldaps://localhost:636",
+				Auth:    validAuthCredentials,
+				Config: &ldap_adapter.Config{
+					BaseDN:           "dc=example,dc=org",
+					CertificateChain: validCertificateChain,
+					EntityConfigMap: map[string]*ldap_adapter.EntityConfig{
+						"Person": {
+							Query: "(&(objectClass=person))",
+						},
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "Person",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "dn",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+							UniqueId:   true,
+						},
+					},
+				},
+				PageSize: 2,
+			},
+			wantErrCode: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		},
+		"valid_hostname_without_port": {
+			ctx: context.Background(),
+			request: &framework.Request[ldap_adapter.Config]{
+				Address: "ldaps://localhost",
+				Auth:    validAuthCredentials,
+				Config: &ldap_adapter.Config{
+					BaseDN:           "dc=example,dc=org",
+					CertificateChain: validCertificateChain,
+					EntityConfigMap: map[string]*ldap_adapter.EntityConfig{
+						"Person": {
+							Query: "(&(objectClass=person))",
+						},
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "Person",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "dn",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+							UniqueId:   true,
+						},
+					},
+				},
+				PageSize: 2,
+			},
+			wantErrCode: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			resp := adapter.GetPage(tt.ctx, tt.request)
+			if resp.Error == nil {
+				t.Errorf("expected error with code %v, got nil", tt.wantErrCode)
+				return
+			}
+			if resp.Error.Code != tt.wantErrCode {
+				t.Errorf("expected error code %v, got %v", tt.wantErrCode, resp.Error.Code)
+			}
+		})
+	}
+}
