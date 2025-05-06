@@ -688,6 +688,7 @@ func StringAttrValuesToRequestedType(
 			msDSGroupMSAMembership, msDFSLinkSecurityDescriptorv2:
 			// Convert the security descriptor bytes to base64 string
 			sddl := base64.StdEncoding.EncodeToString(attr.ByteValues[0])
+
 			return sddl, nil
 		default:
 			return attr.Values[0], nil

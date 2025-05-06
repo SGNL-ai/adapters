@@ -182,6 +182,8 @@ func (s *LDAPTestSuite) Test_AdapterGetPage() {
 					t.Errorf("gotCursor: %v, wantCursor: %v", gotCursor, tt.wantCursor)
 				}
 			}
+
+			return
 		})
 	}
 }
@@ -336,6 +338,8 @@ func (s *LDAPTestSuite) Test_AdapterGetUserPage() {
 					t.Errorf("gotCursor: %v, wantCursor: %v", gotCursor, tt.wantCursor)
 				}
 			}
+
+			return
 		})
 	}
 }
@@ -442,6 +446,8 @@ func (s *LDAPTestSuite) Test_AdapterGetGroupPage() {
 					t.Errorf("gotCursor: %v, wantCursor: %v", gotCursor, tt.wantCursor)
 				}
 			}
+
+			return
 		})
 	}
 }
@@ -619,6 +625,8 @@ func (s *LDAPTestSuite) Test_AdapterGetGroupMemberPage() {
 					t.Errorf("gotCursor: %v, wantCursor: %v", gotCursor, tt.wantCursor)
 				}
 			}
+
+			return
 		})
 	}
 }
@@ -696,11 +704,15 @@ func Test_HostnameValidation(t *testing.T) {
 			resp := adapter.GetPage(tt.ctx, tt.request)
 			if resp.Error == nil {
 				t.Errorf("expected error with code %v, got nil", tt.wantErrCode)
+
 				return
 			}
+
 			if resp.Error.Code != tt.wantErrCode {
 				t.Errorf("expected error code %v, got %v", tt.wantErrCode, resp.Error.Code)
 			}
+
+			return
 		})
 	}
 }
