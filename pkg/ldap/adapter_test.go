@@ -702,17 +702,14 @@ func Test_HostnameValidation(t *testing.T) {
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			resp := adapter.GetPage(tt.ctx, tt.request)
-			if resp.Error == nil {
-				t.Errorf("expected error with code %v, got nil", tt.wantErrCode)
 
-				return
+			if resp.Error == nil {
+				t.Fatalf("expected error, got nil")
 			}
 
 			if resp.Error.Code != tt.wantErrCode {
-				t.Errorf("expected error code %v, got %v", tt.wantErrCode, resp.Error.Code)
+				t.Fatalf("expected error code %v, got %v", tt.wantErrCode, resp.Error.Code)
 			}
-
-			return
 		})
 	}
 }

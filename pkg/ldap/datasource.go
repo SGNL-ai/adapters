@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"reflect"
 	"strconv"
@@ -265,15 +266,18 @@ func GetTLSConfig(request *Request) (*tls.Config, *framework.Error) {
 	caCertPool := x509.NewCertPool()
 	caCertPool.AppendCertsFromPEM(decodedCertChain)
 
-	// Extract hostname without port for certificate validation
-	hostname := request.Host
-	if strings.Contains(hostname, ":") {
-		hostname = strings.Split(hostname, ":")[0]
+	// Use url.Hostname() for more reliable hostname extraction, especially for IPv6
+	u, err := url.Parse(request.BaseURL)
+	if err != nil {
+		return nil, &framework.Error{
+			Message: fmt.Sprintf("Failed to parse URL: %v.", err),
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
+		}
 	}
 
 	return &tls.Config{
 		RootCAs:    caCertPool,
-		ServerName: hostname,
+		ServerName: u.Hostname(),
 	}, nil
 }
 

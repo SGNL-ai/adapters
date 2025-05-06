@@ -352,6 +352,7 @@ func TestGetTLSConfig(t *testing.T) {
 					Host:             "ldap.example.com",
 					CertificateChain: validCertificateChain,
 				},
+				BaseURL: "ldaps://ldap.example.com",
 			},
 			expectedConfig: &tls.Config{
 				ServerName: "ldap.example.com",
@@ -365,9 +366,24 @@ func TestGetTLSConfig(t *testing.T) {
 					Host:             "ldap.example.com:636",
 					CertificateChain: validCertificateChain,
 				},
+				BaseURL: "ldaps://ldap.example.com:636",
 			},
 			expectedConfig: &tls.Config{
 				ServerName: "ldap.example.com",
+			},
+		},
+		{
+			name: "valid_certificate_chain_with_ipv6",
+			request: &ldap.Request{
+				ConnectionParams: ldap.ConnectionParams{
+					IsLDAPS:          true,
+					Host:             "[2001:db8::1]:636",
+					CertificateChain: validCertificateChain,
+				},
+				BaseURL: "ldaps://[2001:db8::1]:636",
+			},
+			expectedConfig: &tls.Config{
+				ServerName: "2001:db8::1",
 			},
 		},
 	}
@@ -375,11 +391,10 @@ func TestGetTLSConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			config, err := ldap.GetTLSConfig(tt.request)
+
 			if tt.expectedError != nil {
 				if err == nil {
-					t.Errorf("expected error %v, got nil", tt.expectedError)
-
-					return
+					t.Fatalf("expected error %v, got nil", tt.expectedError)
 				}
 
 				if err.Message != tt.expectedError.Message {
@@ -394,13 +409,13 @@ func TestGetTLSConfig(t *testing.T) {
 			}
 
 			if err != nil {
-				t.Errorf("unexpected error: %v", err)
-
-				return
+				t.Fatalf("unexpected error: %v", err)
 			}
 
-			if config.ServerName != tt.expectedConfig.ServerName {
-				t.Errorf("expected server name %v, got %v", tt.expectedConfig.ServerName, config.ServerName)
+			if tt.expectedConfig != nil {
+				if config.ServerName != tt.expectedConfig.ServerName {
+					t.Errorf("expected server name %v, got %v", tt.expectedConfig.ServerName, config.ServerName)
+				}
 			}
 		})
 	}
