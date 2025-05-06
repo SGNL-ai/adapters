@@ -623,7 +623,7 @@ func (s *LDAPTestSuite) Test_AdapterGetGroupMemberPage() {
 	}
 }
 
-func (s *LDAPTestSuite) Test_HostnameValidation() {
+func Test_HostnameValidation(t *testing.T) {
 	adapter := ldap_adapter.NewAdapter(nil)
 
 	tests := map[string]struct {

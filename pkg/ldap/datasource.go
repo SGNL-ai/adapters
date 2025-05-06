@@ -17,7 +17,6 @@ import (
 	"strconv"
 	"strings"
 
-	parser "github.com/Azure/azure-storage-azcopy/v10/sddl"
 	"github.com/bwmarrin/go-objectsid"
 	ldap_v3 "github.com/go-ldap/ldap/v3"
 	"github.com/google/uuid"
@@ -687,14 +686,8 @@ func StringAttrValuesToRequestedType(
 			return sid.String(), nil
 		case nTSecurityDescriptor, msDSAllowedToActOnBehalfOfOtherIdentity, fRSRootSecurity, pKIEnrollmentAccess,
 			msDSGroupMSAMembership, msDFSLinkSecurityDescriptorv2:
-			sddl, err := parser.SecurityDescriptorToString(attr.ByteValues[0])
-			if err != nil {
-				return nil, &framework.Error{
-					Message: fmt.Sprintf("Failed to parse a String(NT-Sec-Desc) syntax attribute: %s.", attr.Name),
-					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ATTRIBUTE_TYPE,
-				}
-			}
-
+			// Convert the security descriptor bytes to base64 string
+			sddl := base64.StdEncoding.EncodeToString(attr.ByteValues[0])
 			return sddl, nil
 		default:
 			return attr.Values[0], nil
