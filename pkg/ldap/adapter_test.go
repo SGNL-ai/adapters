@@ -632,9 +632,9 @@ func (s *LDAPTestSuite) Test_HostnameValidation() {
 	time.Sleep(10 * time.Second)
 
 	tests := map[string]struct {
-		ctx         context.Context
-		request     *framework.Request[ldap_adapter.Config]
-		wantErrCode api_adapter_v1.ErrorCode
+		ctx          context.Context
+		request      *framework.Request[ldap_adapter.Config]
+		wantErrCode  api_adapter_v1.ErrorCode
 		wantResponse framework.Response
 	}{
 		"invalid_hostname_with_port": {
