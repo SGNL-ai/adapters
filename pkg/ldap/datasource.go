@@ -690,6 +690,12 @@ func StringAttrValuesToRequestedType(
 			return sid.String(), nil
 		case nTSecurityDescriptor, msDSAllowedToActOnBehalfOfOtherIdentity, fRSRootSecurity, pKIEnrollmentAccess,
 			msDSGroupMSAMembership, msDFSLinkSecurityDescriptorv2:
+			if len(attr.ByteValues) == 0 || attr.ByteValues[0] == nil {
+				return nil, &framework.Error{
+					Message: fmt.Sprintf("Missing or nil security descriptor bytes for attribute: %s", attr.Name),
+					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ATTRIBUTE_TYPE,
+				}
+			}
 			// Convert the security descriptor bytes to base64 string
 			sddl := base64.StdEncoding.EncodeToString(attr.ByteValues[0])
 
