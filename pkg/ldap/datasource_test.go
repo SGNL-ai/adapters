@@ -329,7 +329,6 @@ func TestGetTLSConfig(t *testing.T) {
 					IsLDAPS: false,
 				},
 			},
-			expectedConfig: &tls.Config{},
 		},
 		{
 			name: "invalid_certificate_chain",
