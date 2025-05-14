@@ -1,3 +1,5 @@
+// Copyright 2025 SGNL.ai, Inc.
+
 package awss3
 
 import (
@@ -9,7 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
-// Maximum file size allowed to be loaded into memory (100MB)
+// Maximum file size allowed to be loaded into memory (100MB).
 const MaxAllowedFileSize int64 = 100 * 1024 * 1024
 
 // Implementation of EntityHandler for AWS package awss3.
