@@ -12,12 +12,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"reflect"
 	"strconv"
 	"strings"
 
-	parser "github.com/Azure/azure-storage-azcopy/v10/sddl"
 	"github.com/bwmarrin/go-objectsid"
 	ldap_v3 "github.com/go-ldap/ldap/v3"
 	"github.com/google/uuid"
@@ -30,14 +30,15 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// Datasource directly implements a Client interface to allow querying an external datasource.
-type Datasource struct {
-	Client Dispatcher
+// Proxy is an interface for LDAP proxy requests.
+// It is used to send LDAP requests to a remote connector via the SGNL connector proxy.
+type Proxy interface {
+	ProxyRequest(ctx context.Context, ci *connector.ConnectorInfo, request *Request) (*Response, *framework.Error)
 }
 
-type Dispatcher interface {
-	IsProxied() bool
-	ProxyRequest(ctx context.Context, ci *connector.ConnectorInfo, request *Request) (*Response, *framework.Error)
+// Requester is an interface for LDAP requests.
+// It is used to send LDAP requests directly to a publicly accessible LDAP server.
+type Requester interface {
 	Request(ctx context.Context, request *Request) (*Response, *framework.Error)
 }
 
@@ -48,6 +49,26 @@ func NewClient(proxy grpc_proxy_v1.ProxyServiceClient) Client {
 			proxyClient: proxy,
 		},
 	}
+}
+
+// Datasource directly implements a Client interface to allow querying an external datasource.
+type Datasource struct {
+	Client Dispatcher
+}
+
+// Dispatcher is an interface that combines Proxy and Requester.
+// It is used to determine if the LDAP request should be proxied or sent directly to the LDAP server.
+// The IsProxied method checks if the LDAP request is proxied.
+type Dispatcher interface {
+	IsProxied() bool
+	Proxy
+	Requester
+}
+
+// NewLDAPRequester creates a new LDAP Requester instance.
+// It is used to create a new LDAP client for making LDAP search requests.
+func NewLDAPRequester() Requester {
+	return &ldapClient{}
 }
 
 // ldapClient for making LDAP search request directly to a publicly accessible LDAP server,
@@ -243,12 +264,20 @@ func GetTLSConfig(request *Request) (*tls.Config, *framework.Error) {
 	}
 
 	caCertPool := x509.NewCertPool()
-
 	caCertPool.AppendCertsFromPEM(decodedCertChain)
+
+	// Use url.Hostname() for more reliable hostname extraction, especially for IPv6
+	u, err := url.Parse(request.BaseURL)
+	if err != nil {
+		return nil, &framework.Error{
+			Message: fmt.Sprintf("Failed to parse URL: %v.", err),
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
+		}
+	}
 
 	return &tls.Config{
 		RootCAs:    caCertPool,
-		ServerName: request.Host,
+		ServerName: u.Hostname(),
 	}, nil
 }
 
@@ -661,13 +690,14 @@ func StringAttrValuesToRequestedType(
 			return sid.String(), nil
 		case nTSecurityDescriptor, msDSAllowedToActOnBehalfOfOtherIdentity, fRSRootSecurity, pKIEnrollmentAccess,
 			msDSGroupMSAMembership, msDFSLinkSecurityDescriptorv2:
-			sddl, err := parser.SecurityDescriptorToString(attr.ByteValues[0])
-			if err != nil {
+			if len(attr.ByteValues) == 0 || attr.ByteValues[0] == nil {
 				return nil, &framework.Error{
-					Message: fmt.Sprintf("Failed to parse a String(NT-Sec-Desc) syntax attribute: %s.", attr.Name),
+					Message: fmt.Sprintf("Missing or nil security descriptor bytes for attribute: %s", attr.Name),
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ATTRIBUTE_TYPE,
 				}
 			}
+			// Convert the security descriptor bytes to base64 string
+			sddl := base64.StdEncoding.EncodeToString(attr.ByteValues[0])
 
 			return sddl, nil
 		default:

@@ -12,6 +12,7 @@ import (
 	"reflect"
 	"testing"
 
+	"crypto/tls"
 	"github.com/google/go-cmp/cmp"
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
@@ -21,6 +22,10 @@ import (
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+)
+
+const (
+	validCertificateChain = "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURlekNDQW1PZ0F3SUJBZ0lVTWFQRkozK3JCNGZlZWQ1UEVvaTJqR1JBaXpBd0RRWUpLb1pJaHZjTkFRRUwKQlFBd1NqRUxNQWtHQTFVRUJoTUNWVk14RmpBVUJnTlZCQWdNRFZOaGJpQkdjbUZ1WTJselkyOHhEakFNQmdOVgpCQWNNQlZCaGJXRnlNUk13RVFZRFZRUUtEQXBUUjA1TUlFbHVZeTRnTUI0WERUSXpNRGt4TlRFek1qTXdNRm9YCkRUSTBNRGt4TkRFek1qTXdNRm93U2pFTE1Ba0dBMVVFQmhNQ1ZWTXhGakFVQmdOVkJBZ01EVk5oYmlCR2NtRnUKWTJselkyOHhEakFNQmdOVkJBY01CVkJoYldGeU1STXdFUVlEVlFRS0RBcFRSMDVNSUVsdVl5NGdNSUlCSWpBTgpCZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUEwL0FzNUg3L2ZwZXZXa0VnbGhNTUJwVmxFWFBvCnBxaWZyY2ZrNlM5ZEFnTUVCOVZYY2tBTVBRYjRXNnZzNlY0K0VkK2Q5YzRTWnFkRXBpcGxvbkQyUVNkU0RnN2gKWVJKQlpKYmNqK1JqTUZrd0JxZnNPUzVDWEVDNHZJdm1HTkZNaGRGZUZINHdIRzZKcWozQVdXbGZaT2FpVHBragpJbVRlY0NkdGhQbW9UR1B1WnJDK0VFRjJwYk9GdGxXVWRwU0VZcTB2NEJmS0JFZDkrZnJVTWYzYnk0cVBVUWxvCnRPU0JKK0pKQmFqY1pZVU9zWVdMUkdZWnZFakpOMzNNaGdxaHJWVzF4QmxHYTZwN1BQZVZkUEZvTVdYRVZYTDIKVGxJRDVEcEd2QlpUcUNNRUU3TGZscEtYR0JFUGdBVjJwVGFBUlZLUGRxRVZxUXdJREFRQUJvMU13VVRBZEJnTlYKSFE0RUZnUVVTOHRGS0VQeGpUTEZQZVdxSEZjT1lXeVd6bTh3SHdZRFZSMGpCQmd3Rm9BVVMxVEdLRVB4alRMRgpQZVdxSEZjT1lXeVd6bTh3RHdZRFZSMFRBUUgvQkFVd0F3RUIvekFOQmdrcWhraUc5dzBCQVFzRkFBT0NBUUVBCnZGZEZvQ0I3Y2tNQzRxNGFRY1p6QmFNNzk3VkdBK0NuUWN3QUlSYWNCZkdYZFNNbnEyVWhjam9QZFQ5ZWR4dFEKWUNFWlkwWmVVUGI3UVJGUGlOZkZjTVRDNTNhUWN4THZhNTdSemVhYjE5Y0Y5M2ZlYWpUdkpVZHVPTVRDK2ZVYwpBTzVGTkFOOVZXamZaZVVad0JXVkl6QkFIMGE1bGVLZWZXY2pUK0JUMWlYTVBnUGhTUGpkNHBiT3VmZzZNRGhzCnRFWVBvUWRyVEtYVVIxWnR0cEZEVmZYVVlOQTBrYVdvWVZUdVcxRnNFRGJXQkxuTGxnRVBBVlJzTGRjMGRYbVQKWVBDRGRFUVBzZnJ2NWJkRGtQUVBxTnZEQ2ZrVnIrQkxlTWJxN2VyYVBJUGRBVHdtdkxmQVdxWVBxRGxDRGxLbQpBVGxJUGZJVGRxRVBxZz09Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K"
 )
 
 func TestBytesToOctetString(t *testing.T) {
@@ -307,5 +312,110 @@ func TestGivenRequestWithConnectorContextWhenProxyServiceReturnValidResponseThen
 
 	if diff := cmp.Diff(testResponse, resp); diff != "" {
 		t.Errorf("response payload mismatch (-want +got):%s", diff)
+	}
+}
+
+func TestGetTLSConfig(t *testing.T) {
+	tests := []struct {
+		name           string
+		request        *ldap.Request
+		expectedError  *framework.Error
+		expectedConfig *tls.Config
+	}{
+		{
+			name: "non_ldaps_connection",
+			request: &ldap.Request{
+				ConnectionParams: ldap.ConnectionParams{
+					IsLDAPS: false,
+				},
+			},
+		},
+		{
+			name: "invalid_certificate_chain",
+			request: &ldap.Request{
+				ConnectionParams: ldap.ConnectionParams{
+					IsLDAPS:          true,
+					CertificateChain: "invalid-base64",
+				},
+			},
+			expectedError: &framework.Error{
+				Message: "Failed to load certificates: illegal base64 data at input byte 7.",
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
+			},
+		},
+		{
+			name: "valid_certificate_chain_with_hostname",
+			request: &ldap.Request{
+				ConnectionParams: ldap.ConnectionParams{
+					IsLDAPS:          true,
+					Host:             "ldap.example.com",
+					CertificateChain: validCertificateChain,
+				},
+				BaseURL: "ldaps://ldap.example.com",
+			},
+			expectedConfig: &tls.Config{
+				ServerName: "ldap.example.com",
+			},
+		},
+		{
+			name: "valid_certificate_chain_with_hostname_and_port",
+			request: &ldap.Request{
+				ConnectionParams: ldap.ConnectionParams{
+					IsLDAPS:          true,
+					Host:             "ldap.example.com:636",
+					CertificateChain: validCertificateChain,
+				},
+				BaseURL: "ldaps://ldap.example.com:636",
+			},
+			expectedConfig: &tls.Config{
+				ServerName: "ldap.example.com",
+			},
+		},
+		{
+			name: "valid_certificate_chain_with_ipv6",
+			request: &ldap.Request{
+				ConnectionParams: ldap.ConnectionParams{
+					IsLDAPS:          true,
+					Host:             "[2001:db8::1]:636",
+					CertificateChain: validCertificateChain,
+				},
+				BaseURL: "ldaps://[2001:db8::1]:636",
+			},
+			expectedConfig: &tls.Config{
+				ServerName: "2001:db8::1",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config, err := ldap.GetTLSConfig(tt.request)
+
+			if tt.expectedError != nil {
+				if err == nil {
+					t.Fatalf("expected error %v, got nil", tt.expectedError)
+				}
+
+				if err.Message != tt.expectedError.Message {
+					t.Errorf("expected error message %v, got %v", tt.expectedError.Message, err.Message)
+				}
+
+				if err.Code != tt.expectedError.Code {
+					t.Errorf("expected error code %v, got %v", tt.expectedError.Code, err.Code)
+				}
+
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if tt.expectedConfig != nil {
+				if config.ServerName != tt.expectedConfig.ServerName {
+					t.Errorf("expected server name %v, got %v", tt.expectedConfig.ServerName, config.ServerName)
+				}
+			}
+		})
 	}
 }

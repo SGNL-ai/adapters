@@ -246,7 +246,7 @@ func (s *LDAPTestSuite) Test_AdapterGetUserPage() {
 							"mobile": []string{"+1 408 555 8933", "+1 408 555 2722"},
 						},
 					},
-					NextCursor: "eyJjdXJzb3IiOiJleUpqYjJ4c1pXTjBhVzl1SWpwdWRXeHNMQ0p1WlhoMFVHRm5aVU4xY25OdmNpSTZJa0pSUVVGQlFVRkJRVUZCUFNKOSJ9",
+					NextCursor: "eyJjdXJzb3IiOiJleUpqYjJ4c1pXTjBhVzl1SWpwdWRXeHNMQ0p1WlhoMFVHRm5aVU4xY25OdmNpSTZJa1JSUVVGQlFVRkJRVUZCUFNKOSJ9",
 				},
 			},
 		},
@@ -311,10 +311,12 @@ func (s *LDAPTestSuite) Test_AdapterGetUserPage() {
 				if diff := cmp.Diff(tt.wantResponse.Success.Objects, gotResponse.Success.Objects); diff != "" {
 					t.Errorf("Response mismatch (-want +got):\n%s", diff)
 				}
+			} else if tt.wantResponse.Success != nil || gotResponse.Success != nil {
+				t.Errorf("gotResponse: %v, wantResponse: %v", gotResponse, tt.wantResponse)
 			}
 
-			if !reflect.DeepEqual(gotResponse, tt.wantResponse) {
-				t.Errorf("gotResponse: %v, wantResponse: %v", gotResponse.Error.Message, tt.wantResponse)
+			if !reflect.DeepEqual(gotResponse.Error, tt.wantResponse.Error) {
+				t.Errorf("gotResponse: %v, wantResponse: %v", gotResponse.Error, tt.wantResponse.Error)
 			}
 
 			// We already check the b64 encoded cursor in the response, but it's not easy to
@@ -618,6 +620,108 @@ func (s *LDAPTestSuite) Test_AdapterGetGroupMemberPage() {
 				if !reflect.DeepEqual(&gotCursor, tt.wantCursor) {
 					t.Errorf("gotCursor: %v, wantCursor: %v", gotCursor, tt.wantCursor)
 				}
+			}
+		})
+	}
+}
+
+func (s *LDAPTestSuite) Test_HostnameValidation() {
+	adapter := ldap_adapter.NewAdapter(nil)
+
+	// Wait for LDAP server to be ready
+	time.Sleep(10 * time.Second)
+
+	tests := map[string]struct {
+		ctx          context.Context
+		request      *framework.Request[ldap_adapter.Config]
+		wantErrCode  api_adapter_v1.ErrorCode
+		wantResponse framework.Response
+	}{
+		"invalid_hostname_with_port": {
+			ctx: context.Background(),
+			request: &framework.Request[ldap_adapter.Config]{
+				Address: "ldaps://localhost:636",
+				Auth:    validAuthCredentials,
+				Config: &ldap_adapter.Config{
+					BaseDN:           "dc=example,dc=org",
+					CertificateChain: validCertificateChain,
+					EntityConfigMap: map[string]*ldap_adapter.EntityConfig{
+						"Person": {
+							Query: "(&(objectClass=person))",
+						},
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "Person",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "dn",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+							UniqueId:   true,
+						},
+					},
+				},
+				PageSize: 2,
+			},
+			wantErrCode: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		},
+		"valid_hostname_without_port": {
+			ctx: context.Background(),
+			request: &framework.Request[ldap_adapter.Config]{
+				Address: "localhost:" + s.ldapPort.Port(),
+				Auth:    validAuthCredentials,
+				Config: &ldap_adapter.Config{
+					BaseDN: "dc=example,dc=org",
+					EntityConfigMap: map[string]*ldap_adapter.EntityConfig{
+						"Person": {
+							Query: "(&(objectClass=person))",
+						},
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "Person",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "dn",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+							UniqueId:   true,
+						},
+					},
+				},
+				PageSize: 2,
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{},
+				},
+			},
+		},
+	}
+
+	for name, tt := range tests {
+		s.T().Run(name, func(t *testing.T) {
+			response := adapter.GetPage(tt.ctx, tt.request)
+
+			if tt.wantErrCode != 0 {
+				if response.Error == nil {
+					t.Fatal("expected error, got nil")
+				}
+
+				if response.Error.Code != tt.wantErrCode {
+					t.Errorf("expected error code %v, got %v", tt.wantErrCode, response.Error.Code)
+				}
+
+				return
+			}
+
+			if response.Error != nil {
+				t.Fatalf("expected success, got error: %v", response.Error)
+			}
+
+			if response.Success == nil {
+				t.Fatal("expected success response, got nil")
 			}
 		})
 	}

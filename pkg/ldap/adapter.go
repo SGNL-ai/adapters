@@ -67,6 +67,9 @@ func (a *Adapter) RequestPageFromDatasource(
 		isLDAPS = true
 	}
 
+	// Extract hostname without port for TLS verification
+	hostname := url.Hostname()
+
 	uniqueIDAttribute := getUniqueIDAttribute(request.Entity.Attributes)
 
 	adReq := &Request{
@@ -80,7 +83,7 @@ func (a *Adapter) RequestPageFromDatasource(
 			BaseDN:           request.Config.BaseDN,
 			CertificateChain: request.Config.CertificateChain,
 			IsLDAPS:          isLDAPS,
-			Host:             url.Host,
+			Host:             hostname,
 		},
 		UniqueIDAttribute:     *uniqueIDAttribute,
 		Cursor:                cursor,
