@@ -21,7 +21,7 @@ require (
 	github.com/sgnl-ai/adapter-framework v0.18.0
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.37.0
-	google.golang.org/grpc v1.72.0
+	google.golang.org/grpc v1.72.1
 	google.golang.org/protobuf v1.36.6
 	gopkg.in/dnaeon/go-vcr.v3 v3.2.0
 	gopkg.in/dnaeon/go-vcr.v4 v4.0.2
