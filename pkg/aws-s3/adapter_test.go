@@ -10,9 +10,12 @@ import (
 	"encoding/json"
 	"net/http"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	s3_adapter "github.com/sgnl-ai/adapters/pkg/aws-s3"
@@ -649,7 +652,7 @@ func TestAdapterGetPage(t *testing.T) {
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			// Setup mock middleware to mimic responses from the SDK
-			cfg := mockS3Config(tt.headObjectStatusCode, tt.getObjectStatusCode)
+			cfg := mockS3Config(tt.headObjectStatusCode, tt.getObjectStatusCode, nil)
 
 			client, err := s3_adapter.NewClient(http.DefaultClient, cfg)
 			if err != nil {
@@ -684,5 +687,59 @@ func TestAdapterGetPage(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestFileSizeLimitCheck(t *testing.T) {
+	// Create a mock response with file size exceeding the limit
+	oversizedFileResponse := &s3.HeadObjectOutput{
+		ContentLength: aws.Int64(s3_adapter.MaxAllowedFileSize + 1), // Exceed the limit by 1 byte
+		ContentType:   aws.String("text/csv"),
+		LastModified:  aws.Time(time.Now()),
+	}
+
+	// Setup mock middleware with the oversized file response
+	cfg := mockS3Config(http.StatusOK, http.StatusOK, oversizedFileResponse)
+
+	client, err := s3_adapter.NewClient(http.DefaultClient, cfg)
+	if err != nil {
+		t.Fatalf("Failed to create client: %v", err)
+	}
+
+	adapter := s3_adapter.NewAdapter(client)
+
+	// Create a request
+	request := &framework.Request[s3_adapter.Config]{
+		Auth: validAuthCredentials,
+		Entity: framework.EntityConfig{
+			ExternalId: "customers",
+			Attributes: []*framework.AttributeConfig{
+				{
+					ExternalId: "Email",
+					Type:       framework.AttributeTypeString,
+					UniqueId:   true,
+				},
+				{
+					ExternalId: "Score",
+					Type:       framework.AttributeTypeDouble,
+				},
+			},
+		},
+		Config:   validCommonConfig,
+		PageSize: 10,
+	}
+
+	// Call GetPage
+	resp := adapter.GetPage(context.Background(), request)
+
+	// Verify response contains the expected error
+	if resp.Error == nil {
+		t.Fatal("Expected error for oversized file, but got nil")
+	}
+
+	// Check the error message contains the right information
+	expectedErrSubstring := "file size exceeds maximum allowed size"
+	if !strings.Contains(resp.Error.Message, expectedErrSubstring) {
+		t.Errorf("Error message doesn't contain '%s': %s", expectedErrSubstring, resp.Error.Message)
 	}
 }

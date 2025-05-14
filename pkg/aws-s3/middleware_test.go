@@ -25,8 +25,9 @@ const (
 
 // Custom middleware to mock S3 responses.
 type mockS3Middleware struct {
-	headStatusCode int
-	getStatusCode  int
+	headStatusCode   int
+	getStatusCode    int
+	headObjectOutput *s3.HeadObjectOutput
 }
 
 func (m *mockS3Middleware) ID() string {
@@ -63,15 +64,19 @@ func (m *mockS3Middleware) mockHeadObject(
 ) {
 	switch m.headStatusCode {
 	case http.StatusOK:
-		out.Result = &s3.HeadObjectOutput{
-			ContentLength: aws.Int64(1234),
-			ContentType:   aws.String("text/csv"),
-			ETag:          aws.String("\"f8a7b3f9be0e4c3d2e1a0b9c8d7e6f5\""),
-			LastModified:  aws.Time(time.Now()),
-			VersionId:     aws.String("3/L4kqtJlcpXroDTDmJ+rmSpXd3dIbrHY"),
-			Metadata: map[string]string{
-				"example-metadata-key": "example-metadata-value",
-			},
+		if m.headObjectOutput != nil {
+			out.Result = m.headObjectOutput
+		} else {
+			out.Result = &s3.HeadObjectOutput{
+				ContentLength: aws.Int64(1234),
+				ContentType:   aws.String("text/csv"),
+				ETag:          aws.String("\"f8a7b3f9be0e4c3d2e1a0b9c8d7e6f5\""),
+				LastModified:  aws.Time(time.Now()),
+				VersionId:     aws.String("3/L4kqtJlcpXroDTDmJ+rmSpXd3dIbrHY"),
+				Metadata: map[string]string{
+					"example-metadata-key": "example-metadata-value",
+				},
+			}
 		}
 	case http.StatusMovedPermanently:
 		err = &smithyhttp.ResponseError{
@@ -178,10 +183,11 @@ func (m *mockS3Middleware) mockGetObject(
 	return
 }
 
-func mockS3Config(headStatusCode, getStatusCode int) *aws.Config {
+func mockS3Config(headStatusCode, getStatusCode int, headObjectOutput *s3.HeadObjectOutput) *aws.Config {
 	mockMiddleware := &mockS3Middleware{
-		headStatusCode: headStatusCode,
-		getStatusCode:  getStatusCode,
+		headStatusCode:   headStatusCode,
+		getStatusCode:    getStatusCode,
+		headObjectOutput: headObjectOutput,
 	}
 
 	// Create a custom AWS config with the mock middleware

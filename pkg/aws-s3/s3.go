@@ -1,5 +1,3 @@
-// Copyright 2025 SGNL.ai, Inc.
-
 package awss3
 
 import (
@@ -10,6 +8,9 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
+
+// Maximum file size allowed to be loaded into memory (100MB)
+const MaxAllowedFileSize int64 = 100 * 1024 * 1024
 
 // Implementation of EntityHandler for AWS package awss3.
 type S3Handler struct {
@@ -47,12 +48,18 @@ func (s *S3Handler) FileExists(ctx context.Context, bucket string, key string) (
 // GetFile retrieves the object from the bucket.
 // It returns a 403 error if ListBucket permission is missing.
 // It returns a 404 error if the object does not exist in the path.
+// It returns an error if the file size exceeds MaxAllowedFileSize.
 func (s S3Handler) GetFile(ctx context.Context, bucket string, key string) (*[]byte, error) {
-	// Check if file exists.
-	// Use metadata for file type, encoding and other checks in the future.
-	_, err := s.FileExists(ctx, bucket, key)
+	// Check if file exists and get the file metadata.
+	headObj, err := s.FileExists(ctx, bucket, key)
 	if err != nil {
 		return nil, err
+	}
+
+	// Check file size before attempting to download
+	if headObj.ContentLength != nil && *headObj.ContentLength > MaxAllowedFileSize {
+		return nil, fmt.Errorf("file size exceeds maximum allowed size of %d bytes (actual size: %d bytes)",
+			MaxAllowedFileSize, *headObj.ContentLength)
 	}
 
 	response, err := s.Client.GetObject(ctx, &s3.GetObjectInput{
