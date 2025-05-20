@@ -181,11 +181,7 @@ func (c *ldapClient) Request(_ context.Context, request *Request) (*Response, *f
 	address := request.BaseURL
 	key := sessionKey(address, cookie)
 
-	var session *Session
-
-	var found bool
-
-	session, found = c.sessionPool.Get(key)
+	session, found := c.sessionPool.Get(key)
 	if !found {
 		session = &Session{}
 		c.sessionPool.Set(key, session)
