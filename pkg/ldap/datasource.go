@@ -17,6 +17,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/bwmarrin/go-objectsid"
 	ldap_v3 "github.com/go-ldap/ldap/v3"
@@ -42,15 +43,6 @@ type Requester interface {
 	Request(ctx context.Context, request *Request) (*Response, *framework.Error)
 }
 
-// NewClient returns a Client to query the datasource.
-func NewClient(proxy grpc_proxy_v1.ProxyServiceClient) Client {
-	return &Datasource{
-		Client: &ldapClient{
-			proxyClient: proxy,
-		},
-	}
-}
-
 // Datasource directly implements a Client interface to allow querying an external datasource.
 type Datasource struct {
 	Client Dispatcher
@@ -67,15 +59,22 @@ type Dispatcher interface {
 
 // NewLDAPRequester creates a new LDAP Requester instance.
 // It is used to create a new LDAP client for making LDAP search requests.
-func NewLDAPRequester() Requester {
-	return &ldapClient{}
+// It also manages a session pool to reuse LDAP connections.
+func NewLDAPRequester(ttl time.Duration) Requester {
+	client := &ldapClient{
+		sessionPool: NewSessionPool(ttl),
+	}
+
+	return client
 }
 
 // ldapClient for making LDAP search request directly to a publicly accessible LDAP server,
 // or for using a proxy client to access an on-premises LDAP server via the on-premises SGNL
 // connector.
+// It also manages a session pool to reuse LDAP connections.
 type ldapClient struct {
 	proxyClient grpc_proxy_v1.ProxyServiceClient
+	sessionPool *SessionPool
 }
 
 func (c *ldapClient) IsProxied() bool {
@@ -157,22 +156,55 @@ func (c *ldapClient) Request(_ context.Context, request *Request) (*Response, *f
 		return nil, configErr
 	}
 
-	conn, err := ldap_v3.DialURL(request.BaseURL, ldap_v3.DialWithTLSConfig(tlsConfig))
-	if err != nil {
-		return nil, &framework.Error{
-			Message: fmt.Sprintf("Failed to dial LDAP server: %v.", err),
-			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+	// Determine the paging cookie (if any)
+	var cookie []byte
+
+	if request.Cursor != nil && request.Cursor.Cursor != nil {
+		pageInfo, decodeErr := DecodePageInfo(request.Cursor.Cursor)
+		if decodeErr != nil {
+			return nil, decodeErr
+		}
+
+		if pageInfo.NextPageCursor != nil {
+			var err error
+
+			cookie, err = OctetStringToBytes(*pageInfo.NextPageCursor)
+			if err != nil {
+				return nil, &framework.Error{
+					Message: fmt.Sprintf("Failed to parse cursor value: %v.", err),
+					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+				}
+			}
 		}
 	}
 
-	err = conn.Bind(request.BindDN, request.BindPassword)
+	address := request.BaseURL
+	key := sessionKey(address, cookie)
+
+	var session *Session
+
+	var found bool
+
+	session, found = c.sessionPool.Get(key)
+	if !found {
+		session = &Session{}
+		c.sessionPool.Set(key, session)
+	}
+
+	conn, err := session.GetOrCreateConn(request.BaseURL, tlsConfig, request.BindDN, request.BindPassword)
 	if err != nil {
+		if ldapErr, ok := err.(*ldap_v3.Error); ok && ldapErr.ResultCode == 49 {
+			return nil, &framework.Error{
+				Message: "Failed to bind credentials: LDAP Result Code 49 \"Invalid Credentials\": .",
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_AUTHENTICATION_FAILED,
+			}
+		}
+
 		return nil, &framework.Error{
-			Message: fmt.Sprintf("Failed to bind credentials: %v.", err),
-			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_AUTHENTICATION_FAILED,
+			Message: fmt.Sprintf("Failed to dial/bind LDAP server: %v.", err),
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		}
 	}
-	defer conn.Close()
 
 	// Set cursor from the request (if exists)
 	pageControl, pageErr := setPageControl(request)
@@ -186,7 +218,6 @@ func (c *ldapClient) Request(_ context.Context, request *Request) (*Response, *f
 	}
 
 	attributes := make([]string, 0, len(request.Attributes))
-
 	for _, attr := range request.Attributes {
 		attributes = append(attributes, attr.ExternalId)
 	}
@@ -244,6 +275,25 @@ func (c *ldapClient) Request(_ context.Context, request *Request) (*Response, *f
 
 	if err := ProcessLDAPSearchResult(searchResult, response, request); err != nil {
 		return nil, err
+	}
+
+	// Handle paging: store or cleanup session
+	var nextCookie []byte
+
+	if response.NextCursor != nil && response.NextCursor.Cursor != nil {
+		pageInfo, decodeErr := DecodePageInfo(response.NextCursor.Cursor)
+		if decodeErr == nil && pageInfo.NextPageCursor != nil {
+			nextCookie, _ = OctetStringToBytes(*pageInfo.NextPageCursor)
+		}
+	}
+
+	if len(nextCookie) > 0 {
+		// Move the session to the new cookie key: remove old key, add new key (without closing conn)
+		nextKey := sessionKey(address, nextCookie)
+		c.sessionPool.UpdateKey(key, nextKey)
+	} else {
+		// Paging done, cleanup
+		c.sessionPool.Delete(key)
 	}
 
 	return response, nil
@@ -808,4 +858,10 @@ func DecodePageInfo(cursor *string) (*PageInfo, *framework.Error) {
 	}
 
 	return &pageInfo, nil
+}
+
+func sessionKey(address string, cookie []byte) string {
+	cookieStr := base64.StdEncoding.EncodeToString(cookie)
+
+	return address + "|" + cookieStr
 }

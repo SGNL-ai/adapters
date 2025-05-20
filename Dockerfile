@@ -12,6 +12,7 @@ RUN go mod download
 ARG GOPS_VERSION=v0.3.27
 RUN CGO_ENABLED=0 go install -ldflags "-s -w" github.com/google/gops@${GOPS_VERSION}
 RUN CGO_ENABLED=0 GOOS=linux go build -C /app/cmd/adapter -o /sgnl/adapter
+RUN CGO_ENABLED=0 GOOS=linux go build -C /app/cmd/ldap-adapter -o /sgnl/ldap-adapter
 
 # STAGE 2: run...
 FROM gcr.io/distroless/static AS run
@@ -22,6 +23,7 @@ WORKDIR /sgnl
 
 COPY --from=build --chown=nonroot:nonroot /go/bin/gops /sgnl/gops
 COPY --from=build --chown=nonroot:nonroot /sgnl/adapter /sgnl/adapter
+COPY --from=build --chown=nonroot:nonroot /sgnl/ldap-adapter /sgnl/ldap-adapter
 COPY --from=build --chown=nonroot:nonroot /app/pkg/mock/servicenow/fixtures/*.yaml /sgnl/pkg/mock/servicenow/fixtures/
 
 EXPOSE 8080

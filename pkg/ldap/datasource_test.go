@@ -11,8 +11,10 @@ import (
 	"net/http"
 	"reflect"
 	"testing"
+	"time"
 
 	"crypto/tls"
+
 	"github.com/google/go-cmp/cmp"
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
@@ -233,7 +235,7 @@ func TestGivenRequestWithConnectorContextWhenProxyServiceConnectionFailsWithGrpc
 	})
 	defer cleanup()
 
-	ds := ldap.NewClient(client)
+	ds := ldap.NewClient(client, ldap.NewSessionPool(1*time.Minute))
 
 	ctx, _ := connector.WithContext(context.Background(), testutil.TestConnectorInfo)
 
@@ -261,7 +263,7 @@ func TestGivenRequestWithConnectorContextWhenProxyServiceReturnEmptyResponseThen
 	})
 	defer cleanup()
 
-	ds := ldap.NewClient(client)
+	ds := ldap.NewClient(client, ldap.NewSessionPool(1*time.Minute))
 
 	ctx, _ := connector.WithContext(context.Background(), testutil.TestConnectorInfo)
 
@@ -294,7 +296,7 @@ func TestGivenRequestWithConnectorContextWhenProxyServiceReturnValidResponseThen
 	})
 	defer cleanup()
 
-	ds := ldap.NewClient(client)
+	ds := ldap.NewClient(client, ldap.NewSessionPool(1*time.Minute))
 
 	ctx, _ := connector.WithContext(context.Background(), testutil.TestConnectorInfo)
 
