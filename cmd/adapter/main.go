@@ -100,7 +100,7 @@ func main() {
 	awsICClient, err := awsidentitycenter.NewClient(
 		client.NewSGNLHTTPClientWithProxy(timeout, "sgnl-AWSIdentityCenter/1.0.0",
 			grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
-		), nil, *MaxConcurrency,
+		), nil,
 	)
 	if err != nil {
 		logger.Fatalf("Failed to create a datasource to query AWS: %v", err)
@@ -108,7 +108,7 @@ func main() {
 
 	// Register adapters here alphabetically.
 	server.RegisterAdapter(adapterServer, "AWS-1.0.0", aws.NewAdapter(awsClient))
-	server.RegisterAdapter(adapterServer, "AWSIdentityCenter-1.0.0", aws.NewAdapter(awsICClient))
+	server.RegisterAdapter(adapterServer, "AWSIdentityCenter-1.0.0", awsidentitycenter.NewAdapter(awsICClient))
 	server.RegisterAdapter(
 		adapterServer,
 		"AzureAD-1.0.1",

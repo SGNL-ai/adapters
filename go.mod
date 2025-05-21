@@ -8,9 +8,9 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.29.14
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.67
 	github.com/aws/aws-sdk-go-v2/service/iam v1.41.1
-       github.com/aws/aws-sdk-go-v2/service/s3 v1.79.3
-       github.com/aws/aws-sdk-go-v2/service/identitystore v1.26.0
-       github.com/aws/aws-sdk-go-v2/service/ssoadmin v1.27.0
+	github.com/aws/aws-sdk-go-v2/service/identitystore v1.28.3
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.79.3
+	github.com/aws/aws-sdk-go-v2/service/ssoadmin v1.31.0
 	github.com/aws/smithy-go v1.22.3
 	github.com/bwmarrin/go-objectsid v0.0.0-20191126144531-5fee401a2f37
 	github.com/docker/go-connections v0.5.0

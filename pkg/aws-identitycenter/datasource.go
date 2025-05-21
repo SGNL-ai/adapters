@@ -83,7 +83,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		client := ssoadmin.NewFromConfig(cfg)
 		input := &ssoadmin.ListPermissionSetsInput{
 			InstanceArn: aws.String(request.InstanceARN),
-			MaxResults:  request.MaxResults,
+			MaxResults:  aws.Int32(request.MaxResults),
 		}
 		if request.Cursor != nil && request.Cursor.Cursor != nil {
 			input.NextToken = request.Cursor.Cursor
@@ -105,16 +105,23 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		client := identitystore.NewFromConfig(cfg)
 		input := &identitystore.ListUsersInput{
 			IdentityStoreId: aws.String(request.IdentityStoreID),
-			MaxResults:      request.MaxResults,
+			MaxResults:      aws.Int32(request.MaxResults),
 		}
 		if request.Cursor != nil && request.Cursor.Cursor != nil {
 			input.NextToken = request.Cursor.Cursor
 		}
 
+		// Add this log:
+		fmt.Printf("DEBUG: ListUsersInput: %+v\n", input)
+
 		out, err2 := client.ListUsers(ctx, input)
 		if err2 != nil {
 			err = err2
 			statusCode = statusCodeFromResponseError(err2)
+			// Add this log:
+			fmt.Printf("ERROR: AWS ListUsers API call failed. Status: %d, Error: %s\n", statusCode, err2.Error())
+			// For even more detail, you might try:
+			// fmt.Printf("ERROR: AWS ListUsers API call failed. Detailed Error: %#v\n", err2)
 			break
 		}
 		objects = make([]map[string]any, len(out.Users))
@@ -133,7 +140,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		client := identitystore.NewFromConfig(cfg)
 		input := &identitystore.ListGroupsInput{
 			IdentityStoreId: aws.String(request.IdentityStoreID),
-			MaxResults:      request.MaxResults,
+			MaxResults:      aws.Int32(request.MaxResults),
 		}
 		if request.Cursor != nil && request.Cursor.Cursor != nil {
 			input.NextToken = request.Cursor.Cursor
@@ -161,7 +168,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		client := identitystore.NewFromConfig(cfg)
 		input := &identitystore.ListGroupMembershipsInput{
 			IdentityStoreId: aws.String(request.IdentityStoreID),
-			MaxResults:      request.MaxResults,
+			MaxResults:      aws.Int32(request.MaxResults),
 		}
 		if request.Cursor != nil && request.Cursor.Cursor != nil {
 			input.NextToken = request.Cursor.Cursor
