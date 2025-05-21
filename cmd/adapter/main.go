@@ -14,6 +14,7 @@ import (
 	grpc_proxy_v1 "github.com/sgnl-ai/adapter-framework/pkg/grpc_proxy/v1"
 	"github.com/sgnl-ai/adapter-framework/server"
 	aws "github.com/sgnl-ai/adapters/pkg/aws"
+	awsidentitycenter "github.com/sgnl-ai/adapters/pkg/aws-identitycenter"
 	aws_s3 "github.com/sgnl-ai/adapters/pkg/aws-s3"
 	"github.com/sgnl-ai/adapters/pkg/azuread"
 	"github.com/sgnl-ai/adapters/pkg/bamboohr"
@@ -85,7 +86,7 @@ func main() {
 		logger.Fatalf("Failed to create a datasource to query AWS S3: %v", err)
 	}
 
-	// Initialize the client to fetch data from AWS.
+	// Initialize the client to fetch data from AWS IAM.
 	awsClient, err := aws.NewClient(
 		client.NewSGNLHTTPClientWithProxy(timeout, "sgnl-AWS/1.0.0",
 			grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
@@ -95,8 +96,19 @@ func main() {
 		logger.Fatalf("Failed to create a datasource to query AWS: %v", err)
 	}
 
+	// Initialize the client to fetch data from AWS Identity Center.
+	awsICClient, err := awsidentitycenter.NewClient(
+		client.NewSGNLHTTPClientWithProxy(timeout, "sgnl-AWSIdentityCenter/1.0.0",
+			grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
+		), nil, *MaxConcurrency,
+	)
+	if err != nil {
+		logger.Fatalf("Failed to create a datasource to query AWS: %v", err)
+	}
+
 	// Register adapters here alphabetically.
 	server.RegisterAdapter(adapterServer, "AWS-1.0.0", aws.NewAdapter(awsClient))
+	server.RegisterAdapter(adapterServer, "AWSIdentityCenter-1.0.0", aws.NewAdapter(awsICClient))
 	server.RegisterAdapter(
 		adapterServer,
 		"AzureAD-1.0.1",
