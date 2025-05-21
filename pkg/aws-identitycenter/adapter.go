@@ -76,6 +76,7 @@ func (a *Adapter) RequestPageFromDatasource(
 	parsedObjects, parserErr := web.ConvertJSONObjectList(
 		&request.Entity,
 		resp.Objects,
+		web.WithJSONPathAttributeNames(),
 		web.WithLocalTimeZoneOffset(commonConfig.LocalTimeZoneOffset),
 		web.WithDateTimeFormats(
 			[]web.DateTimeFormatWithTimeZone{{Format: time.RFC3339, HasTimeZone: true}}...,
