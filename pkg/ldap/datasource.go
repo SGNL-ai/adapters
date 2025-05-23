@@ -280,9 +280,13 @@ func (c *ldapClient) Request(_ context.Context, request *Request) (*Response, *f
 		pageInfo, decodeErr := DecodePageInfo(response.NextCursor.Cursor)
 		if decodeErr == nil && pageInfo.NextPageCursor != nil {
 			var err error
+
 			nextCookie, err = OctetStringToBytes(*pageInfo.NextPageCursor)
 			if err != nil {
-				return nil, fmt.Errorf("failed to convert next page cursor to bytes: %w", err)
+				return nil, &framework.Error{
+					Message: fmt.Sprintf("Failed to encode next page cursor received from LDAP server: %v.", err),
+					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+				}
 			}
 		}
 	}

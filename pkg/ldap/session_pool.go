@@ -120,12 +120,8 @@ func (sp *SessionPool) Delete(key string) {
 
 func (sp *SessionPool) startCleanupLoop() {
 	go func() {
-		// Use shorter cleanup interval (ttl/4) to check for expired sessions more frequently
-		cleanupInterval := sp.ttl / 4
-		if cleanupInterval < time.Minute {
-			cleanupInterval = time.Minute
-		}
-		ticker := time.NewTicker(cleanupInterval)
+		// Check for expired sessions every minute
+		ticker := time.NewTicker(time.Minute)
 		defer ticker.Stop()
 
 		for range ticker.C {

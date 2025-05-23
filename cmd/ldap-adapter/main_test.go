@@ -194,6 +194,7 @@ func TestGivenOpenLDAPWithUser_WhenGetPageIsCalled_ThenUserIsReturned(t *testing
 	adapterPort := 54321
 	tmpDir := t.TempDir()
 	authTokensPath := tmpDir + "/fake-auth-tokens"
+
 	t.Setenv("LDAP_ADAPTER_PORT", fmt.Sprintf("%d", adapterPort))
 	// Set up auth tokens for the adapter
 	t.Setenv("AUTH_TOKENS_PATH", authTokensPath)
@@ -405,6 +406,7 @@ func TestGivenOpenLDAPWithMultipleUsers_WhenPagedGetPageIsCalled_ThenAllUsersAre
 	adapterPort := 54322
 	tmpDir := t.TempDir()
 	authTokensPath := tmpDir + "/fake-auth-tokens"
+
 	t.Setenv("LDAP_ADAPTER_PORT", fmt.Sprintf("%d", adapterPort))
 	// Set up auth tokens for the adapter
 	t.Setenv("AUTH_TOKENS_PATH", authTokensPath)
