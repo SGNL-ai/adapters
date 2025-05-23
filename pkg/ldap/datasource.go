@@ -279,7 +279,11 @@ func (c *ldapClient) Request(_ context.Context, request *Request) (*Response, *f
 	if response.NextCursor != nil && response.NextCursor.Cursor != nil {
 		pageInfo, decodeErr := DecodePageInfo(response.NextCursor.Cursor)
 		if decodeErr == nil && pageInfo.NextPageCursor != nil {
-			nextCookie, _ = OctetStringToBytes(*pageInfo.NextPageCursor)
+			var err error
+			nextCookie, err = OctetStringToBytes(*pageInfo.NextPageCursor)
+			if err != nil {
+				return nil, fmt.Errorf("failed to convert next page cursor to bytes: %w", err)
+			}
 		}
 	}
 

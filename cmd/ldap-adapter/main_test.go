@@ -21,26 +21,21 @@ import (
 const attrUID = "uid"
 
 func TestMainFunction_NoPanic(t *testing.T) {
-	origAuthTokensPath := os.Getenv("AUTH_TOKENS_PATH")
+	// Use t.TempDir for temporary directory
+	tmpDir := t.TempDir()
+	authTokensPath := tmpDir + "/fake-auth-tokens"
 
-	defer func() {
-		os.Setenv("AUTH_TOKENS_PATH", origAuthTokensPath)
-	}()
-
-	// Set required env var
-	os.Setenv("AUTH_TOKENS_PATH", "/tmp/fake-auth-tokens")
-	// Set required connector service URL for test
-	os.Setenv("LDAP_ADAPTER_CONNECTOR_SERVICE_URL", "localhost:1234")
+	// Set required env vars using t.Setenv
+	t.Setenv("AUTH_TOKENS_PATH", authTokensPath)
+	t.Setenv("LDAP_ADAPTER_CONNECTOR_SERVICE_URL", "localhost:1234")
 
 	// Create the dummy file so the watcher does not fail
-	f, err := os.Create("/tmp/fake-auth-tokens")
+	f, err := os.Create(authTokensPath)
 	if err != nil {
 		t.Fatalf("failed to create dummy auth tokens file: %v", err)
 	}
 
 	f.Close()
-
-	defer os.Remove("/tmp/fake-auth-tokens")
 
 	// Run main in a goroutine and recover from panic
 	panicChan := make(chan interface{}, 1)
@@ -197,11 +192,12 @@ func TestGivenOpenLDAPWithUser_WhenGetPageIsCalled_ThenUserIsReturned(t *testing
 
 	// Set up the adapter port
 	adapterPort := 54321
-	os.Setenv("LDAP_ADAPTER_PORT", fmt.Sprintf("%d", adapterPort))
+	tmpDir := t.TempDir()
+	authTokensPath := tmpDir + "/fake-auth-tokens"
+	t.Setenv("LDAP_ADAPTER_PORT", fmt.Sprintf("%d", adapterPort))
 	// Set up auth tokens for the adapter
-	os.Setenv("AUTH_TOKENS_PATH", "/tmp/fake-auth-tokens")
-	_ = os.WriteFile("/tmp/fake-auth-tokens", []byte("[\"test-token\"]"), 0644)
-	defer os.Remove("/tmp/fake-auth-tokens")
+	t.Setenv("AUTH_TOKENS_PATH", authTokensPath)
+	_ = os.WriteFile(authTokensPath, []byte("[\"test-token\"]"), 0644)
 
 	go func() {
 		main()
@@ -407,11 +403,12 @@ func TestGivenOpenLDAPWithMultipleUsers_WhenPagedGetPageIsCalled_ThenAllUsersAre
 
 	// Set up the adapter port
 	adapterPort := 54322
-	os.Setenv("LDAP_ADAPTER_PORT", fmt.Sprintf("%d", adapterPort))
+	tmpDir := t.TempDir()
+	authTokensPath := tmpDir + "/fake-auth-tokens"
+	t.Setenv("LDAP_ADAPTER_PORT", fmt.Sprintf("%d", adapterPort))
 	// Set up auth tokens for the adapter
-	os.Setenv("AUTH_TOKENS_PATH", "/tmp/fake-auth-tokens")
-	_ = os.WriteFile("/tmp/fake-auth-tokens", []byte("[\"test-token\"]"), 0644)
-	defer os.Remove("/tmp/fake-auth-tokens")
+	t.Setenv("AUTH_TOKENS_PATH", authTokensPath)
+	_ = os.WriteFile(authTokensPath, []byte("[\"test-token\"]"), 0644)
 
 	go func() {
 		main()

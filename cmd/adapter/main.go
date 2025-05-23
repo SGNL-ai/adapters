@@ -47,14 +47,15 @@ func main() {
 	viper.SetDefault("TIMEOUT", 30)
 	// ADAPTER_MAX_CONCURRENCY: The number of goroutines run concurrently in AWS adapter (default: 20)
 	viper.SetDefault("MAX_CONCURRENCY", 20)
-	// ADAPTER_CONNECTOR_SERVICE_URL: The URL of the connector service (default: empty string)
-	viper.SetDefault("CONNECTOR_SERVICE_URL", "")
-
 	// Read config from environment variables
 	port := viper.GetInt("PORT")                                    // ADAPTER_PORT
 	timeout := viper.GetInt("TIMEOUT")                              // ADAPTER_TIMEOUT
 	maxConcurrency := viper.GetInt("MAX_CONCURRENCY")               // ADAPTER_MAX_CONCURRENCY
 	connectorServiceURL := viper.GetString("CONNECTOR_SERVICE_URL") // ADAPTER_CONNECTOR_SERVICE_URL
+
+	if connectorServiceURL == "" {
+		log.Fatal("ADAPTER_CONNECTOR_SERVICE_URL environment variable is required")
+	}
 
 	logger := log.New(os.Stdout, "adapter", log.Lmicroseconds|log.LUTC|log.Lshortfile)
 

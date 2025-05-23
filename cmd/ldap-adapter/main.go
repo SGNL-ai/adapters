@@ -26,13 +26,14 @@ func main() {
 	viper.SetDefault("PORT", 8080)
 	// LDAP_ADAPTER_TIMEOUT: The session pool TTL in minutes (default: 30)
 	viper.SetDefault("TIMEOUT", 30)
-	// LDAP_ADAPTER_CONNECTOR_SERVICE_URL: The URL of the connector service (default: empty string)
-	viper.SetDefault("CONNECTOR_SERVICE_URL", "")
-
 	// Read config from environment variables
 	port := viper.GetInt("PORT")                                    // LDAP_ADAPTER_PORT
 	adapterTTL := viper.GetInt("TIMEOUT")                           // LDAP_ADAPTER_TIMEOUT
 	connectorServiceURL := viper.GetString("CONNECTOR_SERVICE_URL") // LDAP_ADAPTER_CONNECTOR_SERVICE_URL
+
+	if connectorServiceURL == "" {
+		log.Fatal("LDAP_ADAPTER_CONNECTOR_SERVICE_URL environment variable is required")
+	}
 
 	logger := log.New(
 		os.Stdout, "ldap-adapter", log.Lmicroseconds|log.LUTC|log.Lshortfile,

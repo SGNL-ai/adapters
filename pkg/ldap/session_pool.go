@@ -71,7 +71,7 @@ func NewSessionPool(ttl time.Duration) *SessionPool {
 		pool: make(map[string]*Session),
 		ttl:  ttl,
 	}
-	sp.startCleanup()
+	sp.startCleanupLoop()
 
 	return sp
 }
@@ -118,9 +118,14 @@ func (sp *SessionPool) Delete(key string) {
 	}
 }
 
-func (sp *SessionPool) startCleanup() {
+func (sp *SessionPool) startCleanupLoop() {
 	go func() {
-		ticker := time.NewTicker(sp.ttl)
+		// Use shorter cleanup interval (ttl/4) to check for expired sessions more frequently
+		cleanupInterval := sp.ttl / 4
+		if cleanupInterval < time.Minute {
+			cleanupInterval = time.Minute
+		}
+		ticker := time.NewTicker(cleanupInterval)
 		defer ticker.Stop()
 
 		for range ticker.C {
