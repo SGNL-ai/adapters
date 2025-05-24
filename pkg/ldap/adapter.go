@@ -28,8 +28,8 @@ type Adapter struct {
 // The client is not proxied by default. If you want to use a proxied client,
 // you need to provide a grpc_proxy_v1.ProxyServiceClient instance.
 // The adapter also manages a session pool to reuse LDAP connections.
-func NewAdapter(client grpc_proxy_v1.ProxyServiceClient, ttl time.Duration) framework.Adapter[Config] {
-	pool := NewSessionPool(ttl)
+func NewAdapter(client grpc_proxy_v1.ProxyServiceClient, ttl, cleanupInterval time.Duration) framework.Adapter[Config] {
+	pool := NewSessionPool(ttl, cleanupInterval)
 
 	return &Adapter{
 		ADClient: NewClient(client, pool),

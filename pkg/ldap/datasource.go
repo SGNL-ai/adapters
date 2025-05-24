@@ -61,8 +61,14 @@ type Dispatcher interface {
 // It is used to create a new LDAP client for making LDAP search requests.
 // It also manages a session pool to reuse LDAP connections.
 func NewLDAPRequester(ttl time.Duration) Requester {
+	cleanupInterval := time.Minute
+	if val := os.Getenv("SESSION_POOL_CLEANUP_INTERVAL_MS"); val != "" {
+		if ms, err := strconv.Atoi(val); err == nil && ms > 0 {
+			cleanupInterval = time.Duration(ms) * time.Millisecond
+		}
+	}
 	client := &ldapClient{
-		sessionPool: NewSessionPool(ttl),
+		sessionPool: NewSessionPool(ttl, cleanupInterval),
 	}
 
 	return client

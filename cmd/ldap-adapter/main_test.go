@@ -21,13 +21,14 @@ import (
 const attrUID = "uid"
 
 func TestMainFunction_NoPanic(t *testing.T) {
+	t.Setenv("LDAP_ADAPTER_CONNECTOR_SERVICE_URL", "localhost:1234")
+
 	// Use t.TempDir for temporary directory
 	tmpDir := t.TempDir()
 	authTokensPath := tmpDir + "/fake-auth-tokens"
 
 	// Set required env vars using t.Setenv
 	t.Setenv("AUTH_TOKENS_PATH", authTokensPath)
-	t.Setenv("LDAP_ADAPTER_CONNECTOR_SERVICE_URL", "localhost:1234")
 
 	// Create the dummy file so the watcher does not fail
 	f, err := os.Create(authTokensPath)
@@ -68,6 +69,8 @@ func TestMainFunction_NoPanic(t *testing.T) {
 // When the LDAP adapter GetPage is called for that user entity,
 // Then the adapter should return the user in the results.
 func TestGivenOpenLDAPWithUser_WhenGetPageIsCalled_ThenUserIsReturned(t *testing.T) {
+	t.Setenv("LDAP_ADAPTER_CONNECTOR_SERVICE_URL", "localhost:1234")
+
 	// Arrange
 	ctx := context.Background()
 
@@ -310,6 +313,8 @@ func TestGivenOpenLDAPWithUser_WhenGetPageIsCalled_ThenUserIsReturned(t *testing
 // When the LDAP adapter GetPage is called with a page size of 2,
 // Then the adapter should return two users on the first page and the remaining user on the next page.
 func TestGivenOpenLDAPWithMultipleUsers_WhenPagedGetPageIsCalled_ThenAllUsersAreReturnedAcrossPages(t *testing.T) {
+	t.Setenv("LDAP_ADAPTER_CONNECTOR_SERVICE_URL", "localhost:1234")
+
 	// Arrange
 	ctx := context.Background()
 

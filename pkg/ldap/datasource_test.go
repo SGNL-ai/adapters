@@ -235,7 +235,7 @@ func TestGivenRequestWithConnectorContextWhenProxyServiceConnectionFailsWithGrpc
 	})
 	defer cleanup()
 
-	ds := ldap.NewClient(client, ldap.NewSessionPool(1*time.Minute))
+	ds := ldap.NewClient(client, ldap.NewSessionPool(1*time.Minute, time.Minute))
 
 	ctx, _ := connector.WithContext(context.Background(), testutil.TestConnectorInfo)
 
@@ -263,7 +263,7 @@ func TestGivenRequestWithConnectorContextWhenProxyServiceReturnEmptyResponseThen
 	})
 	defer cleanup()
 
-	ds := ldap.NewClient(client, ldap.NewSessionPool(1*time.Minute))
+	ds := ldap.NewClient(client, ldap.NewSessionPool(1*time.Minute, time.Minute))
 
 	ctx, _ := connector.WithContext(context.Background(), testutil.TestConnectorInfo)
 
@@ -296,7 +296,7 @@ func TestGivenRequestWithConnectorContextWhenProxyServiceReturnValidResponseThen
 	})
 	defer cleanup()
 
-	ds := ldap.NewClient(client, ldap.NewSessionPool(1*time.Minute))
+	ds := ldap.NewClient(client, ldap.NewSessionPool(1*time.Minute, time.Minute))
 
 	ctx, _ := connector.WithContext(context.Background(), testutil.TestConnectorInfo)
 

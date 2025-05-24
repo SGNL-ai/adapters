@@ -41,7 +41,7 @@ func (m *testConn) IsClosed() bool {
 
 func TestSessionPool_SetGetDelete(t *testing.T) {
 	// Arrange
-	pool := NewSessionPool(1 * time.Minute)
+	pool := NewSessionPool(1*time.Minute, time.Minute)
 	key := keyAddressCookie
 	conn := &testConn{}
 	session := &Session{conn: conn, lastUsed: time.Now()}
@@ -67,7 +67,7 @@ func TestSessionPool_SetGetDelete(t *testing.T) {
 
 func TestSessionPool_TTLExpiry(t *testing.T) {
 	// Arrange
-	pool := NewSessionPool(100 * time.Millisecond)
+	pool := NewSessionPool(100*time.Millisecond, 10*time.Millisecond)
 	key := keyAddressCookie
 	conn := &testConn{}
 	session := &Session{
@@ -92,7 +92,7 @@ func TestSessionPool_TTLExpiry(t *testing.T) {
 
 func TestSessionPool_ThreadSafety(_ *testing.T) {
 	// Arrange
-	pool := NewSessionPool(1 * time.Minute)
+	pool := NewSessionPool(1*time.Minute, time.Minute)
 	key := keyAddressCookie
 	wg := sync.WaitGroup{}
 	conn := &testConn{}
@@ -117,7 +117,7 @@ func TestSessionPool_ThreadSafety(_ *testing.T) {
 
 func TestSessionPool_GetOnNonexistentKey(t *testing.T) {
 	// Arrange
-	pool := NewSessionPool(1 * time.Minute)
+	pool := NewSessionPool(1*time.Minute, time.Minute)
 	key := "nonexistent|cookie"
 
 	// Act
@@ -131,7 +131,7 @@ func TestSessionPool_GetOnNonexistentKey(t *testing.T) {
 
 func TestSessionPool_SetOverwritesExistingSession(t *testing.T) {
 	// Arrange
-	pool := NewSessionPool(1 * time.Minute)
+	pool := NewSessionPool(1*time.Minute, time.Minute)
 	key := keyAddressCookie
 
 	conn1 := &testConn{}
@@ -163,7 +163,7 @@ func TestSessionPool_SetOverwritesExistingSession(t *testing.T) {
 
 func TestSessionPool_DeleteOnNonexistentKey(_ *testing.T) {
 	// Arrange
-	pool := NewSessionPool(1 * time.Minute)
+	pool := NewSessionPool(1*time.Minute, time.Minute)
 	key := "nonexistent|cookie"
 
 	// Act, Assert
@@ -173,7 +173,7 @@ func TestSessionPool_DeleteOnNonexistentKey(_ *testing.T) {
 
 func TestSessionPool_UpdateKeyMovesSession(t *testing.T) {
 	// Arrange
-	pool := NewSessionPool(1 * time.Minute)
+	pool := NewSessionPool(1*time.Minute, time.Minute)
 	oldKey := keyAddressCookie1
 	newKey := keyAddressCookie2
 	conn := &testConn{}
@@ -196,7 +196,7 @@ func TestSessionPool_UpdateKeyMovesSession(t *testing.T) {
 
 func TestSessionPool_UpdateKeyOnNonexistentKey(t *testing.T) {
 	// Arrange
-	pool := NewSessionPool(1 * time.Minute)
+	pool := NewSessionPool(1*time.Minute, time.Minute)
 	oldKey := "doesnotexist"
 	newKey := "newkey"
 
@@ -211,7 +211,7 @@ func TestSessionPool_UpdateKeyOnNonexistentKey(t *testing.T) {
 
 func TestSessionPool_GetRemovesNilConn(t *testing.T) {
 	// Arrange
-	pool := NewSessionPool(1 * time.Minute)
+	pool := NewSessionPool(1*time.Minute, time.Minute)
 	key := keyAddressCookie
 	session := &Session{conn: nil, lastUsed: time.Now()}
 
@@ -228,7 +228,7 @@ func TestSessionPool_GetRemovesNilConn(t *testing.T) {
 
 func TestSessionPool_MultipleKeys(t *testing.T) {
 	// Arrange
-	pool := NewSessionPool(1 * time.Minute)
+	pool := NewSessionPool(1*time.Minute, time.Minute)
 	key1 := keyAddressCookie1
 	key2 := keyAddressCookie2
 	conn1 := &testConn{}
@@ -262,7 +262,7 @@ func TestSessionPool_MultipleKeys(t *testing.T) {
 
 func TestSessionPool_CleanupClosesAllExpired(t *testing.T) {
 	// Arrange
-	pool := NewSessionPool(1 * time.Minute)
+	pool := NewSessionPool(1*time.Minute, time.Minute)
 	key1 := keyAddressCookie1
 	key2 := keyAddressCookie2
 	conn1 := &testConn{}
@@ -308,7 +308,7 @@ func TestSessionPool_CleanupClosesAllExpired(t *testing.T) {
 
 func TestSessionPool_ReuseAcrossPages(t *testing.T) {
 	// Arrange
-	pool := NewSessionPool(1 * time.Minute)
+	pool := NewSessionPool(1*time.Minute, time.Minute)
 	key := keyAddressCookie
 	conn := &testConn{}
 	session := &Session{

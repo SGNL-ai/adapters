@@ -24,12 +24,15 @@ func main() {
 
 	// LDAP_ADAPTER_PORT: The port at which the gRPC server will listen (default: 8080)
 	viper.SetDefault("PORT", 8080)
-	// LDAP_ADAPTER_TIMEOUT: The session pool TTL in minutes (default: 30)
-	viper.SetDefault("TIMEOUT", 30)
+	// LDAP_ADAPTER_SESSION_TTL: The session pool TTL in minutes (default: 30)
+	viper.SetDefault("SESSION_TTL", 30)
+	// LDAP_ADAPTER_SESSION_CLEANUP_INTERVAL: The session pool cleanup interval in minutes (default: 1)
+	viper.SetDefault("SESSION_CLEANUP_INTERVAL", 1)
 	// Read config from environment variables
-	port := viper.GetInt("PORT")                                    // LDAP_ADAPTER_PORT
-	adapterTTL := viper.GetInt("TIMEOUT")                           // LDAP_ADAPTER_TIMEOUT
-	connectorServiceURL := viper.GetString("CONNECTOR_SERVICE_URL") // LDAP_ADAPTER_CONNECTOR_SERVICE_URL
+	port := viper.GetInt("PORT")                                       // LDAP_ADAPTER_PORT
+	adapterTTL := viper.GetInt("SESSION_TTL")                          // LDAP_ADAPTER_SESSION_TTL
+	adapterCleanupInterval := viper.GetInt("SESSION_CLEANUP_INTERVAL") // LDAP_ADAPTER_SESSION_CLEANUP_INTERVAL
+	connectorServiceURL := viper.GetString("CONNECTOR_SERVICE_URL")    // LDAP_ADAPTER_CONNECTOR_SERVICE_URL
 
 	if connectorServiceURL == "" {
 		log.Fatal("LDAP_ADAPTER_CONNECTOR_SERVICE_URL environment variable is required")
@@ -60,7 +63,10 @@ func main() {
 	server.RegisterAdapter(
 		adapterServer,
 		"LDAP-1.0.0",
-		ldap.NewAdapter(grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient), time.Duration(adapterTTL)*time.Minute),
+		ldap.NewAdapter(
+			grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
+			time.Duration(adapterTTL)*time.Minute,
+			time.Duration(adapterCleanupInterval)*time.Minute),
 	)
 
 	api_adapter_v1.RegisterAdapterServer(s, adapterServer)

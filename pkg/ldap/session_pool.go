@@ -61,15 +61,17 @@ func (s *Session) GetOrCreateConn(
 }
 
 type SessionPool struct {
-	mu   sync.Mutex
-	pool map[string]*Session
-	ttl  time.Duration
+	mu              sync.Mutex
+	pool            map[string]*Session
+	ttl             time.Duration
+	cleanupInterval time.Duration
 }
 
-func NewSessionPool(ttl time.Duration) *SessionPool {
+func NewSessionPool(ttl, cleanupInterval time.Duration) *SessionPool {
 	sp := &SessionPool{
-		pool: make(map[string]*Session),
-		ttl:  ttl,
+		pool:            make(map[string]*Session),
+		ttl:             ttl,
+		cleanupInterval: cleanupInterval,
 	}
 	sp.startCleanupLoop()
 
@@ -120,8 +122,7 @@ func (sp *SessionPool) Delete(key string) {
 
 func (sp *SessionPool) startCleanupLoop() {
 	go func() {
-		// Check for expired sessions every minute
-		ticker := time.NewTicker(time.Minute)
+		ticker := time.NewTicker(sp.cleanupInterval)
 		defer ticker.Stop()
 
 		for range ticker.C {
