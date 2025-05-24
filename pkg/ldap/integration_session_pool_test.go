@@ -79,7 +79,7 @@ func TestIntegration_SessionExpiryTTL(t *testing.T) {
 	_, addr, cleanup := startOpenLDAPContainer(t)
 	defer cleanup()
 
-	client := ldap_adapter.NewLDAPRequester(100 * time.Millisecond)
+	client := ldap_adapter.NewLDAPRequester(100*time.Millisecond, 10*time.Millisecond)
 	bindDN := "cn=admin,dc=example,dc=org"
 	bindPassword := "admin"
 	baseDN := "dc=example,dc=org"
@@ -118,7 +118,7 @@ func TestIntegration_ConnectionDropRecovery(t *testing.T) {
 	container, addr, cleanup := startOpenLDAPContainer(t)
 	defer cleanup()
 
-	client := ldap_adapter.NewLDAPRequester(100 * time.Millisecond)
+	client := ldap_adapter.NewLDAPRequester(100*time.Millisecond, 10*time.Millisecond)
 	bindDN := "cn=admin,dc=example,dc=org"
 	bindPassword := "admin"
 	baseDN := "dc=example,dc=org"
