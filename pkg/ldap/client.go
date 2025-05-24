@@ -5,6 +5,7 @@ import (
 	"context"
 
 	framework "github.com/sgnl-ai/adapter-framework"
+	grpc_proxy_v1 "github.com/sgnl-ai/adapter-framework/pkg/grpc_proxy/v1"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 )
 
@@ -85,4 +86,14 @@ type Response struct {
 	// NextCursor is the cursor that identifies the first object of the next page.
 	// nil if this is the last page in this full sync.
 	NextCursor *pagination.CompositeCursor[string] `json:"nextCursor"`
+}
+
+// NewClient returns a Client to query the datasource.
+func NewClient(proxy grpc_proxy_v1.ProxyServiceClient, pool *SessionPool) Client {
+	return &Datasource{
+		Client: &ldapClient{
+			proxyClient: proxy,
+			sessionPool: pool,
+		},
+	}
 }
