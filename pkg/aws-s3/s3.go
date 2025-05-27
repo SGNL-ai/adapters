@@ -89,3 +89,67 @@ func (s S3Handler) GetFile(ctx context.Context, bucket string, key string) (*[]b
 
 	return &bytes, nil
 }
+
+// GetFileRange retrieves a specific byte range from the S3 object.
+// This enables streaming large files without loading everything into memory.
+func (s *S3Handler) GetFileRange(ctx context.Context, bucket string, key string, startByte, endByte int64) (*[]byte, error) {
+	rangeHeader := fmt.Sprintf("bytes=%d-%d", startByte, endByte)
+
+	response, err := s.Client.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: &bucket,
+		Key:    &key,
+		Range:  &rangeHeader,
+	})
+
+	if err != nil {
+		httpResponseErr, parseErr := httpResponseFromError(err)
+		if parseErr != nil {
+			return nil, fmt.Errorf("failed to download file range: %w", err)
+		}
+
+		switch httpResponseErr.Response.StatusCode {
+		case http.StatusForbidden:
+			return nil, fmt.Errorf("unable to download file range due to missing permissions")
+		case http.StatusNotFound:
+			return nil, fmt.Errorf("file does not exist")
+		case http.StatusRequestedRangeNotSatisfiable:
+			return nil, fmt.Errorf("requested byte range is not satisfiable")
+		default:
+			return nil, fmt.Errorf("failed to download file range: %w", err)
+		}
+	}
+
+	if response == nil {
+		return nil, fmt.Errorf("failed to download file range: response is nil")
+	}
+
+	defer response.Body.Close()
+
+	bytes, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read file range body: %w", err)
+	}
+
+	return &bytes, nil
+}
+
+// GetFileSize returns the size of the file in bytes using HEAD request.
+func (s *S3Handler) GetFileSize(ctx context.Context, bucket string, key string) (int64, error) {
+	response, err := s.FileExists(ctx, bucket, key)
+	if err != nil {
+		return 0, err
+	}
+
+	if response.ContentLength == nil {
+		return 0, fmt.Errorf("unable to determine file size")
+	}
+
+	return *response.ContentLength, nil
+}
+
+// GetHeaderChunk reads the first chunk of the file to extract CSV headers.
+func (s *S3Handler) GetHeaderChunk(ctx context.Context, bucket string, key string) (*[]byte, error) {
+	const headerChunkSize = 8196 // 8KB should be enough for most CSV headers
+
+	return s.GetFileRange(ctx, bucket, key, 0, headerChunkSize-1)
+}

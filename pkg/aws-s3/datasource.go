@@ -61,38 +61,57 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	// Create the object key using entity name and path prefix
 	objectKey := GetObjectKeyFromRequest(request)
 
-	fileBytes, err := handler.GetFile(ctx, request.Bucket, objectKey)
+	// Get file metadata first
+	fileSize, err := handler.GetFileSize(ctx, request.Bucket, objectKey)
 	if err != nil {
 		return nil, customerror.UpdateError(&framework.Error{
-			Message: fmt.Sprintf("Failed to fetch entity from AWS S3: %s, error: %v.", entityName, err),
+			Message: fmt.Sprintf("Failed to get file size for entity from AWS S3: %s, error: %v.", entityName, err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		},
 			customerror.WithRequestTimeoutMessage(err, request.RequestTimeoutSeconds),
 		)
 	}
 
-	// TODO: Converting bytes to csv reader would consume additional memory.
-	// Optimize this to read s3 object body, which implements io.Reader interface, to csv.NewReader directly.
-
-	if fileBytes == nil {
+	if fileSize == 0 {
 		return nil, &framework.Error{
 			Message: fmt.Sprintf("The file for entity %s is empty.", entityName),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
 		}
 	}
 
-	// Convert bytes to csv reader
-	start := int64(1)
+	// Determine pagination start position
+	start := int64(1) // Start at row 1 (skip header row)
 	if request.Cursor != nil && request.Cursor.Cursor != nil {
 		start = *request.Cursor.Cursor
 	}
 
-	objects, hasNext, err := CSVBytesToPage(fileBytes, start, request.PageSize, request.AttributeConfig)
-	if err != nil {
-		return nil, &framework.Error{
-			Message: fmt.Sprintf("Failed to get %s entity objects from the CSV file: %v.", entityName, err),
+	// Decide whether to use streaming or traditional approach based on file size
+	// For files larger than 10MB, use streaming to avoid memory issues
+	const streamingThreshold = 10 * 1024 * 1024 // 10MB
+
+	var objects []map[string]any
+	var hasNext bool
+	var processErr error
+
+	if fileSize > streamingThreshold {
+		// Use streaming approach for large files
+		objects, hasNext, processErr = d.processLargeFileStreaming(
+			ctx, handler, request.Bucket, objectKey, fileSize, start, request.PageSize, request.AttributeConfig,
+		)
+	} else {
+		// Use traditional approach for smaller files (backward compatibility)
+		objects, hasNext, processErr = d.processSmallFileTraditional(
+			ctx, handler, request.Bucket, objectKey, start, request.PageSize, request.AttributeConfig,
+		)
+	}
+
+	if processErr != nil {
+		return nil, customerror.UpdateError(&framework.Error{
+			Message: fmt.Sprintf("Failed to process entity %s: %v.", entityName, processErr),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
-		}
+		},
+			customerror.WithRequestTimeoutMessage(processErr, request.RequestTimeoutSeconds),
+		)
 	}
 
 	response := &Response{
@@ -108,6 +127,69 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	response.NextCursor = &pagination.CompositeCursor[int64]{Cursor: &nextPage}
 
 	return response, nil
+}
+
+// processLargeFileStreaming handles large files using streaming approach
+func (d *Datasource) processLargeFileStreaming(
+	ctx context.Context,
+	handler *S3Handler,
+	bucket, key string,
+	fileSize, start, pageSize int64,
+	attrConfig []*framework.AttributeConfig,
+) ([]map[string]any, bool, error) {
+
+	// First, get the CSV headers by reading a small chunk from the beginning
+	headerChunk, err := handler.GetHeaderChunk(ctx, bucket, key)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to read header chunk: %v", err)
+	}
+
+	headers, err := CSVHeaders(headerChunk)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to extract CSV headers: %v", err)
+	}
+
+	if len(headers) == 0 {
+		return nil, false, fmt.Errorf("no headers found in CSV file")
+	}
+
+	// Process the file using streaming
+	objects, hasNext, err := StreamingCSVToPage(
+		handler, ctx, bucket, key, fileSize, headers, start, pageSize, attrConfig,
+	)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to process streaming CSV: %v", err)
+	}
+
+	return objects, hasNext, nil
+}
+
+// processSmallFileTraditional handles small files using the original approach
+func (d *Datasource) processSmallFileTraditional(
+	ctx context.Context,
+	handler *S3Handler,
+	bucket, key string,
+	start, pageSize int64,
+	attrConfig []*framework.AttributeConfig,
+) ([]map[string]any, bool, error) {
+
+	// Use the original GetFile method for small files
+	fileBytes, err := handler.GetFile(ctx, bucket, key)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to fetch file: %v", err)
+	}
+
+	if fileBytes == nil {
+		return nil, false, fmt.Errorf("file content is empty")
+	}
+
+	// Use the original CSV processing method
+	objects, hasNext, err := CSVBytesToPage(fileBytes, start, pageSize, attrConfig)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to process CSV: %v", err)
+	}
+
+	return objects, hasNext, nil
 }
 
 // httpResponseFromError returns a awshttp.ResponseError from an SDK error.
