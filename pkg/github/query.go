@@ -154,6 +154,22 @@ func SetAfterParameter(value *string) string {
 	return fmt.Sprintf(", after: \"%s\"", *value)
 }
 
+func SetFilterParameter(value *string) string {
+	if value == nil || *value == "" {
+		return ""
+	}
+
+	return fmt.Sprintf(", %s", *value)
+}
+
+func SetOrderByParameter(value *string) string {
+	if value == nil || *value == "" {
+		return ""
+	}
+
+	return fmt.Sprintf(", %s", *value)
+}
+
 func (b *OrganizationQueryBuilder) Build(request *Request) (string, *framework.Error) {
 	if request.EnterpriseSlug != nil {
 		orgAfterQuery := SetAfterParameter(b.OrgAfter)
@@ -218,6 +234,8 @@ func (b *OrganizationQueryBuilder) Build(request *Request) (string, *framework.E
 
 func (b *OrganizationUserQueryBuilder) Build(request *Request) (string, *framework.Error) {
 	userAfterQuery := SetAfterParameter(b.UserAfter)
+	filterQuery := SetFilterParameter(request.Filter)
+	orderByQuery := SetOrderByParameter(request.OrderBy)
 
 	innerNode, err := AttributeQueryBuilder(request.EntityConfig, &b.OrgLogin, "edges")
 	if err != nil {
@@ -227,7 +245,7 @@ func (b *OrganizationUserQueryBuilder) Build(request *Request) (string, *framewo
 	query := fmt.Sprintf(`query {
         organization (login: "%s") {
 			id
-            membersWithRole (first: %d%s) {
+            membersWithRole (first: %d%s%s%s) {
                 pageInfo {
 					endCursor
                     hasNextPage
@@ -235,7 +253,7 @@ func (b *OrganizationUserQueryBuilder) Build(request *Request) (string, *framewo
 				%s
             }
         }
-    }`, b.OrgLogin, b.PageSize, userAfterQuery, innerNode.BuildQuery())
+    }`, b.OrgLogin, b.PageSize, userAfterQuery, filterQuery, orderByQuery, innerNode.BuildQuery())
 
 	return query, nil
 }
@@ -243,6 +261,8 @@ func (b *OrganizationUserQueryBuilder) Build(request *Request) (string, *framewo
 func (b *UserQueryBuilder) Build(request *Request) (string, *framework.Error) {
 	orgAfterQuery := SetAfterParameter(b.OrgAfter)
 	userAfterQuery := SetAfterParameter(b.UserAfter)
+	filterQuery := SetFilterParameter(request.Filter)
+	orderByQuery := SetOrderByParameter(request.OrderBy)
 
 	innerNode, err := AttributeQueryBuilder(request.EntityConfig, nil, "nodes")
 	if err != nil {
@@ -260,7 +280,7 @@ func (b *UserQueryBuilder) Build(request *Request) (string, *framework.Error) {
 					}
 					nodes {
 						id
-						membersWithRole (first: %d%s) {
+						membersWithRole (first: %d%s%s%s) {
 							pageInfo {
 								endCursor
 								hasNextPage
@@ -271,7 +291,7 @@ func (b *UserQueryBuilder) Build(request *Request) (string, *framework.Error) {
 				}
 			}
 		}`, b.EnterpriseQueryInfo.EnterpriseSlug, CollectionPageSize, orgAfterQuery,
-			b.EnterpriseQueryInfo.PageSize, userAfterQuery, innerNode.BuildQuery()), nil
+			b.EnterpriseQueryInfo.PageSize, userAfterQuery, filterQuery, orderByQuery, innerNode.BuildQuery()), nil
 	}
 
 	OrganizationName := request.Organizations[b.OrganizationOffset]
@@ -279,7 +299,7 @@ func (b *UserQueryBuilder) Build(request *Request) (string, *framework.Error) {
 	return fmt.Sprintf(`query {
 		organization (login: "%s") {
 				id
-				membersWithRole (first: %d%s) {
+				membersWithRole (first: %d%s%s%s) {
 					pageInfo {
 						endCursor
 						hasNextPage
@@ -287,7 +307,7 @@ func (b *UserQueryBuilder) Build(request *Request) (string, *framework.Error) {
 					%s
 				}
 			}
-		}`, OrganizationName, b.EnterpriseQueryInfo.PageSize, userAfterQuery, innerNode.BuildQuery(),
+		}`, OrganizationName, b.EnterpriseQueryInfo.PageSize, userAfterQuery, filterQuery, orderByQuery, innerNode.BuildQuery(),
 	), nil
 }
 
@@ -345,6 +365,8 @@ func (b *TeamQueryBuilder) Build(request *Request) (string, *framework.Error) {
 func (b *RepositoryQueryBuilder) Build(request *Request) (string, *framework.Error) {
 	orgAfterQuery := SetAfterParameter(b.OrgAfter)
 	repoAfterQuery := SetAfterParameter(b.RepoAfter)
+	filterQuery := SetFilterParameter(request.Filter)
+	orderByQuery := SetOrderByParameter(request.OrderBy)
 
 	innerNode, err := AttributeQueryBuilder(request.EntityConfig, nil, "nodes")
 	if err != nil {
@@ -362,7 +384,7 @@ func (b *RepositoryQueryBuilder) Build(request *Request) (string, *framework.Err
 				}
 				nodes {
 					id
-					repositories (first: %d%s) {
+					repositories (first: %d%s%s%s) {
 						pageInfo {
 							endCursor
 							hasNextPage
@@ -373,7 +395,7 @@ func (b *RepositoryQueryBuilder) Build(request *Request) (string, *framework.Err
 			}
 		}
     }`, b.EnterpriseQueryInfo.EnterpriseSlug, CollectionPageSize, orgAfterQuery, b.EnterpriseQueryInfo.PageSize,
-			repoAfterQuery, innerNode.BuildQuery())
+			repoAfterQuery, filterQuery, orderByQuery, innerNode.BuildQuery())
 
 		return query, nil
 	}
@@ -383,7 +405,7 @@ func (b *RepositoryQueryBuilder) Build(request *Request) (string, *framework.Err
 	query := fmt.Sprintf(`query {
 		organization (login: "%s") {
 			id
-			repositories (first: %d%s) {
+			repositories (first: %d%s%s%s) {
 				pageInfo {
 					endCursor
 					hasNextPage
@@ -391,7 +413,7 @@ func (b *RepositoryQueryBuilder) Build(request *Request) (string, *framework.Err
 				%s
 			}
 		}
-    }`, OrganizationName, b.EnterpriseQueryInfo.PageSize, repoAfterQuery, innerNode.BuildQuery())
+    }`, OrganizationName, b.EnterpriseQueryInfo.PageSize, repoAfterQuery, filterQuery, orderByQuery, innerNode.BuildQuery())
 
 	return query, nil
 }
@@ -550,6 +572,8 @@ func (b *IssueQueryBuilder) Build(request *Request) (string, *framework.Error) {
 	orgAfterQuery := SetAfterParameter(b.OrgAfter)
 	repoAfterQuery := SetAfterParameter(b.RepoAfter)
 	issueAfterQuery := SetAfterParameter(b.IssueAfter)
+	filterQuery := SetFilterParameter(request.Filter)
+	orderByQuery := SetOrderByParameter(request.OrderBy)
 
 	innerNode, err := AttributeQueryBuilder(request.EntityConfig, nil, "nodes")
 	if err != nil {
@@ -574,7 +598,7 @@ func (b *IssueQueryBuilder) Build(request *Request) (string, *framework.Error) {
 							}
 							nodes {
 								id
-								issues (first: %d%s) {
+								issues (first: %d%s%s%s) {
 									pageInfo {
 										endCursor
 										hasNextPage
@@ -587,7 +611,7 @@ func (b *IssueQueryBuilder) Build(request *Request) (string, *framework.Error) {
 				}
 			}
 		}`, b.EnterpriseQueryInfo.EnterpriseSlug, CollectionPageSize, orgAfterQuery, CollectionPageSize,
-			repoAfterQuery, b.EnterpriseQueryInfo.PageSize, issueAfterQuery, innerNode.BuildQuery()), nil
+			repoAfterQuery, b.EnterpriseQueryInfo.PageSize, issueAfterQuery, filterQuery, orderByQuery, innerNode.BuildQuery()), nil
 	}
 
 	OrganizationName := request.Organizations[b.OrganizationOffset]
@@ -602,7 +626,7 @@ func (b *IssueQueryBuilder) Build(request *Request) (string, *framework.Error) {
 				}
 				nodes {
 					id
-					issues (first: %d%s) {
+					issues (first: %d%s%s%s) {
 						pageInfo {
 							endCursor
 							hasNextPage
@@ -615,7 +639,7 @@ func (b *IssueQueryBuilder) Build(request *Request) (string, *framework.Error) {
     }`,
 		OrganizationName,
 		CollectionPageSize, repoAfterQuery,
-		b.EnterpriseQueryInfo.PageSize, issueAfterQuery,
+		b.EnterpriseQueryInfo.PageSize, issueAfterQuery, filterQuery, orderByQuery,
 		innerNode.BuildQuery())
 
 	return query, nil
@@ -1005,6 +1029,8 @@ func (b *PullRequestQueryBuilder) Build(request *Request) (string, *framework.Er
 	orgAfterQuery := SetAfterParameter(b.OrgAfter)
 	repoAfterQuery := SetAfterParameter(b.RepoAfter)
 	pullRequestAfterQuery := SetAfterParameter(b.PullRequestAfter)
+	filterQuery := SetFilterParameter(request.Filter)
+	orderByQuery := SetOrderByParameter(request.OrderBy)
 
 	innerNode, err := AttributeQueryBuilder(request.EntityConfig, nil, "nodes")
 	if err != nil {
@@ -1029,7 +1055,7 @@ func (b *PullRequestQueryBuilder) Build(request *Request) (string, *framework.Er
 							}
 							nodes {
 								id
-								pullRequests (first: %d%s) {
+								pullRequests (first: %d%s%s%s) {
 									pageInfo {
 										endCursor
 										hasNextPage
@@ -1042,7 +1068,7 @@ func (b *PullRequestQueryBuilder) Build(request *Request) (string, *framework.Er
 				}
 			}
 		}`, b.EnterpriseQueryInfo.EnterpriseSlug, CollectionPageSize, orgAfterQuery, CollectionPageSize,
-			repoAfterQuery, b.EnterpriseQueryInfo.PageSize, pullRequestAfterQuery, innerNode.BuildQuery()), nil
+			repoAfterQuery, b.EnterpriseQueryInfo.PageSize, pullRequestAfterQuery, filterQuery, orderByQuery, innerNode.BuildQuery()), nil
 	}
 
 	OrganizationName := request.Organizations[b.OrganizationOffset]
@@ -1057,7 +1083,7 @@ func (b *PullRequestQueryBuilder) Build(request *Request) (string, *framework.Er
 				}
 				nodes {
 					id
-					pullRequests (first: %d%s) {
+					pullRequests (first: %d%s%s%s) {
 						pageInfo {
 							endCursor
 							hasNextPage
@@ -1070,7 +1096,7 @@ func (b *PullRequestQueryBuilder) Build(request *Request) (string, *framework.Er
     }`,
 		OrganizationName,
 		CollectionPageSize, repoAfterQuery,
-		b.EnterpriseQueryInfo.PageSize, pullRequestAfterQuery,
+		b.EnterpriseQueryInfo.PageSize, pullRequestAfterQuery, filterQuery, orderByQuery,
 		innerNode.BuildQuery())
 
 	return query, nil
