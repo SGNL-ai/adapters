@@ -86,7 +86,9 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	const streamingThreshold = 10 * 1024 * 1024 // 10MB
 
 	var objects []map[string]any
+
 	var hasNext bool
+
 	var processErr error
 
 	if fileSize > streamingThreshold {
@@ -146,7 +148,7 @@ func (d *Datasource) processLargeFileStreaming(
 	}
 
 	objects, hasNext, err := StreamingCSVToPage(
-		handler, ctx, bucket, key, fileSize, headers, start, pageSize, attrConfig,
+		ctx, handler, bucket, key, fileSize, headers, start, pageSize, attrConfig,
 	)
 	if err != nil {
 		return nil, false, fmt.Errorf("unable to process CSV file data: %v", err)

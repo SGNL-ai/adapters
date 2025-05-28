@@ -35,8 +35,8 @@ func CSVHeaders(headerChunk *[]byte) ([]string, error) {
 }
 
 func StreamingCSVToPage(
-	handler *S3Handler,
 	ctx context.Context,
+	handler *S3Handler,
 	bucket, key string,
 	fileSize int64,
 	headers []string,
@@ -44,13 +44,10 @@ func StreamingCSVToPage(
 	pageSize int64,
 	attrConfig []*framework.AttributeConfig,
 ) ([]map[string]any, bool, error) {
-
 	objects := make([]map[string]any, 0, pageSize)
 	headerToAttributeConfig := headerToAttributeConfig(headers, attrConfig)
 
-	var currentRow int64 = 0
-	var currentPos int64 = 0
-	var collectedRows int64 = 0
+	var currentRow, currentPos, collectedRows int64
 
 	targetEndRow := start + pageSize
 
@@ -110,7 +107,6 @@ func processCSVChunk(
 	targetEndRow int64,
 	chunkStartPos int64,
 ) ([]map[string]any, int64, int64, error) {
-
 	lastNewlineIndex := bytes.LastIndex(chunkData, []byte("\n"))
 	if lastNewlineIndex == -1 {
 		return nil, startRowNum, chunkStartPos,
@@ -118,13 +114,10 @@ func processCSVChunk(
 	}
 
 	completeChunk := chunkData[:lastNewlineIndex+1]
-
 	nextBytePos := chunkStartPos + int64(lastNewlineIndex) + 1
-
-	csvReader := csv.NewReader(bytes.NewReader(completeChunk))
-
-	var objects []map[string]any
 	currentRowNum := startRowNum
+	csvReader := csv.NewReader(bytes.NewReader(completeChunk))
+	var objects []map[string]any
 
 	for {
 		record, err := csvReader.Read()
@@ -183,13 +176,13 @@ func processCSVChunk(
 				switch attrConfig.Type {
 				case framework.AttributeTypeInt64, framework.AttributeTypeDouble:
 					floatValue, err := strconv.ParseFloat(value, 64)
+					row[headerName] = floatValue
 					if err != nil {
 						return nil, currentRowNum, nextBytePos, fmt.Errorf(
 							`CSV contains invalid numeric value "%s" in column "%s" at row %d`,
 							value, headerName, currentRowNum,
 						)
 					}
-					row[headerName] = floatValue
 				default:
 					row[headerName] = value
 				}
