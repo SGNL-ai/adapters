@@ -117,6 +117,7 @@ func processCSVChunk(
 	nextBytePos := chunkStartPos + int64(lastNewlineIndex) + 1
 	currentRowNum := startRowNum
 	csvReader := csv.NewReader(bytes.NewReader(completeChunk))
+
 	var objects []map[string]any
 
 	for {
@@ -176,13 +177,14 @@ func processCSVChunk(
 				switch attrConfig.Type {
 				case framework.AttributeTypeInt64, framework.AttributeTypeDouble:
 					floatValue, err := strconv.ParseFloat(value, 64)
-					row[headerName] = floatValue
 					if err != nil {
 						return nil, currentRowNum, nextBytePos, fmt.Errorf(
 							`CSV contains invalid numeric value "%s" in column "%s" at row %d`,
 							value, headerName, currentRowNum,
 						)
 					}
+
+					row[headerName] = floatValue
 				default:
 					row[headerName] = value
 				}

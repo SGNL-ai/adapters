@@ -132,7 +132,6 @@ func (d *Datasource) processLargeFileStreaming(
 	fileSize, start, pageSize int64,
 	attrConfig []*framework.AttributeConfig,
 ) ([]map[string]any, bool, error) {
-
 	headerChunk, err := handler.GetHeaderChunk(ctx, bucket, key)
 	if err != nil {
 		return nil, false, fmt.Errorf("unable to read CSV file headers: %v", err)
@@ -164,7 +163,6 @@ func (d *Datasource) processSmallFileTraditional(
 	start, pageSize int64,
 	attrConfig []*framework.AttributeConfig,
 ) ([]map[string]any, bool, error) {
-
 	fileBytes, err := handler.GetFile(ctx, bucket, key)
 	if err != nil {
 		return nil, false, fmt.Errorf("unable to read CSV file: %v", err)
