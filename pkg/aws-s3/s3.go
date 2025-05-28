@@ -12,16 +12,15 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
-// BOM (Byte Order Mark) patterns for different encodings
+// BOM (Byte Order Mark) patterns for different encodings.
 var (
-	UTF8BOM    = []byte{0xEF, 0xBB, 0xBF}       // 3 bytes
-	UTF16LEBOM = []byte{0xFF, 0xFE}             // 2 bytes
-	UTF16BEBOM = []byte{0xFE, 0xFF}             // 2 bytes
-	UTF32LEBOM = []byte{0xFF, 0xFE, 0x00, 0x00} // 4 bytes
-	UTF32BEBOM = []byte{0x00, 0x00, 0xFE, 0xFF} // 4 bytes
+	UTF8BOM    = []byte{0xEF, 0xBB, 0xBF}
+	UTF16LEBOM = []byte{0xFF, 0xFE}
+	UTF16BEBOM = []byte{0xFE, 0xFF}
+	UTF32LEBOM = []byte{0xFF, 0xFE, 0x00, 0x00}
+	UTF32BEBOM = []byte{0x00, 0x00, 0xFE, 0xFF}
 )
 
-// stripBOM removes Byte Order Mark from the beginning of data if present
 func stripBOM(data []byte) []byte {
 	if len(data) == 0 {
 		return data
@@ -128,9 +127,8 @@ func (s *S3Handler) GetFile(ctx context.Context, bucket string, key string) (*[]
 }
 
 // GetFileRange retrieves a specific byte range from the S3 object.
-// This enables streaming large files without loading everything into memory.
-func (s *S3Handler) GetFileRange(ctx context.Context, bucket string, key string, startByte, endByte int64) (*[]byte, error) {
-	rangeHeader := fmt.Sprintf("bytes=%d-%d", startByte, endByte)
+func (s *S3Handler) GetFileRange(ctx context.Context, bucket string, key string, sByte, eByte int64) (*[]byte, error) {
+	rangeHeader := fmt.Sprintf("bytes=%d-%d", sByte, eByte)
 
 	response, err := s.Client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: &bucket,
@@ -168,14 +166,13 @@ func (s *S3Handler) GetFileRange(ctx context.Context, bucket string, key string,
 	}
 
 	// Only strip BOM if we're reading from the beginning of the file
-	if startByte == 0 {
+	if sByte == 0 {
 		bytes = stripBOM(bytes)
 	}
 
 	return &bytes, nil
 }
 
-// GetFileSize returns the size of the file in bytes using HEAD request.
 func (s *S3Handler) GetFileSize(ctx context.Context, bucket string, key string) (int64, error) {
 	response, err := s.FileExists(ctx, bucket, key)
 	if err != nil {
@@ -189,16 +186,13 @@ func (s *S3Handler) GetFileSize(ctx context.Context, bucket string, key string) 
 	return *response.ContentLength, nil
 }
 
-// GetHeaderChunk reads the first chunk of the file to extract CSV headers.
-// We read a reasonable amount (8KB) to ensure we get the complete first line.
 func (s *S3Handler) GetHeaderChunk(ctx context.Context, bucket string, key string) (*[]byte, error) {
-	const headerChunkSize = 8192 // 8KB should be enough for most CSV headers
+	const headerChunkSize = 8192 // 8KB
 
 	headerBytes, err := s.GetFileRange(ctx, bucket, key, 0, headerChunkSize-1)
 	if err != nil {
 		return nil, err
 	}
 
-	// BOM is already stripped in GetFileRange when startByte == 0
 	return headerBytes, nil
 }

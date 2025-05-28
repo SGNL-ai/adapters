@@ -61,7 +61,6 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	// Create the object key using entity name and path prefix
 	objectKey := GetObjectKeyFromRequest(request)
 
-	// Get file metadata first
 	fileSize, err := handler.GetFileSize(ctx, request.Bucket, objectKey)
 	if err != nil {
 		return nil, customerror.UpdateError(&framework.Error{
@@ -79,14 +78,11 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		}
 	}
 
-	// Determine pagination start position
-	start := int64(1) // Start at row 1 (skip header row)
+	start := int64(1)
 	if request.Cursor != nil && request.Cursor.Cursor != nil {
 		start = *request.Cursor.Cursor
 	}
 
-	// Decide whether to use streaming or traditional approach based on file size
-	// For files larger than 10MB, use streaming to avoid memory issues
 	const streamingThreshold = 10 * 1024 * 1024 // 10MB
 
 	var objects []map[string]any
@@ -94,12 +90,10 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	var processErr error
 
 	if fileSize > streamingThreshold {
-		// Use streaming approach for large files
 		objects, hasNext, processErr = d.processLargeFileStreaming(
 			ctx, handler, request.Bucket, objectKey, fileSize, start, request.PageSize, request.AttributeConfig,
 		)
 	} else {
-		// Use traditional approach for smaller files (backward compatibility)
 		objects, hasNext, processErr = d.processSmallFileTraditional(
 			ctx, handler, request.Bucket, objectKey, start, request.PageSize, request.AttributeConfig,
 		)
@@ -129,7 +123,6 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	return response, nil
 }
 
-// processLargeFileStreaming handles large files using streaming approach
 func (d *Datasource) processLargeFileStreaming(
 	ctx context.Context,
 	handler *S3Handler,
@@ -138,7 +131,6 @@ func (d *Datasource) processLargeFileStreaming(
 	attrConfig []*framework.AttributeConfig,
 ) ([]map[string]any, bool, error) {
 
-	// First, get the CSV headers by reading a small chunk from the beginning
 	headerChunk, err := handler.GetHeaderChunk(ctx, bucket, key)
 	if err != nil {
 		return nil, false, fmt.Errorf("unable to read CSV file headers: %v", err)
@@ -153,7 +145,6 @@ func (d *Datasource) processLargeFileStreaming(
 		return nil, false, fmt.Errorf("CSV file does not contain valid column headers")
 	}
 
-	// Process the file using streaming
 	objects, hasNext, err := StreamingCSVToPage(
 		handler, ctx, bucket, key, fileSize, headers, start, pageSize, attrConfig,
 	)
@@ -164,7 +155,6 @@ func (d *Datasource) processLargeFileStreaming(
 	return objects, hasNext, nil
 }
 
-// processSmallFileTraditional handles small files using the original approach
 func (d *Datasource) processSmallFileTraditional(
 	ctx context.Context,
 	handler *S3Handler,
@@ -173,7 +163,6 @@ func (d *Datasource) processSmallFileTraditional(
 	attrConfig []*framework.AttributeConfig,
 ) ([]map[string]any, bool, error) {
 
-	// Use the original GetFile method for small files
 	fileBytes, err := handler.GetFile(ctx, bucket, key)
 	if err != nil {
 		return nil, false, fmt.Errorf("unable to read CSV file: %v", err)
@@ -183,7 +172,6 @@ func (d *Datasource) processSmallFileTraditional(
 		return nil, false, fmt.Errorf("CSV file is empty or corrupted")
 	}
 
-	// Use the original CSV processing method
 	objects, hasNext, err := CSVBytesToPage(fileBytes, start, pageSize, attrConfig)
 	if err != nil {
 		return nil, false, fmt.Errorf("unable to process CSV file data: %v", err)

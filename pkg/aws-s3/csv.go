@@ -15,12 +15,10 @@ import (
 
 const (
 	FileTypeCSV = "csv"
-	// StreamingChunkSize defines how many bytes to read per S3 range request
-	// 1MB chunks provide good balance between memory usage and API calls
+	// StreamingChunkSize defines how many bytes to read per S3 range request.
 	StreamingChunkSize = 1024 * 1024 // 1MB
 )
 
-// CSVHeaders extracts just the headers from the first chunk of CSV data
 func CSVHeaders(headerChunk *[]byte) ([]string, error) {
 	if headerChunk == nil || len(*headerChunk) == 0 {
 		return nil, fmt.Errorf("CSV file is empty or could not be read")
@@ -28,48 +26,14 @@ func CSVHeaders(headerChunk *[]byte) ([]string, error) {
 
 	csvData := csv.NewReader(bytes.NewReader(*headerChunk))
 
-	// Read just the first line to get headers
-	record, err := csvData.Read()
+	headers, err := csvData.Read()
 	if err != nil {
 		return nil, fmt.Errorf("CSV file format is invalid or corrupted: %v", err)
 	}
 
-	return record, nil
+	return headers, nil
 }
 
-// CSVRowCount estimates the total number of rows by reading through the file in chunks
-// This is used to determine if we need to continue pagination
-func CSVRowCount(handler *S3Handler, ctx context.Context, bucket, key string, fileSize int64) (int64, error) {
-	var totalRows int64 = 0
-	var currentPos int64 = 0
-
-	for currentPos < fileSize {
-		endPos := currentPos + StreamingChunkSize - 1
-		if endPos >= fileSize {
-			endPos = fileSize - 1
-		}
-
-		chunkData, err := handler.GetFileRange(ctx, bucket, key, currentPos, endPos)
-		if err != nil {
-			return 0, fmt.Errorf("unable to read CSV file data for row counting: %v", err)
-		}
-
-		// Count newlines in this chunk
-		chunkRows := int64(bytes.Count(*chunkData, []byte("\n")))
-		totalRows += chunkRows
-
-		currentPos = endPos + 1
-	}
-
-	// Subtract 1 for header row if file has content
-	if totalRows > 0 {
-		totalRows--
-	}
-
-	return totalRows, nil
-}
-
-// StreamingCSVToPage processes CSV data by streaming chunks and seeking to the desired start position
 func StreamingCSVToPage(
 	handler *S3Handler,
 	ctx context.Context,
@@ -84,11 +48,10 @@ func StreamingCSVToPage(
 	objects := make([]map[string]any, 0, pageSize)
 	headerToAttributeConfig := headerToAttributeConfig(headers, attrConfig)
 
-	var currentRow int64 = 0 // Start at 0 to track absolute row position (including header)
-	var currentPos int64 = 0 // Current byte position in file
+	var currentRow int64 = 0
+	var currentPos int64 = 0
 	var collectedRows int64 = 0
 
-	// We need to find our starting position and then collect pageSize rows
 	targetEndRow := start + pageSize
 
 	for currentPos < fileSize && collectedRows < pageSize {
@@ -102,7 +65,6 @@ func StreamingCSVToPage(
 			return nil, false, fmt.Errorf("unable to read CSV file data: %v", err)
 		}
 
-		// Process this chunk and get the actual byte position where processing stopped
 		chunkObjects, nextRow, nextBytePos, err := processCSVChunk(
 			*chunkData,
 			headers,
@@ -110,7 +72,7 @@ func StreamingCSVToPage(
 			currentRow,
 			start,
 			targetEndRow,
-			currentPos, // Pass current file position
+			currentPos,
 		)
 		if err != nil {
 			return nil, false, fmt.Errorf("CSV file processing failed: %v", err)
@@ -120,32 +82,25 @@ func StreamingCSVToPage(
 		collectedRows += int64(len(chunkObjects))
 		currentRow = nextRow
 
-		// Safety check: if we didn't advance position, prevent infinite loop
 		if nextBytePos <= currentPos {
 			return nil, false, fmt.Errorf("CSV file contains formatting issues that prevent processing from continuing")
 		}
 
-		// CRITICAL FIX: Use actual processed byte position, not chunk boundary
 		currentPos = nextBytePos
 
-		// If we've collected enough rows, we can stop
 		if collectedRows >= pageSize {
 			break
 		}
 	}
 
-	// Determine if there are more rows after this page
 	hasNext := currentRow <= start+pageSize || currentPos < fileSize
 	if !hasNext && collectedRows == pageSize {
-		// We collected exactly pageSize rows, but there might be more
-		// Check if we're at the end of the file
 		hasNext = currentPos < fileSize
 	}
 
 	return objects, hasNext, nil
 }
 
-// processCSVChunk processes a single chunk of CSV data
 func processCSVChunk(
 	chunkData []byte,
 	headers []string,
@@ -153,21 +108,17 @@ func processCSVChunk(
 	startRowNum int64,
 	targetStartRow int64,
 	targetEndRow int64,
-	chunkStartPos int64, // File position where this chunk starts
+	chunkStartPos int64,
 ) ([]map[string]any, int64, int64, error) {
 
-	// Handle the case where chunk doesn't end on a complete line
-	// Find the last complete line in the chunk
 	lastNewlineIndex := bytes.LastIndex(chunkData, []byte("\n"))
 	if lastNewlineIndex == -1 {
-		return nil, startRowNum, chunkStartPos, fmt.Errorf("CSV file contains a single row larger than %d MB, which exceeds processing limits", StreamingChunkSize/(1024*1024))
+		return nil, startRowNum, chunkStartPos,
+			fmt.Errorf("CSV file contains a single row larger than %d MB", StreamingChunkSize/(1024*1024))
 	}
 
-	// Only process up to the last complete line
 	completeChunk := chunkData[:lastNewlineIndex+1]
 
-	// Calculate the actual file position where we stopped processing
-	// This is crucial for continuing from the right position in the next chunk
 	nextBytePos := chunkStartPos + int64(lastNewlineIndex) + 1
 
 	csvReader := csv.NewReader(bytes.NewReader(completeChunk))
@@ -181,31 +132,30 @@ func processCSVChunk(
 			if err.Error() == "EOF" {
 				break
 			}
+
 			return nil, currentRowNum, nextBytePos, fmt.Errorf("CSV file format is invalid or corrupted: %v", err)
 		}
 
 		// Skip header row (row 0) completely
 		if currentRowNum == 0 {
 			currentRowNum++
+
 			continue
 		}
 
-		// Check if this row is in our target range
-		// Convert currentRowNum to data row number (subtract 1 to account for header)
 		dataRowNum := currentRowNum
 		if dataRowNum >= targetStartRow && dataRowNum < targetEndRow {
 			row := make(map[string]interface{})
 
 			for i, value := range record {
 				if i >= len(headers) {
-					continue // Skip extra columns
+					continue
 				}
 
 				headerName := headers[i]
 				attrConfig, found := headerToAttributeConfig[headerName]
 
 				if !found {
-					// Handle complex JSON values
 					if strings.HasPrefix(value, "[{") && strings.HasSuffix(value, "}]") {
 						var childObj []map[string]any
 						if err := json.Unmarshal([]byte(value), &childObj); err != nil {
@@ -221,14 +171,15 @@ func processCSVChunk(
 						}
 
 						row[headerName] = childArray
+
 						continue
 					}
 
 					row[headerName] = value
+
 					continue
 				}
 
-				// Convert based on attribute type
 				switch attrConfig.Type {
 				case framework.AttributeTypeInt64, framework.AttributeTypeDouble:
 					floatValue, err := strconv.ParseFloat(value, 64)
@@ -249,7 +200,6 @@ func processCSVChunk(
 
 		currentRowNum++
 
-		// Early exit if we've processed enough rows
 		if dataRowNum >= targetEndRow {
 			break
 		}
@@ -260,7 +210,6 @@ func processCSVChunk(
 
 // TODO: Clean this up by decoupling the attribute value conversion logic from the CSV parsing logic.
 // CSVBytesToPage converts a CSV byte array to an array of objects.
-// DEPRECATED: Use StreamingCSVToPage for large files to avoid memory issues.
 func CSVBytesToPage(
 	data *[]byte,
 	start int64,
