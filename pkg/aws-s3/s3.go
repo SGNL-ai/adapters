@@ -81,7 +81,7 @@ func (s *S3Handler) FileExists(ctx context.Context, bucket string, key string) (
 // GetFile retrieves the entire object from the bucket.
 // It returns a 403 error if ListBucket permission is missing.
 // It returns a 404 error if the object does not exist in the path.
-func (s S3Handler) GetFile(ctx context.Context, bucket string, key string) (*[]byte, error) {
+func (s *S3Handler) GetFile(ctx context.Context, bucket string, key string) (*[]byte, error) {
 	// Check if file exists.
 	// Use metadata for file type, encoding and other checks in the future.
 	_, err := s.FileExists(ctx, bucket, key)
