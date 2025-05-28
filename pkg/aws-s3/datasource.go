@@ -65,7 +65,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	fileSize, err := handler.GetFileSize(ctx, request.Bucket, objectKey)
 	if err != nil {
 		return nil, customerror.UpdateError(&framework.Error{
-			Message: fmt.Sprintf("Failed to get file size for entity from AWS S3: %s, error: %v.", entityName, err),
+			Message: fmt.Sprintf("Unable to access file for entity %s from AWS S3: %v.", entityName, err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		},
 			customerror.WithRequestTimeoutMessage(err, request.RequestTimeoutSeconds),
@@ -74,7 +74,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 
 	if fileSize == 0 {
 		return nil, &framework.Error{
-			Message: fmt.Sprintf("The file for entity %s is empty.", entityName),
+			Message: fmt.Sprintf("The CSV file for entity %s is empty.", entityName),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
 		}
 	}
@@ -107,7 +107,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 
 	if processErr != nil {
 		return nil, customerror.UpdateError(&framework.Error{
-			Message: fmt.Sprintf("Failed to process entity %s: %v.", entityName, processErr),
+			Message: fmt.Sprintf("Unable to process CSV data for entity %s: %v.", entityName, processErr),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		},
 			customerror.WithRequestTimeoutMessage(processErr, request.RequestTimeoutSeconds),
@@ -141,16 +141,16 @@ func (d *Datasource) processLargeFileStreaming(
 	// First, get the CSV headers by reading a small chunk from the beginning
 	headerChunk, err := handler.GetHeaderChunk(ctx, bucket, key)
 	if err != nil {
-		return nil, false, fmt.Errorf("failed to read header chunk: %v", err)
+		return nil, false, fmt.Errorf("unable to read CSV file headers: %v", err)
 	}
 
 	headers, err := CSVHeaders(headerChunk)
 	if err != nil {
-		return nil, false, fmt.Errorf("failed to extract CSV headers: %v", err)
+		return nil, false, fmt.Errorf("unable to parse CSV file headers: %v", err)
 	}
 
 	if len(headers) == 0 {
-		return nil, false, fmt.Errorf("no headers found in CSV file")
+		return nil, false, fmt.Errorf("CSV file does not contain valid column headers")
 	}
 
 	// Process the file using streaming
@@ -158,7 +158,7 @@ func (d *Datasource) processLargeFileStreaming(
 		handler, ctx, bucket, key, fileSize, headers, start, pageSize, attrConfig,
 	)
 	if err != nil {
-		return nil, false, fmt.Errorf("failed to process streaming CSV: %v", err)
+		return nil, false, fmt.Errorf("unable to process CSV file data: %v", err)
 	}
 
 	return objects, hasNext, nil
@@ -176,17 +176,17 @@ func (d *Datasource) processSmallFileTraditional(
 	// Use the original GetFile method for small files
 	fileBytes, err := handler.GetFile(ctx, bucket, key)
 	if err != nil {
-		return nil, false, fmt.Errorf("failed to fetch file: %v", err)
+		return nil, false, fmt.Errorf("unable to read CSV file: %v", err)
 	}
 
 	if fileBytes == nil {
-		return nil, false, fmt.Errorf("file content is empty")
+		return nil, false, fmt.Errorf("CSV file is empty or corrupted")
 	}
 
 	// Use the original CSV processing method
 	objects, hasNext, err := CSVBytesToPage(fileBytes, start, pageSize, attrConfig)
 	if err != nil {
-		return nil, false, fmt.Errorf("failed to process CSV: %v", err)
+		return nil, false, fmt.Errorf("unable to process CSV file data: %v", err)
 	}
 
 	return objects, hasNext, nil
