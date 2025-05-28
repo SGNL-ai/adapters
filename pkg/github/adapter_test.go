@@ -140,6 +140,215 @@ func TestAdapterGetPage(t *testing.T) {
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
 				},
 			},
+			"valid_request_with_filter": {
+				ctx: context.Background(),
+				request: &framework.Request[github_adapter.Config]{
+					Address: server.URL,
+					Auth: &framework.DatasourceAuthCredentials{
+						HTTPAuthorization: "Bearer Testtoken",
+					},
+					Config: &github_adapter.Config{
+						EnterpriseSlug:    testutil.GenPtr("SGNL"),
+						IsEnterpriseCloud: false,
+						APIVersion:        testutil.GenPtr("v3"),
+						Filters: map[string]string{
+							"Organization": "visibility: PUBLIC",
+						},
+					},
+					Entity:   *PopulateDefaultOrganizationEntityConfig(),
+					PageSize: 1,
+				},
+				wantResponse: framework.Response{
+					Success: &framework.Page{
+						Objects: []framework.Object{
+							{
+								"id":                   "MDEyOk9yZ2FuaXphdGlvbjk=",
+								"enterpriseId":         "MDEwOkVudGVycHJpc2Ux",
+								"databaseId":           int64(9),
+								"login":                "ArvindOrg1",
+								"viewerIsAMember":      true,
+								"viewerCanCreateTeams": true,
+								"updatedAt":            time.Date(2024, 2, 2, 23, 20, 22, 0, time.UTC),
+								"createdAt":            time.Date(2024, 2, 2, 23, 20, 22, 0, time.UTC),
+							},
+						},
+						NextCursor: "eyJjdXJzb3IiOiJleUpCWm5SbGNqRWlPaUpaTTFaNVl6STVlVTl1V1hsUGNFdHhVVmhLTW1GWE5XdFVNMHB1VFZGclBTSXNJa0ZtZEdHeU1pSTZiblZzYkN3aVFXWjBaWEl6SWpwdWRXeHNmUT09In0=",
+					},
+				},
+				wantCursor: CreateGraphQLCompositeCursor(
+					[]*string{testutil.GenPtr("Y3Vyc29yOnYyOpKqQXJ2aW5kT3JnMQk=")},
+					nil,
+					nil,
+				),
+			},
+			"valid_request_with_orderby": {
+				ctx: context.Background(),
+				request: &framework.Request[github_adapter.Config]{
+					Address: server.URL,
+					Auth: &framework.DatasourceAuthCredentials{
+						HTTPAuthorization: "Bearer Testtoken",
+					},
+					Config: &github_adapter.Config{
+						EnterpriseSlug:    testutil.GenPtr("SGNL"),
+						IsEnterpriseCloud: false,
+						APIVersion:        testutil.GenPtr("v3"),
+						OrderBy: map[string]string{
+							"Organization": "orderBy: {field: CREATED_AT, direction: DESC}",
+						},
+					},
+					Entity:   *PopulateDefaultOrganizationEntityConfig(),
+					PageSize: 1,
+				},
+				wantResponse: framework.Response{
+					Success: &framework.Page{
+						Objects: []framework.Object{
+							{
+								"id":                   "MDEyOk9yZ2FuaXphdGlvbjk=",
+								"enterpriseId":         "MDEwOkVudGVycHJpc2Ux",
+								"databaseId":           int64(9),
+								"login":                "ArvindOrg1",
+								"viewerIsAMember":      true,
+								"viewerCanCreateTeams": true,
+								"updatedAt":            time.Date(2024, 2, 2, 23, 20, 22, 0, time.UTC),
+								"createdAt":            time.Date(2024, 2, 2, 23, 20, 22, 0, time.UTC),
+							},
+						},
+						NextCursor: "eyJjdXJzb3IiOiJleUpCWm5SbGNqRWlPaUpaTTFaNVl6STVlVTl1V1hsUGNFdHhVVmhLTW1GWE5XdFVNMHB1VFZGclBTSXNJa0ZtZEdHeU1pSTZiblZzYkN3aVFXWjBaWEl6SWpwdWRXeHNmUT09In0=",
+					},
+				},
+				wantCursor: CreateGraphQLCompositeCursor(
+					[]*string{testutil.GenPtr("Y3Vyc29yOnYyOpKqQXJ2aW5kT3JnMQk=")},
+					nil,
+					nil,
+				),
+			},
+			"valid_request_with_filter_and_orderby": {
+				ctx: context.Background(),
+				request: &framework.Request[github_adapter.Config]{
+					Address: server.URL,
+					Auth: &framework.DatasourceAuthCredentials{
+						HTTPAuthorization: "Bearer Testtoken",
+					},
+					Config: &github_adapter.Config{
+						EnterpriseSlug:    testutil.GenPtr("SGNL"),
+						IsEnterpriseCloud: false,
+						APIVersion:        testutil.GenPtr("v3"),
+						Filters: map[string]string{
+							"Organization": "visibility: PUBLIC",
+						},
+						OrderBy: map[string]string{
+							"Organization": "orderBy: {field: UPDATED_AT, direction: ASC}",
+						},
+					},
+					Entity:   *PopulateDefaultOrganizationEntityConfig(),
+					PageSize: 1,
+				},
+				wantResponse: framework.Response{
+					Success: &framework.Page{
+						Objects: []framework.Object{
+							{
+								"id":                   "MDEyOk9yZ2FuaXphdGlvbjk=",
+								"enterpriseId":         "MDEwOkVudGVycHJpc2Ux",
+								"databaseId":           int64(9),
+								"login":                "ArvindOrg1",
+								"viewerIsAMember":      true,
+								"viewerCanCreateTeams": true,
+								"updatedAt":            time.Date(2024, 2, 2, 23, 20, 22, 0, time.UTC),
+								"createdAt":            time.Date(2024, 2, 2, 23, 20, 22, 0, time.UTC),
+							},
+						},
+						NextCursor: "eyJjdXJzb3IiOiJleUpCWm5SbGNqRWlPaUpaTTFaNVl6STVlVTl1V1hsUGNFdHhVVmhLTW1GWE5XdFVNMHB1VFZGclBTSXNJa0ZtZEdHeU1pSTZiblZzYkN3aVFXWjBaWEl6SWpwdWRXeHNmUT09In0=",
+					},
+				},
+				wantCursor: CreateGraphQLCompositeCursor(
+					[]*string{testutil.GenPtr("Y3Vyc29yOnYyOpKqQXJ2aW5kT3JnMQk=")},
+					nil,
+					nil,
+				),
+			},
+			"valid_request_with_empty_filter": {
+				ctx: context.Background(),
+				request: &framework.Request[github_adapter.Config]{
+					Address: server.URL,
+					Auth: &framework.DatasourceAuthCredentials{
+						HTTPAuthorization: "Bearer Testtoken",
+					},
+					Config: &github_adapter.Config{
+						EnterpriseSlug:    testutil.GenPtr("SGNL"),
+						IsEnterpriseCloud: false,
+						APIVersion:        testutil.GenPtr("v3"),
+						Filters: map[string]string{
+							"Organization": "",
+						},
+					},
+					Entity:   *PopulateDefaultOrganizationEntityConfig(),
+					PageSize: 1,
+				},
+				wantResponse: framework.Response{
+					Success: &framework.Page{
+						Objects: []framework.Object{
+							{
+								"id":                   "MDEyOk9yZ2FuaXphdGlvbjk=",
+								"enterpriseId":         "MDEwOkVudGVycHJpc2Ux",
+								"databaseId":           int64(9),
+								"login":                "ArvindOrg1",
+								"viewerIsAMember":      true,
+								"viewerCanCreateTeams": true,
+								"updatedAt":            time.Date(2024, 2, 2, 23, 20, 22, 0, time.UTC),
+								"createdAt":            time.Date(2024, 2, 2, 23, 20, 22, 0, time.UTC),
+							},
+						},
+						NextCursor: "eyJjdXJzb3IiOiJleUpCWm5SbGNqRWlPaUpaTTFaNVl6STVlVTl1V1hsUGNFdHhVVmhLTW1GWE5XdFVNMHB1VFZGclBTSXNJa0ZtZEdHeU1pSTZiblZzYkN3aVFXWjBaWEl6SWpwdWRXeHNmUT09In0=",
+					},
+				},
+				wantCursor: CreateGraphQLCompositeCursor(
+					[]*string{testutil.GenPtr("Y3Vyc29yOnYyOpKqQXJ2aW5kT3JnMQk=")},
+					nil,
+					nil,
+				),
+			},
+			"valid_request_with_different_entity_filter": {
+				ctx: context.Background(),
+				request: &framework.Request[github_adapter.Config]{
+					Address: server.URL,
+					Auth: &framework.DatasourceAuthCredentials{
+						HTTPAuthorization: "Bearer Testtoken",
+					},
+					Config: &github_adapter.Config{
+						EnterpriseSlug:    testutil.GenPtr("SGNL"),
+						IsEnterpriseCloud: false,
+						APIVersion:        testutil.GenPtr("v3"),
+						Filters: map[string]string{
+							"Repository": "visibility: PRIVATE",
+							"Issue":      "states: OPEN",
+						},
+					},
+					Entity:   *PopulateDefaultOrganizationEntityConfig(),
+					PageSize: 1,
+				},
+				wantResponse: framework.Response{
+					Success: &framework.Page{
+						Objects: []framework.Object{
+							{
+								"id":                   "MDEyOk9yZ2FuaXphdGlvbjk=",
+								"enterpriseId":         "MDEwOkVudGVycHJpc2Ux",
+								"databaseId":           int64(9),
+								"login":                "ArvindOrg1",
+								"viewerIsAMember":      true,
+								"viewerCanCreateTeams": true,
+								"updatedAt":            time.Date(2024, 2, 2, 23, 20, 22, 0, time.UTC),
+								"createdAt":            time.Date(2024, 2, 2, 23, 20, 22, 0, time.UTC),
+							},
+						},
+						NextCursor: "eyJjdXJzb3IiOiJleUpCWm5SbGNqRWlPaUpaTTFaNVl6STVlVTl1V1hsUGNFdHhVVmhLTW1GWE5XdFVNMHB1VFZGclBTSXNJa0ZtZEdHeU1pSTZiblZzYkN3aVFXWjBaWEl6SWpwdWRXeHNmUT09In0=",
+					},
+				},
+				wantCursor: CreateGraphQLCompositeCursor(
+					[]*string{testutil.GenPtr("Y3Vyc29yOnYyOpKqQXJ2aW5kT3JnMQk=")},
+					nil,
+					nil,
+				),
+			},
 		},
 		"valid_request_with_cursor": {
 			ctx: context.Background(),
@@ -5010,6 +5219,215 @@ func TestAdapterGetSecretScanningAlertPage(t *testing.T) {
 			},
 			wantCursor: &pagination.CompositeCursor[string]{
 				Cursor: testutil.GenPtr("https://test-instance.com/api/v3/enterprises/SGNL/secret-scanning/alerts?per_page=1&page=2"),
+			},
+			"valid_request_with_filter": {
+				ctx: context.Background(),
+				request: &framework.Request[github_adapter.Config]{
+					Address: server.URL,
+					Auth: &framework.DatasourceAuthCredentials{
+						HTTPAuthorization: "Bearer Testtoken",
+					},
+					Config: &github_adapter.Config{
+						EnterpriseSlug:    testutil.GenPtr("SGNL"),
+						IsEnterpriseCloud: false,
+						APIVersion:        testutil.GenPtr("v3"),
+						Filters: map[string]string{
+							"Organization": "visibility: PUBLIC",
+						},
+					},
+					Entity:   *PopulateDefaultOrganizationEntityConfig(),
+					PageSize: 1,
+				},
+				wantResponse: framework.Response{
+					Success: &framework.Page{
+						Objects: []framework.Object{
+							{
+								"id":                   "MDEyOk9yZ2FuaXphdGlvbjk=",
+								"enterpriseId":         "MDEwOkVudGVycHJpc2Ux",
+								"databaseId":           int64(9),
+								"login":                "ArvindOrg1",
+								"viewerIsAMember":      true,
+								"viewerCanCreateTeams": true,
+								"updatedAt":            time.Date(2024, 2, 2, 23, 20, 22, 0, time.UTC),
+								"createdAt":            time.Date(2024, 2, 2, 23, 20, 22, 0, time.UTC),
+							},
+						},
+						NextCursor: "eyJjdXJzb3IiOiJleUpCWm5SbGNqRWlPaUpaTTFaNVl6STVlVTl1V1hsUGNFdHhVVmhLTW1GWE5XdFVNMHB1VFZGclBTSXNJa0ZtZEdHeU1pSTZiblZzYkN3aVFXWjBaWEl6SWpwdWRXeHNmUT09In0=",
+					},
+				},
+				wantCursor: CreateGraphQLCompositeCursor(
+					[]*string{testutil.GenPtr("Y3Vyc29yOnYyOpKqQXJ2aW5kT3JnMQk=")},
+					nil,
+					nil,
+				),
+			},
+			"valid_request_with_orderby": {
+				ctx: context.Background(),
+				request: &framework.Request[github_adapter.Config]{
+					Address: server.URL,
+					Auth: &framework.DatasourceAuthCredentials{
+						HTTPAuthorization: "Bearer Testtoken",
+					},
+					Config: &github_adapter.Config{
+						EnterpriseSlug:    testutil.GenPtr("SGNL"),
+						IsEnterpriseCloud: false,
+						APIVersion:        testutil.GenPtr("v3"),
+						OrderBy: map[string]string{
+							"Organization": "orderBy: {field: CREATED_AT, direction: DESC}",
+						},
+					},
+					Entity:   *PopulateDefaultOrganizationEntityConfig(),
+					PageSize: 1,
+				},
+				wantResponse: framework.Response{
+					Success: &framework.Page{
+						Objects: []framework.Object{
+							{
+								"id":                   "MDEyOk9yZ2FuaXphdGlvbjk=",
+								"enterpriseId":         "MDEwOkVudGVycHJpc2Ux",
+								"databaseId":           int64(9),
+								"login":                "ArvindOrg1",
+								"viewerIsAMember":      true,
+								"viewerCanCreateTeams": true,
+								"updatedAt":            time.Date(2024, 2, 2, 23, 20, 22, 0, time.UTC),
+								"createdAt":            time.Date(2024, 2, 2, 23, 20, 22, 0, time.UTC),
+							},
+						},
+						NextCursor: "eyJjdXJzb3IiOiJleUpCWm5SbGNqRWlPaUpaTTFaNVl6STVlVTl1V1hsUGNFdHhVVmhLTW1GWE5XdFVNMHB1VFZGclBTSXNJa0ZtZEdHeU1pSTZiblZzYkN3aVFXWjBaWEl6SWpwdWRXeHNmUT09In0=",
+					},
+				},
+				wantCursor: CreateGraphQLCompositeCursor(
+					[]*string{testutil.GenPtr("Y3Vyc29yOnYyOpKqQXJ2aW5kT3JnMQk=")},
+					nil,
+					nil,
+				),
+			},
+			"valid_request_with_filter_and_orderby": {
+				ctx: context.Background(),
+				request: &framework.Request[github_adapter.Config]{
+					Address: server.URL,
+					Auth: &framework.DatasourceAuthCredentials{
+						HTTPAuthorization: "Bearer Testtoken",
+					},
+					Config: &github_adapter.Config{
+						EnterpriseSlug:    testutil.GenPtr("SGNL"),
+						IsEnterpriseCloud: false,
+						APIVersion:        testutil.GenPtr("v3"),
+						Filters: map[string]string{
+							"Organization": "visibility: PUBLIC",
+						},
+						OrderBy: map[string]string{
+							"Organization": "orderBy: {field: UPDATED_AT, direction: ASC}",
+						},
+					},
+					Entity:   *PopulateDefaultOrganizationEntityConfig(),
+					PageSize: 1,
+				},
+				wantResponse: framework.Response{
+					Success: &framework.Page{
+						Objects: []framework.Object{
+							{
+								"id":                   "MDEyOk9yZ2FuaXphdGlvbjk=",
+								"enterpriseId":         "MDEwOkVudGVycHJpc2Ux",
+								"databaseId":           int64(9),
+								"login":                "ArvindOrg1",
+								"viewerIsAMember":      true,
+								"viewerCanCreateTeams": true,
+								"updatedAt":            time.Date(2024, 2, 2, 23, 20, 22, 0, time.UTC),
+								"createdAt":            time.Date(2024, 2, 2, 23, 20, 22, 0, time.UTC),
+							},
+						},
+						NextCursor: "eyJjdXJzb3IiOiJleUpCWm5SbGNqRWlPaUpaTTFaNVl6STVlVTl1V1hsUGNFdHhVVmhLTW1GWE5XdFVNMHB1VFZGclBTSXNJa0ZtZEdHeU1pSTZiblZzYkN3aVFXWjBaWEl6SWpwdWRXeHNmUT09In0=",
+					},
+				},
+				wantCursor: CreateGraphQLCompositeCursor(
+					[]*string{testutil.GenPtr("Y3Vyc29yOnYyOpKqQXJ2aW5kT3JnMQk=")},
+					nil,
+					nil,
+				),
+			},
+			"valid_request_with_empty_filter": {
+				ctx: context.Background(),
+				request: &framework.Request[github_adapter.Config]{
+					Address: server.URL,
+					Auth: &framework.DatasourceAuthCredentials{
+						HTTPAuthorization: "Bearer Testtoken",
+					},
+					Config: &github_adapter.Config{
+						EnterpriseSlug:    testutil.GenPtr("SGNL"),
+						IsEnterpriseCloud: false,
+						APIVersion:        testutil.GenPtr("v3"),
+						Filters: map[string]string{
+							"Organization": "",
+						},
+					},
+					Entity:   *PopulateDefaultOrganizationEntityConfig(),
+					PageSize: 1,
+				},
+				wantResponse: framework.Response{
+					Success: &framework.Page{
+						Objects: []framework.Object{
+							{
+								"id":                   "MDEyOk9yZ2FuaXphdGlvbjk=",
+								"enterpriseId":         "MDEwOkVudGVycHJpc2Ux",
+								"databaseId":           int64(9),
+								"login":                "ArvindOrg1",
+								"viewerIsAMember":      true,
+								"viewerCanCreateTeams": true,
+								"updatedAt":            time.Date(2024, 2, 2, 23, 20, 22, 0, time.UTC),
+								"createdAt":            time.Date(2024, 2, 2, 23, 20, 22, 0, time.UTC),
+							},
+						},
+						NextCursor: "eyJjdXJzb3IiOiJleUpCWm5SbGNqRWlPaUpaTTFaNVl6STVlVTl1V1hsUGNFdHhVVmhLTW1GWE5XdFVNMHB1VFZGclBTSXNJa0ZtZEdHeU1pSTZiblZzYkN3aVFXWjBaWEl6SWpwdWRXeHNmUT09In0=",
+					},
+				},
+				wantCursor: CreateGraphQLCompositeCursor(
+					[]*string{testutil.GenPtr("Y3Vyc29yOnYyOpKqQXJ2aW5kT3JnMQk=")},
+					nil,
+					nil,
+				),
+			},
+			"valid_request_with_different_entity_filter": {
+				ctx: context.Background(),
+				request: &framework.Request[github_adapter.Config]{
+					Address: server.URL,
+					Auth: &framework.DatasourceAuthCredentials{
+						HTTPAuthorization: "Bearer Testtoken",
+					},
+					Config: &github_adapter.Config{
+						EnterpriseSlug:    testutil.GenPtr("SGNL"),
+						IsEnterpriseCloud: false,
+						APIVersion:        testutil.GenPtr("v3"),
+						Filters: map[string]string{
+							"Repository": "visibility: PRIVATE",
+							"Issue":      "states: OPEN",
+						},
+					},
+					Entity:   *PopulateDefaultOrganizationEntityConfig(),
+					PageSize: 1,
+				},
+				wantResponse: framework.Response{
+					Success: &framework.Page{
+						Objects: []framework.Object{
+							{
+								"id":                   "MDEyOk9yZ2FuaXphdGlvbjk=",
+								"enterpriseId":         "MDEwOkVudGVycHJpc2Ux",
+								"databaseId":           int64(9),
+								"login":                "ArvindOrg1",
+								"viewerIsAMember":      true,
+								"viewerCanCreateTeams": true,
+								"updatedAt":            time.Date(2024, 2, 2, 23, 20, 22, 0, time.UTC),
+								"createdAt":            time.Date(2024, 2, 2, 23, 20, 22, 0, time.UTC),
+							},
+						},
+						NextCursor: "eyJjdXJzb3IiOiJleUpCWm5SbGNqRWlPaUpaTTFaNVl6STVlVTl1V1hsUGNFdHhVVmhLTW1GWE5XdFVNMHB1VFZGclBTSXNJa0ZtZEdHeU1pSTZiblZzYkN3aVFXWjBaWEl6SWpwdWRXeHNmUT09In0=",
+					},
+				},
+				wantCursor: CreateGraphQLCompositeCursor(
+					[]*string{testutil.GenPtr("Y3Vyc29yOnYyOpKqQXJ2aW5kT3JnMQk=")},
+					nil,
+					nil,
+				),
 			},
 		},
 		"second_page": {
