@@ -216,12 +216,12 @@ func CSVBytesToPage(
 	// Read all the CSV data
 	records, err := csvData.ReadAll()
 	if err != nil {
-		return nil, false, fmt.Errorf("CSV file format is invalid or corrupted: %v", err)
+		return nil, false, fmt.Errorf("failed to read CSV data: %v", err)
 	}
 
 	count := len(records)
 	if count == 0 {
-		return nil, false, fmt.Errorf("CSV file contains no data")
+		return nil, false, fmt.Errorf("no data found in the CSV file")
 	}
 
 	objects := make([]map[string]any, 0, pageSize)
@@ -248,8 +248,8 @@ func CSVBytesToPage(
 					var childObj []map[string]any
 					if err := json.Unmarshal([]byte(value), &childObj); err != nil {
 						return nil, false, fmt.Errorf(
-							`CSV contains invalid JSON data in column "%s" at row %d: %v`,
-							headers[i], i, err,
+							`failed to unmarshal the value: "%v" in row: %d, column: %s`,
+							value, i, headers[i],
 						)
 					}
 
@@ -274,8 +274,8 @@ func CSVBytesToPage(
 				floatValue, err := strconv.ParseFloat(value, 64)
 				if err != nil {
 					return nil, false, fmt.Errorf(
-						`CSV contains invalid numeric value "%s" in column "%s" at row %d`,
-						value, headers[i], i,
+						`failed to convert the value: "%v" in row: %d, column: %s to a number`,
+						value, i, headers[i],
 					)
 				}
 

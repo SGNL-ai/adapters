@@ -64,7 +64,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	fileSize, err := handler.GetFileSize(ctx, request.Bucket, objectKey)
 	if err != nil {
 		return nil, customerror.UpdateError(&framework.Error{
-			Message: fmt.Sprintf("Unable to access file for entity %s from AWS S3: %v.", entityName, err),
+			Message: fmt.Sprintf("Failed to fetch entity from AWS S3: %s, error: %v.", entityName, err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		},
 			customerror.WithRequestTimeoutMessage(err, request.RequestTimeoutSeconds),
@@ -73,7 +73,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 
 	if fileSize == 0 {
 		return nil, &framework.Error{
-			Message: fmt.Sprintf("The CSV file for entity %s is empty.", entityName),
+			Message: fmt.Sprintf("The file for entity %s is empty.", entityName),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
 		}
 	}
@@ -103,7 +103,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 
 	if processErr != nil {
 		return nil, customerror.UpdateError(&framework.Error{
-			Message: fmt.Sprintf("Unable to process CSV data for entity %s: %v.", entityName, processErr),
+			Message: fmt.Sprintf("Failed to fetch entity from AWS S3: %s, error: %v.", entityName, processErr),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		},
 			customerror.WithRequestTimeoutMessage(processErr, request.RequestTimeoutSeconds),
