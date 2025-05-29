@@ -567,7 +567,7 @@ func TestAdapterGetPage(t *testing.T) {
 			wantResponse: framework.Response{
 				Error: &framework.Error{
 					// nolint: lll
-					Message: "Failed to fetch entity from AWS S3: customers, error: failed to download the file: operation error S3: GetObject, http response error StatusCode: 301, permanent redirect: The bucket you are attempting to access must be addressed using the specified endpoint.",
+					Message: "Failed to fetch entity from AWS S3: customers, error: unable to read CSV file: failed to download the file: operation error S3: GetObject, http response error StatusCode: 301, permanent redirect: The bucket you are attempting to access must be addressed using the specified endpoint.",
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 				},
 			},
@@ -603,7 +603,7 @@ func TestAdapterGetPage(t *testing.T) {
 			wantResponse: framework.Response{
 				Error: &framework.Error{
 					// nolint: lll
-					Message: "Failed to fetch entity from AWS S3: customers, error: failed to download the file: operation error S3: GetObject, http response error StatusCode: 403, access denied: Access Denied.",
+					Message: "Failed to fetch entity from AWS S3: customers, error: unable to read CSV file: failed to download the file: operation error S3: GetObject, http response error StatusCode: 403, access denied: Access Denied.",
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 				},
 			},
@@ -639,7 +639,7 @@ func TestAdapterGetPage(t *testing.T) {
 			wantResponse: framework.Response{
 				Error: &framework.Error{
 					// nolint: lll
-					Message: "Failed to fetch entity from AWS S3: customers, error: failed to download the file: operation error S3: GetObject, http response error StatusCode: 404, no such key: The specified key does not exist.",
+					Message: "Failed to fetch entity from AWS S3: customers, error: unable to read CSV file: failed to download the file: operation error S3: GetObject, http response error StatusCode: 404, no such key: The specified key does not exist.",
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 				},
 			},
