@@ -96,17 +96,10 @@ func (s *S3Handler) GetFile(ctx context.Context, bucket string, key string) (*[]
 	if err != nil {
 		httpResponseErr, parseErr := httpResponseFromError(err)
 		if parseErr != nil {
-			return nil, fmt.Errorf("failed to download the file: %w", err)
+			return nil, fmt.Errorf("failed to convert response: %w", err)
 		}
 
-		switch httpResponseErr.Response.StatusCode {
-		case http.StatusForbidden:
-			return nil, fmt.Errorf("unable to download the file due to missing permissions")
-		case http.StatusNotFound:
-			return nil, fmt.Errorf("file does not exist")
-		default:
-			return nil, fmt.Errorf("failed to download the file: %w", httpResponseErr.Err)
-		}
+		return nil, httpResponseErr
 	}
 
 	if response == nil {
@@ -139,19 +132,10 @@ func (s *S3Handler) GetFileRange(ctx context.Context, bucket string, key string,
 	if err != nil {
 		httpResponseErr, parseErr := httpResponseFromError(err)
 		if parseErr != nil {
-			return nil, fmt.Errorf("failed to download file range: %w", err)
+			return nil, fmt.Errorf("failed to convert response: %w", err)
 		}
 
-		switch httpResponseErr.Response.StatusCode {
-		case http.StatusForbidden:
-			return nil, fmt.Errorf("unable to download file range due to missing permissions")
-		case http.StatusNotFound:
-			return nil, fmt.Errorf("file does not exist")
-		case http.StatusRequestedRangeNotSatisfiable:
-			return nil, fmt.Errorf("requested byte range is not satisfiable")
-		default:
-			return nil, fmt.Errorf("failed to download file range: %w", httpResponseErr.Err)
-		}
+		return nil, httpResponseErr
 	}
 
 	if response == nil {

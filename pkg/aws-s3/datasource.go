@@ -83,13 +83,13 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		start = *request.Cursor.Cursor
 	}
 
-	const streamingThreshold = 10 * 1024 * 1024 // 10MB
+	const streamingThreshold = 10 * StreamingChunkSize // 10MB
 
-	var objects []map[string]any
-
-	var hasNext bool
-
-	var processErr error
+	var (
+		objects    []map[string]any
+		hasNext    bool
+		processErr error
+	)
 
 	if fileSize > streamingThreshold {
 		objects, hasNext, processErr = d.processLargeFileStreaming(

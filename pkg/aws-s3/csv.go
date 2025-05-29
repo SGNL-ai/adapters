@@ -21,7 +21,7 @@ const (
 
 func CSVHeaders(headerChunk *[]byte) ([]string, error) {
 	if headerChunk == nil || len(*headerChunk) == 0 {
-		return nil, fmt.Errorf("CSV file is empty or could not be read")
+		return nil, fmt.Errorf("CSV header is empty or missing")
 	}
 
 	csvData := csv.NewReader(bytes.NewReader(*headerChunk))
@@ -60,6 +60,10 @@ func StreamingCSVToPage(
 		chunkData, err := handler.GetFileRange(ctx, bucket, key, currentPos, endPos)
 		if err != nil {
 			return nil, false, fmt.Errorf("unable to read CSV file data: %v", err)
+		}
+
+		if chunkData == nil {
+			return nil, false, fmt.Errorf("received empty response from S3 file range request")
 		}
 
 		chunkObjects, nextRow, nextBytePos, err := processCSVChunk(
@@ -137,8 +141,8 @@ func processCSVChunk(
 			continue
 		}
 
-		dataRowNum := currentRowNum
-		if dataRowNum >= targetStartRow && dataRowNum < targetEndRow {
+		// dataRowNum := currentRowNum
+		if currentRowNum >= targetStartRow && currentRowNum < targetEndRow {
 			row := make(map[string]interface{})
 
 			for i, value := range record {
@@ -193,11 +197,11 @@ func processCSVChunk(
 			objects = append(objects, row)
 		}
 
-		currentRowNum++
-
-		if dataRowNum >= targetEndRow {
+		if currentRowNum >= targetEndRow {
 			break
 		}
+
+		currentRowNum++
 	}
 
 	return objects, currentRowNum, nextBytePos, nil
