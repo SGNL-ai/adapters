@@ -923,7 +923,7 @@ func (b *IssueAssigneeQueryBuilder) Build(request *Request) (string, *framework.
 		OrganizationName,
 		CollectionPageSize, repoAfterQuery,
 		CollectionPageSize, issueAfterQuery,
-		b.EnterpriseQueryInfo.PageSize, issueAfterQuery,
+		b.EnterpriseQueryInfo.PageSize, assigneeAfterQuery,
 		innerNode.BuildQuery())
 
 	return query, nil
@@ -1019,7 +1019,7 @@ func (b *IssueParticipantQueryBuilder) Build(request *Request) (string, *framewo
 		OrganizationName,
 		CollectionPageSize, repoAfterQuery,
 		CollectionPageSize, issueAfterQuery,
-		b.EnterpriseQueryInfo.PageSize, issueAfterQuery,
+		b.EnterpriseQueryInfo.PageSize, participantAfterQuery,
 		innerNode.BuildQuery())
 
 	return query, nil
