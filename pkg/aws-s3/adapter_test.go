@@ -387,7 +387,7 @@ func TestAdapterGetPage(t *testing.T) {
 			wantResponse: framework.Response{
 				Error: &framework.Error{
 					// nolint: lll
-					Message: "Failed to get customers entity objects from the CSV file: no data found in the CSV file.",
+					Message: "Failed to fetch entity from AWS S3: customers, error: unable to process CSV file data: no data found in the CSV file.",
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 				},
 			},
@@ -423,7 +423,7 @@ func TestAdapterGetPage(t *testing.T) {
 			wantResponse: framework.Response{
 				Error: &framework.Error{
 					// nolint: lll
-					Message: "Failed to get customers entity objects from the CSV file: failed to read CSV data: parse error on line 4, column 34: bare \" in non-quoted-field.",
+					Message: "Failed to fetch entity from AWS S3: customers, error: unable to process CSV file data: failed to read CSV data: parse error on line 4, column 34: bare \" in non-quoted-field.",
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 				},
 			},
