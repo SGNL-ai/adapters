@@ -51,7 +51,7 @@ func StreamingCSVToPage(
 
 	targetEndRow := start + pageSize
 
-	for currentPos < fileSize && collectedRows < pageSize {
+	for (currentPos < fileSize) && (collectedRows < pageSize) {
 		endPos := currentPos + StreamingChunkSize - 1
 		if endPos >= fileSize {
 			endPos = fileSize - 1
