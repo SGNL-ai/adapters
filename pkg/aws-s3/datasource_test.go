@@ -505,39 +505,53 @@ func TestDatasource_GetPage(t *testing.T) {
 			response, frameworkErr := datasource.GetPage(ctx, tt.request)
 
 			if tt.expectedError != nil {
-				if frameworkErr == nil {
-					t.Errorf("Expected error but got none")
-				} else {
-					if frameworkErr.Message != tt.expectedError.Message {
-						t.Errorf("Expected error message '%s', got '%s'", tt.expectedError.Message, frameworkErr.Message)
-					}
-
-					if frameworkErr.Code != tt.expectedError.Code {
-						t.Errorf("Expected error code %v, got %v", tt.expectedError.Code, frameworkErr.Code)
-					}
-				}
-
-				if response != nil {
-					t.Errorf("Expected nil response on error, got %v", response)
-				}
+				validateErrorCase(t, frameworkErr, response, tt.expectedError)
 			} else {
-				if frameworkErr != nil {
-					t.Errorf("Expected no error, got: %v", frameworkErr)
-				}
-
-				if response == nil {
-					t.Errorf("Expected response, got nil")
-				} else {
-					if name == "success_large_file_streaming_path" {
-						validateLargeFileResponse(t, response, tt.expectedResponse)
-					} else {
-						if !reflect.DeepEqual(response, tt.expectedResponse) {
-							t.Errorf("Response mismatch.\nGot: %+v\nWant: %+v", response, tt.expectedResponse)
-						}
-					}
-				}
+				validateSuccessCase(t, frameworkErr, response, tt.expectedResponse, name)
 			}
 		})
+	}
+}
+
+func validateErrorCase(t *testing.T, frameworkErr *framework.Error,
+	response *s3_adapter.Response, expectedError *framework.Error) {
+	if frameworkErr == nil {
+		t.Errorf("Expected error but got none")
+
+		return
+	}
+
+	if frameworkErr.Message != expectedError.Message {
+		t.Errorf("Expected error message '%s', got '%s'", expectedError.Message, frameworkErr.Message)
+	}
+
+	if frameworkErr.Code != expectedError.Code {
+		t.Errorf("Expected error code %v, got %v", expectedError.Code, frameworkErr.Code)
+	}
+
+	if response != nil {
+		t.Errorf("Expected nil response on error, got %v", response)
+	}
+}
+
+func validateSuccessCase(t *testing.T, frameworkErr *framework.Error,
+	response, expectedResponse *s3_adapter.Response, name string) {
+	if frameworkErr != nil {
+		t.Errorf("Expected no error, got: %v", frameworkErr)
+
+		return
+	}
+
+	if response == nil {
+		t.Errorf("Expected response, got nil")
+
+		return
+	}
+
+	if name == "success_large_file_streaming_path" {
+		validateLargeFileResponse(t, response, expectedResponse)
+	} else if !reflect.DeepEqual(response, expectedResponse) {
+		t.Errorf("Response mismatch.\nGot: %+v\nWant: %+v", response, expectedResponse)
 	}
 }
 
@@ -558,36 +572,38 @@ func validateLargeFileResponse(t *testing.T, got, want *s3_adapter.Response) {
 	}
 
 	if len(got.Objects) > 0 {
-		firstObj := got.Objects[0]
-
-		if _, exists := firstObj["Email"]; !exists {
-			t.Error("Expected Email field in large file response object")
-		}
-
-		if _, exists := firstObj["Score"]; !exists {
-			t.Error("Expected Score field in large file response object")
-		}
-
-		if _, exists := firstObj["Customer Id"]; !exists {
-			t.Error("Expected Customer Id field in large file response object")
-		}
-
-		if email, ok := firstObj["Email"].(string); ok {
-			if email != "user1@example.com" {
-				t.Errorf("Expected first row email 'user1@example.com', got '%s'", email)
-			}
-		} else {
-			t.Error("Email field should be string")
-		}
-
-		if score, ok := firstObj["Score"].(float64); ok {
-			if score != 0.1 {
-				t.Errorf("Expected first row score 0.1, got %f", score)
-			}
-		} else {
-			t.Error("Score field should be float64")
-		}
+		validateFirstObject(t, got.Objects[0])
 	}
 
 	t.Logf("Large file test: Successfully processed %d objects with streaming", len(got.Objects))
+}
+
+func validateFirstObject(t *testing.T, firstObj map[string]any) {
+	if _, exists := firstObj["Email"]; !exists {
+		t.Error("Expected Email field in large file response object")
+	}
+
+	if _, exists := firstObj["Score"]; !exists {
+		t.Error("Expected Score field in large file response object")
+	}
+
+	if _, exists := firstObj["Customer Id"]; !exists {
+		t.Error("Expected Customer Id field in large file response object")
+	}
+
+	if email, ok := firstObj["Email"].(string); ok {
+		if email != "user1@example.com" {
+			t.Errorf("Expected first row email 'user1@example.com', got '%s'", email)
+		}
+	} else {
+		t.Error("Email field should be string")
+	}
+
+	if score, ok := firstObj["Score"].(float64); ok {
+		if score != 0.1 {
+			t.Errorf("Expected first row score 0.1, got %f", score)
+		}
+	} else {
+		t.Error("Score field should be float64")
+	}
 }
