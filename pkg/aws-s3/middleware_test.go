@@ -21,6 +21,7 @@ import (
 const (
 	emptyCSVFileCode       = 800
 	headersOnlyCSVFileCode = 801
+	largeCSVFileCode       = -300 // Added for large file streaming tests
 )
 
 // Custom middleware to mock S3 responses.
@@ -54,13 +55,32 @@ func (m *mockS3Middleware) HandleSerialize(
 
 func (m *mockS3Middleware) mockHeadObject(
 	_ context.Context,
-	_ middleware.SerializeInput,
+	in middleware.SerializeInput,
 	_ middleware.SerializeHandler,
 ) (
 	out middleware.SerializeOutput,
 	metadata middleware.Metadata,
 	err error,
 ) {
+	// Check if this is for the large file test case
+	if headInput, ok := in.Parameters.(*s3.HeadObjectInput); ok {
+		if headInput.Key != nil && strings.Contains(*headInput.Key, "large-customers") {
+			// Return size > streaming threshold (10MB) for large file test
+			largeSize := int64(11 * 1024 * 1024) // 11MB
+			out.Result = &s3.HeadObjectOutput{
+				ContentLength: &largeSize,
+				ContentType:   aws.String("text/csv"),
+				ETag:          aws.String("\"f8a7b3f9be0e4c3d2e1a0b9c8d7e6f5\""),
+				LastModified:  aws.Time(time.Now()),
+				VersionId:     aws.String("3/L4kqtJlcpXroDTDmJ+rmSpXd3dIbrHY"),
+				Metadata: map[string]string{
+					"example-metadata-key": "example-metadata-value",
+				},
+			}
+			return
+		}
+	}
+
 	switch m.headStatusCode {
 	case http.StatusOK:
 		out.Result = &s3.HeadObjectOutput{
@@ -123,6 +143,19 @@ func (m *mockS3Middleware) mockGetObject(
 		out.Result = &s3.GetObjectOutput{
 			Body:          io.NopCloser(strings.NewReader(headersOnlyCSVData)),
 			ContentLength: aws.Int64(int64(len(headersOnlyCSVData))),
+			ContentType:   aws.String("text/csv"),
+			ETag:          aws.String("\"f8a7b3f9be0e4c3d2e1a0b9c8d7e6f5\""),
+			LastModified:  aws.Time(time.Now()),
+			VersionId:     aws.String("3/L4kqtJlcpXroDTDmJ+rmSpXd3dIbrHY"),
+			Metadata: map[string]string{
+				"example-metadata-key": "example-metadata-value",
+			},
+		}
+	case largeCSVFileCode:
+		largeData := generateLargeCSVData()
+		out.Result = &s3.GetObjectOutput{
+			Body:          io.NopCloser(strings.NewReader(largeData)),
+			ContentLength: aws.Int64(int64(len(largeData))),
 			ContentType:   aws.String("text/csv"),
 			ETag:          aws.String("\"f8a7b3f9be0e4c3d2e1a0b9c8d7e6f5\""),
 			LastModified:  aws.Time(time.Now()),
