@@ -77,6 +77,7 @@ func (m *mockS3Middleware) mockHeadObject(
 					"example-metadata-key": "example-metadata-value",
 				},
 			}
+
 			return
 		}
 	}

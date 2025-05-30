@@ -66,6 +66,7 @@ func TestS3Handler_FileExists(t *testing.T) {
 				} else if tt.errorContains != "" && !strings.Contains(err.Error(), tt.errorContains) {
 					t.Errorf("Expected error to contain '%s', got: %v", tt.errorContains, err)
 				}
+
 				if response != nil {
 					t.Errorf("Expected nil response on error, got: %v", response)
 				}
@@ -73,6 +74,7 @@ func TestS3Handler_FileExists(t *testing.T) {
 				if err != nil {
 					t.Errorf("Expected no error, got: %v", err)
 				}
+
 				if response == nil {
 					t.Errorf("Expected response, got nil")
 				}
@@ -146,6 +148,7 @@ func TestS3Handler_GetFile(t *testing.T) {
 				} else if tt.errorContains != "" && !strings.Contains(err.Error(), tt.errorContains) {
 					t.Errorf("Expected error to contain '%s', got: %v", tt.errorContains, err)
 				}
+
 				if result != nil {
 					t.Errorf("Expected nil result on error, got: %v", result)
 				}
@@ -153,6 +156,7 @@ func TestS3Handler_GetFile(t *testing.T) {
 				if err != nil {
 					t.Errorf("Expected no error, got: %v", err)
 				}
+
 				if result == nil {
 					t.Errorf("Expected result, got nil")
 				} else if diff := cmp.Diff(*result, tt.expectedContent); diff != "" {
@@ -235,6 +239,7 @@ func TestS3Handler_GetFileRange(t *testing.T) {
 				} else if tt.errorContains != "" && !strings.Contains(err.Error(), tt.errorContains) {
 					t.Errorf("Expected error to contain '%s', got: %v", tt.errorContains, err)
 				}
+
 				if result != nil {
 					t.Errorf("Expected nil result on error, got: %v", result)
 				}
@@ -242,6 +247,7 @@ func TestS3Handler_GetFileRange(t *testing.T) {
 				if err != nil {
 					t.Errorf("Expected no error, got: %v", err)
 				}
+
 				if result == nil {
 					t.Errorf("Expected result, got nil")
 				}
@@ -303,6 +309,7 @@ func TestS3Handler_GetFileSize(t *testing.T) {
 				} else if tt.errorContains != "" && !strings.Contains(err.Error(), tt.errorContains) {
 					t.Errorf("Expected error to contain '%s', got: %v", tt.errorContains, err)
 				}
+
 				if size != 0 {
 					t.Errorf("Expected zero size on error, got: %d", size)
 				}
@@ -310,6 +317,7 @@ func TestS3Handler_GetFileSize(t *testing.T) {
 				if err != nil {
 					t.Errorf("Expected no error, got: %v", err)
 				}
+
 				if size != tt.expectedSize {
 					t.Errorf("Expected size %d, got: %d", tt.expectedSize, size)
 				}
@@ -369,6 +377,7 @@ func TestS3Handler_GetHeaderChunk(t *testing.T) {
 				} else if tt.errorContains != "" && !strings.Contains(err.Error(), tt.errorContains) {
 					t.Errorf("Expected error to contain '%s', got: %v", tt.errorContains, err)
 				}
+
 				if result != nil {
 					t.Errorf("Expected nil result on error, got: %v", result)
 				}
@@ -376,6 +385,7 @@ func TestS3Handler_GetHeaderChunk(t *testing.T) {
 				if err != nil {
 					t.Errorf("Expected no error, got: %v", err)
 				}
+
 				if result == nil {
 					t.Errorf("Expected result, got nil")
 				}

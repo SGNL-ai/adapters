@@ -121,13 +121,14 @@ func TestDatasource_GetPage(t *testing.T) {
 				StatusCode: 200,
 				Objects: []map[string]any{
 					{
-						"City":              "Caitlynmouth",
-						"Company":           "Blankenship PLC",
-						"Country":           "Sao Tome and Principe",
-						"Customer Id":       "e685B8690f9fbce",
-						"Email":             "shanehester@campbell.org",
-						"First Name":        "Erik",
-						"KnownAliases":      []any{map[string]any{"alias": "Shane Hester", "primary": true}, map[string]any{"alias": "Cheyne Hester", "primary": false}},
+						"City":        "Caitlynmouth",
+						"Company":     "Blankenship PLC",
+						"Country":     "Sao Tome and Principe",
+						"Customer Id": "e685B8690f9fbce",
+						"Email":       "shanehester@campbell.org",
+						"First Name":  "Erik",
+						"KnownAliases": []any{map[string]any{"alias": "Shane Hester", "primary": true},
+							map[string]any{"alias": "Cheyne Hester", "primary": false}},
 						"Last Name":         "Little",
 						"Phone 1":           "457-542-6899",
 						"Phone 2":           "055.415.2664x5425",
@@ -136,13 +137,14 @@ func TestDatasource_GetPage(t *testing.T) {
 						"Website":           "https://wagner.com/",
 					},
 					{
-						"City":              "Janetfort",
-						"Company":           "Jensen and Sons",
-						"Country":           "Palestinian Territory",
-						"Customer Id":       "6EDdBA3a2DFA7De",
-						"Email":             "kleinluis@vang.com",
-						"First Name":        "Yvonne",
-						"KnownAliases":      []any{map[string]any{"primary": true, "alias": "Klein Luis"}, map[string]any{"alias": "Cline Luis", "primary": false}},
+						"City":        "Janetfort",
+						"Company":     "Jensen and Sons",
+						"Country":     "Palestinian Territory",
+						"Customer Id": "6EDdBA3a2DFA7De",
+						"Email":       "kleinluis@vang.com",
+						"First Name":  "Yvonne",
+						"KnownAliases": []any{map[string]any{"primary": true, "alias": "Klein Luis"},
+							map[string]any{"alias": "Cline Luis", "primary": false}},
 						"Last Name":         "Shaw",
 						"Phone 1":           "9610730173",
 						"Phone 2":           "531-482-3000x7085",
@@ -365,8 +367,10 @@ func TestDatasource_GetPage(t *testing.T) {
 			headObjectStatusCode: http.StatusNotFound,
 			getObjectStatusCode:  http.StatusOK,
 			expectedError: &framework.Error{
-				Message: "Failed to fetch entity from AWS S3: missing, error: failed to check if the file exists: operation error S3: HeadObject, http response error StatusCode: 404, not found: The specified key does not exist.",
-				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+				Message: "Failed to fetch entity from AWS S3: missing, error: failed to check if the file exists: " +
+					"operation error S3: HeadObject, http response error StatusCode: 404, not found: " +
+					"The specified key does not exist.",
+				Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			},
 		},
 		"error_permission_denied_head_object": {
@@ -393,8 +397,9 @@ func TestDatasource_GetPage(t *testing.T) {
 			headObjectStatusCode: http.StatusForbidden,
 			getObjectStatusCode:  http.StatusOK,
 			expectedError: &framework.Error{
-				Message: "Failed to fetch entity from AWS S3: forbidden, error: failed to check if the file exists: operation error S3: HeadObject, http response error StatusCode: 403, AccessDenied: Access Denied.",
-				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+				Message: "Failed to fetch entity from AWS S3: forbidden, error: failed to check if the file exists: " +
+					"operation error S3: HeadObject, http response error StatusCode: 403, AccessDenied: Access Denied.",
+				Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			},
 		},
 		"error_empty_csv_file": {
@@ -421,8 +426,9 @@ func TestDatasource_GetPage(t *testing.T) {
 			headObjectStatusCode: http.StatusOK,
 			getObjectStatusCode:  emptyCSVFileCode,
 			expectedError: &framework.Error{
-				Message: "Failed to fetch entity from AWS S3: empty, error: unable to process CSV file data: no data found in the CSV file.",
-				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+				Message: "Failed to fetch entity from AWS S3: empty, error: " +
+					"unable to process CSV file data: no data found in the CSV file.",
+				Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			},
 		},
 		"error_corrupted_csv_file": {
@@ -449,8 +455,9 @@ func TestDatasource_GetPage(t *testing.T) {
 			headObjectStatusCode: http.StatusOK,
 			getObjectStatusCode:  -200,
 			expectedError: &framework.Error{
-				Message: "Failed to fetch entity from AWS S3: corrupt, error: unable to process CSV file data: failed to read CSV data: parse error on line 4, column 34: bare \" in non-quoted-field.",
-				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+				Message: "Failed to fetch entity from AWS S3: corrupt, error: unable to process CSV file data: " +
+					"failed to read CSV data: parse error on line 4, column 34: bare \" in non-quoted-field.",
+				Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			},
 		},
 		"error_permission_denied_get_object": {
@@ -477,8 +484,10 @@ func TestDatasource_GetPage(t *testing.T) {
 			headObjectStatusCode: http.StatusOK,
 			getObjectStatusCode:  http.StatusForbidden,
 			expectedError: &framework.Error{
-				Message: "Failed to fetch entity from AWS S3: forbidden-get, error: unable to read CSV file: failed to convert response: operation error S3: GetObject, http response error StatusCode: 403, access denied: Access Denied.",
-				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+				Message: "Failed to fetch entity from AWS S3: forbidden-get, error: unable to read CSV file: " +
+					"failed to convert response: operation error S3: GetObject, http response error StatusCode: 403, access denied: " +
+					"Access Denied.",
+				Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			},
 		},
 	}
@@ -502,10 +511,12 @@ func TestDatasource_GetPage(t *testing.T) {
 					if frameworkErr.Message != tt.expectedError.Message {
 						t.Errorf("Expected error message '%s', got '%s'", tt.expectedError.Message, frameworkErr.Message)
 					}
+
 					if frameworkErr.Code != tt.expectedError.Code {
 						t.Errorf("Expected error code %v, got %v", tt.expectedError.Code, frameworkErr.Code)
 					}
 				}
+
 				if response != nil {
 					t.Errorf("Expected nil response on error, got %v", response)
 				}
@@ -513,6 +524,7 @@ func TestDatasource_GetPage(t *testing.T) {
 				if frameworkErr != nil {
 					t.Errorf("Expected no error, got: %v", frameworkErr)
 				}
+
 				if response == nil {
 					t.Errorf("Expected response, got nil")
 				} else {
@@ -529,40 +541,37 @@ func TestDatasource_GetPage(t *testing.T) {
 	}
 }
 
-// since we can't predict the exact content but can validate structure and pagination
+// Since we can't predict the exact content but can validate structure and pagination.
 func validateLargeFileResponse(t *testing.T, got, want *s3_adapter.Response) {
 	if got.StatusCode != want.StatusCode {
 		t.Errorf("Expected StatusCode %d, got %d", want.StatusCode, got.StatusCode)
 	}
 
-	// Should return exactly PageSize objects (100)
 	if len(got.Objects) != 100 {
 		t.Errorf("Expected 100 objects for large file test, got %d", len(got.Objects))
 	}
 
-	// Should have NextCursor indicating more data
 	if got.NextCursor == nil {
 		t.Error("Expected NextCursor for large file test, got nil")
 	} else if *got.NextCursor.Cursor != 101 {
 		t.Errorf("Expected NextCursor value 101, got %d", *got.NextCursor.Cursor)
 	}
 
-	// Validate structure of first object
 	if len(got.Objects) > 0 {
 		firstObj := got.Objects[0]
 
-		// Check that required fields exist
 		if _, exists := firstObj["Email"]; !exists {
 			t.Error("Expected Email field in large file response object")
 		}
+
 		if _, exists := firstObj["Score"]; !exists {
 			t.Error("Expected Score field in large file response object")
 		}
+
 		if _, exists := firstObj["Customer Id"]; !exists {
 			t.Error("Expected Customer Id field in large file response object")
 		}
 
-		// Validate first row has expected pattern
 		if email, ok := firstObj["Email"].(string); ok {
 			if email != "user1@example.com" {
 				t.Errorf("Expected first row email 'user1@example.com', got '%s'", email)

@@ -63,9 +63,11 @@ func TestCSVHeaders(t *testing.T) {
 			if tt.expectedError {
 				if err == nil {
 					t.Errorf("Expected error but got none")
-				} else if tt.errorContains != "" && !cmp.Equal(err.Error(), tt.errorContains) && !contains(err.Error(), tt.errorContains) {
+				} else if tt.errorContains != "" && !cmp.Equal(err.Error(), tt.errorContains) &&
+					!contains(err.Error(), tt.errorContains) {
 					t.Errorf("Expected error to contain '%s', got: %v", tt.errorContains, err)
 				}
+
 				if result != nil {
 					t.Errorf("Expected nil result on error, got: %v", result)
 				}
@@ -73,6 +75,7 @@ func TestCSVHeaders(t *testing.T) {
 				if err != nil {
 					t.Errorf("Expected no error, got: %v", err)
 				}
+
 				if diff := cmp.Diff(result, tt.expected); diff != "" {
 					t.Errorf("Headers mismatch: %s", diff)
 				}
@@ -240,9 +243,11 @@ John,"[{invalid json}]"`)),
 				if err != nil {
 					t.Errorf("Expected no error, got: %v", err)
 				}
+
 				if diff := cmp.Diff(objects, tt.expectedObjects); diff != "" {
 					t.Errorf("Objects mismatch: %s", diff)
 				}
+
 				if hasNext != tt.expectedHasNext {
 					t.Errorf("HasNext mismatch: got %v, want %v", hasNext, tt.expectedHasNext)
 				}
@@ -371,9 +376,11 @@ func TestStreamingCSVToPage(t *testing.T) {
 				if err != nil {
 					t.Errorf("Expected no error, got: %v", err)
 				}
+
 				if diff := cmp.Diff(objects, tt.expectedObjects); diff != "" {
 					t.Errorf("Objects mismatch: %s", diff)
 				}
+
 				if hasNext != tt.expectedHasNext {
 					t.Errorf("HasNext mismatch: got %v, want %v", hasNext, tt.expectedHasNext)
 				}
@@ -382,7 +389,6 @@ func TestStreamingCSVToPage(t *testing.T) {
 	}
 }
 
-// Helper function to check if a string contains a substring
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) && (s == substr || len(substr) == 0 ||
 		(len(s) > len(substr) && (s[:len(substr)] == substr || s[len(s)-len(substr):] == substr ||
@@ -392,6 +398,7 @@ func contains(s, substr string) bool {
 						return true
 					}
 				}
+
 				return false
 			}())))
 }
