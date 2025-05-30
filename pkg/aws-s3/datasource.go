@@ -119,7 +119,8 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		return response, nil
 	}
 
-	nextPage := start + request.PageSize
+	actualRowsReturned := int64(len(objects))
+	nextPage := start + actualRowsReturned
 	response.NextCursor = &pagination.CompositeCursor[int64]{Cursor: &nextPage}
 
 	return response, nil

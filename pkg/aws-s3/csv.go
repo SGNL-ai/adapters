@@ -44,10 +44,12 @@ func StreamingCSVToPage(
 	pageSize int64,
 	attrConfig []*framework.AttributeConfig,
 ) ([]map[string]any, bool, error) {
+	const maxProcessingLimit = 200 * StreamingChunkSize
+
 	objects := make([]map[string]any, 0, pageSize)
 	headerToAttributeConfig := headerToAttributeConfig(headers, attrConfig)
 
-	var currentRow, currentPos, collectedRows int64
+	var currentRow, currentPos, collectedRows, totalProcessedBytes int64
 
 	targetEndRow := start + pageSize
 
@@ -65,6 +67,9 @@ func StreamingCSVToPage(
 		if chunkData == nil {
 			return nil, false, fmt.Errorf("received empty response from S3 file range request")
 		}
+
+		chunkSize := int64(len(*chunkData))
+		totalProcessedBytes += chunkSize
 
 		chunkObjects, nextRow, nextBytePos, err := processCSVChunk(
 			*chunkData,
@@ -88,6 +93,12 @@ func StreamingCSVToPage(
 		}
 
 		currentPos = nextBytePos
+
+		if totalProcessedBytes >= maxProcessingLimit {
+			hasNext := true
+
+			return objects, hasNext, nil
+		}
 
 		if collectedRows >= pageSize {
 			break
@@ -141,7 +152,6 @@ func processCSVChunk(
 			continue
 		}
 
-		// dataRowNum := currentRowNum
 		if currentRowNum >= targetStartRow && currentRowNum < targetEndRow {
 			row := make(map[string]interface{})
 
