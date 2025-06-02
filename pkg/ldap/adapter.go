@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"time"
 
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
@@ -26,9 +27,12 @@ type Adapter struct {
 // It is used to connect to a LDAP server and execute search queries.
 // The client is not proxied by default. If you want to use a proxied client,
 // you need to provide a grpc_proxy_v1.ProxyServiceClient instance.
-func NewAdapter(client grpc_proxy_v1.ProxyServiceClient) framework.Adapter[Config] {
+// The adapter also manages a session pool to reuse LDAP connections.
+func NewAdapter(client grpc_proxy_v1.ProxyServiceClient, ttl, cleanupInterval time.Duration) framework.Adapter[Config] {
+	pool := NewSessionPool(ttl, cleanupInterval)
+
 	return &Adapter{
-		ADClient: NewClient(client),
+		ADClient: NewClient(client, pool),
 	}
 }
 
