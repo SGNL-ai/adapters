@@ -51,6 +51,7 @@ func StreamingCSVToPage(
 
 	var currentRow, currentPos, collectedRows, totalProcessedBytes int64
 
+	targetStartRow := start
 	targetEndRow := start + pageSize
 
 	for (currentPos < fileSize) && (collectedRows < pageSize) {
@@ -69,14 +70,13 @@ func StreamingCSVToPage(
 		}
 
 		chunkSize := int64(len(*chunkData))
-		totalProcessedBytes += chunkSize
 
-		chunkObjects, nextRow, nextBytePos, err := processCSVChunk(
+		chunkObjects, nextRow, nextBytePos, chunkWasUseful, err := processCSVChunk(
 			*chunkData,
 			headers,
 			headerToAttributeConfig,
 			currentRow,
-			start,
+			targetStartRow,
 			targetEndRow,
 			currentPos,
 		)
@@ -84,8 +84,17 @@ func StreamingCSVToPage(
 			return nil, false, fmt.Errorf("CSV file processing failed: %v", err)
 		}
 
-		objects = append(objects, chunkObjects...)
-		collectedRows += int64(len(chunkObjects))
+		if chunkWasUseful {
+			totalProcessedBytes += chunkSize
+			objects = append(objects, chunkObjects...)
+			collectedRows += int64(len(chunkObjects))
+
+			if totalProcessedBytes >= maxProcessingLimit {
+				hasNext := true
+				return objects, hasNext, nil
+			}
+		}
+
 		currentRow = nextRow
 
 		if nextBytePos <= currentPos {
@@ -94,23 +103,38 @@ func StreamingCSVToPage(
 
 		currentPos = nextBytePos
 
-		if totalProcessedBytes >= maxProcessingLimit {
-			hasNext := true
-
-			return objects, hasNext, nil
-		}
-
 		if collectedRows >= pageSize {
 			break
 		}
 	}
 
-	hasNext := currentRow <= start+pageSize || currentPos < fileSize
+	hasNext := currentRow < targetEndRow || currentPos < fileSize
 	if !hasNext && collectedRows == pageSize {
 		hasNext = currentPos < fileSize
 	}
 
 	return objects, hasNext, nil
+}
+
+func findLastCompleteRowEndAndCount(data []byte) (int, int64) {
+	var inQuotes bool
+	lastValidNewline := -1
+	var rowCount int64
+
+	for i, b := range data {
+		if b == '"' {
+			if i+1 < len(data) && data[i+1] == '"' {
+				i++ // Skip escaped quote
+				continue
+			}
+			inQuotes = !inQuotes
+		} else if b == '\n' && !inQuotes {
+			lastValidNewline = i
+			rowCount++
+		}
+	}
+
+	return lastValidNewline, rowCount
 }
 
 func processCSVChunk(
@@ -121,53 +145,62 @@ func processCSVChunk(
 	targetStartRow int64,
 	targetEndRow int64,
 	chunkStartPos int64,
-) ([]map[string]any, int64, int64, error) {
-	lastNewlineIndex := bytes.LastIndex(chunkData, []byte("\n"))
+) ([]map[string]any, int64, int64, bool, error) {
+	lastNewlineIndex, chunkRowCount := findLastCompleteRowEndAndCount(chunkData)
 	if lastNewlineIndex == -1 {
-		return nil, startRowNum, chunkStartPos,
+		return nil, startRowNum, chunkStartPos, false,
 			fmt.Errorf("CSV file contains a single row larger than %d MB", StreamingChunkSize/(1024*1024))
 	}
 
 	completeChunk := chunkData[:lastNewlineIndex+1]
 	nextBytePos := chunkStartPos + int64(lastNewlineIndex) + 1
-	currentRowNum := startRowNum
+
+	chunkStartRow := startRowNum
+	chunkEndRow := startRowNum + chunkRowCount
+
+	recordStartIndex := 0
+	if chunkStartRow == 0 {
+		recordStartIndex = 1
+		chunkStartRow = 1
+		chunkEndRow = startRowNum + chunkRowCount
+	}
+
+	if targetEndRow <= chunkStartRow {
+		return nil, chunkEndRow, nextBytePos, false, nil
+	}
+
+	if targetStartRow >= chunkEndRow {
+		return nil, chunkEndRow, nextBytePos, false, nil
+	}
+
 	csvReader := csv.NewReader(bytes.NewReader(completeChunk))
+	records, err := csvReader.ReadAll()
+	if err != nil {
+		return nil, startRowNum, nextBytePos, false, fmt.Errorf("CSV file format is invalid or corrupted: %v", err)
+	}
 
 	var objects []map[string]any
 
-	for {
-		record, err := csvReader.Read()
-		if err != nil {
-			if err.Error() == "EOF" {
-				break
-			}
-
-			return nil, currentRowNum, nextBytePos, fmt.Errorf("CSV file format is invalid or corrupted: %v", err)
-		}
-
-		// Skip header row (row 0) completely
-		if currentRowNum == 0 {
-			currentRowNum++
-
-			continue
-		}
+	for i := recordStartIndex; i < len(records); i++ {
+		currentRowNum := chunkStartRow + int64(i-recordStartIndex)
 
 		if currentRowNum >= targetStartRow && currentRowNum < targetEndRow {
+			record := records[i]
 			row := make(map[string]interface{})
 
-			for i, value := range record {
-				if i >= len(headers) {
+			for j, value := range record {
+				if j >= len(headers) {
 					continue
 				}
 
-				headerName := headers[i]
+				headerName := headers[j]
 				attrConfig, found := headerToAttributeConfig[headerName]
 
 				if !found {
 					if strings.HasPrefix(value, "[{") && strings.HasSuffix(value, "}]") {
 						var childObj []map[string]any
 						if err := json.Unmarshal([]byte(value), &childObj); err != nil {
-							return nil, currentRowNum, nextBytePos, fmt.Errorf(
+							return nil, currentRowNum, nextBytePos, false, fmt.Errorf(
 								`failed to unmarshal the value: "%v" in row: %d, column: %s`,
 								value, currentRowNum, headerName,
 							)
@@ -192,7 +225,7 @@ func processCSVChunk(
 				case framework.AttributeTypeInt64, framework.AttributeTypeDouble:
 					floatValue, err := strconv.ParseFloat(value, 64)
 					if err != nil {
-						return nil, currentRowNum, nextBytePos, fmt.Errorf(
+						return nil, currentRowNum, nextBytePos, false, fmt.Errorf(
 							`CSV contains invalid numeric value "%s" in column "%s" at row %d`,
 							value, headerName, currentRowNum,
 						)
@@ -207,14 +240,13 @@ func processCSVChunk(
 			objects = append(objects, row)
 		}
 
-		if currentRowNum >= targetEndRow {
+		if currentRowNum >= targetEndRow-1 {
 			break
 		}
-
-		currentRowNum++
 	}
 
-	return objects, currentRowNum, nextBytePos, nil
+	chunkWasUseful := len(objects) > 0
+	return objects, chunkEndRow, nextBytePos, chunkWasUseful, nil
 }
 
 // TODO: Clean this up by decoupling the attribute value conversion logic from the CSV parsing logic.
