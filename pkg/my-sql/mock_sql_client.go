@@ -2,13 +2,16 @@
 package mysql
 
 import (
+	"context"
 	"database/sql"
 	"database/sql/driver"
 	"errors"
 	"math"
+	"regexp"
 	"strings"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	grpc_proxy_v1 "github.com/sgnl-ai/adapter-framework/pkg/grpc_proxy/v1"
 )
 
 type MockSQLClient struct {
@@ -20,8 +23,16 @@ func NewMockSQLClient() *MockSQLClient {
 	return &MockSQLClient{}
 }
 
+const (
+	TestDatasourceForConnectFailure = "test.connect.failure"
+)
+
+func (c *MockSQLClient) IsProxied() bool {
+	return false
+}
+
 func (c *MockSQLClient) Connect(datasourceName string) error {
-	if strings.Contains(datasourceName, "testconnectfailure") {
+	if strings.Contains(datasourceName, TestDatasourceForConnectFailure) {
 		return errors.New("failed to connect to mock sql service")
 	}
 
@@ -38,27 +49,30 @@ func (c *MockSQLClient) Connect(datasourceName string) error {
 
 // nolint: lll
 func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
-	if len(args) != 3 {
-		return nil, errors.New("mock sql client called with unsupported number of args")
-	}
+	var (
+		pageSize int64
+		cursor   int64
+		ok       bool
+	)
 
-	_, ok := args[0].(string)
-	if !ok {
-		return nil, errors.New("mock sql client called with invalid arg[0], unable to cast `uniqueAttributeExternalID` to string")
-	}
+	switch {
+	case len(args) == 0:
+		return nil, errors.New("mock sql client called with invalid arg length `0`")
+	case len(args) == 1:
+		pageSize, ok = args[0].(int64)
+		if !ok {
+			return nil, errors.New("mock sql client called with invalid arg[1], unable to cast `pageSize` to int64")
+		}
+	default:
+		pageSize, ok = args[len(args)-2].(int64)
+		if !ok {
+			return nil, errors.New("mock sql client called with invalid arg[1], unable to cast `pageSize` to int64")
+		}
 
-	pageSize, ok := args[1].(int64)
-	if !ok {
-		return nil, errors.New("mock sql client called with invalid arg[1], unable to cast `pageSize` to int64")
-	}
-
-	cursor, ok := args[2].(int64)
-	if !ok {
-		return nil, errors.New("mock sql client called with invalid arg[2], unable to cast `cursor` to int64")
-	}
-
-	if query != "SELECT *, CAST(? as CHAR(50)) as str_id FROM users ORDER BY str_id ASC LIMIT ? OFFSET ?" {
-		return nil, errors.New("mock sql client called with unsupported query")
+		cursor, ok = args[len(args)-1].(int64)
+		if !ok {
+			return nil, errors.New("mock sql client called with invalid arg[2], unable to cast `cursor` to int64")
+		}
 	}
 
 	switch {
@@ -86,9 +100,9 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 			values = append(values, driver.Value(arg))
 		}
 
-		c.Mock.ExpectQuery(`SELECT \*, CAST\(\? as CHAR\(50\)\) as str_id FROM users ORDER BY str_id ASC LIMIT \? OFFSET \?`).
-			WithArgs(values...).
-			WillReturnRows(mockRows)
+		c.Mock.ExpectQuery(
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT ?"),
+		).WithArgs(values...).WillReturnRows(mockRows)
 
 	// Second (middle) page of users. Tests providing BOOLs as TINYINT.
 	case pageSize == 5 && cursor == 5:
@@ -114,9 +128,9 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 			values = append(values, driver.Value(arg))
 		}
 
-		c.Mock.ExpectQuery(`SELECT \*, CAST\(\? as CHAR\(50\)\) as str_id FROM users ORDER BY str_id ASC LIMIT \? OFFSET \?`).
-			WithArgs(values...).
-			WillReturnRows(mockRows)
+		c.Mock.ExpectQuery(
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT ? OFFSET ?"),
+		).WithArgs(values...).WillReturnRows(mockRows)
 
 	// Third (last) page of users.
 	case pageSize == 5 && cursor == 10:
@@ -139,9 +153,9 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 			values = append(values, driver.Value(arg))
 		}
 
-		c.Mock.ExpectQuery(`SELECT \*, CAST\(\? as CHAR\(50\)\) as str_id FROM users ORDER BY str_id ASC LIMIT \? OFFSET \?`).
-			WithArgs(values...).
-			WillReturnRows(mockRows)
+		c.Mock.ExpectQuery(
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT ? OFFSET ?"),
+		).WithArgs(values...).WillReturnRows(mockRows)
 
 	// Test: Failed to query datasource
 	case pageSize == 1 && cursor == 101:
@@ -172,9 +186,60 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 			values = append(values, driver.Value(arg))
 		}
 
-		c.Mock.ExpectQuery(`SELECT \*, CAST\(\? as CHAR\(50\)\) as str_id FROM users ORDER BY str_id ASC LIMIT \? OFFSET \?`).
-			WithArgs(values...).
-			WillReturnRows(mockRows)
+		c.Mock.ExpectQuery(
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT ? OFFSET ?"),
+		).WithArgs(values...).WillReturnRows(mockRows)
+
+	// Test: Edge case with empty values
+	case pageSize == 5 && cursor == 203:
+		columns := []*sqlmock.Column{
+			sqlmock.NewColumn("id").OfType("VARCHAR", ""),
+			sqlmock.NewColumn("name").OfType("VARCHAR", ""),
+			sqlmock.NewColumn("active").OfType("BOOL", ""),
+			sqlmock.NewColumn("employee_number").OfType("BIGINT", ""),
+			sqlmock.NewColumn("risk_score").OfType("FLOAT", ""),
+			sqlmock.NewColumn("last_modified").OfType("DATETIME", ""),
+		}
+
+		mockRows := sqlmock.NewRowsWithColumnDefinition(columns...).
+			AddRow("9cf5a596-0df2-4510-a403-9b514fd500b8", nil, nil, nil, nil, nil).
+			AddRow("8f678b7c-2571-45fe-ba01-a6cad31b02de", "", "", "", "", "").
+			AddRow("a20bab52-52e3-46c2-bd6a-2ad1512f713f", "Ernesto Gregg", true, 1, 1.0, "2025-02-12T22:38:00+00:00")
+
+		values := []driver.Value{}
+
+		for _, arg := range args {
+			values = append(values, driver.Value(arg))
+		}
+
+		c.Mock.ExpectQuery(
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT ? OFFSET ?"),
+		).WithArgs(values...).WillReturnRows(mockRows)
+
+	// Test: First page of users filtered active only and risk > 2
+	case pageSize == 5 && cursor == 204:
+		columns := []*sqlmock.Column{
+			sqlmock.NewColumn("id").OfType("VARCHAR", ""),
+			sqlmock.NewColumn("name").OfType("VARCHAR", ""),
+			sqlmock.NewColumn("active").OfType("BOOL", ""),
+			sqlmock.NewColumn("employee_number").OfType("INT", ""),
+			sqlmock.NewColumn("risk_score").OfType("FLOAT", ""),
+			sqlmock.NewColumn("last_modified").OfType("DATETIME", ""),
+		}
+
+		mockRows := sqlmock.NewRowsWithColumnDefinition(columns...).
+			AddRow("62c74831-be4a-4cad-88fa-4e02640269d2", "Chris Griffin", true, 3, 4.23, "2025-02-12T22:38:00+00:00").
+			AddRow("6598acf9-cccc-48c9-ab9b-754bbe9ad146", "Helen Gray", true, 5, 3.25, "2025-02-12T22:38:00+00:00")
+
+		values := []driver.Value{}
+
+		for _, arg := range args {
+			values = append(values, driver.Value(arg))
+		}
+
+		c.Mock.ExpectQuery(
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE ((`active` IS TRUE) AND (`risk_score` > ?)) ORDER BY `str_id` ASC LIMIT ? OFFSET ?"),
+		).WithArgs(values...).WillReturnRows(mockRows)
 
 	default:
 		return nil, errors.New("mock sql client called with unsupported args")
@@ -192,4 +257,9 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 	}
 
 	return rows, nil
+}
+
+func (c *MockSQLClient) Proxy(_ context.Context, _ *grpc_proxy_v1.ProxyRequestMessage,
+) (*grpc_proxy_v1.Response, error) {
+	return nil, nil
 }

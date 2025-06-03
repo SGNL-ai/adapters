@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"time"
 
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
+	grpc_proxy_v1 "github.com/sgnl-ai/adapter-framework/pkg/grpc_proxy/v1"
 	"github.com/sgnl-ai/adapter-framework/web"
 	"github.com/sgnl-ai/adapters/pkg/config"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
@@ -22,9 +24,15 @@ type Adapter struct {
 }
 
 // NewAdapter instantiates a new Adapter.
-func NewAdapter() framework.Adapter[Config] {
+// It is used to connect to a LDAP server and execute search queries.
+// The client is not proxied by default. If you want to use a proxied client,
+// you need to provide a grpc_proxy_v1.ProxyServiceClient instance.
+// The adapter also manages a session pool to reuse LDAP connections.
+func NewAdapter(client grpc_proxy_v1.ProxyServiceClient, ttl, cleanupInterval time.Duration) framework.Adapter[Config] {
+	pool := NewSessionPool(ttl, cleanupInterval)
+
 	return &Adapter{
-		ADClient: &Datasource{},
+		ADClient: NewClient(client, pool),
 	}
 }
 
@@ -63,6 +71,9 @@ func (a *Adapter) RequestPageFromDatasource(
 		isLDAPS = true
 	}
 
+	// Extract hostname without port for TLS verification
+	hostname := url.Hostname()
+
 	uniqueIDAttribute := getUniqueIDAttribute(request.Entity.Attributes)
 
 	adReq := &Request{
@@ -76,7 +87,7 @@ func (a *Adapter) RequestPageFromDatasource(
 			BaseDN:           request.Config.BaseDN,
 			CertificateChain: request.Config.CertificateChain,
 			IsLDAPS:          isLDAPS,
-			Host:             url.Host,
+			Host:             hostname,
 		},
 		UniqueIDAttribute:     *uniqueIDAttribute,
 		Cursor:                cursor,

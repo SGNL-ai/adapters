@@ -13,6 +13,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
+	"github.com/sgnl-ai/adapters/pkg/condexpr"
 	"github.com/sgnl-ai/adapters/pkg/config"
 	mysql "github.com/sgnl-ai/adapters/pkg/my-sql"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
@@ -280,7 +281,7 @@ func TestAdapterGetPage(t *testing.T) {
 						RequestTimeoutSeconds: testutil.GenPtr(10),
 						LocalTimeZoneOffset:   -18000, // UTC−05:00 (EST)
 					},
-					Database: "testconnectfailure",
+					Database: mysql.TestDatasourceForConnectFailure,
 				},
 				Ordered:  true,
 				PageSize: 5,
@@ -288,7 +289,7 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
-					Message: "Failed to connect to datasource: failed to connect to mock sql service",
+					Message: "Failed to connect to datasource: failed to connect to mock sql service.",
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
 				},
 			},
@@ -334,7 +335,7 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
-					Message: "Failed to query datasource: failed to query mock sql service",
+					Message: "Failed to query datasource: failed to query mock sql service.",
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
 				},
 			},
@@ -376,8 +377,8 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
-					Message: "Failed to convert datasource response objects: attribute name cannot be parsed into an int64 value.",
-					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+					Message: `Failed to parse attribute: (name) strconv.ParseFloat: parsing "Erica Meadows": invalid syntax.`,
+					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ATTRIBUTE_TYPE,
 				},
 			},
 		},
@@ -459,7 +460,82 @@ func TestAdapterGetPage(t *testing.T) {
 				},
 			},
 		},
-		"validation_prevent_sql_injection": {
+		"null_values": {
+			request: &framework.Request[mysql.Config]{
+				Address: "127.0.0.1",
+				Auth: &framework.DatasourceAuthCredentials{
+					Basic: &framework.BasicAuthCredentials{
+						Username: "testusername",
+						Password: "testpassword",
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "users",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "id",
+							Type:       framework.AttributeTypeString,
+							UniqueId:   true,
+						},
+						{
+							ExternalId: "name",
+							Type:       framework.AttributeTypeString,
+						},
+						{
+							ExternalId: "missing_field",
+							Type:       framework.AttributeTypeString,
+						},
+						{
+							ExternalId: "active",
+							Type:       framework.AttributeTypeBool,
+						},
+						{
+							ExternalId: "employee_number",
+							Type:       framework.AttributeTypeInt64,
+						},
+						{
+							ExternalId: "risk_score",
+							Type:       framework.AttributeTypeDouble,
+						},
+						{
+							ExternalId: "last_modified",
+							Type:       framework.AttributeTypeDateTime,
+						},
+					},
+				},
+				Config: &mysql.Config{
+					CommonConfig: &config.CommonConfig{
+						RequestTimeoutSeconds: testutil.GenPtr(10),
+						LocalTimeZoneOffset:   -18000, // UTC−05:00 (EST)
+					},
+					Database: "sgnl",
+				},
+				Ordered:  true,
+				PageSize: 5,
+				Cursor:   "203",
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"id": "9cf5a596-0df2-4510-a403-9b514fd500b8",
+						},
+						{
+							"id": "8f678b7c-2571-45fe-ba01-a6cad31b02de",
+						},
+						{
+							"active":          true,
+							"employee_number": int64(1),
+							"id":              "a20bab52-52e3-46c2-bd6a-2ad1512f713f",
+							"last_modified":   time.Date(2025, 2, 12, 22, 38, 00, 00, time.UTC),
+							"name":            "Ernesto Gregg",
+							"risk_score":      float64(1),
+						},
+					},
+				},
+			},
+		},
+		"validation_prevent_sql_injection_table": {
 			request: &framework.Request[mysql.Config]{
 				Address: "127.0.0.1",
 				Auth: &framework.DatasourceAuthCredentials{
@@ -491,8 +567,295 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
-					Message: "SQL table name validation failed: unsupported characters found.",
+					Message: "SQL table name validation failed: unsupported characters found or length is not in range 1-128.",
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
+				},
+			},
+		},
+		"validation_prevent_sql_injection_unique_attribute": {
+			request: &framework.Request[mysql.Config]{
+				Address: "127.0.0.1",
+				Auth: &framework.DatasourceAuthCredentials{
+					Basic: &framework.BasicAuthCredentials{
+						Username: "testusername",
+						Password: "testpassword",
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "Users",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "DROP sampletable;-- ",
+							Type:       framework.AttributeTypeString,
+							UniqueId:   true,
+						},
+					},
+				},
+				Config: &mysql.Config{
+					CommonConfig: &config.CommonConfig{
+						RequestTimeoutSeconds: testutil.GenPtr(10),
+						LocalTimeZoneOffset:   -18000, // UTC−05:00 (EST)
+					},
+					Database: "sgnl",
+				},
+				Ordered:  true,
+				PageSize: 5,
+				Cursor:   "10",
+			},
+			wantResponse: framework.Response{
+				Error: &framework.Error{
+					Message: "SQL unique attribute validation failed: unsupported characters found or length is not in range 1-128.",
+					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
+				},
+			},
+		},
+		"valid_request_first_page_cast_multiple_fields_to_string": {
+			request: &framework.Request[mysql.Config]{
+				Address: "127.0.0.1",
+				Auth: &framework.DatasourceAuthCredentials{
+					Basic: &framework.BasicAuthCredentials{
+						Username: "testusername",
+						Password: "testpassword",
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "users",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "id",
+							Type:       framework.AttributeTypeString,
+							UniqueId:   true,
+						},
+						{
+							ExternalId: "name",
+							Type:       framework.AttributeTypeString,
+						},
+						{
+							ExternalId: "missing_field",
+							Type:       framework.AttributeTypeString,
+						},
+						{
+							ExternalId: "active",
+							Type:       framework.AttributeTypeString,
+						},
+						{
+							ExternalId: "employee_number",
+							Type:       framework.AttributeTypeString,
+						},
+						{
+							ExternalId: "risk_score",
+							Type:       framework.AttributeTypeString,
+						},
+						{
+							ExternalId: "last_modified",
+							Type:       framework.AttributeTypeString,
+						},
+					},
+				},
+				Config: &mysql.Config{
+					CommonConfig: &config.CommonConfig{
+						RequestTimeoutSeconds: testutil.GenPtr(10),
+						LocalTimeZoneOffset:   -18000, // UTC−05:00 (EST)
+					},
+					Database: "sgnl",
+				},
+				Ordered:  true,
+				PageSize: 5,
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"active":          "true",
+							"employee_number": "1",
+							"id":              "a20bab52-52e3-46c2-bd6a-2ad1512f713f",
+							"last_modified":   "2025-02-12T22:38:00+00:00",
+							"name":            "Ernesto Gregg",
+							"risk_score":      "1",
+						},
+						{
+							"active":          "true",
+							"employee_number": "2",
+							"id":              "d35c298e-d343-4ad8-ac35-f7c5d9d47cb9",
+							"last_modified":   "2025-02-12T22:38:00+00:00",
+							"name":            "Eleanor Watts",
+							"risk_score":      "1.562",
+						},
+						{
+							"active":          "true",
+							"employee_number": "3",
+							"id":              "62c74831-be4a-4cad-88fa-4e02640269d2",
+							"last_modified":   "2025-02-12T22:38:00+00:00",
+							"name":            "Chris Griffin",
+							"risk_score":      "4.23",
+						},
+						{
+							"active":          "false",
+							"employee_number": "4",
+							"id":              "65b8fa65-25c5-4682-997f-ca86923e59e4",
+							"last_modified":   "2025-02-12T22:38:00+00:00",
+							"name":            "Casey Manning",
+							"risk_score":      "10",
+						},
+						{
+							"active":          "true",
+							"employee_number": "5",
+							"id":              "6598acf9-cccc-48c9-ab9b-754bbe9ad146",
+							"last_modified":   "2025-02-12T22:38:00+00:00",
+							"name":            "Helen Gray",
+							"risk_score":      "3.25",
+						},
+					},
+					NextCursor: "5",
+				},
+			},
+		},
+		"valid_request_fields_not_in_db": {
+			request: &framework.Request[mysql.Config]{
+				Address: "127.0.0.1",
+				Auth: &framework.DatasourceAuthCredentials{
+					Basic: &framework.BasicAuthCredentials{
+						Username: "testusername",
+						Password: "testpassword",
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "users",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "id",
+							Type:       framework.AttributeTypeString,
+							UniqueId:   true,
+						},
+						{
+							ExternalId: "invalid_field_not_present",
+							Type:       framework.AttributeTypeString,
+						},
+					},
+				},
+				Config: &mysql.Config{
+					CommonConfig: &config.CommonConfig{
+						RequestTimeoutSeconds: testutil.GenPtr(10),
+						LocalTimeZoneOffset:   -18000, // UTC−05:00 (EST)
+					},
+					Database: "sgnl",
+				},
+				Ordered:  true,
+				PageSize: 5,
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"id": "a20bab52-52e3-46c2-bd6a-2ad1512f713f",
+						},
+						{
+							"id": "d35c298e-d343-4ad8-ac35-f7c5d9d47cb9",
+						},
+						{
+							"id": "62c74831-be4a-4cad-88fa-4e02640269d2",
+						},
+						{
+							"id": "65b8fa65-25c5-4682-997f-ca86923e59e4",
+						},
+						{
+							"id": "6598acf9-cccc-48c9-ab9b-754bbe9ad146",
+						},
+					},
+					NextCursor: "5",
+				},
+			},
+		},
+		"valid_request_first_page_filtered": {
+			request: &framework.Request[mysql.Config]{
+				Address: "127.0.0.1",
+				Auth: &framework.DatasourceAuthCredentials{
+					Basic: &framework.BasicAuthCredentials{
+						Username: "testusername",
+						Password: "testpassword",
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "users",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "id",
+							Type:       framework.AttributeTypeString,
+							UniqueId:   true,
+						},
+						{
+							ExternalId: "name",
+							Type:       framework.AttributeTypeString,
+						},
+						{
+							ExternalId: "missing_field",
+							Type:       framework.AttributeTypeString,
+						},
+						{
+							ExternalId: "active",
+							Type:       framework.AttributeTypeBool,
+						},
+						{
+							ExternalId: "employee_number",
+							Type:       framework.AttributeTypeInt64,
+						},
+						{
+							ExternalId: "risk_score",
+							Type:       framework.AttributeTypeDouble,
+						},
+						{
+							ExternalId: "last_modified",
+							Type:       framework.AttributeTypeDateTime,
+						},
+					},
+				},
+				Config: &mysql.Config{
+					CommonConfig: &config.CommonConfig{
+						RequestTimeoutSeconds: testutil.GenPtr(10),
+						LocalTimeZoneOffset:   -18000, // UTC−05:00 (EST)
+					},
+					Database: "sgnl",
+					Filters: map[string]condexpr.Condition{
+						"users": {
+							And: []condexpr.Condition{
+								{
+									Field:    "active",
+									Operator: "=",
+									Value:    true,
+								},
+								{
+									Field:    "risk_score",
+									Operator: ">",
+									Value:    2.0,
+								},
+							},
+						},
+					},
+				},
+				Ordered:  true,
+				PageSize: 5,
+				Cursor:   "204",
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"active":          true,
+							"employee_number": int64(3),
+							"id":              "62c74831-be4a-4cad-88fa-4e02640269d2",
+							"last_modified":   time.Date(2025, 2, 12, 22, 38, 00, 00, time.UTC),
+							"name":            "Chris Griffin",
+							"risk_score":      float64(4.23),
+						},
+						{
+							"active":          true,
+							"employee_number": int64(5),
+							"id":              "6598acf9-cccc-48c9-ab9b-754bbe9ad146",
+							"last_modified":   time.Date(2025, 2, 12, 22, 38, 00, 00, time.UTC),
+							"name":            "Helen Gray",
+							"risk_score":      float64(3.25),
+						},
+					},
 				},
 			},
 		},
