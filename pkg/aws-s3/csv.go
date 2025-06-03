@@ -40,21 +40,18 @@ func StreamingCSVToPage(
 	bucket, key string,
 	fileSize int64,
 	headers []string,
-	start int64,
+	startBytePos int64,
 	pageSize int64,
 	attrConfig []*framework.AttributeConfig,
-) ([]map[string]any, bool, error) {
+) ([]map[string]any, bool, int64, error) {
 	const maxProcessingLimit = 200 * StreamingChunkSize
 
 	objects := make([]map[string]any, 0, pageSize)
 	headerToAttributeConfig := headerToAttributeConfig(headers, attrConfig)
 
-	var currentRow, currentPos, collectedRows, totalProcessedBytes int64
+	var currentPos, totalProcessedBytes, actualNextBytePos int64 = startBytePos, 0, startBytePos
 
-	targetStartRow := start
-	targetEndRow := start + pageSize
-
-	for (currentPos < fileSize) && (collectedRows < pageSize) {
+	for currentPos < fileSize && int64(len(objects)) < pageSize {
 		endPos := currentPos + StreamingChunkSize - 1
 		if endPos >= fileSize {
 			endPos = fileSize - 1
@@ -62,64 +59,72 @@ func StreamingCSVToPage(
 
 		chunkData, err := handler.GetFileRange(ctx, bucket, key, currentPos, endPos)
 		if err != nil {
-			return nil, false, fmt.Errorf("unable to read CSV file data: %v", err)
+			return nil, false, 0, fmt.Errorf("unable to read CSV file data: %v", err)
 		}
 
 		if chunkData == nil {
-			return nil, false, fmt.Errorf("received empty response from S3 file range request")
+			return nil, false, 0, fmt.Errorf("received empty response from S3 file range request")
 		}
 
 		chunkSize := int64(len(*chunkData))
 
-		chunkObjects, nextRow, nextBytePos, chunkWasUseful, err := processCSVChunk(
+		chunkObjects, chunkNextBytePos, objectBytePositions, err := processCSVChunk(
 			*chunkData,
 			headers,
 			headerToAttributeConfig,
-			currentRow,
-			targetStartRow,
-			targetEndRow,
 			currentPos,
 		)
 		if err != nil {
-			return nil, false, fmt.Errorf("CSV file processing failed: %v", err)
+			return nil, false, 0, fmt.Errorf("CSV file processing failed: %v", err)
 		}
 
-		if chunkWasUseful {
-			totalProcessedBytes += chunkSize
-			objects = append(objects, chunkObjects...)
-			collectedRows += int64(len(chunkObjects))
+		totalProcessedBytes += chunkSize
 
-			if totalProcessedBytes >= maxProcessingLimit {
-				hasNext := true
-				return objects, hasNext, nil
+		// Add objects but respect pageSize limit
+		remainingSlots := pageSize - int64(len(objects))
+		objectsToAdd := int64(len(chunkObjects))
+
+		if objectsToAdd <= remainingSlots {
+			// Add all chunk objects
+			objects = append(objects, chunkObjects...)
+			actualNextBytePos = chunkNextBytePos
+		} else {
+			// Add only what we need to reach pageSize
+			objects = append(objects, chunkObjects[:remainingSlots]...)
+			// Calculate cursor position based on the last object we're including
+			if int(remainingSlots) > 0 && len(objectBytePositions) > int(remainingSlots) {
+				actualNextBytePos = objectBytePositions[remainingSlots-1]
+			} else {
+				actualNextBytePos = chunkNextBytePos
 			}
 		}
 
-		currentRow = nextRow
-
-		if nextBytePos <= currentPos {
-			return nil, false, fmt.Errorf("CSV file contains formatting issues that prevent processing from continuing")
+		if totalProcessedBytes >= maxProcessingLimit && len(objects) > 0 {
+			hasNext := true
+			return objects, hasNext, actualNextBytePos, nil
 		}
 
-		currentPos = nextBytePos
+		if chunkNextBytePos <= currentPos {
+			return nil, false, 0, fmt.Errorf("CSV file contains formatting issues that prevent processing from continuing")
+		}
 
-		if collectedRows >= pageSize {
+		currentPos = chunkNextBytePos
+
+		// Break if we've reached pageSize
+		if int64(len(objects)) >= pageSize {
 			break
 		}
 	}
 
-	hasNext := currentRow < targetEndRow || currentPos < fileSize
-	if !hasNext && collectedRows == pageSize {
-		hasNext = currentPos < fileSize
-	}
+	hasNext := currentPos < fileSize || actualNextBytePos < fileSize
 
-	return objects, hasNext, nil
+	return objects, hasNext, actualNextBytePos, nil
 }
 
-func findLastCompleteRowEndAndCount(data []byte) (int, int64) {
+// findLastCompleteRowEnd finds the last complete row in the chunk (simplified version)
+func findLastCompleteRowEnd(data []byte) int {
 	var inQuotes bool
 	lastValidNewline := -1
-	var rowCount int64
 
 	for i, b := range data {
 		if b == '"' {
@@ -130,123 +135,115 @@ func findLastCompleteRowEndAndCount(data []byte) (int, int64) {
 			inQuotes = !inQuotes
 		} else if b == '\n' && !inQuotes {
 			lastValidNewline = i
-			rowCount++
 		}
 	}
 
-	return lastValidNewline, rowCount
+	return lastValidNewline
 }
 
+// processCSVChunkWithPositions processes a single chunk of CSV data and tracks byte positions
 func processCSVChunk(
 	chunkData []byte,
 	headers []string,
 	headerToAttributeConfig map[string]framework.AttributeConfig,
-	startRowNum int64,
-	targetStartRow int64,
-	targetEndRow int64,
 	chunkStartPos int64,
-) ([]map[string]any, int64, int64, bool, error) {
-	lastNewlineIndex, chunkRowCount := findLastCompleteRowEndAndCount(chunkData)
+) ([]map[string]any, int64, []int64, error) {
+	lastNewlineIndex := findLastCompleteRowEnd(chunkData)
 	if lastNewlineIndex == -1 {
-		return nil, startRowNum, chunkStartPos, false,
-			fmt.Errorf("CSV file contains a single row larger than %d MB", StreamingChunkSize/(1024*1024))
+		return nil, chunkStartPos, nil, fmt.Errorf("CSV file contains a single row larger than %d MB", StreamingChunkSize/(1024*1024))
 	}
 
 	completeChunk := chunkData[:lastNewlineIndex+1]
 	nextBytePos := chunkStartPos + int64(lastNewlineIndex) + 1
 
-	chunkStartRow := startRowNum
-	chunkEndRow := startRowNum + chunkRowCount
+	// Track byte positions for each row
+	var objectBytePositions []int64
+	var inQuotes bool
 
-	recordStartIndex := 0
-	if chunkStartRow == 0 {
-		recordStartIndex = 1
-		chunkStartRow = 1
-		chunkEndRow = startRowNum + chunkRowCount
-	}
-
-	if targetEndRow <= chunkStartRow {
-		return nil, chunkEndRow, nextBytePos, false, nil
-	}
-
-	if targetStartRow >= chunkEndRow {
-		return nil, chunkEndRow, nextBytePos, false, nil
+	// Find the start position of each row
+	for i, b := range completeChunk {
+		if b == '"' {
+			if i+1 < len(completeChunk) && completeChunk[i+1] == '"' {
+				i++ // Skip escaped quote
+				continue
+			}
+			inQuotes = !inQuotes
+		} else if b == '\n' && !inQuotes {
+			// End of current row, next row starts after this newline
+			nextRowStart := chunkStartPos + int64(i) + 1
+			objectBytePositions = append(objectBytePositions, nextRowStart)
+		}
 	}
 
 	csvReader := csv.NewReader(bytes.NewReader(completeChunk))
 	records, err := csvReader.ReadAll()
 	if err != nil {
-		return nil, startRowNum, nextBytePos, false, fmt.Errorf("CSV file format is invalid or corrupted: %v", err)
+		return nil, nextBytePos, nil, fmt.Errorf("CSV file format is invalid or corrupted: %v", err)
 	}
 
 	var objects []map[string]any
 
-	for i := recordStartIndex; i < len(records); i++ {
-		currentRowNum := chunkStartRow + int64(i-recordStartIndex)
+	// Process all records in this chunk - no header skipping since we're past headers
+	for _, record := range records {
+		row := make(map[string]interface{})
 
-		if currentRowNum >= targetStartRow && currentRowNum < targetEndRow {
-			record := records[i]
-			row := make(map[string]interface{})
+		for j, value := range record {
+			if j >= len(headers) {
+				continue
+			}
 
-			for j, value := range record {
-				if j >= len(headers) {
-					continue
-				}
+			headerName := headers[j]
+			attrConfig, found := headerToAttributeConfig[headerName]
 
-				headerName := headers[j]
-				attrConfig, found := headerToAttributeConfig[headerName]
-
-				if !found {
-					if strings.HasPrefix(value, "[{") && strings.HasSuffix(value, "}]") {
-						var childObj []map[string]any
-						if err := json.Unmarshal([]byte(value), &childObj); err != nil {
-							return nil, currentRowNum, nextBytePos, false, fmt.Errorf(
-								`failed to unmarshal the value: "%v" in row: %d, column: %s`,
-								value, currentRowNum, headerName,
-							)
-						}
-
-						childArray := make([]any, 0, len(childObj))
-						for _, obj := range childObj {
-							childArray = append(childArray, obj)
-						}
-
-						row[headerName] = childArray
-
-						continue
-					}
-
-					row[headerName] = value
-
-					continue
-				}
-
-				switch attrConfig.Type {
-				case framework.AttributeTypeInt64, framework.AttributeTypeDouble:
-					floatValue, err := strconv.ParseFloat(value, 64)
-					if err != nil {
-						return nil, currentRowNum, nextBytePos, false, fmt.Errorf(
-							`CSV contains invalid numeric value "%s" in column "%s" at row %d`,
-							value, headerName, currentRowNum,
+			if !found {
+				if strings.HasPrefix(value, "[{") && strings.HasSuffix(value, "}]") {
+					var childObj []map[string]any
+					if err := json.Unmarshal([]byte(value), &childObj); err != nil {
+						return nil, nextBytePos, nil, fmt.Errorf(
+							`failed to unmarshal the value: "%v" in column: %s`,
+							value, headerName,
 						)
 					}
 
-					row[headerName] = floatValue
-				default:
-					row[headerName] = value
+					childArray := make([]any, 0, len(childObj))
+					for _, obj := range childObj {
+						childArray = append(childArray, obj)
+					}
+
+					row[headerName] = childArray
+					continue
 				}
+
+				row[headerName] = value
+				continue
 			}
 
-			objects = append(objects, row)
+			switch attrConfig.Type {
+			case framework.AttributeTypeInt64, framework.AttributeTypeDouble:
+				floatValue, err := strconv.ParseFloat(value, 64)
+				if err != nil {
+					return nil, nextBytePos, nil, fmt.Errorf(
+						`CSV contains invalid numeric value "%s" in column "%s"`,
+						value, headerName,
+					)
+				}
+
+				row[headerName] = floatValue
+			default:
+				row[headerName] = value
+			}
 		}
 
-		if currentRowNum >= targetEndRow-1 {
-			break
-		}
+		objects = append(objects, row)
 	}
 
-	chunkWasUseful := len(objects) > 0
-	return objects, chunkEndRow, nextBytePos, chunkWasUseful, nil
+	// Ensure we have position information for all objects
+	// If we have fewer positions than objects, extend with nextBytePos
+	for len(objectBytePositions) < len(objects) {
+		objectBytePositions = append(objectBytePositions, nextBytePos)
+	}
+
+	return objects, nextBytePos, objectBytePositions, nil
 }
 
 // TODO: Clean this up by decoupling the attribute value conversion logic from the CSV parsing logic.

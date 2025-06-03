@@ -78,11 +78,6 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		}
 	}
 
-	start := int64(1)
-	if request.Cursor != nil && request.Cursor.Cursor != nil {
-		start = *request.Cursor.Cursor
-	}
-
 	const streamingThreshold = 10 * StreamingChunkSize // 10MB
 
 	var (
@@ -92,69 +87,106 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	)
 
 	if fileSize > streamingThreshold {
-		objects, hasNext, processErr = d.processLargeFileStreaming(
-			ctx, handler, request.Bucket, objectKey, fileSize, start, request.PageSize, request.AttributeConfig,
+		// For large files, use byte-based cursor
+		startBytePos := int64(0) // Default to start after headers
+		if request.Cursor != nil && request.Cursor.Cursor != nil {
+			startBytePos = *request.Cursor.Cursor
+		}
+
+		var nextBytePos int64
+		objects, hasNext, nextBytePos, processErr = d.processLargeFileStreaming(
+			ctx, handler, request.Bucket, objectKey, fileSize, startBytePos, request.PageSize, request.AttributeConfig,
 		)
+
+		if processErr != nil {
+			return nil, customerror.UpdateError(&framework.Error{
+				Message: fmt.Sprintf("Failed to fetch entity from AWS S3: %s, error: %v.", entityName, processErr),
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+			},
+				customerror.WithRequestTimeoutMessage(processErr, request.RequestTimeoutSeconds),
+			)
+		}
+
+		response := &Response{
+			StatusCode: 200,
+			Objects:    objects,
+		}
+
+		if hasNext {
+			response.NextCursor = &pagination.CompositeCursor[int64]{Cursor: &nextBytePos}
+		}
+
+		return response, nil
 	} else {
+		// For small files, use row-based cursor (existing logic)
+		start := int64(1)
+		if request.Cursor != nil && request.Cursor.Cursor != nil {
+			start = *request.Cursor.Cursor
+		}
+
 		objects, hasNext, processErr = d.processSmallFileTraditional(
 			ctx, handler, request.Bucket, objectKey, start, request.PageSize, request.AttributeConfig,
 		)
-	}
 
-	if processErr != nil {
-		return nil, customerror.UpdateError(&framework.Error{
-			Message: fmt.Sprintf("Failed to fetch entity from AWS S3: %s, error: %v.", entityName, processErr),
-			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
-		},
-			customerror.WithRequestTimeoutMessage(processErr, request.RequestTimeoutSeconds),
-		)
-	}
+		if processErr != nil {
+			return nil, customerror.UpdateError(&framework.Error{
+				Message: fmt.Sprintf("Failed to fetch entity from AWS S3: %s, error: %v.", entityName, processErr),
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+			},
+				customerror.WithRequestTimeoutMessage(processErr, request.RequestTimeoutSeconds),
+			)
+		}
 
-	response := &Response{
-		StatusCode: 200,
-		Objects:    objects,
-	}
+		response := &Response{
+			StatusCode: 200,
+			Objects:    objects,
+		}
 
-	if !hasNext {
+		if hasNext {
+			actualRowsReturned := int64(len(objects))
+			nextPage := start + actualRowsReturned
+			response.NextCursor = &pagination.CompositeCursor[int64]{Cursor: &nextPage}
+		}
+
 		return response, nil
 	}
-
-	actualRowsReturned := int64(len(objects))
-	nextPage := start + actualRowsReturned
-	response.NextCursor = &pagination.CompositeCursor[int64]{Cursor: &nextPage}
-
-	return response, nil
 }
 
 func (d *Datasource) processLargeFileStreaming(
 	ctx context.Context,
 	handler *S3Handler,
 	bucket, key string,
-	fileSize, start, pageSize int64,
+	fileSize, startBytePos, pageSize int64,
 	attrConfig []*framework.AttributeConfig,
-) ([]map[string]any, bool, error) {
+) ([]map[string]any, bool, int64, error) {
+	// Always read headers first
 	headerChunk, err := handler.GetHeaderChunk(ctx, bucket, key)
 	if err != nil {
-		return nil, false, fmt.Errorf("unable to read CSV file headers: %v", err)
+		return nil, false, 0, fmt.Errorf("unable to read CSV file headers: %v", err)
 	}
 
 	headers, err := CSVHeaders(headerChunk)
 	if err != nil {
-		return nil, false, fmt.Errorf("unable to parse CSV file headers: %v", err)
+		return nil, false, 0, fmt.Errorf("unable to parse CSV file headers: %v", err)
 	}
 
 	if len(headers) == 0 {
-		return nil, false, fmt.Errorf("CSV file does not contain valid column headers")
+		return nil, false, 0, fmt.Errorf("CSV file does not contain valid column headers")
 	}
 
-	objects, hasNext, err := StreamingCSVToPage(
-		ctx, handler, bucket, key, fileSize, headers, start, pageSize, attrConfig,
+	// If startBytePos is 0 (first request), calculate position after headers
+	if startBytePos == 0 {
+		startBytePos = calculateHeaderEndPosition(headerChunk)
+	}
+
+	objects, hasNext, nextBytePos, err := StreamingCSVToPage(
+		ctx, handler, bucket, key, fileSize, headers, startBytePos, pageSize, attrConfig,
 	)
 	if err != nil {
-		return nil, false, fmt.Errorf("unable to process CSV file data: %v", err)
+		return nil, false, 0, fmt.Errorf("unable to process CSV file data: %v", err)
 	}
 
-	return objects, hasNext, nil
+	return objects, hasNext, nextBytePos, nil
 }
 
 func (d *Datasource) processSmallFileTraditional(
@@ -179,6 +211,22 @@ func (d *Datasource) processSmallFileTraditional(
 	}
 
 	return objects, hasNext, nil
+}
+
+// calculateHeaderEndPosition finds the byte position right after the header line
+func calculateHeaderEndPosition(headerChunk *[]byte) int64 {
+	if headerChunk == nil || len(*headerChunk) == 0 {
+		return 0
+	}
+
+	// Find the first newline (end of header row)
+	for i, b := range *headerChunk {
+		if b == '\n' {
+			return int64(i + 1) // Position after the newline
+		}
+	}
+
+	return int64(len(*headerChunk)) // If no newline found, start from end of chunk
 }
 
 // httpResponseFromError returns a awshttp.ResponseError from an SDK error.
