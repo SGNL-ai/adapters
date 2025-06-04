@@ -5,251 +5,119 @@
 package awss3_test
 
 import (
-	"context"
-	"net/http"
+	"bufio"
+	"fmt"
+	"strings"
 	"testing"
 
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/google/go-cmp/cmp"
 	framework "github.com/sgnl-ai/adapter-framework"
 	s3_adapter "github.com/sgnl-ai/adapters/pkg/aws-s3"
-	"github.com/sgnl-ai/adapters/pkg/testutil"
 )
 
 func TestCSVHeaders(t *testing.T) {
 	tests := map[string]struct {
-		input         *[]byte
-		expectedError bool
-		errorContains string
-		expected      []string
+		inputReaderFn     func() *bufio.Reader
+		expectedHeaders   []string
+		expectedBytesRead int64
+		expectedError     bool
+		errorContains     string
 	}{
-		"valid_headers": {
-			input:    testutil.GenPtr([]byte("name,age,city\nJohn,25,NYC")),
-			expected: []string{"name", "age", "city"},
+		"valid_headers_newline_terminated": {
+			inputReaderFn: func() *bufio.Reader {
+				return bufio.NewReader(strings.NewReader("name,age,city\nJohn,25,NYC"))
+			},
+			expectedHeaders:   []string{"name", "age", "city"},
+			expectedBytesRead: int64(len("name,age,city\n")),
+		},
+		"valid_headers_eof_terminated": {
+			inputReaderFn: func() *bufio.Reader {
+				return bufio.NewReader(strings.NewReader("name,age,city"))
+			},
+			expectedHeaders:   []string{"name", "age", "city"},
+			expectedBytesRead: int64(len("name,age,city")),
 		},
 		"headers_with_spaces": {
-			input:    testutil.GenPtr([]byte("First Name, Last Name, Email Address\nJohn,Doe,john@example.com")),
-			expected: []string{"First Name", " Last Name", " Email Address"},
+			inputReaderFn: func() *bufio.Reader {
+				return bufio.NewReader(strings.NewReader("First Name, Last Name, Email Address\nJohn,Doe,john@example.com"))
+			},
+			expectedHeaders:   []string{"First Name", " Last Name", " Email Address"},
+			expectedBytesRead: int64(len("First Name, Last Name, Email Address\n")),
 		},
-		"single_header": {
-			input:    testutil.GenPtr([]byte("email\ntest@example.com")),
-			expected: []string{"email"},
+		"single_header_newline": {
+			inputReaderFn: func() *bufio.Reader {
+				return bufio.NewReader(strings.NewReader("email\ntest@example.com"))
+			},
+			expectedHeaders:   []string{"email"},
+			expectedBytesRead: int64(len("email\n")),
 		},
-		"empty_input": {
-			input:         testutil.GenPtr([]byte("")),
+		"single_header_eof": {
+			inputReaderFn: func() *bufio.Reader {
+				return bufio.NewReader(strings.NewReader("email"))
+			},
+			expectedHeaders:   []string{"email"},
+			expectedBytesRead: int64(len("email")),
+		},
+		"empty_input_reader": {
+			inputReaderFn: func() *bufio.Reader {
+				return bufio.NewReader(strings.NewReader(""))
+			},
 			expectedError: true,
 			errorContains: "CSV header is empty or missing",
 		},
-		"nil_input": {
-			input:         nil,
-			expectedError: true,
-			errorContains: "CSV header is empty or missing",
+		"header_just_newline": {
+			inputReaderFn: func() *bufio.Reader {
+				return bufio.NewReader(strings.NewReader("\n"))
+			},
+			expectedError: true,                                      // csv.Reader will return an error on empty line if FieldsPerRecord is not < 0
+			errorContains: "CSV file format is invalid or corrupted", // Go's csv.Reader error for empty record
 		},
-		"invalid_csv_format": {
-			input:         testutil.GenPtr([]byte("\"unclosed quote field")),
+		"invalid_csv_format_unclosed_quote": {
+			inputReaderFn: func() *bufio.Reader {
+				return bufio.NewReader(strings.NewReader("\"unclosed quote field\n"))
+			},
 			expectedError: true,
-			errorContains: "CSV file format is invalid or corrupted",
+			errorContains: `parse error on line 1, column 23: extraneous or missing " in quoted-field`,
 		},
-		"headers_only": {
-			input:    testutil.GenPtr([]byte("Score,Customer Id,First Name")),
-			expected: []string{"Score", "Customer Id", "First Name"},
+		"header_exceeds_max_size": {
+			inputReaderFn: func() *bufio.Reader {
+				return bufio.NewReader(strings.NewReader(strings.Repeat("a,", s3_adapter.MaxHeaderSizeBytes/2+1) + "last\n"))
+			},
+			expectedError: true,
+			errorContains: fmt.Sprintf("CSV header line exceeds %dKB size limit", s3_adapter.MaxHeaderSizeBytes/1024),
+		},
+		"header_with_quoted_newline": {
+			inputReaderFn: func() *bufio.Reader {
+				return bufio.NewReader(strings.NewReader("name,\"multi\nline\nheader\",status\nvalue1,value2,value3"))
+			},
+			expectedHeaders:   []string{"name", "multi\nline\nheader", "status"},
+			expectedBytesRead: int64(len("name,\"multi\nline\nheader\",status\n")),
 		},
 	}
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			result, err := s3_adapter.CSVHeaders(tt.input)
+			reader := tt.inputReaderFn()
+			headers, bytesRead, err := s3_adapter.CSVHeaders(reader)
 
 			if tt.expectedError {
 				if err == nil {
 					t.Errorf("Expected error but got none")
-				} else if tt.errorContains != "" && !cmp.Equal(err.Error(), tt.errorContains) &&
-					!contains(err.Error(), tt.errorContains) {
+				} else if tt.errorContains != "" && !strings.Contains(err.Error(), tt.errorContains) {
 					t.Errorf("Expected error to contain '%s', got: %v", tt.errorContains, err)
 				}
-
-				if result != nil {
-					t.Errorf("Expected nil result on error, got: %v", result)
+				if headers != nil {
+					t.Errorf("Expected nil headers on error, got: %v", headers)
 				}
 			} else {
 				if err != nil {
 					t.Errorf("Expected no error, got: %v", err)
 				}
-
-				if diff := cmp.Diff(result, tt.expected); diff != "" {
-					t.Errorf("Headers mismatch: %s", diff)
+				if diff := cmp.Diff(tt.expectedHeaders, headers); diff != "" {
+					t.Errorf("Headers mismatch (-want +got):\n%s", diff)
 				}
-			}
-		})
-	}
-}
-
-func TestCSVBytesToPage(t *testing.T) {
-	tests := map[string]struct {
-		data            *[]byte
-		start           int64
-		pageSize        int64
-		attrConfig      []*framework.AttributeConfig
-		expectedObjects []map[string]any
-		expectedHasNext bool
-		expectedError   bool
-		errorContains   string
-	}{
-		"success_basic_csv": {
-			data:     testutil.GenPtr([]byte("name,age\nJohn,25\nJane,30\nBob,35")),
-			start:    1,
-			pageSize: 2,
-			attrConfig: []*framework.AttributeConfig{
-				{
-					ExternalId: "name",
-					Type:       framework.AttributeTypeString,
-				},
-				{
-					ExternalId: "age",
-					Type:       framework.AttributeTypeInt64,
-				},
-			},
-			expectedObjects: []map[string]any{
-				{"name": "John", "age": float64(25)},
-				{"name": "Jane", "age": float64(30)},
-			},
-			expectedHasNext: true,
-		},
-		"success_last_page": {
-			data:     testutil.GenPtr([]byte("name,age\nJohn,25\nJane,30")),
-			start:    1,
-			pageSize: 3,
-			attrConfig: []*framework.AttributeConfig{
-				{
-					ExternalId: "name",
-					Type:       framework.AttributeTypeString,
-				},
-			},
-			expectedObjects: []map[string]any{
-				{"name": "John", "age": "25"},
-				{"name": "Jane", "age": "30"},
-			},
-			expectedHasNext: false,
-		},
-		"success_with_json_field": {
-			data: testutil.GenPtr([]byte(`name,aliases
-John,"[{""alias"": ""Johnny"", ""primary"": true}]"`)),
-			start:    1,
-			pageSize: 1,
-			attrConfig: []*framework.AttributeConfig{
-				{
-					ExternalId: "name",
-					Type:       framework.AttributeTypeString,
-				},
-			},
-			expectedObjects: []map[string]any{
-				{
-					"name": "John",
-					"aliases": []any{
-						map[string]any{"alias": "Johnny", "primary": true},
-					},
-				},
-			},
-			expectedHasNext: false,
-		},
-		"success_numeric_conversion": {
-			data:     testutil.GenPtr([]byte("name,score,rating\nJohn,85.5,4")),
-			start:    1,
-			pageSize: 1,
-			attrConfig: []*framework.AttributeConfig{
-				{
-					ExternalId: "score",
-					Type:       framework.AttributeTypeDouble,
-				},
-				{
-					ExternalId: "rating",
-					Type:       framework.AttributeTypeInt64,
-				},
-			},
-			expectedObjects: []map[string]any{
-				{"name": "John", "score": 85.5, "rating": float64(4)},
-			},
-			expectedHasNext: false,
-		},
-		"success_headers_only": {
-			data:     testutil.GenPtr([]byte("name,age")),
-			start:    1,
-			pageSize: 2,
-			attrConfig: []*framework.AttributeConfig{
-				{
-					ExternalId: "name",
-					Type:       framework.AttributeTypeString,
-				},
-			},
-			expectedObjects: []map[string]any{},
-			expectedHasNext: false,
-		},
-		"error_empty_data": {
-			data:          testutil.GenPtr([]byte("")),
-			start:         1,
-			pageSize:      2,
-			attrConfig:    []*framework.AttributeConfig{},
-			expectedError: true,
-			errorContains: "no data found in the CSV file",
-		},
-		"error_invalid_csv": {
-			data:          testutil.GenPtr([]byte("name,\"age\nJohn,25")),
-			start:         1,
-			pageSize:      2,
-			attrConfig:    []*framework.AttributeConfig{},
-			expectedError: true,
-			errorContains: "failed to read CSV data",
-		},
-		"error_invalid_number": {
-			data:     testutil.GenPtr([]byte("name,age\nJohn,not_a_number")),
-			start:    1,
-			pageSize: 1,
-			attrConfig: []*framework.AttributeConfig{
-				{
-					ExternalId: "age",
-					Type:       framework.AttributeTypeInt64,
-				},
-			},
-			expectedError: true,
-			errorContains: "failed to convert the value",
-		},
-		"error_invalid_json": {
-			data: testutil.GenPtr([]byte(`name,data
-John,"[{invalid json}]"`)),
-			start:    1,
-			pageSize: 1,
-			attrConfig: []*framework.AttributeConfig{
-				{
-					ExternalId: "name",
-					Type:       framework.AttributeTypeString,
-				},
-			},
-			expectedError: true,
-			errorContains: "failed to unmarshal the value",
-		},
-	}
-
-	for name, tt := range tests {
-		t.Run(name, func(t *testing.T) {
-			objects, hasNext, err := s3_adapter.CSVBytesToPage(tt.data, tt.start, tt.pageSize, tt.attrConfig)
-
-			if tt.expectedError {
-				if err == nil {
-					t.Errorf("Expected error but got none")
-				} else if tt.errorContains != "" && !contains(err.Error(), tt.errorContains) {
-					t.Errorf("Expected error to contain '%s', got: %v", tt.errorContains, err)
-				}
-			} else {
-				if err != nil {
-					t.Errorf("Expected no error, got: %v", err)
-				}
-
-				if diff := cmp.Diff(objects, tt.expectedObjects); diff != "" {
-					t.Errorf("Objects mismatch: %s", diff)
-				}
-
-				if hasNext != tt.expectedHasNext {
-					t.Errorf("HasNext mismatch: got %v, want %v", hasNext, tt.expectedHasNext)
+				if bytesRead != tt.expectedBytesRead {
+					t.Errorf("Expected bytesRead %d, got %d", tt.expectedBytesRead, bytesRead)
 				}
 			}
 		})
@@ -257,148 +125,286 @@ John,"[{invalid json}]"`)),
 }
 
 func TestStreamingCSVToPage(t *testing.T) {
+	sampleHeaders := []string{"name", "age", "city", "aliases"}
+	attrConfigDefault := []*framework.AttributeConfig{
+		{ExternalId: "name", Type: framework.AttributeTypeString},
+		{ExternalId: "age", Type: framework.AttributeTypeInt64}, // Will be parsed as float64
+		{ExternalId: "city", Type: framework.AttributeTypeString},
+		// aliases will be handled by default JSON detection
+	}
+	attrConfigAllString := []*framework.AttributeConfig{
+		{ExternalId: "name", Type: framework.AttributeTypeString},
+		{ExternalId: "age", Type: framework.AttributeTypeString},
+		{ExternalId: "city", Type: framework.AttributeTypeString},
+		{ExternalId: "aliases", Type: framework.AttributeTypeString},
+	}
+
+	csvDataBasic := `John,25,NYC,"[{""alias"":""Johnny""}]"
+Jane,30,LA,"[{""alias"":""Janey""}]"
+Bob,35,SF,"[{""alias"":""Bobby""}]"`
+	csvDataWithEmptyLine := "John,25,NYC,\n\nJane,30,LA," // Empty line, then valid line
+	csvDataOneLine := "Alice,40,BOS,"
+
+	// Generate a row that would exceed MaxCSVRowSizeBytes
+	longString := strings.Repeat("longdata", s3_adapter.MaxCSVRowSizeBytes/(len("longdata")))
+	csvDataExceedsRowLimit := fmt.Sprintf("name1,%s,city1,\nname2,short,city2,", longString)
+
+	csvDataForProcessingLimit := "r1,1\nr2,22\nr3,333\n"
+	headersForProcessingLimit := []string{"colA", "colB"}
+	attrConfigForProcessingLimit := []*framework.AttributeConfig{
+		{ExternalId: "colA", Type: framework.AttributeTypeString},
+		{ExternalId: "colB", Type: framework.AttributeTypeString},
+	}
+
 	tests := map[string]struct {
-		bucket              string
-		key                 string
-		fileSize            int64
-		headers             []string
-		start               int64
-		pageSize            int64
-		attrConfig          []*framework.AttributeConfig
-		getObjectStatusCode int
-		expectedObjects     []map[string]any
-		expectedHasNext     bool
-		expectedError       bool
-		errorContains       string
+		csvData                 string
+		headers                 []string
+		pageSize                int64
+		attrConfig              []*framework.AttributeConfig
+		maxProcessingBytesTotal int64
+		expectedObjects         []map[string]any
+		expectedHasNext         bool
+		expectedError           bool
+		errorContains           string
 	}{
-		"success_streaming_basic": {
-			bucket:              "test-bucket",
-			key:                 "basic-file.csv",
-			fileSize:            int64(len(validCSVData)),
-			headers:             []string{"Email", "Score"},
-			start:               1,
-			pageSize:            2,
-			getObjectStatusCode: http.StatusOK,
-			attrConfig: []*framework.AttributeConfig{
-				{
-					ExternalId: "Email",
-					Type:       framework.AttributeTypeString,
-				},
-				{
-					ExternalId: "Score",
-					Type:       framework.AttributeTypeString,
-				},
-			},
+		"success_basic_csv_page1": {
+			csvData:    csvDataBasic,
+			headers:    sampleHeaders,
+			pageSize:   2,
+			attrConfig: attrConfigDefault,
 			expectedObjects: []map[string]any{
-				{"Email": "1.1", "Score": "e685B8690f9fbce"},
-				{"Email": "2.2", "Score": "6EDdBA3a2DFA7De"},
+				{"name": "John", "age": float64(25), "city": "NYC", "aliases": []any{map[string]any{"alias": "Johnny"}}},
+				{"name": "Jane", "age": float64(30), "city": "LA", "aliases": []any{map[string]any{"alias": "Janey"}}},
 			},
 			expectedHasNext: true,
 		},
-		"success_streaming_with_cursor": {
-			bucket:              "test-bucket",
-			key:                 "basic-file.csv",
-			fileSize:            int64(len(validCSVData)),
-			headers:             []string{"Email", "Score"},
-			start:               3,
-			pageSize:            2,
-			getObjectStatusCode: http.StatusOK,
-			attrConfig: []*framework.AttributeConfig{
-				{
-					ExternalId: "Email",
-					Type:       framework.AttributeTypeString,
-				},
-				{
-					ExternalId: "Score",
-					Type:       framework.AttributeTypeString,
-				},
+		"success_basic_csv_page2_and_last": {
+			csvData:    `Bob,35,SF,"[{""alias"":""Bobby""}]"`,
+			headers:    sampleHeaders,
+			pageSize:   2,
+			attrConfig: attrConfigDefault,
+			expectedObjects: []map[string]any{
+				{"name": "Bob", "age": float64(35), "city": "SF", "aliases": []any{map[string]any{"alias": "Bobby"}}},
+			},
+			expectedHasNext: false,
+		},
+		"success_last_page_exact_size": {
+			csvData:    csvDataOneLine,
+			headers:    sampleHeaders,
+			pageSize:   1,
+			attrConfig: attrConfigDefault,
+			expectedObjects: []map[string]any{
+				{"name": "Alice", "age": float64(40), "city": "BOS", "aliases": ""},
+			},
+			expectedHasNext: false,
+		},
+		"success_page_size_larger_than_data": {
+			csvData:    csvDataOneLine,
+			headers:    sampleHeaders,
+			pageSize:   5,
+			attrConfig: attrConfigDefault,
+			expectedObjects: []map[string]any{
+				{"name": "Alice", "age": float64(40), "city": "BOS", "aliases": ""},
+			},
+			expectedHasNext: false,
+		},
+		"success_with_json_field_auto_detected": {
+			csvData:  `John,"[{""alias"": ""Johnny"", ""primary"": true}]"`,
+			headers:  []string{"name", "details"},
+			pageSize: 1,
+			attrConfig: []*framework.AttributeConfig{ // No specific config for "details"
+				{ExternalId: "name", Type: framework.AttributeTypeString},
 			},
 			expectedObjects: []map[string]any{
-				{"Email": "3.3", "Score": "b9Da13bedEc47de"},
-				{"Email": "4.4", "Score": "710D4dA2FAa96B5"},
+				{"name": "John", "details": []any{map[string]any{"alias": "Johnny", "primary": true}}},
+			},
+			expectedHasNext: false,
+		},
+		"success_numeric_conversion_int_and_double": {
+			csvData:  "John,85.5,4",
+			headers:  []string{"name", "score", "rating"},
+			pageSize: 1,
+			attrConfig: []*framework.AttributeConfig{
+				{ExternalId: "name", Type: framework.AttributeTypeString},
+				{ExternalId: "score", Type: framework.AttributeTypeDouble},
+				{ExternalId: "rating", Type: framework.AttributeTypeInt64}, // Becomes float64
+			},
+			expectedObjects: []map[string]any{
+				{"name": "John", "score": 85.5, "rating": float64(4)},
+			},
+			expectedHasNext: false,
+		},
+		"success_empty_csv_data_after_headers": {
+			csvData:         "",
+			headers:         sampleHeaders,
+			pageSize:        2,
+			attrConfig:      attrConfigDefault,
+			expectedObjects: []map[string]any{},
+			expectedHasNext: false,
+		},
+		"success_skips_empty_lines": {
+			csvData:    csvDataWithEmptyLine,
+			headers:    sampleHeaders,
+			pageSize:   2,
+			attrConfig: attrConfigDefault,
+			expectedObjects: []map[string]any{
+				{"name": "John", "age": float64(25), "city": "NYC", "aliases": ""},
+				{"name": "Jane", "age": float64(30), "city": "LA", "aliases": ""},
+			},
+			expectedHasNext: false, // Assuming the data ends after Jane
+		},
+		"error_invalid_number_in_data": {
+			csvData:       "John,not_a_number,NYC,",
+			headers:       sampleHeaders,
+			pageSize:      1,
+			attrConfig:    attrConfigDefault, // age is Int64
+			expectedError: true,
+			errorContains: `CSV contains invalid numeric value "not_a_number" in column "age"`,
+		},
+		"error_invalid_json_in_data": {
+			csvData:       `John,"[{invalid json}]"`,
+			headers:       []string{"name", "data"},
+			pageSize:      1,
+			attrConfig:    []*framework.AttributeConfig{{ExternalId: "name", Type: framework.AttributeTypeString}},
+			expectedError: true,
+			errorContains: `failed to unmarshal the value: "[{invalid json}]" in column: data`,
+		},
+		"error_row_exceeds_max_size": {
+			csvData:       csvDataExceedsRowLimit,
+			headers:       sampleHeaders,
+			pageSize:      2,
+			attrConfig:    attrConfigAllString,
+			expectedError: true,
+			errorContains: fmt.Sprintf("CSV file contains a single row larger than %d MB", s3_adapter.MaxCSVRowSizeBytes/(1024*1024)),
+		},
+		"success_max_processing_bytes_total_exact_one_row": {
+			csvData:                 csvDataForProcessingLimit, // "r1,1\n" (5b), "r2,22\n" (6b), "r3,333\n" (7b)
+			headers:                 headersForProcessingLimit,
+			pageSize:                3,
+			attrConfig:              attrConfigForProcessingLimit,
+			maxProcessingBytesTotal: 5, // Allows only first row (5 bytes)
+			expectedObjects: []map[string]any{
+				{"colA": "r1", "colB": "1"},
+			},
+			expectedHasNext: true, // because total data is larger
+		},
+		"success_max_processing_bytes_total_allows_two_rows": {
+			csvData:                 csvDataForProcessingLimit, // r1 (5b), r2 (6b) = 11b total
+			headers:                 headersForProcessingLimit,
+			pageSize:                3,
+			attrConfig:              attrConfigForProcessingLimit,
+			maxProcessingBytesTotal: 11, // Allows first two rows
+			expectedObjects: []map[string]any{
+				{"colA": "r1", "colB": "1"},
+				{"colA": "r2", "colB": "22"},
 			},
 			expectedHasNext: true,
 		},
-		"error_s3_read_failure": {
-			bucket:              "test-bucket",
-			key:                 "missing-file.csv",
-			fileSize:            1000,
-			headers:             []string{"Email"},
-			start:               1,
-			pageSize:            2,
-			getObjectStatusCode: http.StatusNotFound,
-			attrConfig: []*framework.AttributeConfig{
-				{
-					ExternalId: "Email",
-					Type:       framework.AttributeTypeString,
-				},
+		"success_max_processing_bytes_total_mid_row_allowance": {
+			// Total bytes read for r1=5. Next check: 5 < 8 is true. Read r2 (6 bytes). Total=11. Process r2.
+			// Next check: 11 < 8 is false. Break.
+			csvData:                 csvDataForProcessingLimit, // r1 (5b), r2 (6b), r3 (7b)
+			headers:                 headersForProcessingLimit,
+			pageSize:                3,
+			attrConfig:              attrConfigForProcessingLimit,
+			maxProcessingBytesTotal: 8, // Allows r1. Then r1+r2 (11b) > 8, so r2 is read & processed, then stop.
+			expectedObjects: []map[string]any{
+				{"colA": "r1", "colB": "1"},
+				{"colA": "r2", "colB": "22"}, // r2 is processed as 5(r1) < 8, then 5+6=11.
 			},
-			expectedError: true,
-			errorContains: "unable to read CSV file data",
+			expectedHasNext: true,
 		},
-		"error_permission_denied": {
-			bucket:              "test-bucket",
-			key:                 "forbidden.csv",
-			fileSize:            1000,
-			headers:             []string{"Email"},
-			start:               1,
-			pageSize:            2,
-			getObjectStatusCode: http.StatusForbidden,
-			attrConfig: []*framework.AttributeConfig{
-				{
-					ExternalId: "Email",
-					Type:       framework.AttributeTypeString,
-				},
+		"success_max_processing_bytes_total_unlimited": {
+			csvData:                 csvDataForProcessingLimit,
+			headers:                 headersForProcessingLimit,
+			pageSize:                3,
+			attrConfig:              attrConfigForProcessingLimit,
+			maxProcessingBytesTotal: 0, // Unlimited
+			expectedObjects: []map[string]any{
+				{"colA": "r1", "colB": "1"},
+				{"colA": "r2", "colB": "22"},
+				{"colA": "r3", "colB": "333"},
 			},
+			expectedHasNext: false,
+		},
+		"success_max_processing_bytes_total_less_than_first_row_but_first_row_read": {
+			csvData:                 csvDataForProcessingLimit, // r1 is 5 bytes
+			headers:                 headersForProcessingLimit,
+			pageSize:                3,
+			attrConfig:              attrConfigForProcessingLimit,
+			maxProcessingBytesTotal: 3, // Less than first row
+			expectedObjects: []map[string]any{
+				// First row (5 bytes) is read because initial totalBytes (0) < 3 is true.
+				// Then 5 >= 3, so loop breaks after processing it.
+				{"colA": "r1", "colB": "1"},
+			},
+			expectedHasNext: true,
+		},
+		"error_on_record_parse_after_first_row": {
+			// First row OK, second row has unclosed quote causing csv.Reader.Read() to error.
+			csvData:       "good,data\n\"bad,data",
+			headers:       []string{"f1", "f2"},
+			pageSize:      2,
+			attrConfig:    []*framework.AttributeConfig{{ExternalId: "f1", Type: framework.AttributeTypeString}, {ExternalId: "f2", Type: framework.AttributeTypeString}},
 			expectedError: true,
-			errorContains: "unable to read CSV file data",
+			// The error message includes the problematic row.
+			errorContains: `CSV file format is invalid or corrupted (record parse error): parse error on line 1, column 10: extraneous or missing " in quoted-field. Row: '"bad,data'`,
+		},
+		"header_name_not_in_attr_config": {
+			csvData:  "valX,valY",
+			headers:  []string{"HeaderX", "HeaderY"}, // HeaderY not in attrConfig
+			pageSize: 1,
+			attrConfig: []*framework.AttributeConfig{
+				{ExternalId: "HeaderX", Type: framework.AttributeTypeString},
+			},
+			expectedObjects: []map[string]any{
+				{"HeaderX": "valX", "HeaderY": "valY"}, // HeaderY included as string
+			},
+			expectedHasNext: false,
+		},
+		"attr_config_for_non_existent_header": {
+			csvData:  "valA",
+			headers:  []string{"HeaderA"},
+			pageSize: 1,
+			attrConfig: []*framework.AttributeConfig{
+				{ExternalId: "HeaderA", Type: framework.AttributeTypeString},
+				{ExternalId: "NonExistentHeader", Type: framework.AttributeTypeInt64},
+			},
+			expectedObjects: []map[string]any{
+				{"HeaderA": "valA"},
+			},
+			expectedHasNext: false,
 		},
 	}
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			awsConfig := mockS3Config(http.StatusOK, tt.getObjectStatusCode)
-			handler := &s3_adapter.S3Handler{Client: s3.NewFromConfig(*awsConfig)}
-
-			ctx := context.Background()
-			objects, hasNext, err := s3_adapter.StreamingCSVToPage(
-				ctx, handler, tt.bucket, tt.key, tt.fileSize,
-				tt.headers, tt.start, tt.pageSize, tt.attrConfig,
+			streamReader := bufio.NewReader(strings.NewReader(tt.csvData))
+			objects, _, hasNext, err := s3_adapter.StreamingCSVToPage(
+				streamReader,
+				tt.headers,
+				tt.pageSize,
+				tt.attrConfig,
+				tt.maxProcessingBytesTotal,
 			)
 
 			if tt.expectedError {
 				if err == nil {
 					t.Errorf("Expected error but got none")
-				} else if tt.errorContains != "" && !contains(err.Error(), tt.errorContains) {
+				} else if tt.errorContains != "" && !strings.Contains(err.Error(), tt.errorContains) {
 					t.Errorf("Expected error to contain '%s', got: %v", tt.errorContains, err)
 				}
 			} else {
 				if err != nil {
 					t.Errorf("Expected no error, got: %v", err)
 				}
-
-				if diff := cmp.Diff(objects, tt.expectedObjects); diff != "" {
+				if diff := cmp.Diff(tt.expectedObjects, objects); diff != "" {
 					t.Errorf("Objects mismatch: %s", diff)
 				}
-
 				if hasNext != tt.expectedHasNext {
 					t.Errorf("HasNext mismatch: got %v, want %v", hasNext, tt.expectedHasNext)
 				}
 			}
 		})
 	}
-}
-
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(substr) == 0 ||
-		(len(s) > len(substr) && (s[:len(substr)] == substr || s[len(s)-len(substr):] == substr ||
-			func() bool {
-				for i := 0; i <= len(s)-len(substr); i++ {
-					if s[i:i+len(substr)] == substr {
-						return true
-					}
-				}
-
-				return false
-			}())))
 }

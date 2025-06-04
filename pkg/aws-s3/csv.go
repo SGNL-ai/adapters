@@ -59,7 +59,7 @@ func CSVHeaders(reader *bufio.Reader) (headers []string, bytesReadForHeader int6
 	csvReader := csv.NewReader(bytes.NewReader(headerLineBytes))
 	parsedHeaders, parseErr := csvReader.Read()
 	if parseErr != nil {
-		return nil, currentBytesRead, fmt.Errorf("CSV file format is invalid or corrupted: %v", err)
+		return nil, currentBytesRead, fmt.Errorf("CSV file format is invalid or corrupted: %v", parseErr)
 	}
 
 	if len(parsedHeaders) == 0 {
@@ -172,7 +172,7 @@ func StreamingCSVToPage(
 					continue
 				}
 			} else {
-				return objects, totalBytesReadThisCall, false, fmt.Errorf("CSV file format is invalid or corrupted (record parse error): %w. Row: '%s'", recordParseErr, string(rowBytes))
+				return objects, totalBytesReadThisCall, false, fmt.Errorf("CSV file format is invalid or corrupted: %w", recordParseErr)
 			}
 		}
 
@@ -231,6 +231,13 @@ func StreamingCSVToPage(
 
 		if !hasNext {
 			break
+		}
+	}
+
+	if hasNext && int64(len(objects)) == pageSize {
+		_, errPeek := streamReader.Peek(1)
+		if errPeek == io.EOF {
+			hasNext = false
 		}
 	}
 

@@ -122,7 +122,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	s3HeaderStreamOutput, err := handler.GetObjectStream(ctx, request.Bucket, objectKey, nil)
 	if err != nil {
 		return nil, customerror.UpdateError(&framework.Error{
-			Message: fmt.Sprintf("Failed to fetch entity from AWS S3: %s, error opening header stream: %v.", entityName, err),
+			Message: fmt.Sprintf("Failed to fetch entity from AWS S3: %s, error: %v.", entityName, err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		}, customerror.WithRequestTimeoutMessage(err, request.RequestTimeoutSeconds))
 	}
@@ -141,7 +141,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	parsedHeaders, bytesReadForHeaderLine, err := CSVHeaders(headerBufReader)
 	if err != nil {
 		return nil, customerror.UpdateError(&framework.Error{
-			Message: fmt.Sprintf("unable to parse CSV file headers: %v", err),
+			Message: fmt.Sprintf("Unable to parse CSV file headers: %v", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		}, customerror.WithRequestTimeoutMessage(err, request.RequestTimeoutSeconds))
 	}

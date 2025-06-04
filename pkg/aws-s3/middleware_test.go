@@ -7,8 +7,10 @@ package awss3_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -19,12 +21,12 @@ import (
 )
 
 const (
-	emptyCSVFileCode       = 800
-	headersOnlyCSVFileCode = 801
-	largeCSVFileCode       = -300 // Added for large file streaming tests
+	emptyCSVFileCode             = 800
+	headersOnlyCSVFileCode       = 801
+	largeCSVFileCode             = -300
+	largeFileHeaderIndicatorCode = -301
 )
 
-// Custom middleware to mock S3 responses.
 type mockS3Middleware struct {
 	headStatusCode int
 	getStatusCode  int
@@ -43,11 +45,11 @@ func (m *mockS3Middleware) HandleSerialize(
 	metadata middleware.Metadata,
 	err error,
 ) {
-	switch in.Parameters.(type) {
+	switch params := in.Parameters.(type) {
 	case *s3.HeadObjectInput:
-		return m.mockHeadObject(ctx, in, next)
+		return m.mockHeadObject(ctx, params, next)
 	case *s3.GetObjectInput:
-		return m.mockGetObject(ctx, in, next)
+		return m.mockGetObject(ctx, params, next)
 	default:
 		return next.HandleSerialize(ctx, in)
 	}
@@ -55,50 +57,40 @@ func (m *mockS3Middleware) HandleSerialize(
 
 func (m *mockS3Middleware) mockHeadObject(
 	_ context.Context,
-	in middleware.SerializeInput,
+	_ *s3.HeadObjectInput,
 	_ middleware.SerializeHandler,
 ) (
 	out middleware.SerializeOutput,
 	metadata middleware.Metadata,
 	err error,
 ) {
-	// Check if this is for the large file test case
-	if headInput, ok := in.Parameters.(*s3.HeadObjectInput); ok {
-		if headInput.Key != nil && strings.Contains(*headInput.Key, "large-customers") {
-			// Return size > streaming threshold (10MB) for large file test
-			largeSize := int64(11 * 1024 * 1024) // 11MB
-			out.Result = &s3.HeadObjectOutput{
-				ContentLength: &largeSize,
-				ContentType:   aws.String("text/csv"),
-				ETag:          aws.String("\"f8a7b3f9be0e4c3d2e1a0b9c8d7e6f5\""),
-				LastModified:  aws.Time(time.Now()),
-				VersionId:     aws.String("3/L4kqtJlcpXroDTDmJ+rmSpXd3dIbrHY"),
-				Metadata: map[string]string{
-					"example-metadata-key": "example-metadata-value",
-				},
-			}
-
-			return
+	if m.headStatusCode == largeFileHeaderIndicatorCode {
+		largeSize := int64(11 * 1024 * 1024)
+		out.Result = &s3.HeadObjectOutput{
+			ContentLength: &largeSize,
+			ContentType:   aws.String("text/csv"),
+			ETag:          aws.String("\"f8a7b3f9be0e4c3d2e1a0b9c8d7e6f5\""),
+			LastModified:  aws.Time(time.Now()),
+			VersionId:     aws.String("3/L4kqtJlcpXroDTDmJ+rmSpXd3dIbrHY"),
+			Metadata:      map[string]string{"example-metadata-key": "example-metadata-value"},
 		}
+		return
 	}
 
 	switch m.headStatusCode {
 	case http.StatusOK:
 		out.Result = &s3.HeadObjectOutput{
-			ContentLength: aws.Int64(1234),
+			ContentLength: aws.Int64(int64(len(validCSVData))),
 			ContentType:   aws.String("text/csv"),
 			ETag:          aws.String("\"f8a7b3f9be0e4c3d2e1a0b9c8d7e6f5\""),
 			LastModified:  aws.Time(time.Now()),
 			VersionId:     aws.String("3/L4kqtJlcpXroDTDmJ+rmSpXd3dIbrHY"),
-			Metadata: map[string]string{
-				"example-metadata-key": "example-metadata-value",
-			},
+			Metadata:      map[string]string{"example-metadata-key": "example-metadata-value"},
 		}
 	case http.StatusMovedPermanently:
 		err = &smithyhttp.ResponseError{
 			Response: &smithyhttp.Response{Response: &http.Response{StatusCode: http.StatusMovedPermanently}},
-			// nolint: lll
-			Err: errors.New("permanent redirect: The bucket you are attempting to access must be addressed using the specified endpoint"),
+			Err:      errors.New("permanent redirect: The bucket you are attempting to access must be addressed using the specified endpoint"),
 		}
 	case http.StatusForbidden:
 		err = &smithyhttp.ResponseError{
@@ -111,104 +103,99 @@ func (m *mockS3Middleware) mockHeadObject(
 			Err:      errors.New("not found: The specified key does not exist"),
 		}
 	default:
-		err = errors.New("unexpected status code")
+		err = fmt.Errorf("mockHeadObject: unexpected headStatusCode %d", m.headStatusCode)
 	}
-
 	return
 }
 
 func (m *mockS3Middleware) mockGetObject(
 	_ context.Context,
-	_ middleware.SerializeInput,
+	getObjectInput *s3.GetObjectInput,
 	_ middleware.SerializeHandler,
 ) (
 	out middleware.SerializeOutput,
 	metadata middleware.Metadata,
 	err error,
 ) {
+	var fullDataString string
+
 	switch m.getStatusCode {
-	case emptyCSVFileCode:
-		emptyCSVFile := ""
-		out.Result = &s3.GetObjectOutput{
-			Body:          io.NopCloser(strings.NewReader(emptyCSVFile)),
-			ContentLength: aws.Int64(int64(len(emptyCSVFile))),
-			ContentType:   aws.String("text/csv"),
-			ETag:          aws.String("\"f8a7b3f9be0e4c3d2e1a0b9c8d7e6f5\""),
-			LastModified:  aws.Time(time.Now()),
-			VersionId:     aws.String("3/L4kqtJlcpXroDTDmJ+rmSpXd3dIbrHY"),
-			Metadata: map[string]string{
-				"example-metadata-key": "example-metadata-value",
-			},
-		}
-	case headersOnlyCSVFileCode:
-		out.Result = &s3.GetObjectOutput{
-			Body:          io.NopCloser(strings.NewReader(headersOnlyCSVData)),
-			ContentLength: aws.Int64(int64(len(headersOnlyCSVData))),
-			ContentType:   aws.String("text/csv"),
-			ETag:          aws.String("\"f8a7b3f9be0e4c3d2e1a0b9c8d7e6f5\""),
-			LastModified:  aws.Time(time.Now()),
-			VersionId:     aws.String("3/L4kqtJlcpXroDTDmJ+rmSpXd3dIbrHY"),
-			Metadata: map[string]string{
-				"example-metadata-key": "example-metadata-value",
-			},
-		}
-	case largeCSVFileCode:
-		largeData := generateLargeCSVData()
-		out.Result = &s3.GetObjectOutput{
-			Body:          io.NopCloser(strings.NewReader(largeData)),
-			ContentLength: aws.Int64(int64(len(largeData))),
-			ContentType:   aws.String("text/csv"),
-			ETag:          aws.String("\"f8a7b3f9be0e4c3d2e1a0b9c8d7e6f5\""),
-			LastModified:  aws.Time(time.Now()),
-			VersionId:     aws.String("3/L4kqtJlcpXroDTDmJ+rmSpXd3dIbrHY"),
-			Metadata: map[string]string{
-				"example-metadata-key": "example-metadata-value",
-			},
-		}
-	case -200:
-		out.Result = &s3.GetObjectOutput{
-			Body:          io.NopCloser(strings.NewReader(corruptCSVData)),
-			ContentLength: aws.Int64(int64(len(corruptCSVData))),
-			ContentType:   aws.String("text/csv"),
-			ETag:          aws.String("\"f8a7b3f9be0e4c3d2e1a0b9c8d7e6f5\""),
-			LastModified:  aws.Time(time.Now()),
-			VersionId:     aws.String("3/L4kqtJlcpXroDTDmJ+rmSpXd3dIbrHY"),
-			Metadata: map[string]string{
-				"example-metadata-key": "example-metadata-value",
-			},
-		}
-	case http.StatusOK:
-		out.Result = &s3.GetObjectOutput{
-			Body:          io.NopCloser(strings.NewReader(validCSVData)),
-			ContentLength: aws.Int64(int64(len(validCSVData))),
-			ContentType:   aws.String("text/csv"),
-			ETag:          aws.String("\"f8a7b3f9be0e4c3d2e1a0b9c8d7e6f5\""),
-			LastModified:  aws.Time(time.Now()),
-			VersionId:     aws.String("3/L4kqtJlcpXroDTDmJ+rmSpXd3dIbrHY"),
-			Metadata: map[string]string{
-				"example-metadata-key": "example-metadata-value",
-			},
-		}
 	case http.StatusMovedPermanently:
 		err = &smithyhttp.ResponseError{
 			Response: &smithyhttp.Response{Response: &http.Response{StatusCode: http.StatusMovedPermanently}},
-			// nolint: lll
-			Err: errors.New("permanent redirect: The bucket you are attempting to access must be addressed using the specified endpoint"),
+			Err:      errors.New("permanent redirect: The bucket you are attempting to access must be addressed using the specified endpoint"),
 		}
+		return
 	case http.StatusForbidden:
 		err = &smithyhttp.ResponseError{
 			Response: &smithyhttp.Response{Response: &http.Response{StatusCode: http.StatusForbidden}},
 			Err:      errors.New("access denied: Access Denied"),
 		}
+		return
 	case http.StatusNotFound:
 		err = &smithyhttp.ResponseError{
 			Response: &smithyhttp.Response{Response: &http.Response{StatusCode: http.StatusNotFound}},
 			Err:      errors.New("no such key: The specified key does not exist"),
 		}
-	default:
-		err = errors.New("unexpected status code")
+		return
+	case http.StatusRequestedRangeNotSatisfiable:
+		err = &smithyhttp.ResponseError{
+			Response: &smithyhttp.Response{Response: &http.Response{StatusCode: http.StatusRequestedRangeNotSatisfiable}},
+			Err:      errors.New("range not satisfiable"),
+		}
+		return
 	}
 
+	switch m.getStatusCode {
+	case emptyCSVFileCode:
+		fullDataString = ""
+	case headersOnlyCSVFileCode:
+		fullDataString = headersOnlyCSVData
+	case largeCSVFileCode:
+		fullDataString = generateLargeCSVData()
+	case -200:
+		fullDataString = corruptCSVData
+	case http.StatusOK:
+		fullDataString = validCSVData
+	default:
+		err = fmt.Errorf("mockGetObject: unexpected getStatusCode %d for body generation", m.getStatusCode)
+		return
+	}
+
+	startByte := int64(0)
+	servedData := fullDataString
+
+	if getObjectInput.Range != nil && *getObjectInput.Range != "" {
+		rangeStr := *getObjectInput.Range
+		if strings.HasPrefix(rangeStr, "bytes=") {
+			rangeValue := strings.TrimPrefix(rangeStr, "bytes=")
+			parts := strings.SplitN(rangeValue, "-", 2)
+
+			if parsedStart, parseErr := strconv.ParseInt(parts[0], 10, 64); parseErr == nil {
+				startByte = parsedStart
+			}
+
+			if startByte < 0 {
+				startByte = 0
+			}
+
+			if startByte >= int64(len(fullDataString)) {
+				servedData = ""
+			} else {
+				servedData = fullDataString[startByte:]
+			}
+		}
+	}
+
+	out.Result = &s3.GetObjectOutput{
+		Body:          io.NopCloser(strings.NewReader(servedData)),
+		ContentLength: aws.Int64(int64(len(servedData))),
+		ContentType:   aws.String("text/csv"),
+		ETag:          aws.String("\"f8a7b3f9be0e4c3d2e1a0b9c8d7e6f5\""),
+		LastModified:  aws.Time(time.Now()),
+		VersionId:     aws.String("3/L4kqtJlcpXroDTDmJ+rmSpXd3dIbrHY"),
+		Metadata:      map[string]string{"example-metadata-key": "example-metadata-value"},
+	}
 	return
 }
 
@@ -218,7 +205,6 @@ func mockS3Config(headStatusCode, getStatusCode int) *aws.Config {
 		getStatusCode:  getStatusCode,
 	}
 
-	// Create a custom AWS config with the mock middleware
 	return &aws.Config{
 		Region: "us-west-2",
 		APIOptions: []func(*middleware.Stack) error{
