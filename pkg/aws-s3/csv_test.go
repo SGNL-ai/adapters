@@ -353,8 +353,8 @@ Bob,35,SF,"[{""alias"":""Bobby""}]"`
 				{ExternalId: "f2", Type: framework.AttributeTypeString}},
 			expectedError: true,
 			// The error message includes the problematic row.
-			errorContains: `CSV file format is invalid or corrupted (record parse error): parse error on line 1,
-			column 10: extraneous or missing " in quoted-field. Row: '"bad,data'`,
+			errorContains: "CSV file format is invalid or corrupted: parse error on line 1, " +
+				"column 10: extraneous or missing \" in quoted-field",
 		},
 		"header_name_not_in_attr_config": {
 			csvData:  "valX,valY",

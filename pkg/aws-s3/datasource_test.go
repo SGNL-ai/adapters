@@ -245,7 +245,7 @@ func TestDatasource_GetPage(t *testing.T) {
 			headObjectStatusCode: http.StatusOK,
 			getObjectStatusCode:  emptyCSVFileCode,
 			expectedError: &framework.Error{
-				Message: "unable to parse CSV file headers: CSV header is empty or missing",
+				Message: "Unable to parse CSV file headers: CSV header is empty or missing",
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			},
 		},
@@ -259,9 +259,7 @@ func TestDatasource_GetPage(t *testing.T) {
 			getObjectStatusCode:  -200, // CorruptCSVData
 			expectedError: &framework.Error{ // Adjusted to match datasource.go's direct wrapping
 				Message: "Failed to fetch entity from AWS S3: corrupt, error: CSV file format is invalid or corrupted: " +
-					"parse error on line 1, column 34: bare \" in non-quoted-field. Row: '3	b9Da13bedEc47de	Jeffery	Ibarra	\"Rose	 " +
-					"Deleon and Sanders\"	Darlenebury	Albania	(840)539-1797x479	209-519-5817	deckerjamie@bartlett.biz	2020-03-30	" +
-					"https://www.morgan-phelps.com/",
+					"parse error on line 1, column 34: bare \" in non-quoted-field.",
 				Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			},
 		},
