@@ -3,9 +3,12 @@
 package awss3
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"path/filepath"
 	"time"
@@ -19,6 +22,17 @@ import (
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	customerror "github.com/sgnl-ai/adapters/pkg/errors"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
+)
+
+const MaxBytesToProcessPerPage = 200 * MaxCSVRowSizeBytes // 200MB
+
+// BOM (Byte Order Mark) patterns for different encodings.
+var (
+	UTF8BOM    = []byte{0xEF, 0xBB, 0xBF}
+	UTF16LEBOM = []byte{0xFF, 0xFE}
+	UTF16BEBOM = []byte{0xFE, 0xFF}
+	UTF32LEBOM = []byte{0xFF, 0xFE, 0x00, 0x00}
+	UTF32BEBOM = []byte{0x00, 0x00, 0xFE, 0xFF}
 )
 
 type Datasource struct {
@@ -41,6 +55,35 @@ func NewClient(client *http.Client, awsConfig *aws.Config) (Client, error) {
 		AWSConfig: awsConfig,
 		Client:    client,
 	}, nil
+}
+
+func stripBOM(reader *bufio.Reader) (bomLength int, err error) {
+	peekedBytes, peekErr := reader.Peek(len(UTF32LEBOM))
+	if peekErr != nil && peekErr != io.EOF && peekErr != bufio.ErrBufferFull {
+		return 0, fmt.Errorf("error peeking for BOM: %w", peekErr)
+	}
+
+	identifiedBomLength := 0
+	if bytes.HasPrefix(peekedBytes, UTF32LEBOM) {
+		identifiedBomLength = len(UTF32LEBOM)
+	} else if bytes.HasPrefix(peekedBytes, UTF32BEBOM) {
+		identifiedBomLength = len(UTF32BEBOM)
+	} else if bytes.HasPrefix(peekedBytes, UTF8BOM) {
+		identifiedBomLength = len(UTF8BOM)
+	} else if bytes.HasPrefix(peekedBytes, UTF16LEBOM) {
+		identifiedBomLength = len(UTF16LEBOM)
+	} else if bytes.HasPrefix(peekedBytes, UTF16BEBOM) {
+		identifiedBomLength = len(UTF16BEBOM)
+	}
+
+	if identifiedBomLength > 0 {
+		_, discardErr := reader.Discard(identifiedBomLength)
+		if discardErr != nil {
+			return 0, fmt.Errorf("error discarding BOM (length %d): %w", identifiedBomLength, discardErr)
+		}
+		return identifiedBomLength, nil
+	}
+	return 0, nil
 }
 
 func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, *framework.Error) {
@@ -66,9 +109,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		return nil, customerror.UpdateError(&framework.Error{
 			Message: fmt.Sprintf("Failed to fetch entity from AWS S3: %s, error: %v.", entityName, err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
-		},
-			customerror.WithRequestTimeoutMessage(err, request.RequestTimeoutSeconds),
-		)
+		}, customerror.WithRequestTimeoutMessage(err, request.RequestTimeoutSeconds))
 	}
 
 	if fileSize == 0 {
@@ -78,155 +119,92 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		}
 	}
 
-	const streamingThreshold = 10 * StreamingChunkSize // 10MB
+	s3HeaderStreamOutput, err := handler.GetObjectStream(ctx, request.Bucket, objectKey, nil)
+	if err != nil {
+		return nil, customerror.UpdateError(&framework.Error{
+			Message: fmt.Sprintf("Failed to fetch entity from AWS S3: %s, error opening header stream: %v.", entityName, err),
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}, customerror.WithRequestTimeoutMessage(err, request.RequestTimeoutSeconds))
+	}
+	defer s3HeaderStreamOutput.Body.Close()
 
-	var (
-		objects    []map[string]any
-		hasNext    bool
-		processErr error
+	headerBufReader := bufio.NewReader(s3HeaderStreamOutput.Body)
+
+	bomLength, bomErr := stripBOM(headerBufReader)
+	if bomErr != nil {
+		return nil, customerror.UpdateError(&framework.Error{
+			Message: fmt.Sprintf("Failed to fetch entity from AWS S3: %s, error processing BOM: %v", entityName, bomErr),
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}, customerror.WithRequestTimeoutMessage(bomErr, request.RequestTimeoutSeconds))
+	}
+
+	parsedHeaders, bytesReadForHeaderLine, err := CSVHeaders(headerBufReader)
+	if err != nil {
+		return nil, customerror.UpdateError(&framework.Error{
+			Message: fmt.Sprintf("unable to parse CSV file headers: %v", err),
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}, customerror.WithRequestTimeoutMessage(err, request.RequestTimeoutSeconds))
+	}
+	s3HeaderStreamOutput.Body.Close()
+
+	firstDataByteOffset := int64(bomLength) + bytesReadForHeaderLine
+
+	var startBytePos int64
+	if request.Cursor != nil && request.Cursor.Cursor != nil {
+		startBytePos = *request.Cursor.Cursor
+	} else {
+		startBytePos = firstDataByteOffset
+	}
+
+	if startBytePos >= fileSize {
+		return &Response{StatusCode: 200, Objects: []map[string]any{}}, nil
+	}
+
+	rangeHeaderForData := fmt.Sprintf("bytes=%d-", startBytePos)
+	s3DataStreamOutput, err := handler.GetObjectStream(ctx, request.Bucket, objectKey, &rangeHeaderForData)
+	if err != nil {
+		return nil, customerror.UpdateError(&framework.Error{
+			Message: fmt.Sprintf("Failed to fetch entity from AWS S3: %v", err),
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}, customerror.WithRequestTimeoutMessage(err, request.RequestTimeoutSeconds))
+	}
+	defer s3DataStreamOutput.Body.Close()
+
+	dataBufReader := bufio.NewReader(s3DataStreamOutput.Body)
+
+	var objects []map[string]any
+	var hasNext bool
+	var bytesReadFromDataStream int64
+	var processErr error
+
+	objects, bytesReadFromDataStream, hasNext, processErr = StreamingCSVToPage(
+		dataBufReader,
+		parsedHeaders,
+		request.PageSize,
+		request.AttributeConfig,
+		MaxBytesToProcessPerPage,
 	)
 
-	if fileSize > streamingThreshold {
-		// For large files, use byte-based cursor
-		startBytePos := int64(0) // Default to start after headers
-		if request.Cursor != nil && request.Cursor.Cursor != nil {
-			startBytePos = *request.Cursor.Cursor
-		}
+	if processErr != nil {
+		return nil, customerror.UpdateError(&framework.Error{
+			Message: fmt.Sprintf("Failed to fetch entity from AWS S3: %s, error: %v.", entityName, processErr),
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}, customerror.WithRequestTimeoutMessage(processErr, request.RequestTimeoutSeconds))
+	}
 
-		var nextBytePos int64
-		objects, hasNext, nextBytePos, processErr = d.processLargeFileStreaming(
-			ctx, handler, request.Bucket, objectKey, fileSize, startBytePos, request.PageSize, request.AttributeConfig,
-		)
+	response := &Response{
+		StatusCode: 200,
+		Objects:    objects,
+	}
 
-		if processErr != nil {
-			return nil, customerror.UpdateError(&framework.Error{
-				Message: fmt.Sprintf("Failed to fetch entity from AWS S3: %s, error: %v.", entityName, processErr),
-				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
-			},
-				customerror.WithRequestTimeoutMessage(processErr, request.RequestTimeoutSeconds),
-			)
-		}
-
-		response := &Response{
-			StatusCode: 200,
-			Objects:    objects,
-		}
-
-		if hasNext {
+	if hasNext {
+		nextBytePos := startBytePos + bytesReadFromDataStream
+		if nextBytePos < fileSize {
 			response.NextCursor = &pagination.CompositeCursor[int64]{Cursor: &nextBytePos}
 		}
-
-		return response, nil
-	} else {
-		// For small files, use row-based cursor (existing logic)
-		start := int64(1)
-		if request.Cursor != nil && request.Cursor.Cursor != nil {
-			start = *request.Cursor.Cursor
-		}
-
-		objects, hasNext, processErr = d.processSmallFileTraditional(
-			ctx, handler, request.Bucket, objectKey, start, request.PageSize, request.AttributeConfig,
-		)
-
-		if processErr != nil {
-			return nil, customerror.UpdateError(&framework.Error{
-				Message: fmt.Sprintf("Failed to fetch entity from AWS S3: %s, error: %v.", entityName, processErr),
-				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
-			},
-				customerror.WithRequestTimeoutMessage(processErr, request.RequestTimeoutSeconds),
-			)
-		}
-
-		response := &Response{
-			StatusCode: 200,
-			Objects:    objects,
-		}
-
-		if hasNext {
-			actualRowsReturned := int64(len(objects))
-			nextPage := start + actualRowsReturned
-			response.NextCursor = &pagination.CompositeCursor[int64]{Cursor: &nextPage}
-		}
-
-		return response, nil
-	}
-}
-
-func (d *Datasource) processLargeFileStreaming(
-	ctx context.Context,
-	handler *S3Handler,
-	bucket, key string,
-	fileSize, startBytePos, pageSize int64,
-	attrConfig []*framework.AttributeConfig,
-) ([]map[string]any, bool, int64, error) {
-	// Always read headers first
-	headerChunk, err := handler.GetHeaderChunk(ctx, bucket, key)
-	if err != nil {
-		return nil, false, 0, fmt.Errorf("unable to read CSV file headers: %v", err)
 	}
 
-	headers, err := CSVHeaders(headerChunk)
-	if err != nil {
-		return nil, false, 0, fmt.Errorf("unable to parse CSV file headers: %v", err)
-	}
-
-	if len(headers) == 0 {
-		return nil, false, 0, fmt.Errorf("CSV file does not contain valid column headers")
-	}
-
-	// If startBytePos is 0 (first request), calculate position after headers
-	if startBytePos == 0 {
-		startBytePos = calculateHeaderEndPosition(headerChunk)
-	}
-
-	objects, hasNext, nextBytePos, err := StreamingCSVToPage(
-		ctx, handler, bucket, key, fileSize, headers, startBytePos, pageSize, attrConfig,
-	)
-	if err != nil {
-		return nil, false, 0, fmt.Errorf("unable to process CSV file data: %v", err)
-	}
-
-	return objects, hasNext, nextBytePos, nil
-}
-
-func (d *Datasource) processSmallFileTraditional(
-	ctx context.Context,
-	handler *S3Handler,
-	bucket, key string,
-	start, pageSize int64,
-	attrConfig []*framework.AttributeConfig,
-) ([]map[string]any, bool, error) {
-	fileBytes, err := handler.GetFile(ctx, bucket, key)
-	if err != nil {
-		return nil, false, fmt.Errorf("unable to read CSV file: %v", err)
-	}
-
-	if fileBytes == nil {
-		return nil, false, fmt.Errorf("CSV file is empty or corrupted")
-	}
-
-	objects, hasNext, err := CSVBytesToPage(fileBytes, start, pageSize, attrConfig)
-	if err != nil {
-		return nil, false, fmt.Errorf("unable to process CSV file data: %v", err)
-	}
-
-	return objects, hasNext, nil
-}
-
-// calculateHeaderEndPosition finds the byte position right after the header line
-func calculateHeaderEndPosition(headerChunk *[]byte) int64 {
-	if headerChunk == nil || len(*headerChunk) == 0 {
-		return 0
-	}
-
-	// Find the first newline (end of header row)
-	for i, b := range *headerChunk {
-		if b == '\n' {
-			return int64(i + 1) // Position after the newline
-		}
-	}
-
-	return int64(len(*headerChunk)) // If no newline found, start from end of chunk
+	return response, nil
 }
 
 // httpResponseFromError returns a awshttp.ResponseError from an SDK error.

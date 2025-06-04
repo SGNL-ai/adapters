@@ -2,7 +2,7 @@
 package config
 
 var (
-	DefaultRequestTimeout = 600 // 10 seconds
+	DefaultRequestTimeout = 10 // 10 seconds
 )
 
 // CommonConfig is a collection of configuration common to all adapters.
