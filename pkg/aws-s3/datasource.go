@@ -81,8 +81,10 @@ func stripBOM(reader *bufio.Reader) (bomLength int, err error) {
 		if discardErr != nil {
 			return 0, fmt.Errorf("error discarding BOM (length %d): %w", identifiedBomLength, discardErr)
 		}
+
 		return identifiedBomLength, nil
 	}
+
 	return 0, nil
 }
 
@@ -145,6 +147,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		}, customerror.WithRequestTimeoutMessage(err, request.RequestTimeoutSeconds))
 	}
+
 	s3HeaderStreamOutput.Body.Close()
 
 	firstDataByteOffset := int64(bomLength) + bytesReadForHeaderLine
@@ -162,20 +165,24 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 
 	rangeHeaderForData := fmt.Sprintf("bytes=%d-", startBytePos)
 	s3DataStreamOutput, err := handler.GetObjectStream(ctx, request.Bucket, objectKey, &rangeHeaderForData)
+
 	if err != nil {
 		return nil, customerror.UpdateError(&framework.Error{
 			Message: fmt.Sprintf("Failed to fetch entity from AWS S3: %v", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		}, customerror.WithRequestTimeoutMessage(err, request.RequestTimeoutSeconds))
 	}
+
 	defer s3DataStreamOutput.Body.Close()
 
 	dataBufReader := bufio.NewReader(s3DataStreamOutput.Body)
 
-	var objects []map[string]any
-	var hasNext bool
-	var bytesReadFromDataStream int64
-	var processErr error
+	var (
+		objects                 []map[string]any
+		hasNext                 bool
+		bytesReadFromDataStream int64
+		processErr              error
+	)
 
 	objects, bytesReadFromDataStream, hasNext, processErr = StreamingCSVToPage(
 		dataBufReader,

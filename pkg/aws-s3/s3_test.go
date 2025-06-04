@@ -181,6 +181,7 @@ func TestS3Handler_GetObjectStream(t *testing.T) {
 				} else if tt.errorContains != "" && !strings.Contains(err.Error(), tt.errorContains) {
 					t.Errorf("Expected error to contain '%s', got: %v", tt.errorContains, err)
 				}
+
 				if response != nil {
 					t.Errorf("Expected nil response on error, got: %v", response)
 				}
@@ -188,17 +189,22 @@ func TestS3Handler_GetObjectStream(t *testing.T) {
 				if err != nil {
 					t.Errorf("Expected no error, got: %v", err)
 				}
+
 				if response == nil {
 					t.Fatalf("Expected non-nil response")
 				}
+
 				if response.Body == nil {
 					t.Fatalf("Expected non-nil response.Body")
 				}
+
 				defer response.Body.Close()
 				bodyBytes, readErr := io.ReadAll(response.Body)
+
 				if readErr != nil {
 					t.Fatalf("Failed to read response body: %v", readErr)
 				}
+
 				if diff := cmp.Diff(tt.expectedContent, string(bodyBytes)); diff != "" {
 					t.Errorf("Content mismatch (-want +got):\n%s", diff)
 				}
@@ -266,7 +272,8 @@ func TestS3Handler_GetFileSize(t *testing.T) {
 				// This is a conceptual reminder that the mock would need adjustment for this path.
 				// For now, we can't directly trigger this path with the existing mock without changes to it.
 				// One way to test would be to make mockS3Config return a specially crafted HeadObjectOutput.
-				t.Skip("Skipping test for 'unable to determine file size' as mock needs modification to support nil ContentLength on success.")
+				t.Skip("Skipping test for 'unable to determine file size' as mock needs modification to support " +
+					"nil ContentLength on success.")
 			}
 
 			awsConfig := mockS3Config(tt.headObjectStatusCode, http.StatusOK) // getObjectStatusCode doesn't matter

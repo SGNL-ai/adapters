@@ -69,8 +69,8 @@ func TestCSVHeaders(t *testing.T) {
 			inputReaderFn: func() *bufio.Reader {
 				return bufio.NewReader(strings.NewReader("\n"))
 			},
-			expectedError: true,                                      // csv.Reader will return an error on empty line if FieldsPerRecord is not < 0
-			errorContains: "CSV file format is invalid or corrupted", // Go's csv.Reader error for empty record
+			expectedError: true,
+			errorContains: "CSV file format is invalid or corrupted",
 		},
 		"invalid_csv_format_unclosed_quote": {
 			inputReaderFn: func() *bufio.Reader {
@@ -106,6 +106,7 @@ func TestCSVHeaders(t *testing.T) {
 				} else if tt.errorContains != "" && !strings.Contains(err.Error(), tt.errorContains) {
 					t.Errorf("Expected error to contain '%s', got: %v", tt.errorContains, err)
 				}
+
 				if headers != nil {
 					t.Errorf("Expected nil headers on error, got: %v", headers)
 				}
@@ -113,9 +114,11 @@ func TestCSVHeaders(t *testing.T) {
 				if err != nil {
 					t.Errorf("Expected no error, got: %v", err)
 				}
+
 				if diff := cmp.Diff(tt.expectedHeaders, headers); diff != "" {
 					t.Errorf("Headers mismatch (-want +got):\n%s", diff)
 				}
+
 				if bytesRead != tt.expectedBytesRead {
 					t.Errorf("Expected bytesRead %d, got %d", tt.expectedBytesRead, bytesRead)
 				}
@@ -275,7 +278,8 @@ Bob,35,SF,"[{""alias"":""Bobby""}]"`
 			pageSize:      2,
 			attrConfig:    attrConfigAllString,
 			expectedError: true,
-			errorContains: fmt.Sprintf("CSV file contains a single row larger than %d MB", s3_adapter.MaxCSVRowSizeBytes/(1024*1024)),
+			errorContains: fmt.Sprintf("CSV file contains a single row larger than %d MB",
+				s3_adapter.MaxCSVRowSizeBytes/(1024*1024)),
 		},
 		"success_max_processing_bytes_total_exact_one_row": {
 			csvData:                 csvDataForProcessingLimit, // "r1,1\n" (5b), "r2,22\n" (6b), "r3,333\n" (7b)
@@ -342,13 +346,15 @@ Bob,35,SF,"[{""alias"":""Bobby""}]"`
 		},
 		"error_on_record_parse_after_first_row": {
 			// First row OK, second row has unclosed quote causing csv.Reader.Read() to error.
-			csvData:       "good,data\n\"bad,data",
-			headers:       []string{"f1", "f2"},
-			pageSize:      2,
-			attrConfig:    []*framework.AttributeConfig{{ExternalId: "f1", Type: framework.AttributeTypeString}, {ExternalId: "f2", Type: framework.AttributeTypeString}},
+			csvData:  "good,data\n\"bad,data",
+			headers:  []string{"f1", "f2"},
+			pageSize: 2,
+			attrConfig: []*framework.AttributeConfig{{ExternalId: "f1", Type: framework.AttributeTypeString},
+				{ExternalId: "f2", Type: framework.AttributeTypeString}},
 			expectedError: true,
 			// The error message includes the problematic row.
-			errorContains: `CSV file format is invalid or corrupted (record parse error): parse error on line 1, column 10: extraneous or missing " in quoted-field. Row: '"bad,data'`,
+			errorContains: `CSV file format is invalid or corrupted (record parse error): parse error on line 1,
+			column 10: extraneous or missing " in quoted-field. Row: '"bad,data'`,
 		},
 		"header_name_not_in_attr_config": {
 			csvData:  "valX,valY",
@@ -398,9 +404,11 @@ Bob,35,SF,"[{""alias"":""Bobby""}]"`
 				if err != nil {
 					t.Errorf("Expected no error, got: %v", err)
 				}
+
 				if diff := cmp.Diff(tt.expectedObjects, objects); diff != "" {
 					t.Errorf("Objects mismatch: %s", diff)
 				}
+
 				if hasNext != tt.expectedHasNext {
 					t.Errorf("HasNext mismatch: got %v, want %v", hasNext, tt.expectedHasNext)
 				}

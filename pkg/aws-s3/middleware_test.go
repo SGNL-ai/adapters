@@ -74,6 +74,7 @@ func (m *mockS3Middleware) mockHeadObject(
 			VersionId:     aws.String("3/L4kqtJlcpXroDTDmJ+rmSpXd3dIbrHY"),
 			Metadata:      map[string]string{"example-metadata-key": "example-metadata-value"},
 		}
+
 		return
 	}
 
@@ -90,7 +91,8 @@ func (m *mockS3Middleware) mockHeadObject(
 	case http.StatusMovedPermanently:
 		err = &smithyhttp.ResponseError{
 			Response: &smithyhttp.Response{Response: &http.Response{StatusCode: http.StatusMovedPermanently}},
-			Err:      errors.New("permanent redirect: The bucket you are attempting to access must be addressed using the specified endpoint"),
+			Err: errors.New("permanent redirect: The bucket you are attempting to access must be addressed " +
+				"using the specified endpoint"),
 		}
 	case http.StatusForbidden:
 		err = &smithyhttp.ResponseError{
@@ -105,6 +107,7 @@ func (m *mockS3Middleware) mockHeadObject(
 	default:
 		err = fmt.Errorf("mockHeadObject: unexpected headStatusCode %d", m.headStatusCode)
 	}
+
 	return
 }
 
@@ -123,26 +126,31 @@ func (m *mockS3Middleware) mockGetObject(
 	case http.StatusMovedPermanently:
 		err = &smithyhttp.ResponseError{
 			Response: &smithyhttp.Response{Response: &http.Response{StatusCode: http.StatusMovedPermanently}},
-			Err:      errors.New("permanent redirect: The bucket you are attempting to access must be addressed using the specified endpoint"),
+			Err: errors.New("permanent redirect: The bucket you are attempting to access must be addressed " +
+				"using the specified endpoint"),
 		}
+
 		return
 	case http.StatusForbidden:
 		err = &smithyhttp.ResponseError{
 			Response: &smithyhttp.Response{Response: &http.Response{StatusCode: http.StatusForbidden}},
 			Err:      errors.New("access denied: Access Denied"),
 		}
+
 		return
 	case http.StatusNotFound:
 		err = &smithyhttp.ResponseError{
 			Response: &smithyhttp.Response{Response: &http.Response{StatusCode: http.StatusNotFound}},
 			Err:      errors.New("no such key: The specified key does not exist"),
 		}
+
 		return
 	case http.StatusRequestedRangeNotSatisfiable:
 		err = &smithyhttp.ResponseError{
 			Response: &smithyhttp.Response{Response: &http.Response{StatusCode: http.StatusRequestedRangeNotSatisfiable}},
 			Err:      errors.New("range not satisfiable"),
 		}
+
 		return
 	}
 
@@ -159,6 +167,7 @@ func (m *mockS3Middleware) mockGetObject(
 		fullDataString = validCSVData
 	default:
 		err = fmt.Errorf("mockGetObject: unexpected getStatusCode %d for body generation", m.getStatusCode)
+
 		return
 	}
 
@@ -196,6 +205,7 @@ func (m *mockS3Middleware) mockGetObject(
 		VersionId:     aws.String("3/L4kqtJlcpXroDTDmJ+rmSpXd3dIbrHY"),
 		Metadata:      map[string]string{"example-metadata-key": "example-metadata-value"},
 	}
+
 	return
 }
 

@@ -35,7 +35,8 @@ func (s *S3Handler) FileExists(ctx context.Context, bucket string, key string) (
 	return response, nil
 }
 
-func (s *S3Handler) GetObjectStream(ctx context.Context, bucket string, key string, rangeHeader *string) (*s3.GetObjectOutput, error) {
+func (s *S3Handler) GetObjectStream(ctx context.Context, bucket string, key string, rangeHeader *string) (
+	*s3.GetObjectOutput, error) {
 	getObjectInput := &s3.GetObjectInput{
 		Bucket: &bucket,
 		Key:    &key,

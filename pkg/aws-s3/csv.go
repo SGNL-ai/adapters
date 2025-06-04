@@ -21,8 +21,11 @@ const (
 )
 
 func CSVHeaders(reader *bufio.Reader) (headers []string, bytesReadForHeader int64, err error) {
-	var headerLineBuffer bytes.Buffer
-	var currentBytesRead int64
+	var (
+		headerLineBuffer bytes.Buffer
+		currentBytesRead int64
+	)
+
 	inQuotes := false
 
 	for {
@@ -36,12 +39,15 @@ func CSVHeaders(reader *bufio.Reader) (headers []string, bytesReadForHeader int6
 				if headerLineBuffer.Len() == 0 && currentBytesRead == 0 {
 					return nil, 0, fmt.Errorf("CSV header is empty or missing")
 				}
+
 				break
 			}
+
 			return nil, currentBytesRead, fmt.Errorf("failed to read byte for CSV header: %w", readErr)
 		}
 
 		currentBytesRead++
+
 		headerLineBuffer.WriteByte(b)
 
 		if b == '"' {
@@ -58,6 +64,7 @@ func CSVHeaders(reader *bufio.Reader) (headers []string, bytesReadForHeader int6
 
 	csvReader := csv.NewReader(bytes.NewReader(headerLineBytes))
 	parsedHeaders, parseErr := csvReader.Read()
+
 	if parseErr != nil {
 		return nil, currentBytesRead, fmt.Errorf("CSV file format is invalid or corrupted: %v", parseErr)
 	}
@@ -69,15 +76,22 @@ func CSVHeaders(reader *bufio.Reader) (headers []string, bytesReadForHeader int6
 	return parsedHeaders, currentBytesRead, nil
 }
 
-func readNextCSVRow(reader *bufio.Reader, maxRowBytes int64) (rowLineBytes []byte, bytesConsumedThisRow int64, err error) {
-	var rowBuffer bytes.Buffer
-	var currentBytesRead int64
+func readNextCSVRow(reader *bufio.Reader, maxRowBytes int64) (
+	rowLineBytes []byte,
+	bytesConsumedThisRow int64,
+	err error) {
+	var (
+		rowBuffer        bytes.Buffer
+		currentBytesRead int64
+		prevByte         byte
+	)
+
 	inQuotes := false
-	var prevByte byte
 
 	for {
 		if currentBytesRead >= maxRowBytes {
-			return rowBuffer.Bytes(), currentBytesRead, fmt.Errorf("CSV file contains a single row larger than %d MB", maxRowBytes/(1024*1024))
+			return rowBuffer.Bytes(), currentBytesRead, fmt.Errorf("CSV file contains a single row larger than %d MB",
+				maxRowBytes/(1024*1024))
 		}
 
 		b, readErr := reader.ReadByte()
@@ -86,12 +100,15 @@ func readNextCSVRow(reader *bufio.Reader, maxRowBytes int64) (rowLineBytes []byt
 				if rowBuffer.Len() > 0 {
 					return rowBuffer.Bytes(), currentBytesRead, io.EOF
 				}
+
 				return nil, currentBytesRead, io.EOF
 			}
+
 			return nil, currentBytesRead, fmt.Errorf("failed to read byte for CSV row: %w", readErr)
 		}
 
 		currentBytesRead++
+
 		rowBuffer.WriteByte(b)
 
 		if b == '"' {
@@ -107,6 +124,7 @@ func readNextCSVRow(reader *bufio.Reader, maxRowBytes int64) (rowLineBytes []byt
 			prevByte = b
 		}
 	}
+
 	return rowBuffer.Bytes(), currentBytesRead, nil
 }
 
@@ -117,9 +135,9 @@ func StreamingCSVToPage(
 	attrConfig []*framework.AttributeConfig,
 	maxProcessingBytesTotal int64,
 ) (objects []map[string]any, bytesReadFromDataStream int64, hasNext bool, err error) {
-
 	objects = make([]map[string]any, 0, pageSize)
 	headerToAttributeConfig := headerToAttributeConfig(headers, attrConfig)
+
 	var totalBytesReadThisCall int64
 
 	hasNext = true
@@ -135,7 +153,8 @@ func StreamingCSVToPage(
 			totalBytesReadThisCall += bytesForRow
 		}
 
-		processThisRowData := false
+		var processThisRowData bool
+
 		if rowReadErr == nil {
 			if len(rowBytes) > 0 {
 				processThisRowData = true
@@ -144,6 +163,7 @@ func StreamingCSVToPage(
 			}
 		} else if rowReadErr == io.EOF {
 			hasNext = false
+
 			if len(rowBytes) > 0 {
 				processThisRowData = true
 			} else {
@@ -157,6 +177,7 @@ func StreamingCSVToPage(
 			if !hasNext {
 				break
 			}
+
 			continue
 		}
 
@@ -169,10 +190,12 @@ func StreamingCSVToPage(
 					if !hasNext {
 						break
 					}
+
 					continue
 				}
 			} else {
-				return objects, totalBytesReadThisCall, false, fmt.Errorf("CSV file format is invalid or corrupted: %w", recordParseErr)
+				return objects, totalBytesReadThisCall, false,
+					fmt.Errorf("CSV file format is invalid or corrupted: %w", recordParseErr)
 			}
 		}
 
@@ -180,10 +203,12 @@ func StreamingCSVToPage(
 			if !hasNext && rowReadErr == io.EOF {
 				break
 			}
+
 			continue
 		}
 
 		row := make(map[string]interface{})
+
 		for i, value := range record {
 			if i >= len(headers) {
 				continue
@@ -200,6 +225,7 @@ func StreamingCSVToPage(
 						for _, obj := range childObj {
 							childArray = append(childArray, obj)
 						}
+
 						row[headerName] = childArray
 					} else {
 						return objects, totalBytesReadThisCall, false, fmt.Errorf(
@@ -210,6 +236,7 @@ func StreamingCSVToPage(
 				} else {
 					row[headerName] = value
 				}
+
 				continue
 			}
 
@@ -222,11 +249,13 @@ func StreamingCSVToPage(
 						value, headerName,
 					)
 				}
+
 				row[headerName] = floatValue
 			default:
 				row[headerName] = value
 			}
 		}
+
 		objects = append(objects, row)
 
 		if !hasNext {
@@ -257,12 +286,15 @@ func headerToAttributeConfig(
 	}
 
 	headerToAttrType := make(map[string]framework.AttributeConfig, len(headers))
+
 	for _, header := range headers {
 		attrConfig, found := attrExternalIDToAttrConfig[header]
 		if !found {
 			continue
 		}
+
 		headerToAttrType[header] = attrConfig
 	}
+
 	return headerToAttrType
 }
