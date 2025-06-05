@@ -92,8 +92,8 @@ interactions:
           - e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
         X-Amz-Date:
           - 20240711T222501Z
-      url: https://example-bucket.s3.us-east-1.amazonaws.com/users.csv
-      method: HEAD
+      url: https://example-bucket.s3.us-east-1.amazonaws.com/users.csv?x-id=GetObject
+      method: GET
     response:
       proto: HTTP/1.1
       proto_major: 1
@@ -102,7 +102,28 @@ interactions:
       trailer: {}
       content_length: 218
       uncompressed: false
-      body: ""
+      body: |
+        userId,userName
+        1,user_1
+        2,user_2
+        3,user_3
+        4,user_4
+        5,user_5
+        6,user_6
+        7,user_7
+        8,user_8
+        9,user_9
+        10,user_10
+        11,user_11
+        12,user_12
+        13,user_13
+        14,user_14
+        15,user_15
+        16,user_16
+        17,user_17
+        18,user_18
+        19,user_19
+        20,user_20
       headers:
         Accept-Ranges:
           - bytes
@@ -155,6 +176,8 @@ interactions:
           - e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
         X-Amz-Date:
           - 20240711T222502Z
+        Range:
+          - bytes=16-
       url: https://example-bucket.s3.us-east-1.amazonaws.com/users.csv?x-id=GetObject
       method: GET
     response:
@@ -163,10 +186,9 @@ interactions:
       proto_minor: 1
       transfer_encoding: []
       trailer: {}
-      content_length: 218
+      content_length: 202
       uncompressed: false
       body: |
-        userId,userName
         1,user_1
         2,user_2
         3,user_3
@@ -191,7 +213,7 @@ interactions:
         Accept-Ranges:
           - bytes
         Content-Length:
-          - "218"
+          - "202"
         Content-Type:
           - text/csv
         Date:
