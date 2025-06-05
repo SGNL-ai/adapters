@@ -19,6 +19,31 @@ const (
 	MaxCSVRowSizeBytes = 1 * 1024 * 1024 // 1MB
 )
 
+func handleQuoteChar(b byte, inQuotes *bool, prevByte *byte, isHeaderReading bool) {
+	if isHeaderReading {
+		*inQuotes = !*inQuotes
+	} else {
+		if *inQuotes && *prevByte == '"' {
+			*prevByte = 0
+		} else {
+			*inQuotes = !*inQuotes
+			*prevByte = b
+		}
+	}
+}
+
+func handleLineEnding(reader *bufio.Reader, b byte, lineBuffer *bytes.Buffer, currentBytesRead *int64) {
+	if b == '\r' {
+		if nextBytes, peekErr := reader.Peek(1); peekErr == nil && len(nextBytes) > 0 && nextBytes[0] == '\n' {
+			if nextByte, readErr := reader.ReadByte(); readErr == nil {
+				*currentBytesRead++
+
+				lineBuffer.WriteByte(nextByte)
+			}
+		}
+	}
+}
+
 func readCSVLine(reader *bufio.Reader, maxBytes int64, isHeaderReading bool) (
 	lineBytes []byte, bytesRead int64, err error) {
 	var (
@@ -62,17 +87,10 @@ func readCSVLine(reader *bufio.Reader, maxBytes int64, isHeaderReading bool) (
 		lineBuffer.WriteByte(b)
 
 		if b == '"' {
-			if isHeaderReading {
-				inQuotes = !inQuotes
-			} else {
-				if inQuotes && prevByte == '"' {
-					prevByte = 0
-				} else {
-					inQuotes = !inQuotes
-					prevByte = b
-				}
-			}
-		} else if b == '\n' && !inQuotes {
+			handleQuoteChar(b, &inQuotes, &prevByte, isHeaderReading)
+		} else if (b == '\n' || b == '\r') && !inQuotes {
+			handleLineEnding(reader, b, &lineBuffer, &currentBytesRead)
+
 			break
 		} else {
 			if !isHeaderReading {
@@ -81,7 +99,13 @@ func readCSVLine(reader *bufio.Reader, maxBytes int64, isHeaderReading bool) (
 		}
 	}
 
-	return lineBuffer.Bytes(), currentBytesRead, nil
+	lineBytes = lineBuffer.Bytes()
+
+	if len(lineBytes) > 0 && lineBytes[len(lineBytes)-1] == '\r' {
+		lineBytes[len(lineBytes)-1] = '\n'
+	}
+
+	return lineBytes, currentBytesRead, nil
 }
 
 func CSVHeaders(reader *bufio.Reader) (headers []string, bytesReadForHeader int64, err error) {
