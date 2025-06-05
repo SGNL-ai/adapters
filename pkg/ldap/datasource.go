@@ -561,9 +561,13 @@ func ProcessLDAPSearchResult(result *ldap_v3.SearchResult, response *Response, r
 		memberUniqueIDAttribute := *entityConfig.MemberUniqueIDAttribute
 		memberOfUniqueIDAttribute := *entityConfig.MemberOfUniqueIDAttribute
 
-		if request.Cursor != nil && request.Cursor.CollectionCursor != nil {
-			memberOfPageInfo, _ := DecodePageInfo(request.Cursor.CollectionCursor)
-			memberOfUniqueIDValue = memberOfPageInfo.Collection[memberOfUniqueIDAttribute]
+		if request.Cursor != nil {
+			if request.Cursor.CollectionCursor != nil {
+				memberOfPageInfo, _ := DecodePageInfo(request.Cursor.CollectionCursor)
+				memberOfUniqueIDValue = memberOfPageInfo.Collection[memberOfUniqueIDAttribute]
+			} else if request.Cursor.CollectionID != nil {
+				memberOfUniqueIDValue = *request.Cursor.CollectionID
+			}
 		}
 
 		for idx, member := range objects {

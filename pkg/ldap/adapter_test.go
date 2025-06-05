@@ -625,6 +625,139 @@ func (s *LDAPTestSuite) Test_AdapterGetGroupMemberPage() {
 	}
 }
 
+func (s *LDAPTestSuite) Test_AdapterGetGroupMemberLastPage() {
+	adapter := ldap_adapter.NewAdapter(nil, time.Minute, time.Minute)
+	tests := map[string]struct {
+		ctx                context.Context
+		request            *framework.Request[ldap_adapter.Config]
+		inputRequestCursor *pagination.CompositeCursor[string]
+		wantResponse       framework.Response
+		wantCursor         *pagination.CompositeCursor[string]
+	}{
+		"valid_request_1": {
+			ctx: context.Background(),
+			request: &framework.Request[ldap_adapter.Config]{
+				Address: s.ldapHost,
+				Auth:    validAuthCredentials,
+				Config: &ldap_adapter.Config{
+					BaseDN: "dc=example,dc=org",
+					EntityConfigMap: map[string]*ldap_adapter.EntityConfig{
+						"Group": {
+							Query: "(&(objectClass=groupofuniquenames)(cn=Science))",
+						},
+						"GroupMember": {
+							MemberOf:                  testutil.GenPtr("Group"),
+							CollectionAttribute:       testutil.GenPtr("dn"),
+							Query:                     "(&(memberOf={{CollectionId}}))",
+							MemberUniqueIDAttribute:   testutil.GenPtr("dn"),
+							MemberOfUniqueIDAttribute: testutil.GenPtr("dn"),
+						},
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "GroupMember",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "id",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+							UniqueId:   true,
+						},
+						{
+							ExternalId: "group_dn",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+						{
+							ExternalId: "member_dn",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+					},
+				},
+				PageSize: 2,
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"id":        "cn=bobby,ou=People,dc=example,dc=org-cn=Science,ou=Groups,dc=example,dc=org",
+							"group_dn":  "cn=Science,ou=Groups,dc=example,dc=org",
+							"member_dn": "cn=bobby,ou=People,dc=example,dc=org",
+						},
+						{
+							"id":        "cn=lorem,ou=People,dc=example,dc=org-cn=Science,ou=Groups,dc=example,dc=org",
+							"group_dn":  "cn=Science,ou=Groups,dc=example,dc=org",
+							"member_dn": "cn=lorem,ou=People,dc=example,dc=org",
+						},
+					},
+					NextCursor: "",
+				},
+			},
+		},
+	}
+
+	var nextCursor string
+	for name, tt := range tests {
+		s.T().Run(name, func(t *testing.T) {
+
+			if tt.inputRequestCursor != nil {
+				encodedCursor, err := pagination.MarshalCursor(tt.inputRequestCursor)
+				if err != nil {
+					t.Error(err)
+				}
+
+				tt.request.Cursor = encodedCursor
+			}
+			if nextCursor != "" {
+				tt.request.Cursor = nextCursor
+			}
+
+			gotResponse := adapter.GetPage(tt.ctx, tt.request)
+			nextCursor = gotResponse.Success.NextCursor
+			if tt.wantResponse.Success != nil && gotResponse.Success != nil {
+				if diff := cmp.Diff(tt.wantResponse.Success.Objects, gotResponse.Success.Objects); diff != "" {
+					t.Errorf("Response mismatch (-want +got):\n%s", diff)
+				}
+
+				if diff := cmp.Diff(tt.wantResponse.Success.NextCursor, gotResponse.Success.NextCursor); diff != "" {
+					t.Errorf("Response mismatch (-want +got):\n%s", diff)
+				}
+
+				if !reflect.DeepEqual(gotResponse.Success.Objects, tt.wantResponse.Success.Objects) {
+					t.Errorf("gotResponse: %v, wantResponse: %v", gotResponse, tt.wantResponse)
+				}
+			} else if tt.wantResponse.Success != nil || gotResponse.Success != nil {
+				t.Errorf("gotResponse: %v, wantResponse: %v", gotResponse, tt.wantResponse)
+			}
+
+			if !reflect.DeepEqual(gotResponse.Error, tt.wantResponse.Error) {
+				t.Errorf("gotResponse: %v, wantResponse: %v", gotResponse.Error, tt.wantResponse.Error)
+			}
+
+			// We already check the b64 encoded cursor in the response, but it's not easy to
+			// decipher the cursor just by reading the test case.
+			// So in addition, decode the b64 cursor and compare structs.
+			if gotResponse.Success != nil && tt.wantCursor != nil {
+				var gotCursor pagination.CompositeCursor[string]
+
+				decodedCursor, err := base64.StdEncoding.DecodeString(gotResponse.Success.NextCursor)
+				if err != nil {
+					t.Errorf("error decoding cursor: %v", err)
+				}
+
+				if err := json.Unmarshal(decodedCursor, &gotCursor); err != nil {
+					t.Errorf("error unmarshalling cursor: %v", err)
+				}
+
+				if !reflect.DeepEqual(&gotCursor, tt.wantCursor) {
+					t.Errorf("gotCursor: %v, wantCursor: %v", gotCursor, tt.wantCursor)
+				}
+			}
+		})
+	}
+}
+
 func (s *LDAPTestSuite) Test_HostnameValidation() {
 	adapter := ldap_adapter.NewAdapter(nil, time.Minute, time.Minute)
 
