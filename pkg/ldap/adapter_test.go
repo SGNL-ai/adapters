@@ -698,9 +698,9 @@ func (s *LDAPTestSuite) Test_AdapterGetGroupMemberLastPage() {
 	}
 
 	var nextCursor string
+
 	for name, tt := range tests {
 		s.T().Run(name, func(t *testing.T) {
-
 			if tt.inputRequestCursor != nil {
 				encodedCursor, err := pagination.MarshalCursor(tt.inputRequestCursor)
 				if err != nil {
@@ -709,12 +709,14 @@ func (s *LDAPTestSuite) Test_AdapterGetGroupMemberLastPage() {
 
 				tt.request.Cursor = encodedCursor
 			}
+
 			if nextCursor != "" {
 				tt.request.Cursor = nextCursor
 			}
 
 			gotResponse := adapter.GetPage(tt.ctx, tt.request)
 			nextCursor = gotResponse.Success.NextCursor
+
 			if tt.wantResponse.Success != nil && gotResponse.Success != nil {
 				if diff := cmp.Diff(tt.wantResponse.Success.Objects, gotResponse.Success.Objects); diff != "" {
 					t.Errorf("Response mismatch (-want +got):\n%s", diff)
