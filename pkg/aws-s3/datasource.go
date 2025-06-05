@@ -24,7 +24,7 @@ import (
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 )
 
-const MaxBytesToProcessPerPage = 200 * MaxCSVRowSizeBytes // 200MB
+const MaxBytesToProcessPerPage = 50 * MaxCSVRowSizeBytes // 50MB
 
 // BOM (Byte Order Mark) patterns for different encodings.
 var (

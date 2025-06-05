@@ -51,7 +51,7 @@ var (
 5	3c44ed62d7BfEBC	Leslie	Snyder	"Price	 Mason and Doyle"	Mossfort	Central African Republic	812-016-9904x8231	254.631.9380	darrylbarber@warren.org	2020-01-25	http://www.trujillo-sullivan.info/`
 )
 
-// generateLargeCSVData creates a CSV string larger than the streaming threshold (10MB).
+// generateLargeCSVData creates a large CSV string.
 func generateLargeCSVData() string {
 	header := "Score,Customer Id,First Name,Last Name,Company,City,Country," +
 		"Phone 1,Phone 2,Email,Subscription Date,Website,KnownAliases\n"
@@ -62,7 +62,7 @@ func generateLargeCSVData() string {
 
 	builder.WriteString(header)
 
-	builder.Grow(10*1024*1024 + 1024*1024) // 11MB capacity
+	builder.Grow(10*1024*1024 + 1024*1024) // 11MB capacity (does not have any significance, can be any big number)
 
 	for i := 1; i <= targetRows; i++ {
 		score := float64(i) * 0.1

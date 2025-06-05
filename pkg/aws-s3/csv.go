@@ -16,7 +16,6 @@ import (
 
 const (
 	FileTypeCSV        = "csv"
-	MaxHeaderSizeBytes = 8 * 1024        // 8KB
 	MaxCSVRowSizeBytes = 1 * 1024 * 1024 // 1MB
 )
 
@@ -29,8 +28,8 @@ func CSVHeaders(reader *bufio.Reader) (headers []string, bytesReadForHeader int6
 	inQuotes := false
 
 	for {
-		if currentBytesRead >= MaxHeaderSizeBytes {
-			return nil, currentBytesRead, fmt.Errorf("CSV header line exceeds %dKB size limit", MaxHeaderSizeBytes/1024)
+		if currentBytesRead >= MaxCSVRowSizeBytes {
+			return nil, currentBytesRead, fmt.Errorf("CSV header line exceeds %dMB size limit", MaxCSVRowSizeBytes/(1024*1024))
 		}
 
 		b, readErr := reader.ReadByte()
@@ -43,7 +42,7 @@ func CSVHeaders(reader *bufio.Reader) (headers []string, bytesReadForHeader int6
 				break
 			}
 
-			return nil, currentBytesRead, fmt.Errorf("failed to read byte for CSV header: %w", readErr)
+			return nil, 0, fmt.Errorf("failed to read byte for CSV header: %w", readErr)
 		}
 
 		currentBytesRead++
@@ -59,18 +58,18 @@ func CSVHeaders(reader *bufio.Reader) (headers []string, bytesReadForHeader int6
 
 	headerLineBytes := headerLineBuffer.Bytes()
 	if len(headerLineBytes) == 0 {
-		return nil, currentBytesRead, fmt.Errorf("CSV header is empty or missing")
+		return nil, 0, fmt.Errorf("CSV header is empty or missing")
 	}
 
 	csvReader := csv.NewReader(bytes.NewReader(headerLineBytes))
 	parsedHeaders, parseErr := csvReader.Read()
 
 	if parseErr != nil {
-		return nil, currentBytesRead, fmt.Errorf("CSV file format is invalid or corrupted: %v", parseErr)
+		return nil, 0, fmt.Errorf("CSV file format is invalid or corrupted: %v", parseErr)
 	}
 
 	if len(parsedHeaders) == 0 {
-		return nil, currentBytesRead, fmt.Errorf("CSV header is empty or missing")
+		return nil, 0, fmt.Errorf("CSV header is empty or missing")
 	}
 
 	return parsedHeaders, currentBytesRead, nil
@@ -104,7 +103,7 @@ func readNextCSVRow(reader *bufio.Reader, maxRowBytes int64) (
 				return nil, currentBytesRead, io.EOF
 			}
 
-			return nil, currentBytesRead, fmt.Errorf("failed to read byte for CSV row: %w", readErr)
+			return nil, 0, fmt.Errorf("failed to read byte for CSV row: %w", readErr)
 		}
 
 		currentBytesRead++
@@ -138,19 +137,19 @@ func StreamingCSVToPage(
 	objects = make([]map[string]any, 0, pageSize)
 	headerToAttributeConfig := headerToAttributeConfig(headers, attrConfig)
 
-	var totalBytesReadThisCall int64
+	var totalBytesRead int64
 
 	hasNext = true
 
 	for int64(len(objects)) < pageSize {
-		if maxProcessingBytesTotal > 0 && totalBytesReadThisCall >= maxProcessingBytesTotal {
+		if maxProcessingBytesTotal > 0 && totalBytesRead >= maxProcessingBytesTotal {
 			break
 		}
 
 		rowBytes, bytesForRow, rowReadErr := readNextCSVRow(streamReader, MaxCSVRowSizeBytes)
 
 		if bytesForRow > 0 {
-			totalBytesReadThisCall += bytesForRow
+			totalBytesRead += bytesForRow
 		}
 
 		var processThisRowData bool
@@ -170,7 +169,7 @@ func StreamingCSVToPage(
 				break
 			}
 		} else {
-			return objects, totalBytesReadThisCall, false, fmt.Errorf("unable to read CSV file data: %w", rowReadErr)
+			return nil, 0, false, fmt.Errorf("unable to read CSV file data: %w", rowReadErr)
 		}
 
 		if !processThisRowData {
@@ -194,7 +193,7 @@ func StreamingCSVToPage(
 					continue
 				}
 			} else {
-				return objects, totalBytesReadThisCall, false,
+				return nil, 0, false,
 					fmt.Errorf("CSV file format is invalid or corrupted: %w", recordParseErr)
 			}
 		}
@@ -228,7 +227,7 @@ func StreamingCSVToPage(
 
 						row[headerName] = childArray
 					} else {
-						return objects, totalBytesReadThisCall, false, fmt.Errorf(
+						return nil, 0, false, fmt.Errorf(
 							`failed to unmarshal the value: "%v" in column: %s`,
 							value, headerName,
 						)
@@ -244,7 +243,7 @@ func StreamingCSVToPage(
 			case framework.AttributeTypeInt64, framework.AttributeTypeDouble:
 				floatValue, convErr := strconv.ParseFloat(value, 64)
 				if convErr != nil {
-					return objects, totalBytesReadThisCall, false, fmt.Errorf(
+					return nil, 0, false, fmt.Errorf(
 						`CSV contains invalid numeric value "%s" in column "%s"`,
 						value, headerName,
 					)
@@ -270,7 +269,7 @@ func StreamingCSVToPage(
 		}
 	}
 
-	return objects, totalBytesReadThisCall, hasNext, nil
+	return objects, totalBytesRead, hasNext, nil
 }
 
 func headerToAttributeConfig(

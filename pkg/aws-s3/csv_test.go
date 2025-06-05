@@ -81,10 +81,10 @@ func TestCSVHeaders(t *testing.T) {
 		},
 		"header_exceeds_max_size": {
 			inputReaderFn: func() *bufio.Reader {
-				return bufio.NewReader(strings.NewReader(strings.Repeat("a,", s3_adapter.MaxHeaderSizeBytes/2+1) + "last\n"))
+				return bufio.NewReader(strings.NewReader(strings.Repeat("a,", s3_adapter.MaxCSVRowSizeBytes/2+1) + "last\n"))
 			},
 			expectedError: true,
-			errorContains: fmt.Sprintf("CSV header line exceeds %dKB size limit", s3_adapter.MaxHeaderSizeBytes/1024),
+			errorContains: fmt.Sprintf("CSV header line exceeds %dMB size limit", s3_adapter.MaxCSVRowSizeBytes/(1024*1024)),
 		},
 		"header_with_quoted_newline": {
 			inputReaderFn: func() *bufio.Reader {
