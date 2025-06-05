@@ -549,8 +549,6 @@ func ProcessLDAPSearchResult(result *ldap_v3.SearchResult, response *Response, r
 
 	// [MemberEntities] Set `id`, `memberId` and `memberType`.
 	if memberOf != nil {
-		var memberOfUniqueIDValue any
-
 		if request.Cursor == nil || request.Cursor.CollectionID == nil {
 			return &framework.Error{
 				Message: "Cursor or CollectionID is nil",
@@ -561,13 +559,9 @@ func ProcessLDAPSearchResult(result *ldap_v3.SearchResult, response *Response, r
 		memberUniqueIDAttribute := *entityConfig.MemberUniqueIDAttribute
 		memberOfUniqueIDAttribute := *entityConfig.MemberOfUniqueIDAttribute
 
-		if request.Cursor != nil {
-			if request.Cursor.CollectionCursor != nil {
-				memberOfPageInfo, _ := DecodePageInfo(request.Cursor.CollectionCursor)
-				memberOfUniqueIDValue = memberOfPageInfo.Collection[memberOfUniqueIDAttribute]
-			} else if request.Cursor.CollectionID != nil {
-				memberOfUniqueIDValue = *request.Cursor.CollectionID
-			}
+		memberOfUniqueIDValue, err := getMemberOfUniqueIDValue(request, memberOfUniqueIDAttribute)
+		if err != nil {
+			return err
 		}
 
 		for idx, member := range objects {
@@ -844,6 +838,26 @@ func ldapErrToHTTPStatusCode(ldapError *ldap_v3.Error) int {
 	logger.Printf("Unknown LDAP result code received: %v \t %v\n", ldapError.ResultCode, ldapError.Err.Error())
 
 	return http.StatusInternalServerError // default error code
+}
+
+func getMemberOfUniqueIDValue(request *Request, memberOfUniqueIDAttribute string) (any, *framework.Error) {
+	var memberOfUniqueIDValue any
+
+	if request.Cursor != nil {
+		if request.Cursor.CollectionCursor != nil {
+			memberOfPageInfo, pageInfoErr := DecodePageInfo(request.Cursor.CollectionCursor)
+
+			if pageInfoErr != nil {
+				return nil, pageInfoErr
+			}
+
+			memberOfUniqueIDValue = memberOfPageInfo.Collection[memberOfUniqueIDAttribute]
+		} else if request.Cursor.CollectionID != nil {
+			memberOfUniqueIDValue = *request.Cursor.CollectionID
+		}
+	}
+
+	return memberOfUniqueIDValue, nil
 }
 
 func DecodePageInfo(cursor *string) (*PageInfo, *framework.Error) {

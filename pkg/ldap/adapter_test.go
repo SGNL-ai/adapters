@@ -568,73 +568,7 @@ func (s *LDAPTestSuite) Test_AdapterGetGroupMemberPage() {
 				},
 			},
 		},
-	}
-
-	for name, tt := range tests {
-		s.T().Run(name, func(t *testing.T) {
-			if tt.inputRequestCursor != nil {
-				encodedCursor, err := pagination.MarshalCursor(tt.inputRequestCursor)
-				if err != nil {
-					t.Error(err)
-				}
-
-				tt.request.Cursor = encodedCursor
-			}
-
-			gotResponse := adapter.GetPage(tt.ctx, tt.request)
-			if tt.wantResponse.Success != nil && gotResponse.Success != nil {
-				if diff := cmp.Diff(tt.wantResponse.Success.Objects, gotResponse.Success.Objects); diff != "" {
-					t.Errorf("Response mismatch (-want +got):\n%s", diff)
-				}
-
-				if diff := cmp.Diff(tt.wantResponse.Success.NextCursor, gotResponse.Success.NextCursor); diff != "" {
-					t.Errorf("Response mismatch (-want +got):\n%s", diff)
-				}
-
-				if !reflect.DeepEqual(gotResponse.Success.Objects, tt.wantResponse.Success.Objects) {
-					t.Errorf("gotResponse: %v, wantResponse: %v", gotResponse, tt.wantResponse)
-				}
-			} else if tt.wantResponse.Success != nil || gotResponse.Success != nil {
-				t.Errorf("gotResponse: %v, wantResponse: %v", gotResponse, tt.wantResponse)
-			}
-
-			if !reflect.DeepEqual(gotResponse.Error, tt.wantResponse.Error) {
-				t.Errorf("gotResponse: %v, wantResponse: %v", gotResponse.Error, tt.wantResponse.Error)
-			}
-
-			// We already check the b64 encoded cursor in the response, but it's not easy to
-			// decipher the cursor just by reading the test case.
-			// So in addition, decode the b64 cursor and compare structs.
-			if gotResponse.Success != nil && tt.wantCursor != nil {
-				var gotCursor pagination.CompositeCursor[string]
-
-				decodedCursor, err := base64.StdEncoding.DecodeString(gotResponse.Success.NextCursor)
-				if err != nil {
-					t.Errorf("error decoding cursor: %v", err)
-				}
-
-				if err := json.Unmarshal(decodedCursor, &gotCursor); err != nil {
-					t.Errorf("error unmarshalling cursor: %v", err)
-				}
-
-				if !reflect.DeepEqual(&gotCursor, tt.wantCursor) {
-					t.Errorf("gotCursor: %v, wantCursor: %v", gotCursor, tt.wantCursor)
-				}
-			}
-		})
-	}
-}
-
-func (s *LDAPTestSuite) Test_AdapterGetGroupMemberLastPage() {
-	adapter := ldap_adapter.NewAdapter(nil, time.Minute, time.Minute)
-	tests := map[string]struct {
-		ctx                context.Context
-		request            *framework.Request[ldap_adapter.Config]
-		inputRequestCursor *pagination.CompositeCursor[string]
-		wantResponse       framework.Response
-		wantCursor         *pagination.CompositeCursor[string]
-	}{
-		"valid_request_1": {
+		"valid_request_check_last_page_group_id": {
 			ctx: context.Background(),
 			request: &framework.Request[ldap_adapter.Config]{
 				Address: s.ldapHost,
@@ -697,8 +631,6 @@ func (s *LDAPTestSuite) Test_AdapterGetGroupMemberLastPage() {
 		},
 	}
 
-	var nextCursor string
-
 	for name, tt := range tests {
 		s.T().Run(name, func(t *testing.T) {
 			if tt.inputRequestCursor != nil {
@@ -710,13 +642,7 @@ func (s *LDAPTestSuite) Test_AdapterGetGroupMemberLastPage() {
 				tt.request.Cursor = encodedCursor
 			}
 
-			if nextCursor != "" {
-				tt.request.Cursor = nextCursor
-			}
-
 			gotResponse := adapter.GetPage(tt.ctx, tt.request)
-			nextCursor = gotResponse.Success.NextCursor
-
 			if tt.wantResponse.Success != nil && gotResponse.Success != nil {
 				if diff := cmp.Diff(tt.wantResponse.Success.Objects, gotResponse.Success.Objects); diff != "" {
 					t.Errorf("Response mismatch (-want +got):\n%s", diff)
