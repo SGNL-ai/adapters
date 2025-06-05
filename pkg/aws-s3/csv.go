@@ -19,44 +19,78 @@ const (
 	MaxCSVRowSizeBytes = 1 * 1024 * 1024 // 1MB
 )
 
-func CSVHeaders(reader *bufio.Reader) (headers []string, bytesReadForHeader int64, err error) {
+func readCSVLine(reader *bufio.Reader, maxBytes int64, isHeaderReading bool) (
+	lineBytes []byte, bytesRead int64, err error) {
 	var (
-		headerLineBuffer bytes.Buffer
+		lineBuffer       bytes.Buffer
 		currentBytesRead int64
+		prevByte         byte
 	)
 
 	inQuotes := false
 
 	for {
-		if currentBytesRead >= MaxCSVRowSizeBytes {
-			return nil, currentBytesRead, fmt.Errorf("CSV header line exceeds %dMB size limit", MaxCSVRowSizeBytes/(1024*1024))
+		if currentBytesRead >= maxBytes {
+			if isHeaderReading {
+				return nil, currentBytesRead, fmt.Errorf("CSV header line exceeds %dMB size limit", maxBytes/(1024*1024))
+			}
+
+			return nil, currentBytesRead, fmt.Errorf("CSV file contains a single row larger than %d MB", maxBytes/(1024*1024))
 		}
 
 		b, readErr := reader.ReadByte()
 		if readErr != nil {
 			if readErr == io.EOF {
-				if headerLineBuffer.Len() == 0 && currentBytesRead == 0 {
-					return nil, 0, fmt.Errorf("CSV header is empty or missing")
+				if lineBuffer.Len() == 0 && currentBytesRead == 0 {
+					if isHeaderReading {
+						return nil, 0, fmt.Errorf("CSV header is empty or missing")
+					}
 				}
 
 				break
 			}
 
-			return nil, 0, fmt.Errorf("failed to read byte for CSV header: %w", readErr)
+			if isHeaderReading {
+				return nil, 0, fmt.Errorf("failed to read byte for CSV header: %w", readErr)
+			}
+
+			return nil, 0, fmt.Errorf("failed to read byte for CSV row: %w", readErr)
 		}
 
 		currentBytesRead++
 
-		headerLineBuffer.WriteByte(b)
+		lineBuffer.WriteByte(b)
 
 		if b == '"' {
-			inQuotes = !inQuotes
+			if isHeaderReading {
+				inQuotes = !inQuotes
+			} else {
+				if inQuotes && prevByte == '"' {
+					prevByte = 0
+				} else {
+					inQuotes = !inQuotes
+					prevByte = b
+				}
+			}
 		} else if b == '\n' && !inQuotes {
 			break
+		} else {
+			if !isHeaderReading {
+				prevByte = b
+			}
 		}
 	}
 
-	headerLineBytes := headerLineBuffer.Bytes()
+	return lineBuffer.Bytes(), currentBytesRead, nil
+}
+
+func CSVHeaders(reader *bufio.Reader) (headers []string, bytesReadForHeader int64, err error) {
+	headerLineBytes, bytesRead, err := readCSVLine(reader, MaxCSVRowSizeBytes, true)
+
+	if err != nil {
+		return nil, bytesRead, err
+	}
+
 	if len(headerLineBytes) == 0 {
 		return nil, 0, fmt.Errorf("CSV header is empty or missing")
 	}
@@ -72,59 +106,24 @@ func CSVHeaders(reader *bufio.Reader) (headers []string, bytesReadForHeader int6
 		return nil, 0, fmt.Errorf("CSV header is empty or missing")
 	}
 
-	return parsedHeaders, currentBytesRead, nil
+	return parsedHeaders, bytesRead, nil
 }
 
 func readNextCSVRow(reader *bufio.Reader, maxRowBytes int64) (
 	rowLineBytes []byte,
 	bytesConsumedThisRow int64,
 	err error) {
-	var (
-		rowBuffer        bytes.Buffer
-		currentBytesRead int64
-		prevByte         byte
-	)
+	rowLineBytes, bytesRead, err := readCSVLine(reader, maxRowBytes, false)
 
-	inQuotes := false
-
-	for {
-		if currentBytesRead >= maxRowBytes {
-			return rowBuffer.Bytes(), currentBytesRead, fmt.Errorf("CSV file contains a single row larger than %d MB",
-				maxRowBytes/(1024*1024))
-		}
-
-		b, readErr := reader.ReadByte()
-		if readErr != nil {
-			if readErr == io.EOF {
-				if rowBuffer.Len() > 0 {
-					return rowBuffer.Bytes(), currentBytesRead, io.EOF
-				}
-
-				return nil, currentBytesRead, io.EOF
-			}
-
-			return nil, 0, fmt.Errorf("failed to read byte for CSV row: %w", readErr)
-		}
-
-		currentBytesRead++
-
-		rowBuffer.WriteByte(b)
-
-		if b == '"' {
-			if inQuotes && prevByte == '"' {
-				prevByte = 0
-			} else {
-				inQuotes = !inQuotes
-				prevByte = b
-			}
-		} else if b == '\n' && !inQuotes {
-			break
-		} else {
-			prevByte = b
-		}
+	if err != nil {
+		return nil, bytesRead, err
 	}
 
-	return rowBuffer.Bytes(), currentBytesRead, nil
+	if len(rowLineBytes) == 0 {
+		return nil, bytesRead, io.EOF
+	}
+
+	return rowLineBytes, bytesRead, nil
 }
 
 func StreamingCSVToPage(
