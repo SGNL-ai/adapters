@@ -840,8 +840,10 @@ func ldapErrToHTTPStatusCode(ldapError *ldap_v3.Error) int {
 	return http.StatusInternalServerError // default error code
 }
 
-func getMemberOfUniqueIDValue(cursor *pagination.CompositeCursor[string],
-	memberOfUniqueIDAttribute string) (any, *framework.Error) {
+func getMemberOfUniqueIDValue(
+	cursor *pagination.CompositeCursor[string],
+	memberOfUniqueIDAttribute string,
+) (any, *framework.Error) {
 	var memberOfUniqueIDValue any
 
 	if cursor.CollectionCursor != nil {
