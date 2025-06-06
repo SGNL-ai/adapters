@@ -2,7 +2,7 @@ ARG GOLANG_IMAGE=golang:1.24-bookworm
 ARG USE_BAZEL_VERSION=6.1.1
 
 # STAGE 1: build...
-FROM ${GOLANG_IMAGE} as build
+FROM ${GOLANG_IMAGE} AS build
 
 WORKDIR /app
 COPY . ./

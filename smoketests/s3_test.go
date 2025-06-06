@@ -121,7 +121,7 @@ func TestS3Adapter(t *testing.T) {
 					]
 				}
 			],
-			"next_cursor": "eyJjdXJzb3IiOjN9"
+			"next_cursor": "eyJjdXJzb3IiOjM0fQ=="
 		}
 	}`), wantResp)
 

@@ -2,104 +2,314 @@
 package awss3
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
 
 	framework "github.com/sgnl-ai/adapter-framework"
 )
 
-const FileTypeCSV = "csv"
+const (
+	FileTypeCSV        = "csv"
+	MaxCSVRowSizeBytes = 1 * 1024 * 1024 // 1MB
+)
 
-// TODO: Clean this up by decoupling the attribute value conversion logic from the CSV parsing logic.
-// CSVBytesToObject converts a CSV byte array to an array of objects.
-func CSVBytesToPage(
-	data *[]byte,
-	start int64,
+func handleQuoteChar(reader *bufio.Reader, lineBuffer *bytes.Buffer, currentBytesRead *int64, inQuotes *bool) error {
+	if !*inQuotes {
+		// This is an opening quote
+		*inQuotes = true
+
+		return nil
+	}
+
+	// We're inside quotes - need to check if this is an escaped quote or closing quote
+	nextBytes, peekErr := reader.Peek(1)
+
+	if peekErr != nil {
+		if peekErr == io.EOF {
+			// End of file - this quote closes the field
+			*inQuotes = false
+
+			return nil
+		}
+		// Some other error occurred
+		return fmt.Errorf("failed to peek next byte after quote: %w", peekErr)
+	}
+
+	if len(nextBytes) > 0 && nextBytes[0] == '"' {
+		// This is "", an escaped quote - consume the second quote
+		nextByte, readErr := reader.ReadByte()
+		if readErr != nil {
+			return fmt.Errorf("failed to read escaped quote: %w", readErr)
+		}
+
+		*currentBytesRead++
+
+		// Write the second quote to buffer
+		// Stay in quotes, this was just an escaped quote
+		// Note: The first quote was already written to buffer in readCSVLine
+		lineBuffer.WriteByte(nextByte)
+	} else {
+		// This is the closing quote
+		*inQuotes = false
+	}
+
+	return nil
+}
+
+func handleLineEnding(reader *bufio.Reader, b byte, lineBuffer *bytes.Buffer, currentBytesRead *int64) error {
+	if b == '\r' {
+		nextBytes, peekErr := reader.Peek(1)
+
+		if peekErr != nil {
+			if peekErr == io.EOF {
+				// CR at EOF is a valid line ending
+				return nil
+			}
+			// Other errors should be propagated
+			return fmt.Errorf("failed to peek after CR: %w", peekErr)
+		}
+
+		if len(nextBytes) > 0 && nextBytes[0] == '\n' {
+			// This is CRLF - consume the LF
+			nextByte, readErr := reader.ReadByte()
+
+			if readErr != nil {
+				// This shouldn't happen - we just peeked successfully
+				return fmt.Errorf("failed to read LF after CR: %w", readErr)
+			}
+
+			*currentBytesRead++
+
+			lineBuffer.WriteByte(nextByte)
+		}
+	}
+
+	return nil
+}
+
+func readCSVLine(reader *bufio.Reader) (
+	lineBytes []byte, bytesRead int64, err error) {
+	var (
+		lineBuffer       bytes.Buffer
+		currentBytesRead int64
+	)
+
+	inQuotes := false
+
+	for {
+		if currentBytesRead >= MaxCSVRowSizeBytes {
+			return nil, 0, fmt.Errorf("size limit of %d MB exceeded", MaxCSVRowSizeBytes/(1024*1024))
+		}
+
+		b, readErr := reader.ReadByte()
+		if readErr != nil {
+			if readErr == io.EOF {
+				if lineBuffer.Len() == 0 && currentBytesRead == 0 {
+					return nil, 0, fmt.Errorf("empty or missing")
+				}
+
+				break
+			}
+
+			return nil, 0, fmt.Errorf("failed to read byte: %w", readErr)
+		}
+
+		currentBytesRead++
+
+		lineBuffer.WriteByte(b)
+
+		if b == '"' {
+			if err := handleQuoteChar(reader, &lineBuffer, &currentBytesRead, &inQuotes); err != nil {
+				return nil, 0, err
+			}
+		} else if (b == '\n' || b == '\r') && !inQuotes {
+			if err := handleLineEnding(reader, b, &lineBuffer, &currentBytesRead); err != nil {
+				return nil, 0, err
+			}
+
+			break
+		}
+	}
+
+	lineBytes = lineBuffer.Bytes()
+
+	if len(lineBytes) > 0 && lineBytes[len(lineBytes)-1] == '\r' {
+		lineBytes[len(lineBytes)-1] = '\n'
+	}
+
+	return lineBytes, currentBytesRead, nil
+}
+
+func CSVHeaders(reader *bufio.Reader) (headers []string, bytesReadForHeader int64, err error) {
+	headerLineBytes, bytesRead, err := readCSVLine(reader)
+
+	if err != nil {
+		return nil, bytesRead, fmt.Errorf("CSV header error: %w", err)
+	}
+
+	csvReader := csv.NewReader(bytes.NewReader(headerLineBytes))
+	parsedHeaders, parseErr := csvReader.Read()
+
+	if parseErr != nil {
+		return nil, 0, fmt.Errorf("CSV file format is invalid or corrupted: %v", parseErr)
+	}
+
+	if len(parsedHeaders) == 0 {
+		return nil, 0, fmt.Errorf("CSV header error: empty or missing")
+	}
+
+	return parsedHeaders, bytesRead, nil
+}
+
+func StreamingCSVToPage(
+	streamReader *bufio.Reader,
+	headers []string,
 	pageSize int64,
 	attrConfig []*framework.AttributeConfig,
-) ([]map[string]any, bool, error) {
-	csvData := csv.NewReader(bytes.NewReader(*data))
-
-	// Read all the CSV data
-	records, err := csvData.ReadAll()
-	if err != nil {
-		return nil, false, fmt.Errorf("failed to read CSV data: %v", err)
-	}
-
-	count := len(records)
-	if count == 0 {
-		return nil, false, fmt.Errorf("no data found in the CSV file")
-	}
-
-	objects := make([]map[string]any, 0, pageSize)
-	if count == 1 {
-		return objects, false, nil
-	}
-
-	// Convert CSV data to a slice of maps
-	headers := records[0]
+	maxProcessingBytesTotal int64,
+) (objects []map[string]any, bytesReadFromDataStream int64, hasNext bool, err error) {
+	objects = make([]map[string]any, 0, pageSize)
 	headerToAttributeConfig := headerToAttributeConfig(headers, attrConfig)
 
-	end := min(start+pageSize, int64(count))
-	hasNext := end < int64(count)
+	var totalBytesRead int64
 
-	for _, record := range records[start:end] {
-		row := make(map[string]interface{})
+	hasNext = true
 
-		for i, value := range record {
-			attrConfig, found := headerToAttributeConfig[headers[i]]
-			if !found {
-				// If the value is a complex list of attributes, unmarshal it.
-				// "[{\"primary\": true, \"alias\": \"Klein Luis\"},{\"alias\": \"Cline Luis\", \"primary\": false}]"
-				if strings.HasPrefix(value, "[{") && strings.HasSuffix(value, "}]") {
-					var childObj []map[string]any
-					if err := json.Unmarshal([]byte(value), &childObj); err != nil {
-						return nil, false, fmt.Errorf(
-							`failed to unmarshal the value: "%v" in row: %d, column: %s`,
-							value, i, headers[i],
-						)
+	for int64(len(objects)) < pageSize {
+		if maxProcessingBytesTotal > 0 && totalBytesRead >= maxProcessingBytesTotal {
+			break
+		}
+
+		rowBytes, bytesForRow, rowReadErr := readCSVLine(streamReader)
+
+		if bytesForRow > 0 {
+			totalBytesRead += bytesForRow
+		}
+
+		var processThisRowData bool
+
+		if rowReadErr == nil {
+			if len(rowBytes) > 0 {
+				processThisRowData = true
+			} else {
+				processThisRowData = true
+			}
+		} else if rowReadErr == io.EOF || rowReadErr.Error() == "empty or missing" {
+			hasNext = false
+
+			if len(rowBytes) > 0 {
+				processThisRowData = true
+			} else {
+				break
+			}
+		} else {
+			return nil, 0, false, fmt.Errorf("CSV row error: %w", rowReadErr)
+		}
+
+		if !processThisRowData {
+			if !hasNext {
+				break
+			}
+
+			continue
+		}
+
+		csvRowReader := csv.NewReader(bytes.NewReader(rowBytes))
+		record, recordParseErr := csvRowReader.Read()
+
+		if recordParseErr != nil {
+			if recordParseErr == io.EOF {
+				if len(record) == 0 {
+					if !hasNext {
+						break
 					}
-
-					childArray := make([]any, 0, len(childObj))
-					for _, obj := range childObj {
-						childArray = append(childArray, obj)
-					}
-
-					row[headers[i]] = childArray
 
 					continue
 				}
+			} else {
+				return nil, 0, false,
+					fmt.Errorf("CSV file format is invalid or corrupted: %w", recordParseErr)
+			}
+		}
 
-				row[headers[i]] = value
+		if len(record) == 0 {
+			if !hasNext && rowReadErr == io.EOF {
+				break
+			}
+
+			continue
+		}
+
+		row := make(map[string]interface{})
+
+		for i, value := range record {
+			if i >= len(headers) {
+				continue
+			}
+
+			headerName := headers[i]
+			attrConfig, found := headerToAttributeConfig[headerName]
+
+			if !found {
+				if strings.HasPrefix(value, "[{") && strings.HasSuffix(value, "}]") {
+					var childObj []map[string]any
+					if errUnmarshal := json.Unmarshal([]byte(value), &childObj); errUnmarshal == nil {
+						childArray := make([]any, 0, len(childObj))
+						for _, obj := range childObj {
+							childArray = append(childArray, obj)
+						}
+
+						row[headerName] = childArray
+					} else {
+						return nil, 0, false, fmt.Errorf(
+							`failed to unmarshal the value: "%v" in column: %s`,
+							value, headerName,
+						)
+					}
+				} else {
+					row[headerName] = value
+				}
 
 				continue
 			}
 
-			// If attributeConfig is present, based on the attribute type, convert the value to a number
 			switch attrConfig.Type {
 			case framework.AttributeTypeInt64, framework.AttributeTypeDouble:
-				floatValue, err := strconv.ParseFloat(value, 64)
-				if err != nil {
-					return nil, false, fmt.Errorf(
-						`failed to convert the value: "%v" in row: %d, column: %s to a number`,
-						value, i, headers[i],
+				floatValue, convErr := strconv.ParseFloat(value, 64)
+				if convErr != nil {
+					return nil, 0, false, fmt.Errorf(
+						`CSV contains invalid numeric value "%s" in column "%s"`,
+						value, headerName,
 					)
 				}
 
-				row[headers[i]] = floatValue
+				row[headerName] = floatValue
 			default:
-				row[headers[i]] = value
+				row[headerName] = value
 			}
 		}
 
 		objects = append(objects, row)
+
+		if !hasNext {
+			break
+		}
 	}
 
-	return objects, hasNext, nil
+	if hasNext && int64(len(objects)) == pageSize {
+		_, errPeek := streamReader.Peek(1)
+		if errPeek == io.EOF {
+			hasNext = false
+		}
+	}
+
+	return objects, totalBytesRead, hasNext, nil
 }
 
 func headerToAttributeConfig(
