@@ -384,7 +384,7 @@ func TestAdapterGetPage(t *testing.T) {
 			wantResponse: framework.Response{
 				Error: &framework.Error{
 					// nolint: lll
-					Message: "Unable to parse CSV file headers: CSV header is empty or missing",
+					Message: "Unable to parse CSV file headers: CSV header error: empty or missing",
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 				},
 			},

@@ -63,7 +63,7 @@ func TestCSVHeaders(t *testing.T) {
 				return bufio.NewReader(strings.NewReader(""))
 			},
 			expectedError: true,
-			errorContains: "CSV header is empty or missing",
+			errorContains: "CSV header error: empty or missing",
 		},
 		"header_just_newline": {
 			inputReaderFn: func() *bufio.Reader {
@@ -84,7 +84,8 @@ func TestCSVHeaders(t *testing.T) {
 				return bufio.NewReader(strings.NewReader(strings.Repeat("a,", s3_adapter.MaxCSVRowSizeBytes/2+1) + "last\n"))
 			},
 			expectedError: true,
-			errorContains: fmt.Sprintf("CSV header line exceeds %dMB size limit", s3_adapter.MaxCSVRowSizeBytes/(1024*1024)),
+			errorContains: fmt.Sprintf("CSV header error: size limit of %d MB exceeded",
+				s3_adapter.MaxCSVRowSizeBytes/(1024*1024)),
 		},
 		"header_with_quoted_newline": {
 			inputReaderFn: func() *bufio.Reader {
@@ -278,7 +279,7 @@ Bob,35,SF,"[{""alias"":""Bobby""}]"`
 			pageSize:      2,
 			attrConfig:    attrConfigAllString,
 			expectedError: true,
-			errorContains: fmt.Sprintf("CSV file contains a single row larger than %d MB",
+			errorContains: fmt.Sprintf("CSV row error: size limit of %d MB exceeded",
 				s3_adapter.MaxCSVRowSizeBytes/(1024*1024)),
 		},
 		"success_max_processing_bytes_total_exact_one_row": {

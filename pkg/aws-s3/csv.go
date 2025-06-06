@@ -19,67 +19,105 @@ const (
 	MaxCSVRowSizeBytes = 1 * 1024 * 1024 // 1MB
 )
 
-func handleQuoteChar(b byte, inQuotes *bool, prevByte *byte, isHeaderReading bool) {
-	if isHeaderReading {
-		*inQuotes = !*inQuotes
+func handleQuoteChar(reader *bufio.Reader, lineBuffer *bytes.Buffer, currentBytesRead *int64, inQuotes *bool) error {
+	if !*inQuotes {
+		// This is an opening quote
+		*inQuotes = true
+
+		return nil
+	}
+
+	// We're inside quotes - need to check if this is an escaped quote or closing quote
+	nextBytes, peekErr := reader.Peek(1)
+
+	if peekErr != nil {
+		if peekErr == io.EOF {
+			// End of file - this quote closes the field
+			*inQuotes = false
+
+			return nil
+		}
+		// Some other error occurred
+		return fmt.Errorf("failed to peek next byte after quote: %w", peekErr)
+	}
+
+	if len(nextBytes) > 0 && nextBytes[0] == '"' {
+		// This is "", an escaped quote - consume the second quote
+		nextByte, readErr := reader.ReadByte()
+		if readErr != nil {
+			return fmt.Errorf("failed to read escaped quote: %w", readErr)
+		}
+
+		*currentBytesRead++
+
+		// Write the second quote to buffer
+		// Stay in quotes, this was just an escaped quote
+		// Note: The first quote was already written to buffer in readCSVLine
+		lineBuffer.WriteByte(nextByte)
 	} else {
-		if *inQuotes && *prevByte == '"' {
-			*prevByte = 0
-		} else {
-			*inQuotes = !*inQuotes
-			*prevByte = b
-		}
+		// This is the closing quote
+		*inQuotes = false
 	}
+
+	return nil
 }
 
-func handleLineEnding(reader *bufio.Reader, b byte, lineBuffer *bytes.Buffer, currentBytesRead *int64) {
+func handleLineEnding(reader *bufio.Reader, b byte, lineBuffer *bytes.Buffer, currentBytesRead *int64) error {
 	if b == '\r' {
-		if nextBytes, peekErr := reader.Peek(1); peekErr == nil && len(nextBytes) > 0 && nextBytes[0] == '\n' {
-			if nextByte, readErr := reader.ReadByte(); readErr == nil {
-				*currentBytesRead++
+		nextBytes, peekErr := reader.Peek(1)
 
-				lineBuffer.WriteByte(nextByte)
+		if peekErr != nil {
+			if peekErr == io.EOF {
+				// CR at EOF is a valid line ending
+				return nil
 			}
+			// Other errors should be propagated
+			return fmt.Errorf("failed to peek after CR: %w", peekErr)
+		}
+
+		if len(nextBytes) > 0 && nextBytes[0] == '\n' {
+			// This is CRLF - consume the LF
+			nextByte, readErr := reader.ReadByte()
+
+			if readErr != nil {
+				// This shouldn't happen - we just peeked successfully
+				return fmt.Errorf("failed to read LF after CR: %w", readErr)
+			}
+
+			*currentBytesRead++
+
+			lineBuffer.WriteByte(nextByte)
 		}
 	}
+
+	return nil
 }
 
-func readCSVLine(reader *bufio.Reader, maxBytes int64, isHeaderReading bool) (
+func readCSVLine(reader *bufio.Reader) (
 	lineBytes []byte, bytesRead int64, err error) {
 	var (
 		lineBuffer       bytes.Buffer
 		currentBytesRead int64
-		prevByte         byte
 	)
 
 	inQuotes := false
 
 	for {
-		if currentBytesRead >= maxBytes {
-			if isHeaderReading {
-				return nil, currentBytesRead, fmt.Errorf("CSV header line exceeds %dMB size limit", maxBytes/(1024*1024))
-			}
-
-			return nil, currentBytesRead, fmt.Errorf("CSV file contains a single row larger than %d MB", maxBytes/(1024*1024))
+		if currentBytesRead >= MaxCSVRowSizeBytes {
+			return nil, 0, fmt.Errorf("size limit of %d MB exceeded", MaxCSVRowSizeBytes/(1024*1024))
 		}
 
 		b, readErr := reader.ReadByte()
 		if readErr != nil {
 			if readErr == io.EOF {
 				if lineBuffer.Len() == 0 && currentBytesRead == 0 {
-					if isHeaderReading {
-						return nil, 0, fmt.Errorf("CSV header is empty or missing")
-					}
+					return nil, 0, fmt.Errorf("empty or missing")
 				}
 
 				break
 			}
 
-			if isHeaderReading {
-				return nil, 0, fmt.Errorf("failed to read byte for CSV header: %w", readErr)
-			}
-
-			return nil, 0, fmt.Errorf("failed to read byte for CSV row: %w", readErr)
+			return nil, 0, fmt.Errorf("failed to read byte: %w", readErr)
 		}
 
 		currentBytesRead++
@@ -87,15 +125,15 @@ func readCSVLine(reader *bufio.Reader, maxBytes int64, isHeaderReading bool) (
 		lineBuffer.WriteByte(b)
 
 		if b == '"' {
-			handleQuoteChar(b, &inQuotes, &prevByte, isHeaderReading)
+			if err := handleQuoteChar(reader, &lineBuffer, &currentBytesRead, &inQuotes); err != nil {
+				return nil, 0, err
+			}
 		} else if (b == '\n' || b == '\r') && !inQuotes {
-			handleLineEnding(reader, b, &lineBuffer, &currentBytesRead)
+			if err := handleLineEnding(reader, b, &lineBuffer, &currentBytesRead); err != nil {
+				return nil, 0, err
+			}
 
 			break
-		} else {
-			if !isHeaderReading {
-				prevByte = b
-			}
 		}
 	}
 
@@ -109,14 +147,10 @@ func readCSVLine(reader *bufio.Reader, maxBytes int64, isHeaderReading bool) (
 }
 
 func CSVHeaders(reader *bufio.Reader) (headers []string, bytesReadForHeader int64, err error) {
-	headerLineBytes, bytesRead, err := readCSVLine(reader, MaxCSVRowSizeBytes, true)
+	headerLineBytes, bytesRead, err := readCSVLine(reader)
 
 	if err != nil {
-		return nil, bytesRead, err
-	}
-
-	if len(headerLineBytes) == 0 {
-		return nil, 0, fmt.Errorf("CSV header is empty or missing")
+		return nil, bytesRead, fmt.Errorf("CSV header error: %w", err)
 	}
 
 	csvReader := csv.NewReader(bytes.NewReader(headerLineBytes))
@@ -127,27 +161,10 @@ func CSVHeaders(reader *bufio.Reader) (headers []string, bytesReadForHeader int6
 	}
 
 	if len(parsedHeaders) == 0 {
-		return nil, 0, fmt.Errorf("CSV header is empty or missing")
+		return nil, 0, fmt.Errorf("CSV header error: empty or missing")
 	}
 
 	return parsedHeaders, bytesRead, nil
-}
-
-func readNextCSVRow(reader *bufio.Reader, maxRowBytes int64) (
-	rowLineBytes []byte,
-	bytesConsumedThisRow int64,
-	err error) {
-	rowLineBytes, bytesRead, err := readCSVLine(reader, maxRowBytes, false)
-
-	if err != nil {
-		return nil, bytesRead, err
-	}
-
-	if len(rowLineBytes) == 0 {
-		return nil, bytesRead, io.EOF
-	}
-
-	return rowLineBytes, bytesRead, nil
 }
 
 func StreamingCSVToPage(
@@ -169,7 +186,7 @@ func StreamingCSVToPage(
 			break
 		}
 
-		rowBytes, bytesForRow, rowReadErr := readNextCSVRow(streamReader, MaxCSVRowSizeBytes)
+		rowBytes, bytesForRow, rowReadErr := readCSVLine(streamReader)
 
 		if bytesForRow > 0 {
 			totalBytesRead += bytesForRow
@@ -183,7 +200,7 @@ func StreamingCSVToPage(
 			} else {
 				processThisRowData = true
 			}
-		} else if rowReadErr == io.EOF {
+		} else if rowReadErr == io.EOF || rowReadErr.Error() == "empty or missing" {
 			hasNext = false
 
 			if len(rowBytes) > 0 {
@@ -192,7 +209,7 @@ func StreamingCSVToPage(
 				break
 			}
 		} else {
-			return nil, 0, false, fmt.Errorf("unable to read CSV file data: %w", rowReadErr)
+			return nil, 0, false, fmt.Errorf("CSV row error: %w", rowReadErr)
 		}
 
 		if !processThisRowData {

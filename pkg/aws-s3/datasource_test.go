@@ -245,7 +245,7 @@ func TestDatasource_GetPage(t *testing.T) {
 			headObjectStatusCode: http.StatusOK,
 			getObjectStatusCode:  emptyCSVFileCode,
 			expectedError: &framework.Error{
-				Message: "Unable to parse CSV file headers: CSV header is empty or missing",
+				Message: "Unable to parse CSV file headers: CSV header error: empty or missing",
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			},
 		},
