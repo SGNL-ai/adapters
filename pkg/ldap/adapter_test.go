@@ -568,6 +568,67 @@ func (s *LDAPTestSuite) Test_AdapterGetGroupMemberPage() {
 				},
 			},
 		},
+		"valid_request_check_last_page_group_id": {
+			ctx: context.Background(),
+			request: &framework.Request[ldap_adapter.Config]{
+				Address: s.ldapHost,
+				Auth:    validAuthCredentials,
+				Config: &ldap_adapter.Config{
+					BaseDN: "dc=example,dc=org",
+					EntityConfigMap: map[string]*ldap_adapter.EntityConfig{
+						"Group": {
+							Query: "(&(objectClass=groupofuniquenames)(cn=Science))",
+						},
+						"GroupMember": {
+							MemberOf:                  testutil.GenPtr("Group"),
+							CollectionAttribute:       testutil.GenPtr("dn"),
+							Query:                     "(&(memberOf={{CollectionId}}))",
+							MemberUniqueIDAttribute:   testutil.GenPtr("dn"),
+							MemberOfUniqueIDAttribute: testutil.GenPtr("dn"),
+						},
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "GroupMember",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "id",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+							UniqueId:   true,
+						},
+						{
+							ExternalId: "group_dn",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+						{
+							ExternalId: "member_dn",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+					},
+				},
+				PageSize: 2,
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"id":        "cn=bobby,ou=People,dc=example,dc=org-cn=Science,ou=Groups,dc=example,dc=org",
+							"group_dn":  "cn=Science,ou=Groups,dc=example,dc=org",
+							"member_dn": "cn=bobby,ou=People,dc=example,dc=org",
+						},
+						{
+							"id":        "cn=lorem,ou=People,dc=example,dc=org-cn=Science,ou=Groups,dc=example,dc=org",
+							"group_dn":  "cn=Science,ou=Groups,dc=example,dc=org",
+							"member_dn": "cn=lorem,ou=People,dc=example,dc=org",
+						},
+					},
+					NextCursor: "",
+				},
+			},
+		},
 	}
 
 	for name, tt := range tests {
