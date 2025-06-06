@@ -840,28 +840,27 @@ func ldapErrToHTTPStatusCode(ldapError *ldap_v3.Error) int {
 	return http.StatusInternalServerError // default error code
 }
 
-func getMemberOfUniqueIDValue(cursor *pagination.CompositeCursor[string], memberOfUniqueIDAttribute string) (any, *framework.Error) {
+func getMemberOfUniqueIDValue(cursor *pagination.CompositeCursor[string],
+	memberOfUniqueIDAttribute string) (any, *framework.Error) {
 	var memberOfUniqueIDValue any
 
-	if cursor != nil {
-		if cursor.CollectionCursor != nil {
-			memberOfPageInfo, pageInfoErr := DecodePageInfo(cursor.CollectionCursor)
+	if cursor.CollectionCursor != nil {
+		memberOfPageInfo, pageInfoErr := DecodePageInfo(cursor.CollectionCursor)
 
-			if pageInfoErr != nil {
-				return nil, pageInfoErr
-			}
-
-			if memberOfPageInfo == nil {
-				return nil, &framework.Error{
-					Message: "Failed to decode memberOfPageInfo.",
-					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
-				}
-			}
-
-			memberOfUniqueIDValue = memberOfPageInfo.Collection[memberOfUniqueIDAttribute]
-		} else if cursor.CollectionID != nil {
-			memberOfUniqueIDValue = *cursor.CollectionID
+		if pageInfoErr != nil {
+			return nil, pageInfoErr
 		}
+
+		if memberOfPageInfo == nil {
+			return nil, &framework.Error{
+				Message: "MemberOfPageInfo is empty",
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+			}
+		}
+
+		memberOfUniqueIDValue = memberOfPageInfo.Collection[memberOfUniqueIDAttribute]
+	} else {
+		memberOfUniqueIDValue = *cursor.CollectionID
 	}
 
 	return memberOfUniqueIDValue, nil
