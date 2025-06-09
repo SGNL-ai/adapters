@@ -21,6 +21,9 @@ import (
 
 const attrUID = "uid"
 
+// Seed test user using ldapadd.
+const ldifPath = "testdata/test.ldif"
+
 func TestMainFunction_NoPanic(t *testing.T) {
 	t.Setenv("LDAP_ADAPTER_CONNECTOR_SERVICE_URL", "localhost:1234")
 
@@ -125,8 +128,6 @@ func TestGivenOpenLDAPWithUser_WhenGetPageIsCalled_ThenUserIsReturned(t *testing
 	t.Log("Sleeping 2s to ensure LDAP server is ready for ldapadd...")
 	time.Sleep(2 * time.Second)
 
-	// Seed test user using ldapadd
-	ldifPath := "testdata/test.ldif"
 	// Print LDIF file contents for debugging
 	ldifBytes, readErr := os.ReadFile(ldifPath)
 	if readErr != nil {
@@ -367,7 +368,6 @@ func TestGivenOpenLDAPWithMultipleUsers_WhenPagedGetPageIsCalled_ThenAllUsersAre
 	t.Log("Sleeping 2s to ensure LDAP server is ready for ldapadd...")
 	time.Sleep(2 * time.Second)
 
-	ldifPath := "testdata/test.ldif"
 	// Print LDIF file contents for debugging
 	ldifBytes, readErr := os.ReadFile(ldifPath)
 	if readErr != nil {
@@ -605,7 +605,6 @@ func TestGivenOpenLDAPWithGroupMembers_WhenGetGroupMemberPageIsCalled_ThenGroupD
 	t.Log("Sleeping 2s to ensure LDAP server is ready for ldapadd...")
 	time.Sleep(2 * time.Second)
 
-	ldifPath := "testdata/test.ldif"
 	// Print LDIF file contents for debugging
 	ldifBytes, readErr := os.ReadFile(ldifPath)
 	if readErr != nil {
@@ -769,5 +768,4 @@ func TestGivenOpenLDAPWithGroupMembers_WhenGetGroupMemberPageIsCalled_ThenGroupD
 	if page.NextCursor != "" {
 		t.Fatalf("expected empty next_cursor but got: %s", page.NextCursor)
 	}
-
 }
