@@ -2,6 +2,10 @@ dn: ou=users,dc=example,dc=org
 objectClass: organizationalUnit
 ou: users
 
+dn: ou=Groups,dc=example,dc=org
+objectClass: organizationalUnit
+ou: Groups
+
 dn: uid=john,ou=users,dc=example,dc=org
 objectClass: inetOrgPerson
 uid: john
@@ -21,4 +25,10 @@ objectClass: inetOrgPerson
 uid: bob
 sn: Brown
 cn: Bob Brown
-userPassword: password 
+userPassword: password
+
+dn: cn=Science,ou=Groups,dc=example,dc=org
+objectClass: groupOfUniqueNames
+cn: Science
+uniqueMember: uid=john,ou=users,dc=example,dc=org
+uniqueMember: uid=alice,ou=users,dc=example,dc=org
