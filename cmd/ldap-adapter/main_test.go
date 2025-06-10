@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strings"
+	"reflect"
 	"testing"
 	"time"
 
@@ -19,10 +19,12 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-const attrUID = "uid"
+const (
+	attrUID = "uid"
 
-// Seed test user using ldapadd.
-const ldifPath = "testdata/test.ldif"
+	// Seed test user using ldapadd.
+	ldifPath = "testdata/test.ldif"
+)
 
 func TestMainFunction_NoPanic(t *testing.T) {
 	t.Setenv("LDAP_ADAPTER_CONNECTOR_SERVICE_URL", "localhost:1234")
@@ -755,14 +757,23 @@ func TestGivenOpenLDAPWithGroupMembers_WhenGetGroupMemberPageIsCalled_ThenGroupD
 		t.Fatalf("expected two users on first page, got: %+v", resp)
 	}
 
+	gotGroupMemberIDSlice := []string{"uid=john,ou=users,dc=example,dc=org-cn=Science,ou=Groups,dc=example,dc=org",
+		"uid=alice,ou=users,dc=example,dc=org-cn=Science,ou=Groups,dc=example,dc=org"}
+
+	var wantGroupMemberIDSlice []string
+
 	for _, obj := range page.Objects {
 		for _, attr := range obj.Attributes {
 			for _, value := range attr.Values {
-				if attr.Id == "id" && strings.Contains(value.GetStringValue(), "<nil>") {
-					t.Fatalf("id contains nil indicating no group id for the member, got: %s", value.GetStringValue())
+				if attr.Id == "id" {
+					wantGroupMemberIDSlice = append(wantGroupMemberIDSlice, value.GetStringValue())
 				}
 			}
 		}
+	}
+
+	if !reflect.DeepEqual(gotGroupMemberIDSlice, wantGroupMemberIDSlice) {
+		t.Fatalf("gotResponse: %v, wantResponse: %v", gotGroupMemberIDSlice, wantGroupMemberIDSlice)
 	}
 
 	if page.NextCursor != "" {
