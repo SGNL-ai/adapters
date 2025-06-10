@@ -192,54 +192,33 @@ func StreamingCSVToPage(
 			totalBytesRead += bytesRead
 		}
 
-		var processThisRowData bool
-
-		if rowReadErr == nil {
-			if len(rowBytes) > 0 {
-				processThisRowData = true
-			} else {
-				processThisRowData = false
-			}
-		} else if rowReadErr == io.EOF || errors.Is(rowReadErr, ErrEmptyOrMissing) {
-			hasNext = false
-
-			if len(rowBytes) > 0 {
-				processThisRowData = true
-			} else {
-				break
-			}
-		} else {
+		if rowReadErr != nil && rowReadErr != io.EOF && !errors.Is(rowReadErr, ErrEmptyOrMissing) {
 			return nil, 0, false, fmt.Errorf("CSV row error: %w", rowReadErr)
 		}
 
-		if !processThisRowData {
-			if !hasNext {
-				break
+		if len(rowBytes) == 0 {
+			if rowReadErr == io.EOF || errors.Is(rowReadErr, ErrEmptyOrMissing) {
+				hasNext = false
+
+				return objects, totalBytesRead, hasNext, nil
 			}
 
 			continue
 		}
 
+		if rowReadErr == io.EOF || errors.Is(rowReadErr, ErrEmptyOrMissing) {
+			hasNext = false
+		}
+
 		csvRowReader := csv.NewReader(bytes.NewReader(rowBytes))
 		record, recordParseErr := csvRowReader.Read()
 
-		if recordParseErr != nil {
-			if recordParseErr == io.EOF {
-				if len(record) == 0 {
-					if !hasNext {
-						break
-					}
-
-					continue
-				}
-			} else {
-				return nil, 0, false,
-					fmt.Errorf("CSV file format is invalid or corrupted: %w", recordParseErr)
-			}
+		if recordParseErr != nil && recordParseErr != io.EOF {
+			return nil, 0, false, fmt.Errorf("CSV file format is invalid or corrupted: %w", recordParseErr)
 		}
 
 		if len(record) == 0 {
-			if !hasNext && rowReadErr == io.EOF {
+			if !hasNext {
 				break
 			}
 
