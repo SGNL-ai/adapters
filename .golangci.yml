@@ -1,4 +1,22 @@
 version: "2"
+formatters:
+  enable:
+    - gofmt
+    - gci
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(github.com/sgnl-ai)
+        - localmodule
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+
 linters:
   default: none
   enable:
@@ -9,6 +27,7 @@ linters:
     - durationcheck
     - forcetypeassert
     - goconst
+    - gocritic
     - godot
     - goheader
     - ineffassign
@@ -22,44 +41,36 @@ linters:
     - predeclared
     - promlinter
     - reassign
-    - revive
-    # TODO Enable staticcheck
-    # - staticcheck
     - unconvert
     - unparam
     - unused
     - usestdlibvars
     - wastedassign
     - wsl
-  settings:
-    goheader:
-      values:
-        const:
-          COMPANY: SGNL.ai, Inc.
-      template: Copyright {{ YEAR }} {{ COMPANY }}
-    nestif:
-      min-complexity: 10
   exclusions:
     generated: lax
+    rules:
+      - path: (.+)_test.go
+        linters:
+          - dupl
     presets:
       - comments
       - common-false-positives
       - legacy
       - std-error-handling
-    rules:
-      - linters:
-          - dupl
-        path: (.+)_test.go
     paths:
       - third_party$
       - builtin$
       - examples$
-formatters:
-  enable:
-    - gofmt
-  exclusions:
-    generated: lax
-    paths:
-      - third_party$
-      - builtin$
-      - examples$
+  settings:
+    nestif:
+      min-complexity: 10
+    gocritic:
+      disable-all: true
+      enabled-checks:
+        - dupImport
+    goheader:
+      values:
+        const:
+          COMPANY: SGNL.ai, Inc.
+      template: Copyright {{ YEAR }} {{ COMPANY }}
