@@ -5,6 +5,9 @@
 package awss3_test
 
 import (
+	"fmt"
+	"strings"
+
 	framework "github.com/sgnl-ai/adapter-framework"
 	s3_adapter "github.com/sgnl-ai/adapters/pkg/aws-s3"
 	cmnConfig "github.com/sgnl-ai/adapters/pkg/config"
@@ -47,3 +50,41 @@ var (
 4	710D4dA2FAa96B5	James	Walters	Kline and Sons	Donhaven	Bahrain	+1-985-596-1072x3040	(528)734-8924x054	dochoa@carey-morse.com	2022-01-18	https://brennan.com/
 5	3c44ed62d7BfEBC	Leslie	Snyder	"Price	 Mason and Doyle"	Mossfort	Central African Republic	812-016-9904x8231	254.631.9380	darrylbarber@warren.org	2020-01-25	http://www.trujillo-sullivan.info/`
 )
+
+// generateLargeCSVData creates a large CSV string.
+func generateLargeCSVData() string {
+	header := "Score,Customer Id,First Name,Last Name,Company,City,Country," +
+		"Phone 1,Phone 2,Email,Subscription Date,Website,KnownAliases\n"
+
+	const targetRows = 50000
+
+	var builder strings.Builder
+
+	builder.WriteString(header)
+
+	builder.Grow(10*1024*1024 + 1024*1024) // 11MB capacity (does not have any significance, can be any big number)
+
+	for i := 1; i <= targetRows; i++ {
+		score := float64(i) * 0.1
+		customerID := fmt.Sprintf("ID%07d", i)
+		firstName := fmt.Sprintf("FirstName%d", i)
+		lastName := fmt.Sprintf("LastName%d", i)
+		company := fmt.Sprintf("Company %d LLC", i)
+		city := fmt.Sprintf("City%d", i)
+		country := "TestCountry"
+		phone1 := fmt.Sprintf("555-%03d-%04d", i%1000, i%10000)
+		phone2 := fmt.Sprintf("666-%03d-%04d", (i+1)%1000, (i+1)%10000)
+		email := fmt.Sprintf("user%d@example.com", i)
+		subDate := "2024-01-01"
+		website := fmt.Sprintf("https://example%d.com", i)
+		aliases := fmt.Sprintf(`"[{""alias"": ""Alias%d"", ""primary"": true}]"`, i)
+
+		row := fmt.Sprintf("%.1f,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+			score, customerID, firstName, lastName, company, city, country,
+			phone1, phone2, email, subDate, website, aliases)
+
+		builder.WriteString(row)
+	}
+
+	return builder.String()
+}
