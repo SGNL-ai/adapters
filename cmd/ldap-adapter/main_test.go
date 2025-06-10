@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -757,16 +758,20 @@ func TestGivenOpenLDAPWithGroupMembers_WhenGetGroupMemberPageIsCalled_ThenGroupD
 		t.Fatalf("expected two users on first page, got: %+v", resp)
 	}
 
-	gotGroupMemberIDSlice := []string{"uid=john,ou=users,dc=example,dc=org-cn=Science,ou=Groups,dc=example,dc=org",
+	wantGroupMemberIDSlice := []string{"uid=john,ou=users,dc=example,dc=org-cn=Science,ou=Groups,dc=example,dc=org",
 		"uid=alice,ou=users,dc=example,dc=org-cn=Science,ou=Groups,dc=example,dc=org"}
 
-	var wantGroupMemberIDSlice []string
+	var gotGroupMemberIDSlice []string
 
 	for _, obj := range page.Objects {
 		for _, attr := range obj.Attributes {
 			for _, value := range attr.Values {
 				if attr.Id == "id" {
-					wantGroupMemberIDSlice = append(wantGroupMemberIDSlice, value.GetStringValue())
+					if strings.Contains(value.GetStringValue(), "<nil>") {
+						t.Fatalf("id contains nil indicating no group id for the member, got: %s", value.GetStringValue())
+					}
+					// Collect the group member IDs
+					gotGroupMemberIDSlice = append(gotGroupMemberIDSlice, value.GetStringValue())
 				}
 			}
 		}
