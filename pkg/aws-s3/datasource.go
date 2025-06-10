@@ -177,14 +177,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 
 	dataBufReader := bufio.NewReader(s3DataStreamOutput.Body)
 
-	var (
-		objects                 []map[string]any
-		hasNext                 bool
-		bytesReadFromDataStream int64
-		processErr              error
-	)
-
-	objects, bytesReadFromDataStream, hasNext, processErr = StreamingCSVToPage(
+	objects, bytesReadFromDataStream, hasNext, processErr := StreamingCSVToPage(
 		dataBufReader,
 		parsedHeaders,
 		request.PageSize,

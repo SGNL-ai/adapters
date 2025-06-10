@@ -172,10 +172,11 @@ Bob,35,SF,"[{""alias"":""Bobby""}]"`
 		errorContains           string
 	}{
 		"success_basic_csv_page1": {
-			csvData:    csvDataBasic,
-			headers:    sampleHeaders,
-			pageSize:   2,
-			attrConfig: attrConfigDefault,
+			csvData:                 csvDataBasic,
+			headers:                 sampleHeaders,
+			pageSize:                2,
+			attrConfig:              attrConfigDefault,
+			maxProcessingBytesTotal: s3_adapter.MaxBytesToProcessPerPage,
 			expectedObjects: []map[string]any{
 				{"name": "John", "age": float64(25), "city": "NYC", "aliases": []any{map[string]any{"alias": "Johnny"}}},
 				{"name": "Jane", "age": float64(30), "city": "LA", "aliases": []any{map[string]any{"alias": "Janey"}}},
@@ -183,30 +184,33 @@ Bob,35,SF,"[{""alias"":""Bobby""}]"`
 			expectedHasNext: true,
 		},
 		"success_basic_csv_page2_and_last": {
-			csvData:    `Bob,35,SF,"[{""alias"":""Bobby""}]"`,
-			headers:    sampleHeaders,
-			pageSize:   2,
-			attrConfig: attrConfigDefault,
+			csvData:                 `Bob,35,SF,"[{""alias"":""Bobby""}]"`,
+			headers:                 sampleHeaders,
+			pageSize:                2,
+			attrConfig:              attrConfigDefault,
+			maxProcessingBytesTotal: s3_adapter.MaxBytesToProcessPerPage,
 			expectedObjects: []map[string]any{
 				{"name": "Bob", "age": float64(35), "city": "SF", "aliases": []any{map[string]any{"alias": "Bobby"}}},
 			},
 			expectedHasNext: false,
 		},
 		"success_last_page_exact_size": {
-			csvData:    csvDataOneLine,
-			headers:    sampleHeaders,
-			pageSize:   1,
-			attrConfig: attrConfigDefault,
+			csvData:                 csvDataOneLine,
+			headers:                 sampleHeaders,
+			pageSize:                1,
+			attrConfig:              attrConfigDefault,
+			maxProcessingBytesTotal: s3_adapter.MaxBytesToProcessPerPage,
 			expectedObjects: []map[string]any{
 				{"name": "Alice", "age": float64(40), "city": "BOS", "aliases": ""},
 			},
 			expectedHasNext: false,
 		},
 		"success_page_size_larger_than_data": {
-			csvData:    csvDataOneLine,
-			headers:    sampleHeaders,
-			pageSize:   5,
-			attrConfig: attrConfigDefault,
+			csvData:                 csvDataOneLine,
+			headers:                 sampleHeaders,
+			pageSize:                5,
+			attrConfig:              attrConfigDefault,
+			maxProcessingBytesTotal: s3_adapter.MaxBytesToProcessPerPage,
 			expectedObjects: []map[string]any{
 				{"name": "Alice", "age": float64(40), "city": "BOS", "aliases": ""},
 			},
@@ -216,9 +220,10 @@ Bob,35,SF,"[{""alias"":""Bobby""}]"`
 			csvData:  `John,"[{""alias"": ""Johnny"", ""primary"": true}]"`,
 			headers:  []string{"name", "details"},
 			pageSize: 1,
-			attrConfig: []*framework.AttributeConfig{ // No specific config for "details"
+			attrConfig: []*framework.AttributeConfig{
 				{ExternalId: "name", Type: framework.AttributeTypeString},
 			},
+			maxProcessingBytesTotal: s3_adapter.MaxBytesToProcessPerPage,
 			expectedObjects: []map[string]any{
 				{"name": "John", "details": []any{map[string]any{"alias": "Johnny", "primary": true}}},
 			},
@@ -231,74 +236,80 @@ Bob,35,SF,"[{""alias"":""Bobby""}]"`
 			attrConfig: []*framework.AttributeConfig{
 				{ExternalId: "name", Type: framework.AttributeTypeString},
 				{ExternalId: "score", Type: framework.AttributeTypeDouble},
-				{ExternalId: "rating", Type: framework.AttributeTypeInt64}, // Becomes float64
+				{ExternalId: "rating", Type: framework.AttributeTypeInt64},
 			},
+			maxProcessingBytesTotal: s3_adapter.MaxBytesToProcessPerPage,
 			expectedObjects: []map[string]any{
 				{"name": "John", "score": 85.5, "rating": float64(4)},
 			},
 			expectedHasNext: false,
 		},
 		"success_empty_csv_data_after_headers": {
-			csvData:         "",
-			headers:         sampleHeaders,
-			pageSize:        2,
-			attrConfig:      attrConfigDefault,
-			expectedObjects: []map[string]any{},
-			expectedHasNext: false,
+			csvData:                 "",
+			headers:                 sampleHeaders,
+			pageSize:                2,
+			attrConfig:              attrConfigDefault,
+			maxProcessingBytesTotal: s3_adapter.MaxBytesToProcessPerPage,
+			expectedObjects:         []map[string]any{},
+			expectedHasNext:         false,
 		},
 		"success_skips_empty_lines": {
-			csvData:    csvDataWithEmptyLine,
-			headers:    sampleHeaders,
-			pageSize:   2,
-			attrConfig: attrConfigDefault,
+			csvData:                 csvDataWithEmptyLine,
+			headers:                 sampleHeaders,
+			pageSize:                2,
+			attrConfig:              attrConfigDefault,
+			maxProcessingBytesTotal: s3_adapter.MaxBytesToProcessPerPage,
 			expectedObjects: []map[string]any{
 				{"name": "John", "age": float64(25), "city": "NYC", "aliases": ""},
 				{"name": "Jane", "age": float64(30), "city": "LA", "aliases": ""},
 			},
-			expectedHasNext: false, // Assuming the data ends after Jane
+			expectedHasNext: false,
 		},
 		"error_invalid_number_in_data": {
-			csvData:       "John,not_a_number,NYC,",
-			headers:       sampleHeaders,
-			pageSize:      1,
-			attrConfig:    attrConfigDefault, // age is Int64
-			expectedError: true,
-			errorContains: `CSV contains invalid numeric value "not_a_number" in column "age"`,
+			csvData:                 "John,not_a_number,NYC,",
+			headers:                 sampleHeaders,
+			pageSize:                1,
+			attrConfig:              attrConfigDefault,
+			maxProcessingBytesTotal: s3_adapter.MaxBytesToProcessPerPage,
+			expectedError:           true,
+			errorContains:           `CSV contains invalid numeric value "not_a_number" in column "age"`,
 		},
 		"error_invalid_json_in_data": {
-			csvData:       `John,"[{invalid json}]"`,
-			headers:       []string{"name", "data"},
-			pageSize:      1,
-			attrConfig:    []*framework.AttributeConfig{{ExternalId: "name", Type: framework.AttributeTypeString}},
-			expectedError: true,
-			errorContains: `failed to unmarshal the value: "[{invalid json}]" in column: data`,
+			csvData:                 `John,"[{invalid json}]"`,
+			headers:                 []string{"name", "data"},
+			pageSize:                1,
+			attrConfig:              []*framework.AttributeConfig{{ExternalId: "name", Type: framework.AttributeTypeString}},
+			maxProcessingBytesTotal: s3_adapter.MaxBytesToProcessPerPage,
+			expectedError:           true,
+			errorContains:           `failed to unmarshal the value: "[{invalid json}]" in column: data`,
 		},
 		"error_row_exceeds_max_size": {
-			csvData:       csvDataExceedsRowLimit,
-			headers:       sampleHeaders,
-			pageSize:      2,
-			attrConfig:    attrConfigAllString,
-			expectedError: true,
+			csvData:                 csvDataExceedsRowLimit,
+			headers:                 sampleHeaders,
+			pageSize:                2,
+			attrConfig:              attrConfigAllString,
+			maxProcessingBytesTotal: s3_adapter.MaxBytesToProcessPerPage,
+			expectedError:           true,
 			errorContains: fmt.Sprintf("CSV row error: size limit of %d MB exceeded",
 				s3_adapter.MaxCSVRowSizeBytes/(1024*1024)),
 		},
 		"success_max_processing_bytes_total_exact_one_row": {
-			csvData:                 csvDataForProcessingLimit, // "r1,1\n" (5b), "r2,22\n" (6b), "r3,333\n" (7b)
+			csvData:                 csvDataForProcessingLimit,
 			headers:                 headersForProcessingLimit,
 			pageSize:                3,
 			attrConfig:              attrConfigForProcessingLimit,
-			maxProcessingBytesTotal: 5, // Allows only first row (5 bytes)
+			maxProcessingBytesTotal: 5,
 			expectedObjects: []map[string]any{
 				{"colA": "r1", "colB": "1"},
 			},
-			expectedHasNext: true, // because total data is larger
+			expectedHasNext: true,
 		},
 		"success_max_processing_bytes_total_allows_two_rows": {
-			csvData:                 csvDataForProcessingLimit, // r1 (5b), r2 (6b) = 11b total
+			csvData:                 csvDataForProcessingLimit,
 			headers:                 headersForProcessingLimit,
 			pageSize:                3,
 			attrConfig:              attrConfigForProcessingLimit,
-			maxProcessingBytesTotal: 11, // Allows first two rows
+			maxProcessingBytesTotal: 11,
 			expectedObjects: []map[string]any{
 				{"colA": "r1", "colB": "1"},
 				{"colA": "r2", "colB": "22"},
@@ -306,16 +317,14 @@ Bob,35,SF,"[{""alias"":""Bobby""}]"`
 			expectedHasNext: true,
 		},
 		"success_max_processing_bytes_total_mid_row_allowance": {
-			// Total bytes read for r1=5. Next check: 5 < 8 is true. Read r2 (6 bytes). Total=11. Process r2.
-			// Next check: 11 < 8 is false. Break.
-			csvData:                 csvDataForProcessingLimit, // r1 (5b), r2 (6b), r3 (7b)
+			csvData:                 csvDataForProcessingLimit,
 			headers:                 headersForProcessingLimit,
 			pageSize:                3,
 			attrConfig:              attrConfigForProcessingLimit,
-			maxProcessingBytesTotal: 8, // Allows r1. Then r1+r2 (11b) > 8, so r2 is read & processed, then stop.
+			maxProcessingBytesTotal: 8,
 			expectedObjects: []map[string]any{
 				{"colA": "r1", "colB": "1"},
-				{"colA": "r2", "colB": "22"}, // r2 is processed as 5(r1) < 8, then 5+6=11.
+				{"colA": "r2", "colB": "22"},
 			},
 			expectedHasNext: true,
 		},
@@ -324,7 +333,7 @@ Bob,35,SF,"[{""alias"":""Bobby""}]"`
 			headers:                 headersForProcessingLimit,
 			pageSize:                3,
 			attrConfig:              attrConfigForProcessingLimit,
-			maxProcessingBytesTotal: 0, // Unlimited
+			maxProcessingBytesTotal: s3_adapter.MaxBytesToProcessPerPage,
 			expectedObjects: []map[string]any{
 				{"colA": "r1", "colB": "1"},
 				{"colA": "r2", "colB": "22"},
@@ -333,39 +342,37 @@ Bob,35,SF,"[{""alias"":""Bobby""}]"`
 			expectedHasNext: false,
 		},
 		"success_max_processing_bytes_total_less_than_first_row_but_first_row_read": {
-			csvData:                 csvDataForProcessingLimit, // r1 is 5 bytes
+			csvData:                 csvDataForProcessingLimit,
 			headers:                 headersForProcessingLimit,
 			pageSize:                3,
 			attrConfig:              attrConfigForProcessingLimit,
-			maxProcessingBytesTotal: 3, // Less than first row
+			maxProcessingBytesTotal: 3,
 			expectedObjects: []map[string]any{
-				// First row (5 bytes) is read because initial totalBytes (0) < 3 is true.
-				// Then 5 >= 3, so loop breaks after processing it.
 				{"colA": "r1", "colB": "1"},
 			},
 			expectedHasNext: true,
 		},
 		"error_on_record_parse_after_first_row": {
-			// First row OK, second row has unclosed quote causing csv.Reader.Read() to error.
 			csvData:  "good,data\n\"bad,data",
 			headers:  []string{"f1", "f2"},
 			pageSize: 2,
 			attrConfig: []*framework.AttributeConfig{{ExternalId: "f1", Type: framework.AttributeTypeString},
 				{ExternalId: "f2", Type: framework.AttributeTypeString}},
-			expectedError: true,
-			// The error message includes the problematic row.
+			maxProcessingBytesTotal: s3_adapter.MaxBytesToProcessPerPage,
+			expectedError:           true,
 			errorContains: "CSV file format is invalid or corrupted: parse error on line 1, " +
 				"column 10: extraneous or missing \" in quoted-field",
 		},
 		"header_name_not_in_attr_config": {
 			csvData:  "valX,valY",
-			headers:  []string{"HeaderX", "HeaderY"}, // HeaderY not in attrConfig
+			headers:  []string{"HeaderX", "HeaderY"},
 			pageSize: 1,
 			attrConfig: []*framework.AttributeConfig{
 				{ExternalId: "HeaderX", Type: framework.AttributeTypeString},
 			},
+			maxProcessingBytesTotal: s3_adapter.MaxBytesToProcessPerPage,
 			expectedObjects: []map[string]any{
-				{"HeaderX": "valX", "HeaderY": "valY"}, // HeaderY included as string
+				{"HeaderX": "valX", "HeaderY": "valY"},
 			},
 			expectedHasNext: false,
 		},
@@ -377,6 +384,7 @@ Bob,35,SF,"[{""alias"":""Bobby""}]"`
 				{ExternalId: "HeaderA", Type: framework.AttributeTypeString},
 				{ExternalId: "NonExistentHeader", Type: framework.AttributeTypeInt64},
 			},
+			maxProcessingBytesTotal: s3_adapter.MaxBytesToProcessPerPage,
 			expectedObjects: []map[string]any{
 				{"HeaderA": "valA"},
 			},

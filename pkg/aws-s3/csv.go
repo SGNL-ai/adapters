@@ -150,7 +150,7 @@ func CSVHeaders(reader *bufio.Reader) (headers []string, bytesReadForHeader int6
 	headerLineBytes, bytesRead, err := readCSVLine(reader)
 
 	if err != nil {
-		return nil, bytesRead, fmt.Errorf("CSV header error: %w", err)
+		return nil, 0, fmt.Errorf("CSV header error: %w", err)
 	}
 
 	csvReader := csv.NewReader(bytes.NewReader(headerLineBytes))
@@ -182,7 +182,7 @@ func StreamingCSVToPage(
 	hasNext = true
 
 	for int64(len(objects)) < pageSize {
-		if maxProcessingBytesTotal > 0 && totalBytesRead >= maxProcessingBytesTotal {
+		if totalBytesRead >= maxProcessingBytesTotal {
 			break
 		}
 
