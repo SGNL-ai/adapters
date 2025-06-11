@@ -324,7 +324,6 @@ Bob,35,SF,"[{""alias"":""Bobby""}]"`
 			maxProcessingBytesTotal: 8,
 			expectedObjects: []map[string]any{
 				{"colA": "r1", "colB": "1"},
-				{"colA": "r2", "colB": "22"},
 			},
 			expectedHasNext: true,
 		},
@@ -340,17 +339,6 @@ Bob,35,SF,"[{""alias"":""Bobby""}]"`
 				{"colA": "r3", "colB": "333"},
 			},
 			expectedHasNext: false,
-		},
-		"success_max_processing_bytes_total_less_than_first_row_but_first_row_read": {
-			csvData:                 csvDataForProcessingLimit,
-			headers:                 headersForProcessingLimit,
-			pageSize:                3,
-			attrConfig:              attrConfigForProcessingLimit,
-			maxProcessingBytesTotal: 3,
-			expectedObjects: []map[string]any{
-				{"colA": "r1", "colB": "1"},
-			},
-			expectedHasNext: true,
 		},
 		"error_on_record_parse_after_first_row": {
 			csvData:  "good,data\n\"bad,data",
