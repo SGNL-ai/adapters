@@ -182,13 +182,13 @@ func StreamingCSVToPage(
 	hasNext = true
 
 	for int64(len(objects)) < pageSize {
-		if totalBytesRead >= maxProcessingBytesTotal {
-			break
-		}
-
 		rowBytes, bytesRead, rowReadErr := readCSVLine(streamReader)
 
 		if bytesRead > 0 {
+			if (totalBytesRead + bytesRead) > maxProcessingBytesTotal {
+				break
+			}
+
 			totalBytesRead += bytesRead
 		}
 
