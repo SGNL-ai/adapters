@@ -37,6 +37,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+const MB = 1024 * 1024
+
 func main() {
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix("ADAPTER")
@@ -47,17 +49,18 @@ func main() {
 	viper.SetDefault("TIMEOUT", 30)
 	// ADAPTER_MAX_CONCURRENCY: The number of goroutines run concurrently in AWS adapter (default: 20)
 	viper.SetDefault("MAX_CONCURRENCY", 20)
-	// ADAPTER_MAX_CSV_ROW_SIZE_BYTES: The maximum size of a CSV row in bytes (default: 1MB)
-	viper.SetDefault("MAX_CSV_ROW_SIZE_BYTES", 1*1024*1024)
-	// ADAPTER_MAX_BYTES_TO_PROCESS_PER_PAGE: The maximum number of bytes to process per page (default: 10MB)
-	viper.SetDefault("MAX_BYTES_TO_PROCESS_PER_PAGE", 10*1024*1024)
+	// ADAPTER_MAX_S3_CSV_ROW_SIZE_BYTES: The maximum size of a CSV row in bytes (default: 1MB)
+	viper.SetDefault("MAX_S3_CSV_ROW_SIZE_BYTES", 1*MB)
+	// ADAPTER_MAX_S3_BYTES_TO_PROCESS_PER_PAGE: The maximum number of bytes to process per page (default: 10MB)
+	viper.SetDefault("MAX_S3_BYTES_TO_PROCESS_PER_PAGE", 10*MB)
 	// Read config from environment variables
-	port := viper.GetInt("PORT")                                                // ADAPTER_PORT
-	timeout := viper.GetInt("TIMEOUT")                                          // ADAPTER_TIMEOUT
-	maxConcurrency := viper.GetInt("MAX_CONCURRENCY")                           // ADAPTER_MAX_CONCURRENCY
-	connectorServiceURL := viper.GetString("CONNECTOR_SERVICE_URL")             // ADAPTER_CONNECTOR_SERVICE_URL
-	maxCSVRowSizeBytes := viper.GetInt64("MAX_CSV_ROW_SIZE_BYTES")              // ADAPTER_MAX_CSV_ROW_SIZE_BYTES
-	maxBytesToProcessPerPage := viper.GetInt64("MAX_BYTES_TO_PROCESS_PER_PAGE") // ADAPTER_MAX_BYTES_TO_PROCESS_PER_PAGE
+	port := viper.GetInt("PORT")                                      // ADAPTER_PORT
+	timeout := viper.GetInt("TIMEOUT")                                // ADAPTER_TIMEOUT
+	maxConcurrency := viper.GetInt("MAX_CONCURRENCY")                 // ADAPTER_MAX_CONCURRENCY
+	connectorServiceURL := viper.GetString("CONNECTOR_SERVICE_URL")   // ADAPTER_CONNECTOR_SERVICE_URL
+	maxCSVRowSizeBytes := viper.GetInt64("MAX_S3_CSV_ROW_SIZE_BYTES") // ADAPTER_MAX_S3_CSV_ROW_SIZE_BYTES
+	maxBytesToProcessPerPage := viper.GetInt64(
+		"MAX_S3_BYTES_TO_PROCESS_PER_PAGE") // ADAPTER_MAX_S3_BYTES_TO_PROCESS_PER_PAGE
 
 	if connectorServiceURL == "" {
 		log.Fatal("ADAPTER_CONNECTOR_SERVICE_URL environment variable is required")
