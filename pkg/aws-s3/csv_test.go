@@ -84,7 +84,7 @@ func TestCSVHeaders(t *testing.T) {
 				return bufio.NewReader(strings.NewReader(strings.Repeat("a,", MaxCSVRowSizeBytes/2+1) + "last\n"))
 			},
 			expectedError: true,
-			errorContains: fmt.Sprintf("CSV header error: size limit of %d MB exceeded",
+			errorContains: fmt.Sprintf("CSV header error: size limit of %d MiB exceeded",
 				MaxCSVRowSizeBytes/(1024*1024)),
 		},
 		"header_with_quoted_newline": {
@@ -290,7 +290,7 @@ Bob,35,SF,"[{""alias"":""Bobby""}]"`
 			attrConfig:              attrConfigAllString,
 			maxProcessingBytesTotal: MaxBytesToProcessPerPage,
 			expectedError:           true,
-			errorContains: fmt.Sprintf("CSV row error: size limit of %d MB exceeded",
+			errorContains: fmt.Sprintf("CSV row error: size limit of %d MiB exceeded",
 				MaxCSVRowSizeBytes/(1024*1024)),
 		},
 		"success_max_processing_bytes_total_exact_one_row": {

@@ -25,8 +25,8 @@ const (
 	validCSVDataRow2Length   = 260
 	validCSVDataRow3Length   = 232
 	validCSVDataRow4Length   = 208
-	MaxCSVRowSizeBytes       = 1 * 1024 * 1024  // 1MB
-	MaxBytesToProcessPerPage = 10 * 1024 * 1024 // 10MB
+	MaxCSVRowSizeBytes       = 1 * 1024 * 1024  // 1MiB
+	MaxBytesToProcessPerPage = 10 * 1024 * 1024 // 10MiB
 )
 
 func TestGetObjectKeyFromRequest(t *testing.T) {

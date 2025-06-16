@@ -37,7 +37,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-const MB = 1024 * 1024
+const MiB = 1024 * 1024
 
 func main() {
 	viper.AutomaticEnv()
@@ -49,10 +49,10 @@ func main() {
 	viper.SetDefault("TIMEOUT", 30)
 	// ADAPTER_MAX_CONCURRENCY: The number of goroutines run concurrently in AWS adapter (default: 20)
 	viper.SetDefault("MAX_CONCURRENCY", 20)
-	// ADAPTER_MAX_S3_CSV_ROW_SIZE_BYTES: The maximum size of a CSV row in bytes (default: 1MB)
-	viper.SetDefault("MAX_S3_CSV_ROW_SIZE_BYTES", 1*MB)
-	// ADAPTER_MAX_S3_BYTES_TO_PROCESS_PER_PAGE: The maximum number of bytes to process per page (default: 10MB)
-	viper.SetDefault("MAX_S3_BYTES_TO_PROCESS_PER_PAGE", 10*MB)
+	// ADAPTER_MAX_S3_CSV_ROW_SIZE_BYTES: The maximum size of a CSV row in bytes (default: 1MiB)
+	viper.SetDefault("MAX_S3_CSV_ROW_SIZE_BYTES", 1*MiB)
+	// ADAPTER_MAX_S3_BYTES_TO_PROCESS_PER_PAGE: The maximum number of bytes to process per page (default: 10MiB)
+	viper.SetDefault("MAX_S3_BYTES_TO_PROCESS_PER_PAGE", 10*MiB)
 	// Read config from environment variables
 	port := viper.GetInt("PORT")                                      // ADAPTER_PORT
 	timeout := viper.GetInt("TIMEOUT")                                // ADAPTER_TIMEOUT

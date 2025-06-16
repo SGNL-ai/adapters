@@ -99,7 +99,7 @@ func readCSVLine(reader *bufio.Reader, maxRowSize int64) (
 
 	for bytesRead = 0; ; {
 		if bytesRead >= maxRowSize {
-			return nil, 0, fmt.Errorf("size limit of %d MB exceeded", maxRowSize/(1024*1024))
+			return nil, 0, fmt.Errorf("size limit of %d MiB exceeded", maxRowSize/(1024*1024))
 		}
 
 		b, readErr := reader.ReadByte()
