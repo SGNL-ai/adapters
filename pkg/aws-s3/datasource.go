@@ -24,8 +24,6 @@ import (
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 )
 
-const MaxBytesToProcessPerPage = 50 * MaxCSVRowSizeBytes // 50MB
-
 // BOM (Byte Order Mark) patterns for different encodings.
 var (
 	UTF8BOM    = []byte{0xEF, 0xBB, 0xBF}
@@ -36,12 +34,14 @@ var (
 )
 
 type Datasource struct {
-	Client    *http.Client
-	AWSConfig *aws.Config
+	Client                   *http.Client
+	AWSConfig                *aws.Config
+	MaxCSVRowSizeBytes       int64
+	MaxBytesToProcessPerPage int64
 }
 
 // NewClient returns a Client to query the datasource.
-func NewClient(client *http.Client, awsConfig *aws.Config) (Client, error) {
+func NewClient(client *http.Client, awsConfig *aws.Config, maxRowSize, maxPageSize int64) (Client, error) {
 	if awsConfig == nil {
 		cfg, err := aws_config.LoadDefaultConfig(context.TODO())
 		if err != nil {
@@ -52,8 +52,10 @@ func NewClient(client *http.Client, awsConfig *aws.Config) (Client, error) {
 	}
 
 	return &Datasource{
-		AWSConfig: awsConfig,
-		Client:    client,
+		AWSConfig:                awsConfig,
+		Client:                   client,
+		MaxCSVRowSizeBytes:       maxRowSize,
+		MaxBytesToProcessPerPage: maxPageSize,
 	}, nil
 }
 
@@ -140,7 +142,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		}, customerror.WithRequestTimeoutMessage(bomErr, request.RequestTimeoutSeconds))
 	}
 
-	parsedHeaders, bytesReadForHeaderLine, err := CSVHeaders(headerBufReader)
+	parsedHeaders, bytesReadForHeaderLine, err := CSVHeaders(headerBufReader, d.MaxCSVRowSizeBytes)
 	if err != nil {
 		return nil, customerror.UpdateError(&framework.Error{
 			Message: fmt.Sprintf("Unable to parse CSV file headers: %v", err),
@@ -182,7 +184,8 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		parsedHeaders,
 		request.PageSize,
 		request.AttributeConfig,
-		MaxBytesToProcessPerPage,
+		d.MaxBytesToProcessPerPage,
+		d.MaxCSVRowSizeBytes,
 	)
 
 	if processErr != nil {

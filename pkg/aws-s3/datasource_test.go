@@ -25,6 +25,8 @@ const (
 	validCSVDataRow2Length   = 260
 	validCSVDataRow3Length   = 232
 	validCSVDataRow4Length   = 208
+	MaxCSVRowSizeBytes       = 1 * 1024 * 1024  // 1MB
+	MaxBytesToProcessPerPage = 10 * 1024 * 1024 // 10MB
 )
 
 func TestGetObjectKeyFromRequest(t *testing.T) {
@@ -269,7 +271,12 @@ func TestDatasource_GetPage(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			currentMockS3Config := mockS3Config(tt.headObjectStatusCode, tt.getObjectStatusCode)
 
-			datasource, err := s3_adapter.NewClient(http.DefaultClient, currentMockS3Config)
+			datasource, err := s3_adapter.NewClient(
+				http.DefaultClient,
+				currentMockS3Config,
+				MaxCSVRowSizeBytes,
+				MaxBytesToProcessPerPage,
+			)
 			if err != nil {
 				t.Fatalf("Failed to create datasource: %v", err)
 			}
