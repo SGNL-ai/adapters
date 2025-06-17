@@ -9,7 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.67
 	github.com/aws/aws-sdk-go-v2/service/iam v1.41.1
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.79.3
-	github.com/aws/smithy-go v1.22.3
+	github.com/aws/smithy-go v1.22.4
 	github.com/bwmarrin/go-objectsid v0.0.0-20191126144531-5fee401a2f37
 	github.com/docker/go-connections v0.5.0
 	github.com/doug-martin/goqu/v9 v9.19.0
