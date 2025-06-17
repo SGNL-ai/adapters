@@ -648,7 +648,7 @@ func TestAdapterGetPage(t *testing.T) {
 			// Setup mock middleware to mimic responses from the SDK
 			cfg := mockS3Config(tt.headObjectStatusCode, tt.getObjectStatusCode)
 
-			client, err := s3_adapter.NewClient(http.DefaultClient, cfg)
+			client, err := s3_adapter.NewClient(http.DefaultClient, cfg, MaxCSVRowSizeBytes, MaxBytesToProcessPerPage)
 			if err != nil {
 				t.Errorf("error creating client to query datasource: %v", err)
 			}

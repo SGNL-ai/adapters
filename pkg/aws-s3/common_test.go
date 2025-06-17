@@ -62,7 +62,7 @@ func generateLargeCSVData() string {
 
 	builder.WriteString(header)
 
-	builder.Grow(10*1024*1024 + 1024*1024) // 11MB capacity (does not have any significance, can be any big number)
+	builder.Grow(10*1024*1024 + 1024*1024) // 11MiB capacity (does not have any significance, can be any big number)
 
 	for i := 1; i <= targetRows; i++ {
 		score := float64(i) * 0.1
