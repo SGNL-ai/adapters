@@ -69,8 +69,8 @@ func StartAdapterServer(t *testing.T, client *http.Client, port int) chan struct
 	s3Client, err := s3.NewClient(
 		client,
 		&cfg,
-		1*1024*1024,  // 1MB max row size
-		10*1024*1024, // 10MB max processing bytes per page
+		1*1024*1024,  // 1MiB max row size
+		10*1024*1024, // 10MiB max processing bytes per page
 	)
 	if err != nil {
 		t.Fatalf("Failed to create a client for AWS S3 SoR: %v", err)

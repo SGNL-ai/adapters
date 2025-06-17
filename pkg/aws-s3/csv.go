@@ -91,15 +91,15 @@ func handleLineEnding(reader *bufio.Reader, lineBuffer *bytes.Buffer, bytesRead 
 	return nil
 }
 
-func readCSVLine(reader *bufio.Reader, maxRowSize int64) (
+func readCSVLine(reader *bufio.Reader, maxRowSizeBytes int64) (
 	lineBytes []byte, bytesRead int64, err error) {
 	var lineBuffer bytes.Buffer
 
 	inQuotes := false
 
 	for bytesRead = 0; ; {
-		if bytesRead >= maxRowSize {
-			return nil, 0, fmt.Errorf("size limit of %d MiB exceeded", maxRowSize/(1024*1024))
+		if bytesRead >= maxRowSizeBytes {
+			return nil, 0, fmt.Errorf("size limit of %d MiB exceeded", maxRowSizeBytes/(1024*1024))
 		}
 
 		b, readErr := reader.ReadByte()
@@ -143,8 +143,8 @@ func readCSVLine(reader *bufio.Reader, maxRowSize int64) (
 	return lineBytes, bytesRead, nil
 }
 
-func CSVHeaders(reader *bufio.Reader, maxRowSize int64) (headers []string, bytesReadForHeader int64, err error) {
-	headerLineBytes, bytesRead, err := readCSVLine(reader, maxRowSize)
+func CSVHeaders(reader *bufio.Reader, maxRowSizeBytes int64) (headers []string, bytesReadForHeader int64, err error) {
+	headerLineBytes, bytesRead, err := readCSVLine(reader, maxRowSizeBytes)
 
 	if err != nil {
 		return nil, 0, fmt.Errorf("CSV header error: %w", err)
@@ -170,7 +170,7 @@ func StreamingCSVToPage(
 	pageSize int64,
 	attrConfig []*framework.AttributeConfig,
 	maxProcessingBytesTotal int64,
-	maxRowSize int64,
+	maxRowSizeBytes int64,
 ) (objects []map[string]any, bytesReadFromDataStream int64, hasNext bool, err error) {
 	objects = make([]map[string]any, 0, pageSize)
 	headerToAttributeConfig := headerToAttributeConfig(headers, attrConfig)
@@ -180,7 +180,7 @@ func StreamingCSVToPage(
 	hasNext = true
 
 	for int64(len(objects)) < pageSize {
-		rowBytes, bytesRead, rowReadErr := readCSVLine(streamReader, maxRowSize)
+		rowBytes, bytesRead, rowReadErr := readCSVLine(streamReader, maxRowSizeBytes)
 
 		if bytesRead > 0 {
 			if (totalBytesRead + bytesRead) > maxProcessingBytesTotal {

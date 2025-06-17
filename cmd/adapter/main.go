@@ -54,13 +54,15 @@ func main() {
 	// ADAPTER_MAX_S3_BYTES_TO_PROCESS_PER_PAGE: The maximum number of bytes to process per page (default: 10MiB)
 	viper.SetDefault("MAX_S3_BYTES_TO_PROCESS_PER_PAGE", 10*MiB)
 	// Read config from environment variables
-	port := viper.GetInt("PORT")                                      // ADAPTER_PORT
-	timeout := viper.GetInt("TIMEOUT")                                // ADAPTER_TIMEOUT
-	maxConcurrency := viper.GetInt("MAX_CONCURRENCY")                 // ADAPTER_MAX_CONCURRENCY
-	connectorServiceURL := viper.GetString("CONNECTOR_SERVICE_URL")   // ADAPTER_CONNECTOR_SERVICE_URL
-	maxCSVRowSizeBytes := viper.GetInt64("MAX_S3_CSV_ROW_SIZE_BYTES") // ADAPTER_MAX_S3_CSV_ROW_SIZE_BYTES
-	maxBytesToProcessPerPage := viper.GetInt64(
-		"MAX_S3_BYTES_TO_PROCESS_PER_PAGE") // ADAPTER_MAX_S3_BYTES_TO_PROCESS_PER_PAGE
+	var (
+		port                     = viper.GetInt("PORT")                        // ADAPTER_PORT
+		timeout                  = viper.GetInt("TIMEOUT")                     // ADAPTER_TIMEOUT
+		maxConcurrency           = viper.GetInt("MAX_CONCURRENCY")             // ADAPTER_MAX_CONCURRENCY
+		connectorServiceURL      = viper.GetString("CONNECTOR_SERVICE_URL")    // ADAPTER_CONNECTOR_SERVICE_URL
+		maxCSVRowSizeBytes       = viper.GetInt64("MAX_S3_CSV_ROW_SIZE_BYTES") // ADAPTER_MAX_S3_CSV_ROW_SIZE_BYTES
+		maxBytesToProcessPerPage = viper.GetInt64(
+			"MAX_S3_BYTES_TO_PROCESS_PER_PAGE") // ADAPTER_MAX_S3_BYTES_TO_PROCESS_PER_PAGE
+	)
 
 	if connectorServiceURL == "" {
 		log.Fatal("ADAPTER_CONNECTOR_SERVICE_URL environment variable is required")

@@ -41,7 +41,7 @@ type Datasource struct {
 }
 
 // NewClient returns a Client to query the datasource.
-func NewClient(client *http.Client, awsConfig *aws.Config, maxRowSize, maxPageSize int64) (Client, error) {
+func NewClient(client *http.Client, awsConfig *aws.Config, maxRowSizeBytes, maxPageSizeBytes int64) (Client, error) {
 	if awsConfig == nil {
 		cfg, err := aws_config.LoadDefaultConfig(context.TODO())
 		if err != nil {
@@ -54,8 +54,8 @@ func NewClient(client *http.Client, awsConfig *aws.Config, maxRowSize, maxPageSi
 	return &Datasource{
 		AWSConfig:                awsConfig,
 		Client:                   client,
-		MaxCSVRowSizeBytes:       maxRowSize,
-		MaxBytesToProcessPerPage: maxPageSize,
+		MaxCSVRowSizeBytes:       maxRowSizeBytes,
+		MaxBytesToProcessPerPage: maxPageSizeBytes,
 	}, nil
 }
 
