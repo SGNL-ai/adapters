@@ -114,7 +114,6 @@ func main() {
 
 	// Register adapters here alphabetically.
 	server.RegisterAdapter(adapterServer, "AWS-1.0.0", aws.NewAdapter(awsClient))
-
 	server.RegisterAdapter(
 		adapterServer,
 		"AzureAD-1.0.1",
