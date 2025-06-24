@@ -3,6 +3,8 @@ package ldap
 
 import (
 	"context"
+	"log"
+	"os"
 
 	framework "github.com/sgnl-ai/adapter-framework"
 	grpc_proxy_v1 "github.com/sgnl-ai/adapter-framework/pkg/grpc_proxy/v1"
@@ -92,6 +94,7 @@ type Response struct {
 func NewClient(proxy grpc_proxy_v1.ProxyServiceClient, pool *SessionPool) Client {
 	return &Datasource{
 		Client: &ldapClient{
+			logger:      log.New(os.Stdout, "adapter", log.Lmicroseconds|log.LUTC|log.Lshortfile),
 			proxyClient: proxy,
 			sessionPool: pool,
 		},
