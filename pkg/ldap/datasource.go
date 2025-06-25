@@ -684,7 +684,11 @@ func EntryToObject(e *ldap_v3.Entry, attrConfig map[string]*framework.AttributeC
 	result["dn"] = e.DN
 
 	for _, attribute := range e.Attributes {
-		currAttrConfig := attrConfig[attribute.Name]
+		// Skip attributes that are not configured in the attribute config (could be due to user error)
+		currAttrConfig, ok := attrConfig[attribute.Name]
+		if !ok {
+			continue
+		}
 
 		value, err := StringAttrValuesToRequestedType(attribute, currAttrConfig.List, currAttrConfig.Type)
 		if err != nil {
