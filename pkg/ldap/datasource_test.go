@@ -333,7 +333,7 @@ func TestGivenRequestWithConnectorContextWhenProxyServiceReturnValidResponseWith
 	})
 	defer cleanup()
 
-	ds := ldap.NewClient(client)
+	ds := ldap.NewClient(client, ldap.NewSessionPool(1*time.Minute, time.Minute))
 
 	ctx, _ := connector.WithContext(context.Background(), testutil.TestConnectorInfo)
 

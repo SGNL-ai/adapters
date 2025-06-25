@@ -151,12 +151,18 @@ func (c *ldapClient) ProxyRequest(
 		return nil, &respErr
 	}
 
-	if ldapResp.Response != "" {
-		if err = json.Unmarshal([]byte(ldapResp.Response), response); err != nil {
-			return nil, &framework.Error{
-				Message: fmt.Sprintf("Error unmarshalling LDAP response from the proxy: %v.", err),
-				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
-			}
+	if ldapResp.Response == "" {
+		return nil, &framework.Error{
+			Message: "Error received empty response from the proxy",
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}
+	}
+
+	// Unmarshal the response from the proxy.
+	if err = json.Unmarshal([]byte(ldapResp.Response), response); err != nil {
+		return nil, &framework.Error{
+			Message: fmt.Sprintf("Error unmarshalling LDAP response from the proxy: %v.", err),
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		}
 	}
 
