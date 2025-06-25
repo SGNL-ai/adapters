@@ -62,7 +62,6 @@ type Dispatcher interface {
 // It also manages a session pool to reuse LDAP connections.
 func NewLDAPRequester(ttl time.Duration, cleanupInterval time.Duration) Requester {
 	client := &ldapClient{
-		logger:      log.New(os.Stdout, "adapter", log.Lmicroseconds|log.LUTC|log.Lshortfile),
 		sessionPool: NewSessionPool(ttl, cleanupInterval),
 	}
 
@@ -74,7 +73,6 @@ func NewLDAPRequester(ttl time.Duration, cleanupInterval time.Duration) Requeste
 // connector.
 // It also manages a session pool to reuse LDAP connections.
 type ldapClient struct {
-	logger      *log.Logger
 	proxyClient grpc_proxy_v1.ProxyServiceClient
 	sessionPool *SessionPool
 }
@@ -152,7 +150,7 @@ func (c *ldapClient) ProxyRequest(
 
 // Request sends a paginated search query directly to an LDAP server and returns the
 // processed response.
-func (c *ldapClient) Request(ctx context.Context, request *Request) (*Response, *framework.Error) {
+func (c *ldapClient) Request(_ context.Context, request *Request) (*Response, *framework.Error) {
 	tlsConfig, configErr := GetTLSConfig(request)
 	if configErr != nil {
 		return nil, configErr
@@ -187,9 +185,6 @@ func (c *ldapClient) Request(ctx context.Context, request *Request) (*Response, 
 	if !found {
 		session = &Session{}
 		c.sessionPool.Set(key, session)
-		c.logger.Printf("New session created: %s", key)
-	} else {
-		c.logger.Printf("Session found: %s", key)
 	}
 
 	conn, err := session.GetOrCreateConn(request.BaseURL, tlsConfig, request.BindDN, request.BindPassword)
@@ -222,10 +217,6 @@ func (c *ldapClient) Request(ctx context.Context, request *Request) (*Response, 
 	for _, attr := range request.Attributes {
 		attributes = append(attributes, attr.ExternalId)
 	}
-
-	// Log the LDAP search request details.
-	c.logger.Printf("LDAP Search Request: BaseDN: %s, Scope: %d, Filters: %s, Attributes: %v, PageSize: %d, Cursor: %v",
-		request.BaseDN, ldap_v3.ScopeWholeSubtree, filters, attributes, pageControl.PagingSize, pageControl.Cookie)
 
 	// Define LDAP search with filtering, attributes and paging.
 	searchRequest := ldap_v3.NewSearchRequest(
@@ -273,8 +264,6 @@ func (c *ldapClient) Request(ctx context.Context, request *Request) (*Response, 
 		return response, nil
 	}
 
-	c.logger.Printf("LDAP Search Result: %d entries found", len(searchResult.Entries))
-
 	// Indicating a successful LDAP search operation.
 	// In case of no error (err == nil), ldap_v3.Search is considered successful,
 	// returning LDAP Result Code Success(0) equivalent to HTTP status code StatusOK.
@@ -300,19 +289,15 @@ func (c *ldapClient) Request(ctx context.Context, request *Request) (*Response, 
 				}
 			}
 		}
-	} else {
-		c.logger.Printf("No next cursor found in response, paging is done.")
 	}
 
 	if len(nextCookie) > 0 {
 		// Move the session to the new cookie key: remove old key, add new key (without closing conn)
 		nextKey := sessionKey(address, nextCookie)
 		c.sessionPool.UpdateKey(key, nextKey)
-		c.logger.Printf("Paging session updated: %s -> %s", key, nextKey)
 	} else {
 		// Paging done, cleanup
 		c.sessionPool.Delete(key)
-		c.logger.Printf("Paging session deleted: %s", key)
 	}
 
 	return response, nil
@@ -677,9 +662,9 @@ func EntryToObject(e *ldap_v3.Entry, attrConfig map[string]*framework.AttributeC
 	result["dn"] = e.DN
 
 	for _, attribute := range e.Attributes {
-		currAttrConfig := attrConfig[attribute.Name]
-		// Ignore the attributes that are not configured in the EntityConfig.
-		if currAttrConfig == nil {
+		// Skip attributes that are not configured in the attribute config (could be due to user error)
+		currAttrConfig, ok := attrConfig[attribute.Name]
+		if !ok {
 			continue
 		}
 
