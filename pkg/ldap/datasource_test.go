@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"crypto/tls"
+
 	"github.com/google/go-cmp/cmp"
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
@@ -306,12 +307,41 @@ func TestGivenRequestWithConnectorContextWhenProxyServiceReturnValidResponseThen
 
 	// Assert
 	if http.StatusOK != resp.StatusCode {
-		t.Errorf("failed to match the error code, expected %v, got %v",
+		t.Errorf("failed to match the status code, expected %v, got %v",
 			http.StatusOK, resp.StatusCode)
 	}
 
 	if diff := cmp.Diff(testResponse, resp); diff != "" {
 		t.Errorf("response payload mismatch (-want +got):%s", diff)
+	}
+}
+
+func TestGivenRequestWithConnectorContextWhenProxyServiceReturnValidResponseWithErrorShouldReturnErroredResponse(t *testing.T) {
+	// Arrange
+	testErrResponse := &framework.Error{
+		Message: "error message",
+		Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
+	}
+	data, _ := json.Marshal(testErrResponse)
+	respData := string(data)
+
+	client, cleanup := testutil.ProxyTestCommonSetup(t, &testutil.TestProxyServer{
+		Ci:             &testutil.TestConnectorInfo,
+		ResponseErrStr: &respData,
+		IsLDAPResponse: true,
+	})
+	defer cleanup()
+
+	ds := ldap.NewClient(client)
+
+	ctx, _ := connector.WithContext(context.Background(), testutil.TestConnectorInfo)
+
+	// Act
+	_, ferr := ds.GetPage(ctx, testRequest)
+
+	// Assert
+	if ferr != nil {
+		t.Errorf("expecting nil err %v", ferr)
 	}
 }
 
