@@ -678,6 +678,10 @@ func EntryToObject(e *ldap_v3.Entry, attrConfig map[string]*framework.AttributeC
 
 	for _, attribute := range e.Attributes {
 		currAttrConfig := attrConfig[attribute.Name]
+		// Ignore the attributes that are not configured in the EntityConfig.
+		if currAttrConfig == nil {
+			continue
+		}
 
 		value, err := StringAttrValuesToRequestedType(attribute, currAttrConfig.List, currAttrConfig.Type)
 		if err != nil {
