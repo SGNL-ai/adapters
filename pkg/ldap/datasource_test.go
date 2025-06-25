@@ -344,6 +344,7 @@ func TestGivenRequestWithConnectorContextWhenProxyServiceReturnValidResponseWith
 	if ferr == nil {
 		t.Errorf("expecting nil err %v", ferr)
 	}
+
 	if api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG != ferr.Code {
 		t.Errorf("failed to match the error code, expected %v, got %v",
 			api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG, ferr.Code)

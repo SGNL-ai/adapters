@@ -148,6 +148,7 @@ func (c *ldapClient) ProxyRequest(
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			}
 		}
+
 		return nil, &respErr
 	}
 
