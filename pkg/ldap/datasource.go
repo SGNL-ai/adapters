@@ -139,10 +139,25 @@ func (c *ldapClient) ProxyRequest(
 		}
 	}
 
-	if err = json.Unmarshal([]byte(ldapResp.Response), response); err != nil {
-		return nil, &framework.Error{
-			Message: fmt.Sprintf("Error unmarshalling LDAP response from the proxy: %v.", err),
-			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+	if ldapResp.Error != "" {
+		var respErr framework.Error
+		// Unmarshal the error response from the proxy.
+		err = json.Unmarshal([]byte(ldapResp.Error), &respErr)
+		if err != nil {
+			return nil, &framework.Error{
+				Message: fmt.Sprintf("Error unmarshalling LDAP error response from the proxy: %v.", err),
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+			}
+		}
+		return nil, &respErr
+	}
+
+	if ldapResp.Response != "" {
+		if err = json.Unmarshal([]byte(ldapResp.Response), response); err != nil {
+			return nil, &framework.Error{
+				Message: fmt.Sprintf("Error unmarshalling LDAP response from the proxy: %v.", err),
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+			}
 		}
 	}
 
