@@ -71,11 +71,11 @@ func TestAdapterGetPage(t *testing.T) {
 							"Subscription Date": time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 						},
 					},
-					NextCursor: "eyJjdXJzb3IiOjN9",
+					NextCursor: "eyJjdXJzb3IiOjY1NX0=",
 				},
 			},
 			wantCursor: &pagination.CompositeCursor[int64]{
-				Cursor: testutil.GenPtr(int64(3)),
+				Cursor: testutil.GenPtr(int64(655)),
 			},
 		},
 		"success_HeadObject_200_GetObject_200_middle_page": {
@@ -104,7 +104,7 @@ func TestAdapterGetPage(t *testing.T) {
 					},
 				},
 				PageSize: 2,
-				Cursor:   "eyJjdXJzb3IiOjN9",
+				Cursor:   "eyJjdXJzb3IiOjY1NX0=",
 			},
 			wantResponse: framework.Response{
 				Success: &framework.Page{
@@ -120,11 +120,8 @@ func TestAdapterGetPage(t *testing.T) {
 							"Subscription Date": time.Date(2022, 1, 18, 0, 0, 0, 0, time.UTC),
 						},
 					},
-					NextCursor: "eyJjdXJzb3IiOjV9",
+					NextCursor: "eyJjdXJzb3IiOjEwOTV9",
 				},
-			},
-			wantCursor: &pagination.CompositeCursor[int64]{
-				Cursor: testutil.GenPtr(int64(5)),
 			},
 		},
 		"success_HeadObject_200_GetObject_200_last_page": {
@@ -153,7 +150,7 @@ func TestAdapterGetPage(t *testing.T) {
 					},
 				},
 				PageSize: 2,
-				Cursor:   "eyJjdXJzb3IiOjV9",
+				Cursor:   "eyJjdXJzb3IiOjEwOTV9",
 			},
 			wantResponse: framework.Response{
 				Success: &framework.Page{
@@ -236,11 +233,11 @@ func TestAdapterGetPage(t *testing.T) {
 							"Score": "2.2",
 						},
 					},
-					NextCursor: "eyJjdXJzb3IiOjN9",
+					NextCursor: "eyJjdXJzb3IiOjY1NX0=",
 				},
 			},
 			wantCursor: &pagination.CompositeCursor[int64]{
-				Cursor: testutil.GenPtr(int64(3)),
+				Cursor: testutil.GenPtr(int64(655)),
 			},
 		},
 		"success_read_child_objects_HeadObject_200_GetObject_200": {
@@ -307,11 +304,11 @@ func TestAdapterGetPage(t *testing.T) {
 							},
 						},
 					},
-					NextCursor: "eyJjdXJzb3IiOjN9",
+					NextCursor: "eyJjdXJzb3IiOjY1NX0=",
 				},
 			},
 			wantCursor: &pagination.CompositeCursor[int64]{
-				Cursor: testutil.GenPtr(int64(3)),
+				Cursor: testutil.GenPtr(int64(655)),
 			},
 		},
 		// Check if a number in the CSV can be ingested as a double type based on entity configuration
@@ -350,11 +347,11 @@ func TestAdapterGetPage(t *testing.T) {
 							"Score": float64(2.2),
 						},
 					},
-					NextCursor: "eyJjdXJzb3IiOjN9",
+					NextCursor: "eyJjdXJzb3IiOjY1NX0=",
 				},
 			},
 			wantCursor: &pagination.CompositeCursor[int64]{
-				Cursor: testutil.GenPtr(int64(3)),
+				Cursor: testutil.GenPtr(int64(655)),
 			},
 		},
 		"error_empty_csv_file_HeadObject_200_GetObject_800": {
@@ -387,7 +384,7 @@ func TestAdapterGetPage(t *testing.T) {
 			wantResponse: framework.Response{
 				Error: &framework.Error{
 					// nolint: lll
-					Message: "Failed to get customers entity objects from the CSV file: no data found in the CSV file.",
+					Message: "Unable to parse CSV file headers: CSV header error: empty or missing",
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 				},
 			},
@@ -417,13 +414,13 @@ func TestAdapterGetPage(t *testing.T) {
 						},
 					},
 				},
-				PageSize: 2,
-				Cursor:   "eyJjdXJzb3IiOjV9",
+				PageSize: 5,
+				Cursor:   "",
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
 					// nolint: lll
-					Message: "Failed to get customers entity objects from the CSV file: failed to read CSV data: parse error on line 4, column 34: bare \" in non-quoted-field.",
+					Message: "Failed to fetch entity from AWS S3: customers, error: CSV file format is invalid or corrupted: parse error on line 1, column 34: bare \" in non-quoted-field.",
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 				},
 			},
@@ -454,12 +451,12 @@ func TestAdapterGetPage(t *testing.T) {
 					},
 				},
 				PageSize: 2,
-				Cursor:   "eyJjdXJzb3IiOjV9",
+				Cursor:   "eyJjdXJzb3IiOjY1NX0=",
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
 					// nolint: lll
-					Message: "Failed to fetch entity from AWS S3: customers, error: failed to check if the file exists: operation error S3: HeadObject, http response error StatusCode: 301, permanent redirect: The bucket you are attempting to access must be addressed using the specified endpoint.",
+					Message: "Failed to fetch entity from AWS S3: customers, error: failed to convert response: operation error S3: HeadObject, http response error StatusCode: 301, permanent redirect: The bucket you are attempting to access must be addressed using the specified endpoint.",
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 				},
 			},
@@ -490,12 +487,12 @@ func TestAdapterGetPage(t *testing.T) {
 					},
 				},
 				PageSize: 2,
-				Cursor:   "eyJjdXJzb3IiOjV9",
+				Cursor:   "eyJjdXJzb3IiOjY1NX0=",
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
 					// nolint: lll
-					Message: "Failed to fetch entity from AWS S3: customers, error: failed to check if the file exists: operation error S3: HeadObject, http response error StatusCode: 403, AccessDenied: Access Denied.",
+					Message: "Failed to fetch entity from AWS S3: customers, error: failed to convert response: operation error S3: HeadObject, http response error StatusCode: 403, AccessDenied: Access Denied.",
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 				},
 			},
@@ -526,12 +523,12 @@ func TestAdapterGetPage(t *testing.T) {
 					},
 				},
 				PageSize: 2,
-				Cursor:   "eyJjdXJzb3IiOjV9",
+				Cursor:   "eyJjdXJzb3IiOjY1NX0=",
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
 					// nolint: lll
-					Message: "Failed to fetch entity from AWS S3: customers, error: failed to check if the file exists: operation error S3: HeadObject, http response error StatusCode: 404, not found: The specified key does not exist.",
+					Message: "Failed to fetch entity from AWS S3: customers, error: failed to convert response: operation error S3: HeadObject, http response error StatusCode: 404, not found: The specified key does not exist.",
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 				},
 			},
@@ -562,12 +559,12 @@ func TestAdapterGetPage(t *testing.T) {
 					},
 				},
 				PageSize: 2,
-				Cursor:   "eyJjdXJzb3IiOjV9",
+				Cursor:   "eyJjdXJzb3IiOjY1NX0=",
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
 					// nolint: lll
-					Message: "Failed to fetch entity from AWS S3: customers, error: failed to download the file: operation error S3: GetObject, http response error StatusCode: 301, permanent redirect: The bucket you are attempting to access must be addressed using the specified endpoint.",
+					Message: "Failed to fetch entity from AWS S3: customers, error: failed to convert response: operation error S3: GetObject, http response error StatusCode: 301, permanent redirect: The bucket you are attempting to access must be addressed using the specified endpoint.",
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 				},
 			},
@@ -598,12 +595,12 @@ func TestAdapterGetPage(t *testing.T) {
 					},
 				},
 				PageSize: 2,
-				Cursor:   "eyJjdXJzb3IiOjV9",
+				Cursor:   "eyJjdXJzb3IiOjY1NX0=",
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
 					// nolint: lll
-					Message: "Failed to fetch entity from AWS S3: customers, error: failed to download the file: operation error S3: GetObject, http response error StatusCode: 403, access denied: Access Denied.",
+					Message: "Failed to fetch entity from AWS S3: customers, error: failed to convert response: operation error S3: GetObject, http response error StatusCode: 403, access denied: Access Denied.",
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 				},
 			},
@@ -634,12 +631,12 @@ func TestAdapterGetPage(t *testing.T) {
 					},
 				},
 				PageSize: 2,
-				Cursor:   "eyJjdXJzb3IiOjV9",
+				Cursor:   "eyJjdXJzb3IiOjY1NX0=",
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
 					// nolint: lll
-					Message: "Failed to fetch entity from AWS S3: customers, error: failed to download the file: operation error S3: GetObject, http response error StatusCode: 404, no such key: The specified key does not exist.",
+					Message: "Failed to fetch entity from AWS S3: customers, error: failed to convert response: operation error S3: GetObject, http response error StatusCode: 404, no such key: The specified key does not exist.",
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 				},
 			},
@@ -651,7 +648,7 @@ func TestAdapterGetPage(t *testing.T) {
 			// Setup mock middleware to mimic responses from the SDK
 			cfg := mockS3Config(tt.headObjectStatusCode, tt.getObjectStatusCode)
 
-			client, err := s3_adapter.NewClient(http.DefaultClient, cfg)
+			client, err := s3_adapter.NewClient(http.DefaultClient, cfg, MaxCSVRowSizeBytes, MaxBytesToProcessPerPage)
 			if err != nil {
 				t.Errorf("error creating client to query datasource: %v", err)
 			}
