@@ -37,6 +37,8 @@ func ConstructEndpoint(request *Request) (string, *framework.Error) {
 		// [Users]		baseURL + "/api/" + apiVersion + "/users?limit=" + pageSize
 		// [Filtered Users]	baseURL + "/api/" + apiVersion + "/users?filter="
 		// 					+ `status eq \"ACTIVE\"` + "&limit=" + pageSize
+		// [Search Users]	baseURL + "/api/" + apiVersion + "/users?search="
+		// 					+ `profile.firstName eq \"John\"` + "&limit=" + pageSize
 		// [Groups]		baseURL + "/api/" + apiVersion + "/groups?filter="
 		//                  + `type eq "OKTA_GROUP" or type eq "APP_GROUP"` + "&limit=" + pageSize
 		// [GroupMembers] 	baseURL + "/api/" + apiVersion + "/groups/" + groupId + "/users?limit=" + pageSize
@@ -79,49 +81,18 @@ func ConstructEndpoint(request *Request) (string, *framework.Error) {
 		case Users:
 			// Build the base URL first
 			sb.WriteString("users?")
-
-			// Create a slice to hold parameter strings
-			paramParts := []string{}
-
-			if filter != "" {
-				paramParts = append(paramParts, "filter="+filter)
-			}
-
-			if search != "" {
-				paramParts = append(paramParts, "search="+search)
-			}
-
-			// Join all parameters with &
-			if len(paramParts) > 0 {
-				sb.WriteString(strings.Join(paramParts, "&"))
-				sb.WriteString("&")
-			}
+			appendParams(&sb, filter, search)
 
 		case Groups:
 			// Build the base URL first
 			sb.WriteString("groups?")
-
-			// Create a slice to hold parameter strings
-			paramParts := []string{}
 
 			if filter == "" && search == "" {
 				// Some Groups are not useful to ingest into SGNL, automatically filtering.
 				filter = url.QueryEscape(`type eq "OKTA_GROUP" or type eq "APP_GROUP"`)
 			}
 
-			if filter != "" {
-				paramParts = append(paramParts, "filter="+filter)
-			}
-
-			if search != "" {
-				paramParts = append(paramParts, "search="+search)
-			}
-
-			// Join all parameters with &
-			if len(paramParts) > 0 {
-				sb.WriteString(strings.Join(paramParts, "&"))
-				sb.WriteString("&")
-			}
+			appendParams(&sb, filter, search)
 		case GroupMembers:
 			if request.Cursor == nil || request.Cursor.CollectionID == nil {
 				return "", &framework.Error{
@@ -149,4 +120,24 @@ func ConstructEndpoint(request *Request) (string, *framework.Error) {
 	}
 
 	return endpoint, nil
+}
+
+// appendParams appends filter and search parameters to the string builder if they are not empty.
+func appendParams(sb *strings.Builder, filter, search string) {
+	// Create a slice to hold parameter strings
+	paramParts := []string{}
+
+	if filter != "" {
+		paramParts = append(paramParts, "filter="+filter)
+	}
+
+	if search != "" {
+		paramParts = append(paramParts, "search="+search)
+	}
+
+	// Join all parameters with &
+	if len(paramParts) > 0 {
+		sb.WriteString(strings.Join(paramParts, "&"))
+		sb.WriteString("&")
+	}
 }
