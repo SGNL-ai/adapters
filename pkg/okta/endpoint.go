@@ -88,40 +88,44 @@ func ConstructEndpoint(request *Request) (string, *framework.Error) {
 
 		switch request.EntityExternalID {
 		case Users:
-			// If we have either filter or search, add those to the endpoint. We cannot have both.
-			// If not, we just query all users.
-			if filter != "" {
-				sb.Grow(len(filter) + 14)
-				sb.WriteString("users?filter=")
+			// Construct the users endpoint based on filter/search parameters
+			sb.WriteString("users?")
+
+			// Use a nested switch for the query parameter type
+			switch {
+			case filter != "":
+				sb.Grow(len(filter) + 13) // 13 = len("filter=") + len("&") + buffer
+				sb.WriteString("filter=")
 				sb.WriteString(filter)
 				sb.WriteString("&")
-			} else if search != "" {
-				sb.Grow(len(search) + 14)
-				sb.WriteString("users?search=")
+			case search != "":
+				sb.Grow(len(search) + 13) // 13 = len("search=") + len("&") + buffer
+				sb.WriteString("search=")
 				sb.WriteString(search)
 				sb.WriteString("&")
-			} else {
-				sb.WriteString("users?")
 			}
 
 		case Groups:
-			// If we have either filter or search, add those to the endpoint. We cannot have both.
-			// If not, filter the request to the useful groups.
-			if filter != "" {
-				sb.Grow(len(filter) + 14)
-				sb.WriteString("groups?filter=")
+			// Construct the groups endpoint based on filter/search parameters
+			sb.WriteString("groups?")
+
+			// Use a nested switch for the query parameter type
+			switch {
+			case filter != "":
+				sb.Grow(len(filter) + 14) // 14 = len("filter=") + len("&") + buffer
+				sb.WriteString("filter=")
 				sb.WriteString(filter)
 				sb.WriteString("&")
-			} else if search != "" {
-				sb.Grow(len(search) + 14)
-				sb.WriteString("groups?search=")
+			case search != "":
+				sb.Grow(len(search) + 14) // 14 = len("search=") + len("&") + buffer
+				sb.WriteString("search=")
 				sb.WriteString(search)
 				sb.WriteString("&")
-			} else {
+			default:
 				// Some Groups are not useful to ingest into SGNL, automatically filtering.
 				filter = url.QueryEscape(`type eq "OKTA_GROUP" or type eq "APP_GROUP"`)
-				sb.Grow(len(filter) + 15)
-				sb.WriteString("groups?filter=")
+				sb.Grow(len(filter) + 14) // 14 = len("filter=") + len("&") + buffer
+				sb.WriteString("filter=")
 				sb.WriteString(filter)
 				sb.WriteString("&")
 			}
