@@ -84,7 +84,7 @@ func ConstructEndpoint(request *Request) (string, *framework.Error) {
 			paramParts := []string{}
 
 			if filter != "" {
-				paramParts = append(paramParts, "filter="+url.QueryEscape(filter))
+				paramParts = append(paramParts, "filter="+filter)
 			}
 
 			if search != "" {
@@ -106,15 +106,15 @@ func ConstructEndpoint(request *Request) (string, *framework.Error) {
 
 			if filter == "" && search == "" {
 				// Some Groups are not useful to ingest into SGNL, automatically filtering.
-				filter = `type eq "OKTA_GROUP" or type eq "APP_GROUP"`
+				filter = url.QueryEscape(`type eq "OKTA_GROUP" or type eq "APP_GROUP"`)
 			}
 
 			if filter != "" {
-				paramParts = append(paramParts, "filter="+url.QueryEscape(filter))
+				paramParts = append(paramParts, "filter="+filter)
 			}
 
 			if search != "" {
-				paramParts = append(paramParts, "search="+url.QueryEscape(search))
+				paramParts = append(paramParts, "search="+search)
 			}
 
 			// Join all parameters with &
