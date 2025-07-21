@@ -52,18 +52,6 @@ func TestConstructEndpoint(t *testing.T) {
 			},
 			wantEndpoint: "https://test-instance.oktapreview.com/api/v1/users?search=profile.state+eq+%22CO%22&limit=100",
 		},
-		"users_search_and_filter": {
-			request: &okta.Request{
-				BaseURL:          "https://test-instance.oktapreview.com",
-				APIVersion:       "v1",
-				EntityExternalID: "User",
-				PageSize:         100,
-				Filter:           "status eq \"ACTIVE\"",
-				Search:           "profile.state eq \"CO\"",
-				Token:            "SSWS testtoken",
-			},
-			wantEndpoint: "https://test-instance.oktapreview.com/api/v1/users?filter=status+eq+%22ACTIVE%22&search=profile.state+eq+%22CO%22&limit=100",
-		},
 		"users_cursor": {
 			request: &okta.Request{
 				BaseURL:          "https://test-instance.oktapreview.com",

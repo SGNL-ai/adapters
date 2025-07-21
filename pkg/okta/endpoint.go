@@ -41,6 +41,8 @@ func ConstructEndpoint(request *Request) (string, *framework.Error) {
 		// 					+ `profile.firstName eq \"John\"` + "&limit=" + pageSize
 		// [Groups]		baseURL + "/api/" + apiVersion + "/groups?filter="
 		//                  + `type eq "OKTA_GROUP" or type eq "APP_GROUP"` + "&limit=" + pageSize
+		// [Search Groups]	baseURL + "/api/" + apiVersion + "/groups?search="
+		// 					+ `profile.firstName eq \"John\"` + "&limit=" + pageSize
 		// [GroupMembers] 	baseURL + "/api/" + apiVersion + "/groups/" + groupId + "/users?limit=" + pageSize
 		sb.Grow(len(request.BaseURL) + len(request.APIVersion) + len(formattedPageSize) + 12)
 
@@ -77,22 +79,52 @@ func ConstructEndpoint(request *Request) (string, *framework.Error) {
 			}
 		}
 
+		if request.Filter != "" && request.Search != "" {
+			return "", &framework.Error{
+				Message: "Both filter and search cannot be set at the same time, on the same entity.",
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
+			}
+		}
+
 		switch request.EntityExternalID {
 		case Users:
-			// Build the base URL first
-			sb.WriteString("users?")
-			appendParams(&sb, filter, search)
-
-		case Groups:
-			// Build the base URL first
-			sb.WriteString("groups?")
-
-			if filter == "" && search == "" {
-				// Some Groups are not useful to ingest into SGNL, automatically filtering.
-				filter = url.QueryEscape(`type eq "OKTA_GROUP" or type eq "APP_GROUP"`)
+			// If we have either filter or search, add those to the endpoint. We cannot have both.
+			// If not, we just query all users.
+			if filter != "" {
+				sb.Grow(len(filter) + 14)
+				sb.WriteString("users?filter=")
+				sb.WriteString(filter)
+				sb.WriteString("&")
+			} else if search != "" {
+				sb.Grow(len(search) + 14)
+				sb.WriteString("users?search=")
+				sb.WriteString(search)
+				sb.WriteString("&")
+			} else {
+				sb.WriteString("users?")
 			}
 
-			appendParams(&sb, filter, search)
+		case Groups:
+			// If we have either filter or search, add those to the endpoint. We cannot have both.
+			// If not, filter the request to the useful groups.
+			if filter != "" {
+				sb.Grow(len(filter) + 14)
+				sb.WriteString("groups?filter=")
+				sb.WriteString(filter)
+				sb.WriteString("&")
+			} else if search != "" {
+				sb.Grow(len(search) + 14)
+				sb.WriteString("groups?search=")
+				sb.WriteString(search)
+				sb.WriteString("&")
+			} else {
+				// Some Groups are not useful to ingest into SGNL, automatically filtering.
+				filter = url.QueryEscape(`type eq "OKTA_GROUP" or type eq "APP_GROUP"`)
+				sb.Grow(len(filter) + 15)
+				sb.WriteString("groups?filter=")
+				sb.WriteString(filter)
+				sb.WriteString("&")
+			}
 		case GroupMembers:
 			if request.Cursor == nil || request.Cursor.CollectionID == nil {
 				return "", &framework.Error{
@@ -120,24 +152,4 @@ func ConstructEndpoint(request *Request) (string, *framework.Error) {
 	}
 
 	return endpoint, nil
-}
-
-// appendParams appends filter and search parameters to the string builder if they are not empty.
-func appendParams(sb *strings.Builder, filter, search string) {
-	// Create a slice to hold parameter strings
-	paramParts := []string{}
-
-	if filter != "" {
-		paramParts = append(paramParts, "filter="+filter)
-	}
-
-	if search != "" {
-		paramParts = append(paramParts, "search="+search)
-	}
-
-	// Join all parameters with &
-	if len(paramParts) > 0 {
-		sb.WriteString(strings.Join(paramParts, "&"))
-		sb.WriteString("&")
-	}
 }
