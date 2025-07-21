@@ -20,6 +20,8 @@ func ConstructEndpoint(request *Request) (string, *framework.Error) {
 
 	var filter string
 
+	var search string
+
 	// [Users / Groups] This is the cursor to the next page of objects.
 	// [GroupMembers] This is the cursor to the next page of Members.
 	if request.Cursor != nil && request.Cursor.Cursor != nil {
@@ -59,27 +61,67 @@ func ConstructEndpoint(request *Request) (string, *framework.Error) {
 			}
 		}
 
+		if request.Search != "" {
+			// Okta uses double quotes in the search string, so we need to handle
+			// escaping them in config. We need to replace them then encode the search.
+			search = url.QueryEscape(strings.ReplaceAll(request.Search, `\"`, `"`))
+			// The minimum length of a valid Okta search is 7 characters
+			// given the shortest valid search is in the form of "id eq x".
+			if len(search) < 7 {
+				return "", &framework.Error{
+					Message: "Provided search syntax is invalid.",
+					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
+				}
+			}
+		}
+
 		switch request.EntityExternalID {
 		case Users:
+			// Build the base URL first
+			sb.WriteString("users?")
+
+			// Create a slice to hold parameter strings
+			paramParts := []string{}
+
 			if filter != "" {
-				sb.Grow(len(filter) + 14)
-				sb.WriteString("users?filter=")
-				sb.WriteString(filter)
+				paramParts = append(paramParts, "filter="+url.QueryEscape(filter))
+			}
+
+			if search != "" {
+				paramParts = append(paramParts, "search="+search)
+			}
+
+			// Join all parameters with &
+			if len(paramParts) > 0 {
+				sb.WriteString(strings.Join(paramParts, "&"))
 				sb.WriteString("&")
-			} else {
-				sb.WriteString("users?")
 			}
+
 		case Groups:
-			if filter == "" {
+			// Build the base URL first
+			sb.WriteString("groups?")
+
+			// Create a slice to hold parameter strings
+			paramParts := []string{}
+
+			if filter == "" && search == "" {
 				// Some Groups are not useful to ingest into SGNL, automatically filtering.
-				filter = url.QueryEscape(`type eq "OKTA_GROUP" or type eq "APP_GROUP"`)
+				filter = `type eq "OKTA_GROUP" or type eq "APP_GROUP"`
 			}
 
-			sb.Grow(len(filter) + 15)
+			if filter != "" {
+				paramParts = append(paramParts, "filter="+url.QueryEscape(filter))
+			}
 
-			sb.WriteString("groups?filter=")
-			sb.WriteString(filter)
-			sb.WriteString("&")
+			if search != "" {
+				paramParts = append(paramParts, "search="+url.QueryEscape(search))
+			}
+
+			// Join all parameters with &
+			if len(paramParts) > 0 {
+				sb.WriteString(strings.Join(paramParts, "&"))
+				sb.WriteString("&")
+			}
 		case GroupMembers:
 			if request.Cursor == nil || request.Cursor.CollectionID == nil {
 				return "", &framework.Error{

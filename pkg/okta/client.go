@@ -40,6 +40,9 @@ type Request struct {
 	// Filter is the Okta Filter syntax to apply to requests for Users and/or Groups
 	Filter string
 
+	// Search is the Okta Search syntax to apply to requests for Users and/or Groups
+	Search string
+
 	// RequestTimeoutSeconds is the timeout duration for requests made to datasources.
 	// This should be set to the number of seconds to wait before timing out.
 	RequestTimeoutSeconds int
