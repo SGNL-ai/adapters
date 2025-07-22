@@ -41,6 +41,17 @@ func TestConstructEndpoint(t *testing.T) {
 			},
 			wantEndpoint: "https://test-instance.oktapreview.com/api/v1/users?filter=status+eq+%22ACTIVE%22&limit=100",
 		},
+		"users_simple_search": {
+			request: &okta.Request{
+				BaseURL:          "https://test-instance.oktapreview.com",
+				APIVersion:       "v1",
+				EntityExternalID: "User",
+				PageSize:         100,
+				Search:           "profile.state eq \"CO\"",
+				Token:            "SSWS testtoken",
+			},
+			wantEndpoint: "https://test-instance.oktapreview.com/api/v1/users?search=profile.state+eq+%22CO%22&limit=100",
+		},
 		"users_cursor": {
 			request: &okta.Request{
 				BaseURL:          "https://test-instance.oktapreview.com",
@@ -67,6 +78,20 @@ func TestConstructEndpoint(t *testing.T) {
 				Token: "SSWS testtoken",
 			},
 			wantEndpoint: "https://test-instance.oktapreview.com/api/v1/users?filter=status+eq+%22ACTIVE%22&after=00g3zvuhepAwReSDo1d7&limit=100",
+		},
+		"users_cursor_search": {
+			request: &okta.Request{
+				BaseURL:          "https://test-instance.oktapreview.com",
+				APIVersion:       "v1",
+				EntityExternalID: "User",
+				PageSize:         100,
+				Search:           "profile.state eq \"CO\"",
+				Cursor: &pagination.CompositeCursor[string]{
+					Cursor: testutil.GenPtr("https://test-instance.oktapreview.com/api/v1/users?search=profile.state+eq+%22CO%22&after=00g3zvuhepAwReSDo1d7&limit=100"),
+				},
+				Token: "SSWS testtoken",
+			},
+			wantEndpoint: "https://test-instance.oktapreview.com/api/v1/users?search=profile.state+eq+%22CO%22&after=00g3zvuhepAwReSDo1d7&limit=100",
 		},
 		"groups_simple": {
 			request: &okta.Request{
@@ -119,6 +144,20 @@ func TestConstructEndpoint(t *testing.T) {
 			},
 			wantError: &framework.Error{
 				Message: "Provided filter is invalid.",
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
+			},
+		},
+		"invalid_user_search": {
+			request: &okta.Request{
+				BaseURL:          "https://test-instance.oktapreview.com",
+				APIVersion:       "v1",
+				EntityExternalID: "User",
+				PageSize:         100,
+				Token:            "SSWS testtoken",
+				Search:           "id eq ",
+			},
+			wantError: &framework.Error{
+				Message: "Provided search syntax is invalid.",
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
 			},
 		},
