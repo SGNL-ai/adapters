@@ -17,7 +17,7 @@ interactions:
       headers:
         Authorization:
           - Basic {{OMITTED}}
-      url: https://test-instance.jiradc.ai/rest/api/latest/search?fields=*all&startAt=0&maxResults=3
+      url: https://test-instance.jiradc.ai/rest/api/latest/search?fields=id%2Ckey&startAt=0&maxResults=3
       method: GET
     response:
       proto: HTTP/2.0
