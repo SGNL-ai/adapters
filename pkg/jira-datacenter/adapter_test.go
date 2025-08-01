@@ -329,13 +329,13 @@ func TestAdapterGetPage(t *testing.T) {
 				},
 			},
 		},
-		// This test case uses a random URL instead of the test server's URL, so we should expect an invalid cert.
+		// This test case uses a non-existent local address to ensure connection failure.
 		// This test case also verifies that the "https://" prefix is added to the address if it's not present
 		// which is evident by the error message.
-		"failed_to_make_get_page_request_invalid_certs": {
+		"failed_to_make_get_page_request_connection_refused": {
 			ctx: context.Background(),
 			request: &framework.Request[jiradatacenter_adapter.Config]{
-				Address: "example.com",
+				Address: "localhost:1",
 				Auth: &framework.DatasourceAuthCredentials{
 					Basic: &framework.BasicAuthCredentials{
 						Username: mockUsername,
@@ -356,9 +356,8 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
-					Message: `Failed to execute Jira request: Get "https://example.com/rest/api/latest/groups/picker": ` +
-						`tls: failed to verify certificate: ` +
-						`x509: certificate signed by unknown authority.`,
+					Message: `Failed to execute Jira request: Get "https://localhost:1/rest/api/latest/groups/picker": ` +
+						`dial tcp [::1]:1: connect: connection refused.`,
 					Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 				},
 			},
