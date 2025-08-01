@@ -25,7 +25,7 @@ require (
 	google.golang.org/grpc v1.74.2
 	google.golang.org/protobuf v1.36.6
 	gopkg.in/dnaeon/go-vcr.v3 v3.2.0
-	gopkg.in/dnaeon/go-vcr.v4 v4.0.3
+	gopkg.in/dnaeon/go-vcr.v4 v4.0.4
 )
 
 require github.com/docker/docker v28.0.1+incompatible // indirect
