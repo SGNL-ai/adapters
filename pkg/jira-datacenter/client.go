@@ -55,6 +55,10 @@ type Request struct {
 	// IncludeInactiveUsers determines whether inactive users are included in the results
 	// when querying for User or GroupMember entities.
 	IncludeInactiveUsers *bool
+
+	// Attributes contains the list of attributes to request along with the current request.
+	// This is used to limit the fields returned in the API response.
+	Attributes []*framework.AttributeConfig
 }
 
 // Response is a parsed response returned from Jira.

@@ -22,8 +22,11 @@ var supportedAPIVersions = map[string]struct{}{
     "localTimeZoneOffset": 43200,
     "apiVersion": "v1",
     "filters": {
-        "user": "status eq \"ACTIVE\"",
-        "group": "type eq \"OKTA_GROUP\""
+        "User": "status eq \"ACTIVE\"",
+        "Group": "type eq \"OKTA_GROUP\""
+    },
+	"search": {
+        "User": "profile.department eq \"Engineering\""
     }
 }
 */
@@ -32,6 +35,7 @@ type Config struct {
 
 	APIVersion string            `json:"apiVersion,omitempty"`
 	Filters    map[string]string `json:"filters,omitempty"`
+	Search     map[string]string `json:"search,omitempty"`
 }
 
 // ValidateConfig validates that a Config received in a GetPage call is valid.

@@ -60,6 +60,7 @@ func (a *Adapter) RequestPageFromDatasource(
 		APIVersion:            request.Config.APIVersion,
 		RequestTimeoutSeconds: *commonConfig.RequestTimeoutSeconds,
 		Filter:                request.Config.Filters[request.Entity.ExternalId],
+		Search:                request.Config.Search[request.Entity.ExternalId],
 	}
 
 	// Unmarshal the current cursor.
