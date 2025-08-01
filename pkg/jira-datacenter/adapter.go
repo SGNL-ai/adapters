@@ -85,6 +85,9 @@ func (a *Adapter) RequestPageFromDatasource(
 		}
 	}
 
+	// Pass the entity attributes to the request so that only the necessary fields are fetched
+	jiraReq.Attributes = request.Entity.Attributes
+
 	// Unmarshal the current cursor.
 	cursor, err := pagination.UnmarshalCursor[int64](request.Cursor)
 	if err != nil {

@@ -520,8 +520,11 @@ func (e Entity) ConstructURL(request *Request, cursor *pagination.CompositeCurso
 			sb.WriteRune('&')
 		}
 
-		sb.Grow(len("fields=*all&"))
-		sb.WriteString("fields=*all&")
+		// Build fields parameter from attributes
+		fieldsParam := encodedAttributes(request.Attributes)
+		fieldsStr := "fields=" + fieldsParam + "&"
+		sb.Grow(len(fieldsStr))
+		sb.WriteString(fieldsStr)
 
 	default:
 		// Preallocate for endpoint and "?"
@@ -601,4 +604,33 @@ func filterAndPaginateGroups(
 	}
 
 	return objects, nextCursor
+}
+
+// encodedAttributes constructs a comma-separated list of field names for the Jira API fields parameter.
+// It respects the Jira conventions for field selection:
+// - *all - include all fields
+// - *navigable - include just navigable fields (default for search)
+// - field1,field2 - include specific fields
+// - -field - exclude a field.
+func encodedAttributes(attributes []*framework.AttributeConfig) string {
+	if len(attributes) == 0 {
+		// Default to *navigable
+		return "*navigable"
+	}
+
+	fields := make([]string, 0, len(attributes))
+
+	for _, attribute := range attributes {
+		if attribute.ExternalId != "" {
+			fields = append(fields, attribute.ExternalId)
+		}
+	}
+
+	// If no valid fields were found, default to *navigable
+	if len(fields) == 0 {
+		return "*navigable"
+	}
+
+	// Join fields with comma and then URL-encode the entire string
+	return net_url.QueryEscape(strings.Join(fields, ","))
 }
