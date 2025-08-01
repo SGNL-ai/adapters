@@ -20,6 +20,8 @@ func ConstructEndpoint(request *Request) (string, *framework.Error) {
 
 	var filter string
 
+	var search string
+
 	// [Users / Groups] This is the cursor to the next page of objects.
 	// [GroupMembers] This is the cursor to the next page of Members.
 	if request.Cursor != nil && request.Cursor.Cursor != nil {
@@ -35,8 +37,12 @@ func ConstructEndpoint(request *Request) (string, *framework.Error) {
 		// [Users]		baseURL + "/api/" + apiVersion + "/users?limit=" + pageSize
 		// [Filtered Users]	baseURL + "/api/" + apiVersion + "/users?filter="
 		// 					+ `status eq \"ACTIVE\"` + "&limit=" + pageSize
+		// [Search Users]	baseURL + "/api/" + apiVersion + "/users?search="
+		// 					+ `profile.firstName eq \"John\"` + "&limit=" + pageSize
 		// [Groups]		baseURL + "/api/" + apiVersion + "/groups?filter="
 		//                  + `type eq "OKTA_GROUP" or type eq "APP_GROUP"` + "&limit=" + pageSize
+		// [Search Groups]	baseURL + "/api/" + apiVersion + "/groups?search="
+		// 					+ `profile.firstName eq \"John\"` + "&limit=" + pageSize
 		// [GroupMembers] 	baseURL + "/api/" + apiVersion + "/groups/" + groupId + "/users?limit=" + pageSize
 		sb.Grow(len(request.BaseURL) + len(request.APIVersion) + len(formattedPageSize) + 12)
 
@@ -59,27 +65,70 @@ func ConstructEndpoint(request *Request) (string, *framework.Error) {
 			}
 		}
 
+		if request.Search != "" {
+			// Okta uses double quotes in the search string, so we need to handle
+			// escaping them in config. We need to replace them then encode the search.
+			search = url.QueryEscape(strings.ReplaceAll(request.Search, `\"`, `"`))
+			// The minimum length of a valid Okta search is 7 characters
+			// given the shortest valid search is in the form of "id eq x".
+			if len(search) < 7 {
+				return "", &framework.Error{
+					Message: "Provided search syntax is invalid.",
+					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
+				}
+			}
+		}
+
+		if request.Filter != "" && request.Search != "" {
+			return "", &framework.Error{
+				Message: "Both filter and search cannot be set at the same time, on the same entity.",
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
+			}
+		}
+
 		switch request.EntityExternalID {
 		case Users:
-			if filter != "" {
-				sb.Grow(len(filter) + 14)
-				sb.WriteString("users?filter=")
+			// Construct the users endpoint based on filter/search parameters
+			sb.WriteString("users?")
+
+			// Use a nested switch for the query parameter type
+			switch {
+			case filter != "":
+				sb.Grow(len(filter) + 13) // 13 = len("filter=") + len("&") + buffer
+				sb.WriteString("filter=")
 				sb.WriteString(filter)
 				sb.WriteString("&")
-			} else {
-				sb.WriteString("users?")
+			case search != "":
+				sb.Grow(len(search) + 13) // 13 = len("search=") + len("&") + buffer
+				sb.WriteString("search=")
+				sb.WriteString(search)
+				sb.WriteString("&")
 			}
+
 		case Groups:
-			if filter == "" {
+			// Construct the groups endpoint based on filter/search parameters
+			sb.WriteString("groups?")
+
+			// Use a nested switch for the query parameter type
+			switch {
+			case filter != "":
+				sb.Grow(len(filter) + 14) // 14 = len("filter=") + len("&") + buffer
+				sb.WriteString("filter=")
+				sb.WriteString(filter)
+				sb.WriteString("&")
+			case search != "":
+				sb.Grow(len(search) + 14) // 14 = len("search=") + len("&") + buffer
+				sb.WriteString("search=")
+				sb.WriteString(search)
+				sb.WriteString("&")
+			default:
 				// Some Groups are not useful to ingest into SGNL, automatically filtering.
 				filter = url.QueryEscape(`type eq "OKTA_GROUP" or type eq "APP_GROUP"`)
+				sb.Grow(len(filter) + 14) // 14 = len("filter=") + len("&") + buffer
+				sb.WriteString("filter=")
+				sb.WriteString(filter)
+				sb.WriteString("&")
 			}
-
-			sb.Grow(len(filter) + 15)
-
-			sb.WriteString("groups?filter=")
-			sb.WriteString(filter)
-			sb.WriteString("&")
 		case GroupMembers:
 			if request.Cursor == nil || request.Cursor.CollectionID == nil {
 				return "", &framework.Error{
