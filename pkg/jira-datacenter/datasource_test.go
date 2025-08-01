@@ -80,7 +80,7 @@ var TestServerHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Req
 		w.Write([]byte(`{"issues": [{"id": "2005/07/06"}]}`))
 
 	// Test with specific attributes
-	case "/rest/api/latest/search?fields=id%2Ckey%2Csummary%2Cstatus&startAt=10&maxResults=10":
+	case "/rest/api/latest/search?fields=id%2Ckey%2Cstatus%2Csummary&startAt=10&maxResults=10":
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"issues": [{"id": "1", "key": "TEST-1", "summary": "Test Issue", "status": "Open"}]}`))
 
@@ -673,15 +673,15 @@ func TestConstructURL(t *testing.T) {
 				Attributes: []*framework.AttributeConfig{
 					{ExternalId: "id"},
 					{ExternalId: "key"},
-					{ExternalId: "summary"},
-					{ExternalId: "status"},
+					{ExternalId: "$.fields.summary"},
+					{ExternalId: "$.fields.status.id"},
 				},
 			},
 			entity: jiradatacenter.ValidEntityExternalIDs[jiradatacenter_adapter.IssueExternalID],
 			cursor: &pagination.CompositeCursor[int64]{
 				Cursor: testutil.GenPtr[int64](10),
 			},
-			wantURL: "https://jira.com/rest/api/latest/search?fields=id%2Ckey%2Csummary%2Cstatus&startAt=10&maxResults=10",
+			wantURL: "https://jira.com/rest/api/latest/search?fields=id%2Ckey%2Cstatus%2Csummary&startAt=10&maxResults=10",
 		},
 		"group_members": {
 			request: &jiradatacenter_adapter.Request{
@@ -1767,6 +1767,128 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 
 			if !reflect.DeepEqual(gotErr, tt.wantErr) {
 				t.Errorf("gotErr: %v, wantErr: %v", gotErr, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestEncodedAttributes(t *testing.T) {
+	tests := []struct {
+		name       string
+		attributes []*framework.AttributeConfig
+		want       string
+	}{
+		{
+			name:       "empty attributes list",
+			attributes: []*framework.AttributeConfig{},
+			want:       "*navigable",
+		},
+		{
+			name:       "nil attributes list",
+			attributes: nil,
+			want:       "*navigable",
+		},
+		{
+			name: "single field extraction",
+			attributes: []*framework.AttributeConfig{
+				{ExternalId: "$.fields.summary"},
+			},
+			want: "summary",
+		},
+		{
+			name: "multiple different fields",
+			attributes: []*framework.AttributeConfig{
+				{ExternalId: "$.fields.summary"},
+				{ExternalId: "$.fields.description"},
+			},
+			want: "description%2Csummary", // URL encoded "description,summary" (sorted)
+		},
+		{
+			name: "nested field extraction",
+			attributes: []*framework.AttributeConfig{
+				{ExternalId: "$.fields.issuetype.id"},
+			},
+			want: "issuetype",
+		},
+		{
+			name: "deduplication of same field",
+			attributes: []*framework.AttributeConfig{
+				{ExternalId: "$.fields.assignee.key"},
+				{ExternalId: "$.fields.assignee.name"},
+			},
+			want: "assignee",
+		},
+		{
+			name: "root level fields",
+			attributes: []*framework.AttributeConfig{
+				{ExternalId: "$.id"},
+				{ExternalId: "$.key"},
+				{ExternalId: "$.self"},
+			},
+			want: "id%2Ckey%2Cself", // URL encoded "id,key,self" (sorted)
+		},
+		{
+			name: "mix of different field types",
+			attributes: []*framework.AttributeConfig{
+				{ExternalId: "$.fields.summary"},
+				{ExternalId: "$.fields.issuetype.id"},
+				{ExternalId: "$.fields.assignee.key"},
+				{ExternalId: "$.fields.assignee.name"}, // duplicate assignee
+				{ExternalId: "$.id"},
+				{ExternalId: "$.key"},
+			},
+			want: "assignee%2Cid%2Cissuetype%2Ckey%2Csummary", // URL encoded and sorted
+		},
+		{
+			name: "attributes with empty ExternalId",
+			attributes: []*framework.AttributeConfig{
+				{ExternalId: ""},
+				{ExternalId: "$.fields.summary"},
+				{ExternalId: ""},
+			},
+			want: "summary",
+		},
+		{
+			name: "all attributes have empty ExternalId",
+			attributes: []*framework.AttributeConfig{
+				{ExternalId: ""},
+				{ExternalId: ""},
+			},
+			want: "*navigable",
+		},
+		{
+			name: "custom fields",
+			attributes: []*framework.AttributeConfig{
+				{ExternalId: "$.fields.customfield_10000"},
+				{ExternalId: "$.fields.customfield_10001.value"},
+			},
+			want: "customfield_10000%2Ccustomfield_10001", // URL encoded and sorted
+		},
+		{
+			name: "field names with special characters needing URL encoding",
+			attributes: []*framework.AttributeConfig{
+				{ExternalId: "$.fields.summary"},
+				{ExternalId: "$.fields.status"},
+				{ExternalId: "$.fields.project"},
+			},
+			want: "project%2Cstatus%2Csummary", // URL encoded "project,status,summary" (sorted)
+		},
+		{
+			name: "non-JSON path field names",
+			attributes: []*framework.AttributeConfig{
+				{ExternalId: "id"},
+				{ExternalId: "key"},
+				{ExternalId: "summary"},
+			},
+			want: "id%2Ckey%2Csummary", // URL encoded "id,key,summary" (sorted)
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := jiradatacenter.EncodedAttributes(tt.attributes)
+			if got != tt.want {
+				t.Errorf("EncodedAttributes() = %q, want %q", got, tt.want)
 			}
 		})
 	}
