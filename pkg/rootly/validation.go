@@ -18,12 +18,17 @@ const (
 
 // ValidateGetPageRequest validates the fields of the GetPage Request.
 func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework.Request[Config]) *framework.Error {
-	if request.Config != nil {
-		if err := request.Config.Validate(ctx); err != nil {
-			return &framework.Error{
-				Message: fmt.Sprintf("Rootly config is invalid: %v.", err.Error()),
-				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
-			}
+	if request.Config == nil {
+		return &framework.Error{
+			Message: "request contains no config",
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
+		}
+	}
+
+	if err := request.Config.Validate(ctx); err != nil {
+		return &framework.Error{
+			Message: fmt.Sprintf("Rootly config is invalid: %v.", err.Error()),
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
 		}
 	}
 
