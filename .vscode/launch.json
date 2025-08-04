@@ -11,8 +11,7 @@
       "mode": "debug",
       "program": "${workspaceFolder}/cmd/adapter/main.go",
       "env": {
-        "AUTH_TOKENS_PATH": "${workspaceFolder}/shared-envs/ADAPTER_TOKENS",
-        "ADAPTER_CONNECTOR_SERVICE_URL": "http://localhost:8100",
+        "AUTH_TOKENS_PATH": "${workspaceFolder}/shared-envs/ADAPTER_TOKENS"
       }
     }
   ]
