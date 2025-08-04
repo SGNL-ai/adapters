@@ -1,4 +1,6 @@
 // Copyright 2025 SGNL.ai, Inc.
+
+// nolint: lll, goconst
 package rootly_test
 
 import (
@@ -262,12 +264,12 @@ func TestConstructEndpointFilterTransformation(t *testing.T) {
 	}
 }
 
-// Helper function to create string pointers
+// Helper function to create string pointers.
 func stringPtr(s string) *string {
 	return &s
 }
 
-// Helper function to check if a string contains a substring
+// Helper function to check if a string contains a substring.
 func contains(s, substr string) bool {
 	// Convert both to lowercase for case-insensitive comparison
 	sLower := strings.ToLower(s)

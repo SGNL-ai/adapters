@@ -83,8 +83,10 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		var errorResponse DatasourceErrorResponse
 		if err := json.Unmarshal(body, &errorResponse); err != nil {
 			return nil, &framework.Error{
-				Message: fmt.Sprintf("Failed to parse error response: %v. Status: %d. Body: %s.", err, resp.StatusCode, string(body)),
-				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+				Message: fmt.Sprintf(
+					"Failed to parse error response: %v. Status: %d. Body: %s.", err, resp.StatusCode, string(body),
+				),
+				Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			}
 		}
 
@@ -117,6 +119,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 
 	// Determine next cursor based on pagination
 	var nextCursor *string
+
 	currentPage := datasourceResponse.Meta.Page
 	totalPages := datasourceResponse.Meta.Pages
 

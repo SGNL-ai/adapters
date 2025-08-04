@@ -1,4 +1,6 @@
 // Copyright 2025 SGNL.ai, Inc.
+
+// nolint: lll, goconst, revive
 package rootly_test
 
 import (
@@ -25,10 +27,12 @@ func TestDatasourceGetPage(t *testing.T) {
 			serverHandler: func(w http.ResponseWriter, r *http.Request) {
 				if r.Header.Get("Authorization") != "Bearer testtoken" {
 					w.WriteHeader(http.StatusUnauthorized)
+
 					return
 				}
 				if r.URL.Path != "/v1/incidents" {
 					w.WriteHeader(http.StatusNotFound)
+
 					return
 				}
 
@@ -77,10 +81,12 @@ func TestDatasourceGetPage(t *testing.T) {
 			serverHandler: func(w http.ResponseWriter, r *http.Request) {
 				if r.Header.Get("Authorization") != "Bearer testtoken" {
 					w.WriteHeader(http.StatusUnauthorized)
+
 					return
 				}
 				if r.URL.Path != "/v1/users" {
 					w.WriteHeader(http.StatusNotFound)
+
 					return
 				}
 
@@ -127,10 +133,12 @@ func TestDatasourceGetPage(t *testing.T) {
 			serverHandler: func(w http.ResponseWriter, r *http.Request) {
 				if r.Header.Get("Authorization") != "Bearer testtoken" {
 					w.WriteHeader(http.StatusUnauthorized)
+
 					return
 				}
 				if r.URL.Query().Get("page[number]") != "2" {
 					w.WriteHeader(http.StatusBadRequest)
+
 					return
 				}
 
@@ -178,16 +186,19 @@ func TestDatasourceGetPage(t *testing.T) {
 			serverHandler: func(w http.ResponseWriter, r *http.Request) {
 				if r.Header.Get("Authorization") != "Bearer testtoken" {
 					w.WriteHeader(http.StatusUnauthorized)
+
 					return
 				}
 
 				// Check that filters are properly formatted
 				if r.URL.Query().Get("filter[status]") != "started" {
 					w.WriteHeader(http.StatusBadRequest)
+
 					return
 				}
 				if r.URL.Query().Get("filter[severity]") != "high" {
 					w.WriteHeader(http.StatusBadRequest)
+
 					return
 				}
 
@@ -266,6 +277,7 @@ func TestDatasourceGetPage(t *testing.T) {
 			serverHandler: func(w http.ResponseWriter, r *http.Request) {
 				if r.Header.Get("Authorization") != "Bearer testtoken" {
 					w.WriteHeader(http.StatusUnauthorized)
+
 					return
 				}
 				w.WriteHeader(http.StatusNotFound)
@@ -299,6 +311,7 @@ func TestDatasourceGetPage(t *testing.T) {
 			serverHandler: func(w http.ResponseWriter, r *http.Request) {
 				if r.Header.Get("Authorization") != "Bearer testtoken" {
 					w.WriteHeader(http.StatusUnauthorized)
+
 					return
 				}
 				w.Header().Set("Content-Type", "application/vnd.api+json")
@@ -334,24 +347,30 @@ func TestDatasourceGetPage(t *testing.T) {
 			if tt.expectedError != nil {
 				if err == nil {
 					t.Errorf("GetPage() expected error, got nil")
+
 					return
 				}
+
 				if err.Code != tt.expectedError.Code {
 					t.Errorf("GetPage() error code = %v, want %v", err.Code, tt.expectedError.Code)
 				}
+
 				if tt.expectedError.Message != "" && err.Message != tt.expectedError.Message {
 					t.Errorf("GetPage() error message = %v, want %v", err.Message, tt.expectedError.Message)
 				}
+
 				return
 			}
 
 			if err != nil {
 				t.Errorf("GetPage() unexpected error: %v", err)
+
 				return
 			}
 
 			if response == nil {
 				t.Errorf("GetPage() response is nil")
+
 				return
 			}
 
@@ -426,7 +445,7 @@ func TestDatasourceConstructEndpoint(t *testing.T) {
 	}
 }
 
-// Helper function to create string pointers
+// Helper function to create string pointers.
 func strPtr(s string) *string {
 	return &s
 }

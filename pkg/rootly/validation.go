@@ -60,6 +60,7 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 	for _, attribute := range request.Entity.Attributes {
 		if attribute.ExternalId == uniqueIDAttribute {
 			uniqueIDAttributeFound = true
+
 			break
 		}
 	}

@@ -1,4 +1,6 @@
 // Copyright 2025 SGNL.ai, Inc.
+
+// nolint: lll, goconst
 package rootly_test
 
 import (
@@ -303,11 +305,13 @@ func TestValidateGetPageRequest(t *testing.T) {
 				if err != nil {
 					t.Errorf("ValidateGetPageRequest() expected no error, got: %v", err)
 				}
+
 				return
 			}
 
 			if err == nil {
 				t.Errorf("ValidateGetPageRequest() expected error with code %v, got no error", tt.wantErrCode)
+
 				return
 			}
 

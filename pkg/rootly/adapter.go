@@ -115,7 +115,6 @@ func (a *Adapter) RequestPageFromDatasource(
 	return framework.NewGetPageResponseSuccess(page)
 }
 
-
 // buildFilter builds the filter string for the given entity from the config.
 func (a *Adapter) buildFilter(request *framework.Request[Config]) string {
 	if request.Config == nil || request.Config.Filters == nil {

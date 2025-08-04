@@ -1,4 +1,6 @@
 // Copyright 2025 SGNL.ai, Inc.
+
+// nolint: lll, goconst
 package rootly_test
 
 import (
@@ -17,11 +19,12 @@ import (
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 )
 
-// testServerHandler is a comprehensive mock HTTP server handler for testing
+// testServerHandler is a comprehensive mock HTTP server handler for testing.
 func testServerHandler(w http.ResponseWriter, r *http.Request) {
 	// Check authentication
 	if auth := r.Header.Get("Authorization"); auth != "Bearer testtoken" {
 		w.WriteHeader(http.StatusUnauthorized)
+
 		errorResponse := rootly_adapter.DatasourceErrorResponse{
 			Errors: []struct {
 				Title  string `json:"title"`
@@ -36,6 +39,7 @@ func testServerHandler(w http.ResponseWriter, r *http.Request) {
 			},
 		}
 		json.NewEncoder(w).Encode(errorResponse)
+
 		return
 	}
 
@@ -60,8 +64,10 @@ func testServerHandler(w http.ResponseWriter, r *http.Request) {
 			response.Meta.Page = 1
 			response.Meta.Pages = 1
 			response.Meta.TotalCount = 1
+
 			w.Header().Set("Content-Type", "application/vnd.api+json")
 			json.NewEncoder(w).Encode(response)
+
 			return
 		}
 
@@ -121,6 +127,7 @@ func testServerHandler(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Set("Content-Type", "application/vnd.api+json")
 		json.NewEncoder(w).Encode(response)
+
 		return
 	}
 
@@ -146,6 +153,7 @@ func testServerHandler(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Set("Content-Type", "application/vnd.api+json")
 		json.NewEncoder(w).Encode(response)
+
 		return
 	}
 
@@ -170,6 +178,7 @@ func testServerHandler(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Set("Content-Type", "application/vnd.api+json")
 		json.NewEncoder(w).Encode(response)
+
 		return
 	}
 
@@ -496,16 +505,19 @@ func TestAdapterGetPage(t *testing.T) {
 				if response.Error == nil {
 					t.Errorf("GetPage() expected error, got success response")
 				}
+
 				return
 			}
 
 			if response.Error != nil {
 				t.Errorf("GetPage() unexpected error: %v", response.Error.Message)
+
 				return
 			}
 
 			if response.Success == nil {
 				t.Errorf("GetPage() expected success response, got nil")
+
 				return
 			}
 
@@ -518,6 +530,7 @@ func TestAdapterGetPage(t *testing.T) {
 			if len(response.Success.Objects) != len(tt.wantResponse.Success.Objects) {
 				t.Errorf("GetPage() objects count = %d, want %d",
 					len(response.Success.Objects), len(tt.wantResponse.Success.Objects))
+
 				return
 			}
 
