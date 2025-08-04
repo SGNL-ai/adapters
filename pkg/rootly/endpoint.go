@@ -9,7 +9,7 @@ import (
 
 // ConstructEndpoint constructs the endpoint URL for the given request.
 func ConstructEndpoint(request *Request) string {
-	endpoint := fmt.Sprintf("%s/%s", request.BaseURL, request.EntityExternalName)
+	endpoint := fmt.Sprintf("%s/%s", request.BaseURL, request.EntityExternalID)
 
 	params := url.Values{}
 

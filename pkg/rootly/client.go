@@ -24,9 +24,9 @@ type Request struct {
 	// PageSize is the maximum number of objects to return from the entity.
 	PageSize int64
 
-	// EntityExternalName is the external name of the entity.
-	// The external name should match the API's resource name.
-	EntityExternalName string
+	// EntityExternalID is the external ID of the entity.
+	// The external ID should match the API's resource name.
+	EntityExternalID string
 
 	// Cursor identifies the first object of the page to return, as returned by
 	// the last request for the entity.

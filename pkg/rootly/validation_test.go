@@ -31,7 +31,7 @@ func TestValidateGetPageRequest(t *testing.T) {
 					HTTPAuthorization: "Bearer testtoken",
 				},
 				Config: &rootly_adapter.Config{
-					APIVersion: "1",
+					APIVersion: "v1",
 					CommonConfig: &config.CommonConfig{
 						RequestTimeoutSeconds: testutil.GenPtr(30),
 					},
@@ -130,7 +130,7 @@ func TestValidateGetPageRequest(t *testing.T) {
 					HTTPAuthorization: "Bearer testtoken",
 				},
 				Config: &rootly_adapter.Config{
-					APIVersion: "1",
+					APIVersion: "v1",
 				},
 				Entity: framework.EntityConfig{
 					ExternalId: "incidents",
@@ -153,7 +153,7 @@ func TestValidateGetPageRequest(t *testing.T) {
 				Address: "https://api.rootly.com",
 				Auth:    nil,
 				Config: &rootly_adapter.Config{
-					APIVersion: "1",
+					APIVersion: "v1",
 				},
 				Entity: framework.EntityConfig{
 					ExternalId: "incidents",
@@ -178,7 +178,7 @@ func TestValidateGetPageRequest(t *testing.T) {
 					HTTPAuthorization: "",
 				},
 				Config: &rootly_adapter.Config{
-					APIVersion: "1",
+					APIVersion: "v1",
 				},
 				Entity: framework.EntityConfig{
 					ExternalId: "incidents",
@@ -203,7 +203,7 @@ func TestValidateGetPageRequest(t *testing.T) {
 					HTTPAuthorization: "testtoken",
 				},
 				Config: &rootly_adapter.Config{
-					APIVersion: "1",
+					APIVersion: "v1",
 				},
 				Entity: framework.EntityConfig{
 					ExternalId: "incidents",
@@ -228,7 +228,7 @@ func TestValidateGetPageRequest(t *testing.T) {
 					HTTPAuthorization: "Bearer testtoken",
 				},
 				Config: &rootly_adapter.Config{
-					APIVersion: "1",
+					APIVersion: "v1",
 				},
 				Entity: framework.EntityConfig{
 					ExternalId: "incidents",
@@ -253,7 +253,7 @@ func TestValidateGetPageRequest(t *testing.T) {
 					HTTPAuthorization: "Bearer testtoken",
 				},
 				Config: &rootly_adapter.Config{
-					APIVersion: "1",
+					APIVersion: "v1",
 				},
 				Entity: framework.EntityConfig{
 					ExternalId: "incidents",
@@ -278,7 +278,7 @@ func TestValidateGetPageRequest(t *testing.T) {
 					HTTPAuthorization: "Bearer testtoken",
 				},
 				Config: &rootly_adapter.Config{
-					APIVersion: "1",
+					APIVersion: "v1",
 				},
 				Entity: framework.EntityConfig{
 					ExternalId: "incidents",

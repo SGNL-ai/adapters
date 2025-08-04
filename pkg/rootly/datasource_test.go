@@ -58,7 +58,7 @@ func TestDatasourceGetPage(t *testing.T) {
 			},
 			request: &rootly_adapter.Request{
 				HTTPAuthorization:     "Bearer testtoken",
-				EntityExternalName:    "incidents",
+				EntityExternalID:      "incidents",
 				PageSize:              10,
 				RequestTimeoutSeconds: 30,
 			},
@@ -111,7 +111,7 @@ func TestDatasourceGetPage(t *testing.T) {
 			},
 			request: &rootly_adapter.Request{
 				HTTPAuthorization:     "Bearer testtoken",
-				EntityExternalName:    "users",
+				EntityExternalID:      "users",
 				PageSize:              10,
 				RequestTimeoutSeconds: 30,
 			},
@@ -163,7 +163,7 @@ func TestDatasourceGetPage(t *testing.T) {
 			},
 			request: &rootly_adapter.Request{
 				HTTPAuthorization:     "Bearer testtoken",
-				EntityExternalName:    "users",
+				EntityExternalID:      "users",
 				PageSize:              10,
 				Cursor:                strPtr("2"),
 				RequestTimeoutSeconds: 30,
@@ -224,7 +224,7 @@ func TestDatasourceGetPage(t *testing.T) {
 			},
 			request: &rootly_adapter.Request{
 				HTTPAuthorization:     "Bearer testtoken",
-				EntityExternalName:    "incidents",
+				EntityExternalID:      "incidents",
 				PageSize:              10,
 				Filter:                "status=started&severity=high",
 				RequestTimeoutSeconds: 30,
@@ -264,7 +264,7 @@ func TestDatasourceGetPage(t *testing.T) {
 			},
 			request: &rootly_adapter.Request{
 				HTTPAuthorization:     "Bearer invalidtoken",
-				EntityExternalName:    "incidents",
+				EntityExternalID:      "incidents",
 				PageSize:              10,
 				RequestTimeoutSeconds: 30,
 			},
@@ -298,7 +298,7 @@ func TestDatasourceGetPage(t *testing.T) {
 			},
 			request: &rootly_adapter.Request{
 				HTTPAuthorization:     "Bearer testtoken",
-				EntityExternalName:    "nonexistent",
+				EntityExternalID:      "nonexistent",
 				PageSize:              10,
 				RequestTimeoutSeconds: 30,
 			},
@@ -320,7 +320,7 @@ func TestDatasourceGetPage(t *testing.T) {
 			},
 			request: &rootly_adapter.Request{
 				HTTPAuthorization:     "Bearer testtoken",
-				EntityExternalName:    "incidents",
+				EntityExternalID:      "incidents",
 				PageSize:              10,
 				RequestTimeoutSeconds: 30,
 			},
@@ -392,44 +392,44 @@ func TestDatasourceConstructEndpoint(t *testing.T) {
 	}{
 		"basic_request": {
 			request: &rootly_adapter.Request{
-				BaseURL:            "https://api.rootly.com/v1",
-				EntityExternalName: "incidents",
-				PageSize:           10,
+				BaseURL:          "https://api.rootly.com/v1",
+				EntityExternalID: "incidents",
+				PageSize:         10,
 			},
 			expectedURL: "https://api.rootly.com/v1/incidents?page%5Bnumber%5D=1&page%5Bsize%5D=10",
 		},
 		"request_with_cursor": {
 			request: &rootly_adapter.Request{
-				BaseURL:            "https://api.rootly.com/v1",
-				EntityExternalName: "users",
-				PageSize:           25,
-				Cursor:             strPtr("3"),
+				BaseURL:          "https://api.rootly.com/v1",
+				EntityExternalID: "users",
+				PageSize:         25,
+				Cursor:           strPtr("3"),
 			},
 			expectedURL: "https://api.rootly.com/v1/users?page%5Bnumber%5D=3&page%5Bsize%5D=25",
 		},
 		"request_with_filters": {
 			request: &rootly_adapter.Request{
-				BaseURL:            "https://api.rootly.com/v1",
-				EntityExternalName: "incidents",
-				PageSize:           50,
-				Filter:             "status=open&severity=high",
+				BaseURL:          "https://api.rootly.com/v1",
+				EntityExternalID: "incidents",
+				PageSize:         50,
+				Filter:           "status=open&severity=high",
 			},
 			expectedURL: "https://api.rootly.com/v1/incidents?filter%5Bseverity%5D=high&filter%5Bstatus%5D=open&page%5Bnumber%5D=1&page%5Bsize%5D=50",
 		},
 		"request_with_complex_filters": {
 			request: &rootly_adapter.Request{
-				BaseURL:            "https://api.rootly.com/v1",
-				EntityExternalName: "incidents",
-				PageSize:           100,
-				Filter:             "status=started,mitigated&severity=major,minor",
+				BaseURL:          "https://api.rootly.com/v1",
+				EntityExternalID: "incidents",
+				PageSize:         100,
+				Filter:           "status=started,mitigated&severity=major,minor",
 			},
 			expectedURL: "https://api.rootly.com/v1/incidents?filter%5Bseverity%5D=major%2Cminor&filter%5Bstatus%5D=started%2Cmitigated&page%5Bnumber%5D=1&page%5Bsize%5D=100",
 		},
 		"request_no_page_size": {
 			request: &rootly_adapter.Request{
-				BaseURL:            "https://api.rootly.com/v1",
-				EntityExternalName: "teams",
-				PageSize:           0,
+				BaseURL:          "https://api.rootly.com/v1",
+				EntityExternalID: "teams",
+				PageSize:         0,
 			},
 			expectedURL: "https://api.rootly.com/v1/teams?page%5Bnumber%5D=1",
 		},

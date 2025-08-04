@@ -55,7 +55,7 @@ func (a *Adapter) RequestPageFromDatasource(
 		request.Address = fmt.Sprintf("%s/", request.Address)
 	}
 
-	baseURL := fmt.Sprintf("%sv1", request.Address)
+	baseURL := fmt.Sprintf("%s%s", request.Address, request.Config.APIVersion)
 
 	var authorizationHeader string
 	if request.Auth != nil && request.Auth.HTTPAuthorization != "" {
@@ -70,11 +70,11 @@ func (a *Adapter) RequestPageFromDatasource(
 	apiRequest := &Request{
 		BaseURL:               baseURL,
 		HTTPAuthorization:     authorizationHeader,
-		EntityExternalName:    request.Entity.ExternalId,
+		EntityExternalID:      request.Entity.ExternalId,
 		PageSize:              request.PageSize,
 		Cursor:                cursor,
 		RequestTimeoutSeconds: *commonConfig.RequestTimeoutSeconds,
-		Filter:                a.buildFilter(request),
+		Filter:                a.getFilterForEntity(request),
 	}
 
 	response, err := a.RootlyClient.GetPage(ctx, apiRequest)
@@ -115,8 +115,8 @@ func (a *Adapter) RequestPageFromDatasource(
 	return framework.NewGetPageResponseSuccess(page)
 }
 
-// buildFilter builds the filter string for the given entity from the config.
-func (a *Adapter) buildFilter(request *framework.Request[Config]) string {
+// getFilterForEntity builds the filter string for the given entity from the config.
+func (a *Adapter) getFilterForEntity(request *framework.Request[Config]) string {
 	if request.Config == nil || request.Config.Filters == nil {
 		return ""
 	}

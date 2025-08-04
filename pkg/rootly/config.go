@@ -10,7 +10,7 @@ import (
 )
 
 var supportedAPIVersions = map[string]struct{}{
-	"1": {},
+	"v1": {},
 }
 
 // Config is the configuration passed in each GetPage calls to the adapter.
@@ -19,10 +19,10 @@ var supportedAPIVersions = map[string]struct{}{
 /*
 {
     "requestTimeoutSeconds": 10,
-    "apiVersion": "1",
+    "apiVersion": "v1",
     "filters": {
-        "users": "locale=en",
-        "incidents": "status=open"
+        "users": "email=rufus_raynor@hegmann.test",
+        "incidents": "status=started&severity=high"
     }
 }
 */
