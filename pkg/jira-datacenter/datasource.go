@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	net_url "net/url"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -19,6 +20,9 @@ import (
 )
 
 const (
+	// JiraFieldsPrefix is the prefix used for Jira field paths in JSONPath expressions.
+	JiraFieldsPrefix = "fields"
+
 	// Entity external IDs.
 	UserExternalID        string = "User"
 	IssueExternalID       string = "Issue"
@@ -520,8 +524,11 @@ func (e Entity) ConstructURL(request *Request, cursor *pagination.CompositeCurso
 			sb.WriteRune('&')
 		}
 
-		sb.Grow(len("fields=*all&"))
-		sb.WriteString("fields=*all&")
+		// Build fields parameter from attributes
+		fieldsParam := EncodedAttributes(request.Attributes)
+		fieldsStr := "fields=" + fieldsParam + "&"
+		sb.Grow(len(fieldsStr))
+		sb.WriteString(fieldsStr)
 
 	default:
 		// Preallocate for endpoint and "?"
@@ -601,4 +608,82 @@ func filterAndPaginateGroups(
 	}
 
 	return objects, nextCursor
+}
+
+// extractFieldFromJSONPath extracts the Jira field name from a JSON path.
+// Examples:
+//   - $.fields.summary → summary
+//   - $.fields.issuetype.id → issuetype
+//   - $.fields.assignee.key → assignee
+//   - $.id → id
+//   - id → id (handles non-JSON path field names)
+func extractFieldFromJSONPath(jsonPath string) string {
+	// Handle non-JSON path field names (like "id", "key", "self")
+	if !strings.HasPrefix(jsonPath, "$.") {
+		return jsonPath
+	}
+
+	// Remove the "$." prefix
+	path := strings.TrimPrefix(jsonPath, "$.")
+
+	// Split by dots to get path segments
+	segments := strings.Split(path, ".")
+
+	// For paths like "$.id", return "id"
+	if len(segments) == 1 {
+		return segments[0]
+	}
+
+	// For paths like "$.fields.summary", return "summary"
+	// For paths like "$.fields.issuetype.id", return "issuetype"
+	if len(segments) >= 2 && segments[0] == JiraFieldsPrefix {
+		return segments[1]
+	}
+
+	// For other cases, return the first segment
+	return segments[0]
+}
+
+// EncodedAttributes constructs the fields parameter for Jira API requests.
+// It extracts field names from JSON paths and deduplicates them.
+// If no attributes are provided, it returns "*navigable".
+// It respects the Jira conventions for field selection:
+// - *all - include all fields
+// - *navigable - include just navigable fields (default for search)
+// - field1,field2 - include specific fields
+// - -field - exclude a field.
+func EncodedAttributes(attributes []*framework.AttributeConfig) string {
+	if len(attributes) == 0 {
+		// Default to *navigable
+		return "*navigable"
+	}
+
+	// Use a map to deduplicate field names
+	fieldSet := make(map[string]struct{})
+
+	for _, attribute := range attributes {
+		if attribute.ExternalId != "" {
+			fieldName := extractFieldFromJSONPath(attribute.ExternalId)
+			if fieldName != "" {
+				fieldSet[fieldName] = struct{}{}
+			}
+		}
+	}
+
+	// If no valid fields were found, default to *navigable
+	if len(fieldSet) == 0 {
+		return "*navigable"
+	}
+
+	// Convert map to slice
+	fields := make([]string, 0, len(fieldSet))
+	for field := range fieldSet {
+		fields = append(fields, field)
+	}
+
+	// Sort fields for consistent output
+	sort.Strings(fields)
+
+	// Join fields with comma and then URL-encode the entire string
+	return net_url.QueryEscape(strings.Join(fields, ","))
 }
