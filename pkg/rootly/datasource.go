@@ -144,13 +144,12 @@ func ConstructEndpoint(request *Request) string {
 
 	// Add filter if provided
 	if request.Filter != "" {
-		// Parse and add filter parameters
-		// For simplicity, assume filter is already URL-encoded key=value pairs
+		// Parse user-provided filters and convert to Rootly's filter[key]=value format
 		filterParams, err := url.ParseQuery(request.Filter)
 		if err == nil {
 			for key, values := range filterParams {
 				for _, value := range values {
-					params.Add(key, value)
+					params.Add(fmt.Sprintf("filter[%s]", key), value)
 				}
 			}
 		}

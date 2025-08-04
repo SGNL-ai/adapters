@@ -12,7 +12,7 @@ import (
 
 const (
 	uniqueIDAttribute = "id"
-	maxPageSize       = 100
+	maxPageSize       = 1000
 	minPageSize       = 1
 )
 
@@ -62,13 +62,6 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 	if !uniqueIDAttributeFound {
 		return &framework.Error{
 			Message: "Requested entity attributes are missing unique ID attribute.",
-			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
-		}
-	}
-
-	if len(request.Entity.ChildEntities) > 0 {
-		return &framework.Error{
-			Message: "Requested entity does not support child entities.",
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
 		}
 	}
