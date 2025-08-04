@@ -25,8 +25,8 @@ func testServerHandler(w http.ResponseWriter, r *http.Request) {
 		response := rootly_adapter.DatasourceResponse{
 			Data: []map[string]any{
 				{
-					"id":         "user-1",
-					"type":       "users",
+					"id":   "user-1",
+					"type": "users",
 					"attributes": map[string]any{
 						"name":  "Test User",
 						"email": "test@example.com",
@@ -34,11 +34,9 @@ func testServerHandler(w http.ResponseWriter, r *http.Request) {
 				},
 			},
 		}
-		response.Meta.Pagination.Count = 1
-		response.Meta.Pagination.Page = 1
-		response.Meta.Pagination.Pages = 1
-		response.Meta.Pagination.PerPage = 100
-		response.Meta.Pagination.TotalCount = 1
+		response.Meta.Page = 1
+		response.Meta.Pages = 1
+		response.Meta.TotalCount = 1
 
 		w.Header().Set("Content-Type", "application/vnd.api+json")
 		json.NewEncoder(w).Encode(response)

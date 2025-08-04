@@ -23,13 +23,9 @@ type Datasource struct {
 type DatasourceResponse struct {
 	Data []map[string]any `json:"data"`
 	Meta struct {
-		Pagination struct {
-			Count       int `json:"count"`
-			Page        int `json:"page"`
-			Pages       int `json:"pages"`
-			PerPage     int `json:"per_page"`
-			TotalCount  int `json:"total_count"`
-		} `json:"pagination"`
+		Page       int `json:"current_page"`
+		Pages      int `json:"total_pages"`
+		TotalCount int `json:"total_count"`
 	} `json:"meta"`
 }
 
@@ -114,9 +110,9 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 
 	// Determine next cursor based on pagination
 	var nextCursor *string
-	currentPage := datasourceResponse.Meta.Pagination.Page
-	totalPages := datasourceResponse.Meta.Pagination.Pages
-	
+	currentPage := datasourceResponse.Meta.Page
+	totalPages := datasourceResponse.Meta.Pages
+
 	if currentPage < totalPages {
 		nextPageStr := strconv.Itoa(currentPage + 1)
 		nextCursor = &nextPageStr
@@ -131,21 +127,21 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 // ConstructEndpoint constructs the endpoint URL for the given request.
 func ConstructEndpoint(request *Request) string {
 	endpoint := fmt.Sprintf("%s/%s", request.BaseURL, request.EntityExternalName)
-	
+
 	params := url.Values{}
-	
+
 	// Add page size
 	if request.PageSize > 0 {
 		params.Add("page[size]", strconv.FormatInt(request.PageSize, 10))
 	}
-	
+
 	// Add page number if cursor is provided
 	if request.Cursor != nil && *request.Cursor != "" {
 		params.Add("page[number]", *request.Cursor)
 	} else {
 		params.Add("page[number]", "1")
 	}
-	
+
 	// Add filter if provided
 	if request.Filter != "" {
 		// Parse and add filter parameters
@@ -159,10 +155,10 @@ func ConstructEndpoint(request *Request) string {
 			}
 		}
 	}
-	
+
 	if len(params) > 0 {
 		endpoint = fmt.Sprintf("%s?%s", endpoint, params.Encode())
 	}
-	
+
 	return endpoint
 }
