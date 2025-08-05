@@ -208,17 +208,6 @@ func TestRootlyAdapter_User(t *testing.T) {
 	// Check attributes in first object
 	obj := successGot.Success.Objects[0]
 
-	// Print all attributes we're receiving for debugging
-	t.Logf("Found %d attributes in response object:", len(obj.Attributes))
-
-	for _, attr := range obj.Attributes {
-		if len(attr.Values) > 0 {
-			t.Logf("  Attribute: %s, Value: %v", attr.Id, attr.Values[0])
-		} else {
-			t.Logf("  Attribute: %s, No values", attr.Id)
-		}
-	}
-
 	// Basic verification function
 	verifyAttributeExists := func(id string, expectedValue string) {
 		for _, attr := range obj.Attributes {
