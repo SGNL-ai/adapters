@@ -4,6 +4,8 @@ package rootly
 import (
 	"context"
 	"fmt"
+	"net/url"
+	"strconv"
 	"strings"
 
 	framework "github.com/sgnl-ai/adapter-framework"
@@ -69,6 +71,33 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 		return &framework.Error{
 			Message: "Requested entity attributes are missing unique ID attribute.",
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
+		}
+	}
+
+	if request.Config.Filters != nil {
+		for entity, filter := range request.Config.Filters {
+			if filter == "" {
+				continue
+			}
+
+			// Validate that the filter string can be parsed as a query string.
+			if _, err := url.ParseQuery(filter); err != nil {
+				return &framework.Error{
+					Message: fmt.Sprintf("Invalid filter for entity '%s': %v", entity, err),
+					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
+				}
+			}
+		}
+	}
+
+	// Validate that the cursor (page[number]) is a valid integer >= 1, if provided
+	if request.Cursor != "" {
+		pageNum, err := strconv.Atoi(request.Cursor)
+		if err != nil || pageNum < 1 {
+			return &framework.Error{
+				Message: fmt.Sprintf("Provided cursor (page[number]) is invalid: '%s'. Must be an integer >= 1.", request.Cursor),
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_PAGE_REQUEST_CONFIG,
+			}
 		}
 	}
 

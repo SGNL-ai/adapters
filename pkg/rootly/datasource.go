@@ -90,10 +90,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 			}
 		}
 
-		errorMsg := fmt.Sprintf("HTTP %d", resp.StatusCode)
-		if len(errorResponse.Errors) > 0 {
-			errorMsg = fmt.Sprintf("%s: %s", errorMsg, errorResponse.Errors[0].Detail)
-		}
+		errorMsg := fmt.Sprintf("Received Http Error %d: %s", resp.StatusCode, resp.Status)
 
 		return nil, &framework.Error{
 			Message: errorMsg,

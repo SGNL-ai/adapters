@@ -18,12 +18,12 @@ var supportedAPIVersions = map[string]struct{}{
 // nolint: godot
 /*
 {
-    "requestTimeoutSeconds": 10,
-    "apiVersion": "v1",
-    "filters": {
-        "users": "email=rufus_raynor@hegmann.test",
-        "incidents": "status=started&severity=high"
-    }
+	"requestTimeoutSeconds": 10,
+	"apiVersion": "v1",
+	"filters": {
+		"users": "email=rufus_raynor@hegmann.test",
+		"incidents": "status=started&severity=high"
+	}
 }
 */
 type Config struct {

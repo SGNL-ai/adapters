@@ -269,7 +269,7 @@ func TestDatasourceGetPage(t *testing.T) {
 				RequestTimeoutSeconds: 30,
 			},
 			expectedError: &framework.Error{
-				Message: "HTTP 401: Invalid authentication credentials",
+				Message: "Received Http Error 401: 401 Unauthorized",
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			},
 		},
@@ -303,7 +303,7 @@ func TestDatasourceGetPage(t *testing.T) {
 				RequestTimeoutSeconds: 30,
 			},
 			expectedError: &framework.Error{
-				Message: "HTTP 404: The requested resource was not found",
+				Message: "Received Http Error 404: 404 Not Found",
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			},
 		},
