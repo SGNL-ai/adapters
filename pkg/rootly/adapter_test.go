@@ -207,7 +207,7 @@ func TestAdapterGetPage(t *testing.T) {
 					HTTPAuthorization: "Bearer testtoken",
 				},
 				Config: &rootly_adapter.Config{
-					APIVersion: "1",
+					APIVersion: "v1",
 					CommonConfig: &config.CommonConfig{
 						RequestTimeoutSeconds: testutil.GenPtr(30),
 					},
@@ -268,7 +268,7 @@ func TestAdapterGetPage(t *testing.T) {
 					HTTPAuthorization: "Bearer testtoken",
 				},
 				Config: &rootly_adapter.Config{
-					APIVersion: "1",
+					APIVersion: "v1",
 					CommonConfig: &config.CommonConfig{
 						RequestTimeoutSeconds: testutil.GenPtr(30),
 					},
@@ -316,7 +316,7 @@ func TestAdapterGetPage(t *testing.T) {
 					HTTPAuthorization: "Bearer testtoken",
 				},
 				Config: &rootly_adapter.Config{
-					APIVersion: "1",
+					APIVersion: "v1",
 					CommonConfig: &config.CommonConfig{
 						RequestTimeoutSeconds: testutil.GenPtr(30),
 					},
@@ -358,7 +358,7 @@ func TestAdapterGetPage(t *testing.T) {
 					HTTPAuthorization: "Bearer testtoken",
 				},
 				Config: &rootly_adapter.Config{
-					APIVersion: "1",
+					APIVersion: "v1",
 					CommonConfig: &config.CommonConfig{
 						RequestTimeoutSeconds: testutil.GenPtr(30),
 					},
@@ -401,7 +401,7 @@ func TestAdapterGetPage(t *testing.T) {
 					HTTPAuthorization: "Bearer testtoken",
 				},
 				Config: &rootly_adapter.Config{
-					APIVersion: "1",
+					APIVersion: "v1",
 					CommonConfig: &config.CommonConfig{
 						RequestTimeoutSeconds: testutil.GenPtr(30),
 					},
@@ -452,7 +452,7 @@ func TestAdapterGetPage(t *testing.T) {
 					HTTPAuthorization: "Bearer invalidtoken",
 				},
 				Config: &rootly_adapter.Config{
-					APIVersion: "1",
+					APIVersion: "v1",
 					CommonConfig: &config.CommonConfig{
 						RequestTimeoutSeconds: testutil.GenPtr(30),
 					},
