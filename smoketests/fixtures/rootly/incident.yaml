@@ -1,0 +1,66 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: api.rootly.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+        Content-Type:
+          - application/json
+      url: https://api.rootly.com/v1/incidents?filter%5Bseverity%5D=sev2&page%5Bnumber%5D=1&page%5Bsize%5D=10
+      method: GET
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"data":[{"id":"63e2d211-0132-4a12-86f8-d4afe9e666da","type":"incidents","attributes":{"parent_incident_id":null,"sequential_id":5,"title":"Test3","slug":"test3","kind":"normal","private":false,"summary":"Summary Field - MJ","status":"started","source":"web","url":"https://rootly.com/account/incidents/5-test3","short_url":"https://root.ly/kftvsb","user":{"data":{"id":"116641","type":"users","attributes":{"name":"Marc Jordan","email":"marc@sgnl.ai","phone":null,"phone_2":null,"first_name":"Marc","last_name":"Jordan","full_name":"Marc Jordan","full_name_with_team":"[Sgnl] Marc Jordan","slack_id":null,"time_zone":"America/Los_Angeles","updated_at":"2025-07-31T16:21:57.338-07:00","created_at":"2025-07-31T16:21:50.168-07:00"}}},"severity":{"data":{"id":"2ffead00-5112-4fcc-806e-78b22c3e41e6","type":"severities","attributes":{"name":"SEV2","slug":"sev2","description":"Moderate impact on specific features and requires prompt but not immediate attention (e.g. slow response times)","severity":"medium","color":"#E58A1F","position":3,"notify_emails":[],"slack_channels":[],"slack_aliases":[],"created_at":"2025-07-31T16:21:48.421-07:00","updated_at":"2025-07-31T16:21:48.421-07:00"}}},"in_triage_by":null,"started_by":{"data":{"id":"116641","type":"users","attributes":{"name":"Marc Jordan","email":"marc@sgnl.ai","phone":null,"phone_2":null,"first_name":"Marc","last_name":"Jordan","full_name":"Marc Jordan","full_name_with_team":"[Sgnl] Marc Jordan","slack_id":null,"time_zone":"America/Los_Angeles","updated_at":"2025-07-31T16:21:57.338-07:00","created_at":"2025-07-31T16:21:50.168-07:00"}}},"mitigated_by":null,"resolved_by":null,"closed_by":null,"cancelled_by":null,"mitigation_message":null,"resolution_message":null,"cancellation_message":null,"public_title":null,"duplicate_incident_id":null,"retrospective_progress_status":"not_started","started_at":"2025-08-03T20:29:27.269-07:00","detected_at":null,"acknowledged_at":null,"mitigated_at":null,"resolved_at":null,"closed_at":null,"cancelled_at":null,"created_at":"2025-08-03T20:29:27.326-07:00","updated_at":"2025-08-03T20:29:27.755-07:00","labels":{}},"relationships":{"causes":{"data":[]},"subscribers":{"data":[{"id":"6df27f35-210c-4d99-89fd-6cfbb030c3a8","type":"incident_subscribers"}]},"roles":{"data":[{"id":"b7d001a7-3e94-4243-9691-db8e1e57959d","type":"incident_role_assignments"},{"id":"fc0a6149-a07b-4634-9b7d-0dc137115ec8","type":"incident_role_assignments"},{"id":"84f8cf55-e571-4f43-badd-3809642ab8fa","type":"incident_role_assignments"},{"id":"9c68ec43-4edb-453d-abf5-a52c6356fa1e","type":"incident_role_assignments"}]},"environments":{"data":[]},"incident_types":{"data":[{"id":"708b2d31-42ad-4f95-9b33-e2b9c33b326b","type":"incident_types"}]},"services":{"data":[]},"functionalities":{"data":[]},"groups":{"data":[]},"events":{"data":[{"id":"dadc8094-ea87-4a26-a5d0-8eff763904d8","type":"incident_events"},{"id":"dd4ed661-cc2f-428e-8013-ed89a843c598","type":"incident_events"}]},"action_items":{"data":[]},"custom_field_selections":{"data":[]},"feedbacks":{"data":[]},"attachments":{"data":[]},"slack_messages":{"data":[]}}}],"links":{"self":"https://api.rootly.com/v1/incidents?filter%5Bseverity%5D=sev2&page%5Bnumber%5D=1&page%5Bsize%5D=10","first":"https://api.rootly.com/v1/incidents?filter%5Bseverity%5D=sev2&page%5Bnumber%5D=1&page%5Bsize%5D=10","prev":null,"next":null,"last":"https://api.rootly.com/v1/incidents?filter%5Bseverity%5D=sev2&page%5Bnumber%5D=1&page%5Bsize%5D=10"},"meta":{"current_page":1,"next_page":null,"prev_page":null,"total_count":1,"total_pages":1}}'
+      headers:
+        Access-Control-Allow-Origin:
+          - "*"
+        Cache-Control:
+          - max-age=0, private, must-revalidate
+        Content-Type:
+          - application/json; charset=utf-8
+        Date:
+          - Mon, 04 Aug 2025 03:45:14 GMT
+        Etag:
+          - W/"b23f0424b199c8da1712a3c890f35a07"
+        Referrer-Policy:
+          - strict-origin-when-cross-origin
+        Server:
+          - cloudflare
+        Vary:
+          - Origin
+        X-Content-Type-Options:
+          - nosniff
+        X-Download-Options:
+          - noopen
+        X-Frame-Options:
+          - SAMEORIGIN
+        X-Permitted-Cross-Domain-Policies:
+          - none
+        X-Request-Id:
+          - 68afd395-da2e-4d14-bbc1-e3253f609a66
+        X-Runtime:
+          - "0.043915"
+        X-Xss-Protection:
+          - 1; mode=block
+      status: 200 OK
+      code: 200
+      duration: 305.682269ms
