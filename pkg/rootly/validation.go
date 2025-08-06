@@ -4,7 +4,6 @@ package rootly
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"strconv"
 	"strings"
 
@@ -71,22 +70,6 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 		return &framework.Error{
 			Message: "Requested entity attributes are missing unique ID attribute.",
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
-		}
-	}
-
-	if request.Config.Filters != nil {
-		for entity, filter := range request.Config.Filters {
-			if filter == "" {
-				continue
-			}
-
-			// Validate that the filter string can be parsed as a query string.
-			if _, err := url.ParseQuery(filter); err != nil {
-				return &framework.Error{
-					Message: fmt.Sprintf("Invalid filter for entity '%s': %v", entity, err),
-					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
-				}
-			}
 		}
 	}
 
