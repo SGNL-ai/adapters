@@ -27,6 +27,7 @@ import (
 	mysql "github.com/sgnl-ai/adapters/pkg/my-sql"
 	"github.com/sgnl-ai/adapters/pkg/okta"
 	"github.com/sgnl-ai/adapters/pkg/pagerduty"
+	"github.com/sgnl-ai/adapters/pkg/rootly"
 	"github.com/sgnl-ai/adapters/pkg/salesforce"
 	"github.com/sgnl-ai/adapters/pkg/scim"
 	"github.com/sgnl-ai/adapters/pkg/servicenow"
@@ -215,6 +216,15 @@ func main() {
 		"PagerDuty-1.0.0",
 		pagerduty.NewAdapter(pagerduty.NewClient(
 			client.NewSGNLHTTPClientWithProxy(timeoutDuration, "sgnl-PagerDuty/1.0.0",
+				grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
+			)),
+		),
+	)
+	server.RegisterAdapter(
+		adapterServer,
+		"Rootly-1.0.0",
+		rootly.NewAdapter(rootly.NewClient(
+			client.NewSGNLHTTPClientWithProxy(timeoutDuration, "sgnl-Rootly/1.0.0",
 				grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
 			)),
 		),

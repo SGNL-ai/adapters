@@ -1,0 +1,66 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: api.rootly.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+        Content-Type:
+          - application/json
+      url: https://api.rootly.com/v1/users?page%5Bnumber%5D=1&page%5Bsize%5D=50
+      method: GET
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"data":[{"id":"116641","type":"users","attributes":{"name":"Marc Jordan","email":"marc@sgnl.ai","phone":null,"phone_2":null,"first_name":"Marc","last_name":"Jordan","full_name":"Marc Jordan","full_name_with_team":"[Sgnl] Marc Jordan","slack_id":null,"time_zone":"America/Los_Angeles","updated_at":"2025-07-31T16:21:57.338-07:00","created_at":"2025-07-31T16:21:50.168-07:00"},"relationships":{"email_addresses":{"data":[{"id":"3f839ce4-736b-4e1a-a304-d9fdf066a235","type":"user_email_addresses"}]},"phone_numbers":{"data":[]},"devices":{"data":[]},"role":{"data":{"id":"503266d5-90d9-4c40-980c-e30a22f5f161","type":"roles"}},"on_call_role":{"data":{"id":"5af3e566-2d46-4fa5-a883-f9d588d713a2","type":"on_call_roles"}}}}],"links":{"self":"https://api.rootly.com/v1/users?page%5Bnumber%5D=1&page%5Bsize%5D=50","first":"https://api.rootly.com/v1/users?page%5Bnumber%5D=1&page%5Bsize%5D=50","prev":null,"next":null,"last":"https://api.rootly.com/v1/users?page%5Bnumber%5D=1&page%5Bsize%5D=50"},"meta":{"current_page":1,"next_page":null,"prev_page":null,"total_count":1,"total_pages":1}}'
+      headers:
+        Access-Control-Allow-Origin:
+          - "*"
+        Cache-Control:
+          - max-age=0, private, must-revalidate
+        Content-Type:
+          - application/json; charset=utf-8
+        Date:
+          - Mon, 04 Aug 2025 03:45:12 GMT
+        Etag:
+          - W/"a8d6ecfacf29c03a4b7ffeade5c03612"
+        Referrer-Policy:
+          - strict-origin-when-cross-origin
+        Server:
+          - cloudflare
+        Vary:
+          - Origin
+        X-Content-Type-Options:
+          - nosniff
+        X-Download-Options:
+          - noopen
+        X-Frame-Options:
+          - SAMEORIGIN
+        X-Permitted-Cross-Domain-Policies:
+          - none
+        X-Request-Id:
+          - 04a245dd-3e92-4185-900c-5f33a6de8700
+        X-Runtime:
+          - "0.034056"
+        X-Xss-Protection:
+          - 1; mode=block
+      status: 200 OK
+      code: 200
+      duration: 297.519384ms

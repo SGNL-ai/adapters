@@ -27,6 +27,7 @@ import (
 	jiradatacenter "github.com/sgnl-ai/adapters/pkg/jira-datacenter"
 	"github.com/sgnl-ai/adapters/pkg/okta"
 	"github.com/sgnl-ai/adapters/pkg/pagerduty"
+	"github.com/sgnl-ai/adapters/pkg/rootly"
 	"github.com/sgnl-ai/adapters/pkg/salesforce"
 	"github.com/sgnl-ai/adapters/pkg/scim"
 	"github.com/sgnl-ai/adapters/pkg/servicenow"
@@ -97,6 +98,7 @@ func StartAdapterServer(t *testing.T, client *http.Client, port int) chan struct
 		jiradatacenter.NewAdapter(jiradatacenter.NewClient(client)))
 	server.RegisterAdapter(adapterServer, "Okta-1.0.1", okta.NewAdapter(okta.NewClient(client)))
 	server.RegisterAdapter(adapterServer, "PagerDuty-1.0.0", pagerduty.NewAdapter(pagerduty.NewClient(client)))
+	server.RegisterAdapter(adapterServer, "Rootly-1.0.0", rootly.NewAdapter(rootly.NewClient(client)))
 	server.RegisterAdapter(adapterServer, "Salesforce-1.0.1", salesforce.NewAdapter(salesforce.NewClient(client)))
 	server.RegisterAdapter(adapterServer, "SCIM2.0-1.0.0", scim.NewAdapter(scim.NewClient(client)))
 	server.RegisterAdapter(adapterServer, "ServiceNow-1.0.1", servicenow.NewAdapter(servicenow.NewClient(client)))
