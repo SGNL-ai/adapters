@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 
 	"github.com/sgnl-ai/adapters/pkg/config"
 )
@@ -48,6 +49,19 @@ func (c *Config) Validate(_ context.Context) error {
 	default:
 		if _, found := supportedAPIVersions[c.APIVersion]; !found {
 			return fmt.Errorf("apiVersion is not supported: %v", c.APIVersion)
+		}
+
+		if c.Filters != nil {
+			for entity, filter := range c.Filters {
+				if filter == "" {
+					continue
+				}
+
+				// Validate that the filter string can be parsed as a query string.
+				if _, err := url.ParseQuery(filter); err != nil {
+					return fmt.Errorf("invalid filter for entity '%s': %v", entity, err)
+				}
+			}
 		}
 
 		return nil
