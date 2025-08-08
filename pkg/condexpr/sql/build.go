@@ -16,6 +16,8 @@
 //   - >=: Greater than or equal to
 //   - <=: Less than or equal to
 //   - IN: Checks if a value exists within a list of values
+//   - IS NULL: Checks if a field is null (no value required)
+//   - IS NOT NULL: Checks if a field is not null (no value required)
 //
 // Limitations:
 // - Only supports fields that are valid SQL identifiers:
@@ -26,8 +28,8 @@
 //   - LIKE or ILIKE for pattern matching.
 //   - NOT IN or other negated set operations.
 //   - Complex expressions involving functions or subqueries.
-//   - Requires all conditions to have a non-empty field, operator, and value.
-//     Missing any of these will result in an error.
+//   - Requires all conditions to have a non-empty field and operator.
+//     For most operators, a value is also required, except for IS NULL and IS NOT NULL.
 package sql
 
 import (
@@ -93,16 +95,24 @@ func (cb ConditionBuilder) BuildCompositeOr(cond condexpr.Condition) (goqu.Expre
 
 func (cb ConditionBuilder) BuildLeafCondition(cond condexpr.Condition) (goqu.Expression, error) {
 	// Validate leaf condition
-	if cond.Value == nil {
-		return nil, errMissingValue
-	}
-
 	if cond.Field == "" {
 		return nil, errMissingField
 	}
 
 	if cond.Operator == "" {
 		return nil, errMissingOperator
+	}
+
+	// For null operators, value should not be provided
+	if cond.Operator == "IS NULL" || cond.Operator == "IS NOT NULL" {
+		if cond.Value != nil {
+			return nil, fmt.Errorf("value should not be provided for %s operator", cond.Operator)
+		}
+	} else {
+		// For all other operators, value is required
+		if cond.Value == nil {
+			return nil, errMissingValue
+		}
 	}
 
 	if valid := validSQLIdentifier.MatchString(cond.Field); !valid {
@@ -130,6 +140,10 @@ func (cb ConditionBuilder) BuildLeafCondition(cond condexpr.Condition) (goqu.Exp
 		return col.Lte(cond.Value), nil
 	case "IN":
 		return col.In(cond.Value), nil
+	case "IS NULL":
+		return col.IsNull(), nil
+	case "IS NOT NULL":
+		return col.IsNotNull(), nil
 	default:
 		return nil, fmt.Errorf("unsupported operator: %q", cond.Operator)
 	}
