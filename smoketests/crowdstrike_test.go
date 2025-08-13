@@ -1180,7 +1180,7 @@ func TestCrowdStrikeAlert(t *testing.T) {
                         "id": "AggregateId",
                         "values": [
                             {
-                                "stringValue": "aggind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7086C"
+                                "stringValue": "aggind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7086C"
                             }
                         ]
                     },
@@ -1188,7 +1188,7 @@ func TestCrowdStrikeAlert(t *testing.T) {
                         "id": "CompositeId",
                         "values": [
                             {
-                                "stringValue": "8693deb4bf134cfb8855ee118d9a0243:ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7086C"
+                                "stringValue": "1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7086C"
                             }
                         ]
                     },

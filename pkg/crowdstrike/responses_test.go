@@ -1285,12 +1285,12 @@ var (
         },
         "resources": [
             {
-                "cid": "1234567890abcdef1234567890abcdef",
+                "cid": "8693deb4bf134cfb8855ee118d9a0243",
                 "created_timestamp": "2025-01-22T19:52:49.295871976Z",
                 "detection_id": "ldt:9b9b1e4f7512492f95f8039c065a28a9:4298086570",
                 "device": {
                     "device_id": "9b9b1e4f7512492f95f8039c065a28a9",
-                    "cid": "1234567890abcdef1234567890abcdef",
+                    "cid": "8693deb4bf134cfb8855ee118d9a0243",
                     "agent_load_flags": "0",
                     "agent_local_time": "2025-01-22T19:45:19.682Z",
                     "agent_version": "7.19.18913.0",
@@ -1405,12 +1405,12 @@ var (
                 "date_updated": "2025-01-22T19:53:10Z"
             },
             {
-                "cid": "1234567890abcdef1234567890abcdef",
+                "cid": "8693deb4bf134cfb8855ee118d9a0243",
                 "created_timestamp": "2025-01-22T21:14:05.663856584Z",
                 "detection_id": "ldt:9b9b1e4f7512492f95f8039c065a28a9:4298709414",
                 "device": {
                     "device_id": "9b9b1e4f7512492f95f8039c065a28a9",
-                    "cid": "1234567890abcdef1234567890abcdef",
+                    "cid": "8693deb4bf134cfb8855ee118d9a0243",
                     "agent_load_flags": "0",
                     "agent_local_time": "2025-01-22T19:45:19.682Z",
                     "agent_version": "7.19.18913.0",
@@ -1662,12 +1662,12 @@ var (
         },
         "resources": [
             {
-                "cid": "1234567890abcdef1234567890abcdef",
+                "cid": "8693deb4bf134cfb8855ee118d9a0243",
                 "created_timestamp": "2025-01-22T19:48:16.921558696Z",
                 "detection_id": "ldt:9b9b1e4f7512492f95f8039c065a28a9:1169567",
                 "device": {
                     "device_id": "9b9b1e4f7512492f95f8039c065a28a9",
-                    "cid": "1234567890abcdef1234567890abcdef",
+                    "cid": "8693deb4bf134cfb8855ee118d9a0243",
                     "agent_load_flags": "0",
                     "agent_local_time": "2025-01-22T19:45:19.682Z",
                     "agent_version": "7.19.18913.0",
@@ -1782,12 +1782,12 @@ var (
                 "date_updated": "2025-01-22T19:48:38Z"
             },
             {
-                "cid": "1234567890abcdef1234567890abcdef",
+                "cid": "8693deb4bf134cfb8855ee118d9a0243",
                 "created_timestamp": "2025-01-22T19:48:57.812628852Z",
                 "detection_id": "ldt:9b9b1e4f7512492f95f8039c065a28a9:4295459139",
                 "device": {
                     "device_id": "9b9b1e4f7512492f95f8039c065a28a9",
-                    "cid": "1234567890abcdef1234567890abcdef",
+                    "cid": "8693deb4bf134cfb8855ee118d9a0243",
                     "agent_load_flags": "0",
                     "agent_local_time": "2025-01-22T19:45:19.682Z",
                     "agent_version": "7.19.18913.0",
@@ -1915,12 +1915,12 @@ var (
         },
         "resources": [
             {
-                "cid": "1234567890abcdef1234567890abcdef",
+                "cid": "8693deb4bf134cfb8855ee118d9a0243",
                 "created_timestamp": "2024-12-05T02:25:10.199790849Z",
                 "detection_id": "ldt:eca21da34c934e8e95c97a4f7af1d9a5:77310702382",
                 "device": {
                     "device_id": "eca21da34c934e8e95c97a4f7af1d9a5",
-                    "cid": "1234567890abcdef1234567890abcdef",
+                    "cid": "8693deb4bf134cfb8855ee118d9a0243",
                     "agent_load_flags": "0",
                     "agent_local_time": "2024-12-05T02:19:45.022Z",
                     "agent_version": "7.17.18721.0",
@@ -2107,12 +2107,12 @@ var (
                 "date_updated": "2024-12-05T02:25:16Z"
             },
             {
-                "cid": "1234567890abcdef1234567890abcdef",
+                "cid": "8693deb4bf134cfb8855ee118d9a0243",
                 "created_timestamp": "2024-12-05T02:25:09.838903415Z",
                 "detection_id": "ldt:eca21da34c934e8e95c97a4f7af1d9a5:77309428075",
                 "device": {
                     "device_id": "eca21da34c934e8e95c97a4f7af1d9a5",
-                    "cid": "1234567890abcdef1234567890abcdef",
+                    "cid": "8693deb4bf134cfb8855ee118d9a0243",
                     "agent_load_flags": "0",
                     "agent_local_time": "2024-12-05T02:19:45.022Z",
                     "agent_version": "7.17.18721.0",
