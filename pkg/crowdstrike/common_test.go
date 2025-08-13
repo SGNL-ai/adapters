@@ -221,6 +221,25 @@ func PopulateDetectionEntityConfig() *framework.EntityConfig {
 	}
 }
 
+func PopulateAlertsEntityConfig() *framework.EntityConfig {
+	return &framework.EntityConfig{
+		ExternalId: crowdstrike.Alerts,
+		Attributes: []*framework.AttributeConfig{
+			{
+				ExternalId: "composite_id",
+				Type:       framework.AttributeTypeString,
+				List:       false,
+				UniqueId:   true,
+			},
+			{
+				ExternalId: "aggregate_id",
+				Type:       framework.AttributeTypeString,
+				List:       false,
+			},
+		},
+	}
+}
+
 // Define the endpoints and responses for the mock server.
 // This handler is intended to be re-used throughout the test package for GraphQL APIs.
 var TestGraphQLServerHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -330,6 +349,26 @@ var TestRESTServerHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http
 	// Page 999 mimics a specialized error from CRWD REST APIs
 	case "/detects/entities/summaries/GET/v1?limit=2&offset=999":
 		w.Write([]byte(DetectResponseSpecializedErr))
+
+	// ************************ List alerts ************************
+	case "/alerts/queries/alerts/v2?limit=2":
+		w.Write([]byte(AlertListResponseFirstPage))
+
+	case "/alerts/queries/alerts/v2?limit=2&offset=2":
+		w.Write([]byte(AlertListResponseMiddlePage))
+
+	case "/alerts/queries/alerts/v2?limit=2&offset=4":
+		w.Write([]byte(AlertListResponseLastPage))
+
+	// ************************ Detailed alerts ************************
+	case "/alerts/entities/alerts/v2?limit=2":
+		w.Write([]byte(AlertDetailedResponseFirstPage))
+
+	case "/alerts/entities/alerts/v2?limit=2&offset=2":
+		w.Write([]byte(AlertDetailedResponseMiddlePage))
+
+	case "/alerts/entities/alerts/v2?limit=2&offset=4":
+		w.Write([]byte(AlertDetailedResponseLastPage))
 
 	default:
 		w.WriteHeader(http.StatusNotFound)

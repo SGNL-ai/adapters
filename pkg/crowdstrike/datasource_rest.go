@@ -67,6 +67,10 @@ type DetailedResourceRequestBody struct {
 	Identifiers []string `json:"ids"`
 }
 
+type DetailedAlertsRequestBody struct {
+	CompositeIds []string `json:"composite_ids"`
+}
+
 type DetailedResourceResponse struct {
 	Meta      MetaFields       `json:"meta"`
 	Resources []map[string]any `json:"resources"`
@@ -95,11 +99,20 @@ func (d *Datasource) getRESTPage(ctx context.Context, request *Request) (*Respon
 	}
 
 	// Use resourceIDs to fetch detailed information, if applicable.
-	reqBody := &DetailedResourceRequestBody{
-		Identifiers: resourceIDs,
+	var bodyBytes []byte
+	var marshalErr error
+	
+	if request.EntityExternalID == Alerts {
+		reqBody := &DetailedAlertsRequestBody{
+			CompositeIds: resourceIDs,
+		}
+		bodyBytes, marshalErr = json.Marshal(reqBody)
+	} else {
+		reqBody := &DetailedResourceRequestBody{
+			Identifiers: resourceIDs,
+		}
+		bodyBytes, marshalErr = json.Marshal(reqBody)
 	}
-
-	bodyBytes, marshalErr := json.Marshal(reqBody)
 	if marshalErr != nil {
 		return nil, &framework.Error{
 			Message: fmt.Sprintf("Failed to marshal the request body: %v.", marshalErr),

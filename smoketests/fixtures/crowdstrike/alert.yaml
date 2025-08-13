@@ -1,0 +1,199 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: api.us-2.crowdstrike.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+      url: https://api.us-2.crowdstrike.com/alerts/queries/alerts/v2?limit=2
+      method: GET
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: |-
+        {
+         "meta": {
+          "query_time": 0.003,
+          "pagination": {
+           "offset": 0,
+           "limit": 2,
+           "total": 2
+          },
+          "powered_by": "alerts-api",
+          "trace_id": "test-trace-123"
+         },
+         "resources": [
+          "abc123:def456",
+          "xyz789:uvw012"
+         ],
+         "errors": []
+        }
+      headers:
+        Connection:
+          - keep-alive
+        Content-Type:
+          - application/json
+        Date:
+          - Sat, 25 Jan 2025 21:04:13 GMT
+        Server:
+          - nginx
+        Strict-Transport-Security:
+          - max-age=31536000; includeSubDomains
+          - max-age=31536000; includeSubDomains
+        X-Cs-Region:
+          - us-2
+        X-Cs-Traceid:
+          - test-trace-123
+        X-Ratelimit-Limit:
+          - "6000"
+        X-Ratelimit-Remaining:
+          - "5985"
+      status: 200 OK
+      code: 200
+      duration: 140.345514ms
+  - id: 1
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 55
+      transfer_encoding: []
+      trailer: {}
+      host: api.us-2.crowdstrike.com
+      remote_addr: ""
+      request_uri: ""
+      body: '{"composite_ids":["abc123:def456","xyz789:uvw012"]}'
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+        Content-Type:
+          - application/json
+      url: https://api.us-2.crowdstrike.com/alerts/entities/alerts/v2?limit=2
+      method: POST
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding:
+        - chunked
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: |-
+        {
+          "meta": {
+              "query_time": 0.126953871,
+              "writes": {
+                  "resources_affected": 0
+              },
+              "powered_by": "detectsapi",
+              "trace_id": "69d1aded-6520-4c4e-a418-1fd7866c6611"
+          },
+          "resources": [
+              {
+                  "added_privileges": [
+                      "AdministratorsRole"
+                  ],
+                  "aggregate_id": "aggind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7086C",
+                  "cid": "8693deb4bf134cfb8855ee118d9a0243",
+                  "composite_id": "8693deb4bf134cfb8855ee118d9a0243:ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7086C",
+                  "confidence": 20,
+                  "context_timestamp": "2025-08-01T19:22:34.233Z",
+                  "crawled_timestamp": "2025-08-01T20:22:36.344689563Z",
+                  "created_timestamp": "2025-08-01T19:23:36.547858841Z",
+                  "data_domains": [
+                      "Identity"
+                  ],
+                  "description": "A user received new privileges",
+                  "display_name": "Privilege escalation (user)",
+                  "end_time": "2025-08-01T19:22:34.233Z",
+                  "falcon_host_link": "https://falcon.us-2.crowdstrike.com/identity-protection/detections/8693deb4bf134cfb8855ee118d9a0243:ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7086C?_cid=g04000s6h3lrs7encahh67joerwbbsje",
+                  "id": "ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7086C",
+                  "mitre_attack": [
+                      {
+                          "pattern_id": 51113,
+                          "tactic_id": "TA0004",
+                          "technique_id": "T1078",
+                          "tactic": "Privilege Escalation",
+                          "technique": "Valid Accounts"
+                      }
+                  ],
+                  "name": "IdpEntityPrivilegeEscalationUser",
+                  "objective": "Gain Access",
+                  "pattern_id": 51113,
+                  "poly_id": "AACGk960vxNM-4hV7hGNmgJDLHuOENREmtsZGwxsXx_rpwAATiHWsiR7jY1eZfzHO9v5bTBiDJpIT3MtfdjRLhQS-VD_0g==",
+                  "previous_privileges": "0",
+                  "privileges": "2177",
+                  "product": "idp",
+                  "scenario": "privilege_escalation",
+                  "seconds_to_resolved": 0,
+                  "seconds_to_triaged": 0,
+                  "severity": 10,
+                  "severity_name": "Informational",
+                  "show_in_ui": true,
+                  "source_account_domain": "ACMECORP.AI",
+                  "source_account_name": "alejandro.bacong",
+                  "source_account_object_guid": "9160F713-360C-4331-AC61-EBBAD741A7BD",
+                  "source_account_object_sid": "S-1-5-21-2931850618-1476300705-2742956860-1105",
+                  "source_account_sam_account_name": "alejandro.bacong",
+                  "source_account_upn": "alejandro.bacong@acmecorp.ai",
+                  "source_products": [
+                      "Falcon Identity Protection"
+                  ],
+                  "source_vendors": [
+                      "CrowdStrike"
+                  ],
+                  "start_time": "2025-08-01T19:22:34.233Z",
+                  "status": "new",
+                  "tactic": "Privilege Escalation",
+                  "tactic_id": "TA0004",
+                  "technique": "Valid Accounts",
+                  "technique_id": "T1078",
+                  "timestamp": "2025-08-01T19:22:34.848Z",
+                  "type": "idp-user-endpoint-app-info",
+                  "updated_timestamp": "2025-08-01T20:22:36.344680541Z",
+                  "user_name": "alejandro.bacong"
+              }
+          ]
+        }
+      headers:
+        Connection:
+          - keep-alive
+        Content-Type:
+          - application/json
+        Date:
+          - Sat, 25 Jan 2025 21:04:13 GMT
+        Server:
+          - nginx
+        Strict-Transport-Security:
+          - max-age=31536000; includeSubDomains
+          - max-age=31536000; includeSubDomains
+        X-Cs-Region:
+          - us-2
+        X-Cs-Traceid:
+          - test-trace-456
+        X-Ratelimit-Limit:
+          - "6000"
+        X-Ratelimit-Remaining:
+          - "5984"
+      status: 200 OK
+      code: 200
+      duration: 53.851934ms

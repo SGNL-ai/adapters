@@ -36,6 +36,10 @@ var (
 			ListEndpoint: "detects/queries/detects/v1",        // This is implemented over HTTP GET by CRWD
 			GetEndpoint:  "detects/entities/summaries/GET/v1", // This is implemented over HTTP POST by CRWD
 		},
+		Alerts: {
+			ListEndpoint: "alerts/queries/alerts/v2",      // This is implemented over HTTP GET by CRWD
+			GetEndpoint:  "alerts/entities/alerts/v2", // This is implemented over HTTP POST by CRWD
+		},
 	}
 )
 
