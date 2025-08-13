@@ -40,8 +40,7 @@ interactions:
           "trace_id": "test-trace-123"
          },
          "resources": [
-          "abc123:def456",
-          "xyz789:uvw012"
+          "8693deb4bf134cfb8855ee118d9a0243:ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7086C"
          ],
          "errors": []
         }

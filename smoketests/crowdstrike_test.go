@@ -1242,4 +1242,3 @@ func TestCrowdStrikeAlert(t *testing.T) {
 
 	close(stop)
 }
-
