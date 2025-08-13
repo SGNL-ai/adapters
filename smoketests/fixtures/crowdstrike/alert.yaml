@@ -40,7 +40,7 @@ interactions:
           "trace_id": "test-trace-123"
          },
          "resources": [
-          "8693deb4bf134cfb8855ee118d9a0243:ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7086C"
+          "1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7086C"
          ],
          "errors": []
         }
@@ -111,9 +111,9 @@ interactions:
                   "added_privileges": [
                       "AdministratorsRole"
                   ],
-                  "aggregate_id": "aggind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7086C",
-                  "cid": "8693deb4bf134cfb8855ee118d9a0243",
-                  "composite_id": "8693deb4bf134cfb8855ee118d9a0243:ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7086C",
+                  "aggregate_id": "aggind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7086C",
+                  "cid": "1234567890abcdef1234567890abcdef",
+                  "composite_id": "1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7086C",
                   "confidence": 20,
                   "context_timestamp": "2025-08-01T19:22:34.233Z",
                   "crawled_timestamp": "2025-08-01T20:22:36.344689563Z",
@@ -124,8 +124,8 @@ interactions:
                   "description": "A user received new privileges",
                   "display_name": "Privilege escalation (user)",
                   "end_time": "2025-08-01T19:22:34.233Z",
-                  "falcon_host_link": "https://falcon.us-2.crowdstrike.com/identity-protection/detections/8693deb4bf134cfb8855ee118d9a0243:ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7086C?_cid=g04000s6h3lrs7encahh67joerwbbsje",
-                  "id": "ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7086C",
+                  "falcon_host_link": "https://falcon.us-2.crowdstrike.com/identity-protection/detections/1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7086C?_cid=test123456789abcdef0123456789abc",
+                  "id": "ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7086C",
                   "mitre_attack": [
                       {
                           "pattern_id": 51113,
@@ -148,12 +148,12 @@ interactions:
                   "severity": 10,
                   "severity_name": "Informational",
                   "show_in_ui": true,
-                  "source_account_domain": "ACMECORP.AI",
-                  "source_account_name": "alejandro.bacong",
+                  "source_account_domain": "TESTDOMAIN.COM",
+                  "source_account_name": "test.user",
                   "source_account_object_guid": "9160F713-360C-4331-AC61-EBBAD741A7BD",
                   "source_account_object_sid": "S-1-5-21-2931850618-1476300705-2742956860-1105",
-                  "source_account_sam_account_name": "alejandro.bacong",
-                  "source_account_upn": "alejandro.bacong@acmecorp.ai",
+                  "source_account_sam_account_name": "test.user",
+                  "source_account_upn": "test.user@testdomain.com",
                   "source_products": [
                       "Falcon Identity Protection"
                   ],
@@ -169,7 +169,7 @@ interactions:
                   "timestamp": "2025-08-01T19:22:34.848Z",
                   "type": "idp-user-endpoint-app-info",
                   "updated_timestamp": "2025-08-01T20:22:36.344680541Z",
-                  "user_name": "alejandro.bacong"
+                  "user_name": "test.user"
               }
           ]
         }

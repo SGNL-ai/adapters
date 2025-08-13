@@ -1285,12 +1285,12 @@ var (
         },
         "resources": [
             {
-                "cid": "8693deb4bf134cfb8855ee118d9a0243",
+                "cid": "1234567890abcdef1234567890abcdef",
                 "created_timestamp": "2025-01-22T19:52:49.295871976Z",
                 "detection_id": "ldt:9b9b1e4f7512492f95f8039c065a28a9:4298086570",
                 "device": {
                     "device_id": "9b9b1e4f7512492f95f8039c065a28a9",
-                    "cid": "8693deb4bf134cfb8855ee118d9a0243",
+                    "cid": "1234567890abcdef1234567890abcdef",
                     "agent_load_flags": "0",
                     "agent_local_time": "2025-01-22T19:45:19.682Z",
                     "agent_version": "7.19.18913.0",
@@ -1405,12 +1405,12 @@ var (
                 "date_updated": "2025-01-22T19:53:10Z"
             },
             {
-                "cid": "8693deb4bf134cfb8855ee118d9a0243",
+                "cid": "1234567890abcdef1234567890abcdef",
                 "created_timestamp": "2025-01-22T21:14:05.663856584Z",
                 "detection_id": "ldt:9b9b1e4f7512492f95f8039c065a28a9:4298709414",
                 "device": {
                     "device_id": "9b9b1e4f7512492f95f8039c065a28a9",
-                    "cid": "8693deb4bf134cfb8855ee118d9a0243",
+                    "cid": "1234567890abcdef1234567890abcdef",
                     "agent_load_flags": "0",
                     "agent_local_time": "2025-01-22T19:45:19.682Z",
                     "agent_version": "7.19.18913.0",
@@ -1662,12 +1662,12 @@ var (
         },
         "resources": [
             {
-                "cid": "8693deb4bf134cfb8855ee118d9a0243",
+                "cid": "1234567890abcdef1234567890abcdef",
                 "created_timestamp": "2025-01-22T19:48:16.921558696Z",
                 "detection_id": "ldt:9b9b1e4f7512492f95f8039c065a28a9:1169567",
                 "device": {
                     "device_id": "9b9b1e4f7512492f95f8039c065a28a9",
-                    "cid": "8693deb4bf134cfb8855ee118d9a0243",
+                    "cid": "1234567890abcdef1234567890abcdef",
                     "agent_load_flags": "0",
                     "agent_local_time": "2025-01-22T19:45:19.682Z",
                     "agent_version": "7.19.18913.0",
@@ -1782,12 +1782,12 @@ var (
                 "date_updated": "2025-01-22T19:48:38Z"
             },
             {
-                "cid": "8693deb4bf134cfb8855ee118d9a0243",
+                "cid": "1234567890abcdef1234567890abcdef",
                 "created_timestamp": "2025-01-22T19:48:57.812628852Z",
                 "detection_id": "ldt:9b9b1e4f7512492f95f8039c065a28a9:4295459139",
                 "device": {
                     "device_id": "9b9b1e4f7512492f95f8039c065a28a9",
-                    "cid": "8693deb4bf134cfb8855ee118d9a0243",
+                    "cid": "1234567890abcdef1234567890abcdef",
                     "agent_load_flags": "0",
                     "agent_local_time": "2025-01-22T19:45:19.682Z",
                     "agent_version": "7.19.18913.0",
@@ -1915,12 +1915,12 @@ var (
         },
         "resources": [
             {
-                "cid": "8693deb4bf134cfb8855ee118d9a0243",
+                "cid": "1234567890abcdef1234567890abcdef",
                 "created_timestamp": "2024-12-05T02:25:10.199790849Z",
                 "detection_id": "ldt:eca21da34c934e8e95c97a4f7af1d9a5:77310702382",
                 "device": {
                     "device_id": "eca21da34c934e8e95c97a4f7af1d9a5",
-                    "cid": "8693deb4bf134cfb8855ee118d9a0243",
+                    "cid": "1234567890abcdef1234567890abcdef",
                     "agent_load_flags": "0",
                     "agent_local_time": "2024-12-05T02:19:45.022Z",
                     "agent_version": "7.17.18721.0",
@@ -2107,12 +2107,12 @@ var (
                 "date_updated": "2024-12-05T02:25:16Z"
             },
             {
-                "cid": "8693deb4bf134cfb8855ee118d9a0243",
+                "cid": "1234567890abcdef1234567890abcdef",
                 "created_timestamp": "2024-12-05T02:25:09.838903415Z",
                 "detection_id": "ldt:eca21da34c934e8e95c97a4f7af1d9a5:77309428075",
                 "device": {
                     "device_id": "eca21da34c934e8e95c97a4f7af1d9a5",
-                    "cid": "8693deb4bf134cfb8855ee118d9a0243",
+                    "cid": "1234567890abcdef1234567890abcdef",
                     "agent_load_flags": "0",
                     "agent_local_time": "2024-12-05T02:19:45.022Z",
                     "agent_version": "7.17.18721.0",
@@ -2330,8 +2330,8 @@ var (
             "trace_id": "07d38d83-5ea4-41d0-9357-b975f516ac54"
         },
         "resources": [
-            "8693deb4bf134cfb8855ee118d9a0243:ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7086C",
-            "8693deb4bf134cfb8855ee118d9a0243:ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7087D"
+            "1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7086C",
+            "1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7087D"
         ],
         "errors": []
     }`
@@ -2348,8 +2348,8 @@ var (
             "trace_id": "2415f590-faae-44fb-bf0c-843d5dbb095a"
         },
         "resources": [
-            "8693deb4bf134cfb8855ee118d9a0243:ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7088E",
-            "8693deb4bf134cfb8855ee118d9a0243:ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7089F"
+            "1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7088E",
+            "1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7089F"
         ],
         "errors": []
     }`
@@ -2366,8 +2366,8 @@ var (
             "trace_id": "8d91fcdc-5e9b-448a-b4ba-8ece5a647ba7"
         },
         "resources": [
-            "8693deb4bf134cfb8855ee118d9a0243:ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7090A",
-            "8693deb4bf134cfb8855ee118d9a0243:ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7091B"
+            "1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7090A",
+            "1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7091B"
         ],
         "errors": []
     }`
@@ -2386,9 +2386,9 @@ var (
                 "added_privileges": [
                     "AdministratorsRole"
                 ],
-                "aggregate_id": "aggind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7086C",
-                "cid": "8693deb4bf134cfb8855ee118d9a0243",
-                "composite_id": "8693deb4bf134cfb8855ee118d9a0243:ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7086C",
+                "aggregate_id": "aggind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7086C",
+                "cid": "1234567890abcdef1234567890abcdef",
+                "composite_id": "1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7086C",
                 "confidence": 20,
                 "context_timestamp": "2025-08-01T19:22:34.233Z",
                 "crawled_timestamp": "2025-08-01T20:22:36.344689563Z",
@@ -2399,8 +2399,8 @@ var (
                 "description": "A user received new privileges",
                 "display_name": "Privilege escalation (user)",
                 "end_time": "2025-08-01T19:22:34.233Z",
-                "falcon_host_link": "https://falcon.us-2.crowdstrike.com/identity-protection/detections/8693deb4bf134cfb8855ee118d9a0243:ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7086C?_cid=g04000s6h3lrs7encahh67joerwbbsje",
-                "id": "ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7086C",
+                "falcon_host_link": "https://falcon.us-2.crowdstrike.com/identity-protection/detections/1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7086C?_cid=test123456789abcdef0123456789abc",
+                "id": "ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7086C",
                 "mitre_attack": [
                     {
                         "pattern_id": 51113,
@@ -2447,9 +2447,9 @@ var (
                 "user_name": "alejandro.bacong"
             },
             {
-                "aggregate_id": "aggind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7087D",
-                "cid": "8693deb4bf134cfb8855ee118d9a0243",
-                "composite_id": "8693deb4bf134cfb8855ee118d9a0243:ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7087D",
+                "aggregate_id": "aggind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7087D",
+                "cid": "1234567890abcdef1234567890abcdef",
+                "composite_id": "1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7087D",
                 "confidence": 30,
                 "context_timestamp": "2025-08-01T18:45:12.156Z",
                 "crawled_timestamp": "2025-08-01T19:45:14.234567890Z",
@@ -2460,8 +2460,8 @@ var (
                 "description": "Suspicious file execution detected",
                 "display_name": "Malicious behavior (endpoint)",
                 "end_time": "2025-08-01T18:45:12.156Z",
-                "falcon_host_link": "https://falcon.us-2.crowdstrike.com/identity-protection/detections/8693deb4bf134cfb8855ee118d9a0243:ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7087D?_cid=g04000s6h3lrs7encahh67joerwbbsje",
-                "id": "ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7087D",
+                "falcon_host_link": "https://falcon.us-2.crowdstrike.com/identity-protection/detections/1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7087D?_cid=test123456789abcdef0123456789abc",
+                "id": "ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7087D",
                 "mitre_attack": [
                     {
                         "pattern_id": 50234,
@@ -2515,9 +2515,9 @@ var (
         },
         "resources": [
             {
-                "aggregate_id": "aggind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7088E",
-                "cid": "8693deb4bf134cfb8855ee118d9a0243",
-                "composite_id": "8693deb4bf134cfb8855ee118d9a0243:ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7088E",
+                "aggregate_id": "aggind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7088E",
+                "cid": "1234567890abcdef1234567890abcdef",
+                "composite_id": "1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7088E",
                 "confidence": 85,
                 "context_timestamp": "2025-08-02T10:15:22.445Z",
                 "crawled_timestamp": "2025-08-02T11:15:24.567890123Z",
@@ -2528,8 +2528,8 @@ var (
                 "description": "Suspicious network communication detected",
                 "display_name": "Command and Control (network)",
                 "end_time": "2025-08-02T10:15:22.445Z",
-                "falcon_host_link": "https://falcon.us-2.crowdstrike.com/identity-protection/detections/8693deb4bf134cfb8855ee118d9a0243:ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7088E?_cid=g04000s6h3lrs7encahh67joerwbbsje",
-                "id": "ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7088E",
+                "falcon_host_link": "https://falcon.us-2.crowdstrike.com/identity-protection/detections/1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7088E?_cid=test123456789abcdef0123456789abc",
+                "id": "ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7088E",
                 "mitre_attack": [
                     {
                         "pattern_id": 52445,
@@ -2570,9 +2570,9 @@ var (
                 "user_name": "service.account"
             },
             {
-                "aggregate_id": "aggind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7089F",
-                "cid": "8693deb4bf134cfb8855ee118d9a0243",
-                "composite_id": "8693deb4bf134cfb8855ee118d9a0243:ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7089F",
+                "aggregate_id": "aggind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7089F",
+                "cid": "1234567890abcdef1234567890abcdef",
+                "composite_id": "1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7089F",
                 "confidence": 90,
                 "context_timestamp": "2025-08-02T12:30:45.678Z",
                 "crawled_timestamp": "2025-08-02T13:30:47.890123456Z",
@@ -2583,8 +2583,8 @@ var (
                 "description": "Critical malware execution detected",
                 "display_name": "Malware execution (endpoint)",
                 "end_time": "2025-08-02T12:30:45.678Z",
-                "falcon_host_link": "https://falcon.us-2.crowdstrike.com/identity-protection/detections/8693deb4bf134cfb8855ee118d9a0243:ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7089F?_cid=g04000s6h3lrs7encahh67joerwbbsje",
-                "id": "ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7089F",
+                "falcon_host_link": "https://falcon.us-2.crowdstrike.com/identity-protection/detections/1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7089F?_cid=test123456789abcdef0123456789abc",
+                "id": "ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7089F",
                 "mitre_attack": [
                     {
                         "pattern_id": 53667,
@@ -2638,9 +2638,9 @@ var (
         },
         "resources": [
             {
-                "aggregate_id": "aggind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7090A",
-                "cid": "8693deb4bf134cfb8855ee118d9a0243",
-                "composite_id": "8693deb4bf134cfb8855ee118d9a0243:ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7090A",
+                "aggregate_id": "aggind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7090A",
+                "cid": "1234567890abcdef1234567890abcdef",
+                "composite_id": "1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7090A",
                 "confidence": 75,
                 "context_timestamp": "2025-08-03T14:20:33.567Z",
                 "crawled_timestamp": "2025-08-03T15:20:35.789012345Z",
@@ -2651,8 +2651,8 @@ var (
                 "description": "User account compromised",
                 "display_name": "Account compromise (identity)",
                 "end_time": "2025-08-03T14:20:33.567Z",
-                "falcon_host_link": "https://falcon.us-2.crowdstrike.com/identity-protection/detections/8693deb4bf134cfb8855ee118d9a0243:ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7090A?_cid=g04000s6h3lrs7encahh67joerwbbsje",
-                "id": "ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7090A",
+                "falcon_host_link": "https://falcon.us-2.crowdstrike.com/identity-protection/detections/1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7090A?_cid=test123456789abcdef0123456789abc",
+                "id": "ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7090A",
                 "mitre_attack": [
                     {
                         "pattern_id": 54778,
@@ -2693,9 +2693,9 @@ var (
                 "user_name": "security.analyst"
             },
             {
-                "aggregate_id": "aggind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7091B",
-                "cid": "8693deb4bf134cfb8855ee118d9a0243",
-                "composite_id": "8693deb4bf134cfb8855ee118d9a0243:ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7091B",
+                "aggregate_id": "aggind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7091B",
+                "cid": "1234567890abcdef1234567890abcdef",
+                "composite_id": "1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7091B",
                 "confidence": 65,
                 "context_timestamp": "2025-08-03T16:45:28.123Z",
                 "crawled_timestamp": "2025-08-03T17:45:30.456789012Z",
@@ -2706,8 +2706,8 @@ var (
                 "description": "Suspicious registry modification",
                 "display_name": "Registry tampering (endpoint)",
                 "end_time": "2025-08-03T16:45:28.123Z",
-                "falcon_host_link": "https://falcon.us-2.crowdstrike.com/identity-protection/detections/8693deb4bf134cfb8855ee118d9a0243:ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7091B?_cid=g04000s6h3lrs7encahh67joerwbbsje",
-                "id": "ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7091B",
+                "falcon_host_link": "https://falcon.us-2.crowdstrike.com/identity-protection/detections/1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7091B?_cid=test123456789abcdef0123456789abc",
+                "id": "ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7091B",
                 "mitre_attack": [
                     {
                         "pattern_id": 55889,

@@ -843,12 +843,12 @@ func TestAdapterAlertsGetPage(t *testing.T) {
 				Success: &framework.Page{
 					Objects: []framework.Object{
 						{
-							"composite_id": string("8693deb4bf134cfb8855ee118d9a0243:ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7086C"),
-							"aggregate_id": string("aggind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7086C"),
+							"composite_id": string("1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7086C"),
+							"aggregate_id": string("aggind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7086C"),
 						},
 						{
-							"composite_id": string("8693deb4bf134cfb8855ee118d9a0243:ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7087D"),
-							"aggregate_id": string("aggind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7087D"),
+							"composite_id": string("1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7087D"),
+							"aggregate_id": string("aggind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7087D"),
 						},
 					},
 					NextCursor: "eyJjdXJzb3IiOjJ9",
@@ -879,12 +879,12 @@ func TestAdapterAlertsGetPage(t *testing.T) {
 				Success: &framework.Page{
 					Objects: []framework.Object{
 						{
-							"composite_id": string("8693deb4bf134cfb8855ee118d9a0243:ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7090A"),
-							"aggregate_id": string("aggind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7090A"),
+							"composite_id": string("1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7090A"),
+							"aggregate_id": string("aggind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7090A"),
 						},
 						{
-							"composite_id": string("8693deb4bf134cfb8855ee118d9a0243:ind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7091B"),
-							"aggregate_id": string("aggind:8693deb4bf134cfb8855ee118d9a0243:B75E9689-C82E-4EC9-B972-E807CFE7091B"),
+							"composite_id": string("1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7091B"),
+							"aggregate_id": string("aggind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7091B"),
 						},
 					},
 				},
