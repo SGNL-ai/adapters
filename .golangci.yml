@@ -39,6 +39,10 @@ linters:
       template: Copyright {{ YEAR }} {{ COMPANY }}
     nestif:
       min-complexity: 10
+    wsl_v5:
+      allow-first-in-block: true
+      allow-whole-block: false
+      branch-max-lines: 2
   exclusions:
     generated: lax
     presets:
