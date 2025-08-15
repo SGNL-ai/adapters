@@ -602,7 +602,6 @@ func TestDuoAdapter_User(t *testing.T) {
 		}
 	}
 	`), wantResp)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -709,7 +708,6 @@ func TestDuoAdapter_Group(t *testing.T) {
 		}
 	}
 	`), wantResp)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -816,7 +814,6 @@ func TestDuoAdapter_Phone(t *testing.T) {
 		}
 	}
 	`), wantResp)
-
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -507,6 +507,7 @@ func TestAdapterGetPageWithAdvancedFilters(t *testing.T) {
 		Listener: listener,
 		Config:   &http.Server{},
 	}
+
 	server.StartTLS()
 	defer server.Close()
 

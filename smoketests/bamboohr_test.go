@@ -293,7 +293,6 @@ func TestBambooHRAdapter_Employee(t *testing.T) {
 			"next_cursor": "eyJjdXJzb3IiOjR9"
 		}
 	}`), wantResp)
-
 	if err != nil {
 		t.Fatal(err)
 	}

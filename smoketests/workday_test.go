@@ -712,7 +712,6 @@ func TestWorkdayAdapter_Worker(t *testing.T) {
 			"next_cursor": "eyJjdXJzb3IiOjN9"
 		}
 	}`), wantResp)
-
 	if err != nil {
 		t.Fatal(err)
 	}

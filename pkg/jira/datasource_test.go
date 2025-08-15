@@ -1019,6 +1019,7 @@ func TestGetPage(t *testing.T) {
 		server: httptest.NewServer(TestServerHandler),
 	}
 	defer ts.server.Close()
+
 	t.Run("TestGetPageErrors", ts.TestGetPageErrors)
 	t.Run("TestGetPageUsers", ts.TestGetPageUsers)
 	t.Run("TestGetPageIssues", ts.TestGetPageIssues)

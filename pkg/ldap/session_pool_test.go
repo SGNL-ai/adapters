@@ -41,6 +41,7 @@ func (m *MockLDAPClient) Request(_ context.Context, req *ldap_adapter.Request,
 	if req.Cursor != nil && req.Cursor.Cursor != nil {
 		m.cursors = append(m.cursors, *req.Cursor.Cursor)
 	}
+
 	m.mu.Unlock()
 
 	dummyCookie := base64.StdEncoding.EncodeToString([]byte("dummy-cookie"))

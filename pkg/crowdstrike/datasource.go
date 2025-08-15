@@ -19,7 +19,7 @@ const (
 	Device           string = "endpoint_protection_device"
 	EndpointIncident string = "endpoint_protection_incident"
 	Detect           string = "endpoint_protection_detect"
-	Alerts           string = "endpoint_protection_alerts"
+	Alerts           string = "endpoint_protection_alert"
 )
 
 // Datasource directly implements a Client interface to allow querying

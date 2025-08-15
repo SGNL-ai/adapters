@@ -193,7 +193,6 @@ func TestRootlyAdapter_User(t *testing.T) {
 }
 }
 `), wantResp)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -481,7 +480,6 @@ func TestRootlyAdapter_Incident(t *testing.T) {
 }
 }
 `), wantResp)
-
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -18,7 +18,6 @@ func (s *S3Handler) FileExists(ctx context.Context, bucket string, key string) (
 		Bucket: &bucket,
 		Key:    &key,
 	})
-
 	if err != nil {
 		httpResponseErr, parseErr := httpResponseFromError(err)
 		if parseErr != nil {

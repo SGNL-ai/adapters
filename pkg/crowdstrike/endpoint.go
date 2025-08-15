@@ -51,6 +51,7 @@ func buildGQLRequest(request *Request) (*graphql.Request, *framework.Error) {
 
 	if request.GraphQLCursor != nil && request.GraphQLCursor.Cursor != nil {
 		var err *framework.Error
+
 		pageInfo, err = DecodePageInfo(request.GraphQLCursor.Cursor)
 
 		if err != nil {

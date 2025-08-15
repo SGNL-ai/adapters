@@ -27,6 +27,7 @@ type testConn struct {
 func (m *testConn) Close() error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+
 	m.closed = true
 
 	return nil
@@ -281,6 +282,7 @@ func TestSessionPool_CleanupClosesAllExpired(t *testing.T) {
 
 	// Act
 	pool.mu.Lock()
+
 	for key, session := range pool.pool {
 		if time.Since(session.lastUsed) > pool.ttl {
 			if session.conn != nil {
@@ -290,6 +292,7 @@ func TestSessionPool_CleanupClosesAllExpired(t *testing.T) {
 			delete(pool.pool, key)
 		}
 	}
+
 	pool.mu.Unlock()
 
 	// Assert

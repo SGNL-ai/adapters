@@ -124,7 +124,6 @@ func TestS3Adapter(t *testing.T) {
 			"next_cursor": "eyJjdXJzb3IiOjM0fQ=="
 		}
 	}`), wantResp)
-
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -78,6 +78,7 @@ func TestSCIMAdapter_User_Sailpoint(t *testing.T) {
 	}
 
 	wantResp := new(adapter_api_v1.GetPageResponse)
+
 	err = protojson.Unmarshal([]byte(`{
 		"success": {
 			"objects": [
@@ -105,7 +106,6 @@ func TestSCIMAdapter_User_Sailpoint(t *testing.T) {
 			"nextCursor": "2"
 		}
 	}`), wantResp)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -180,6 +180,7 @@ func TestSCIMAdapter_User_Curity(t *testing.T) {
 	}
 
 	wantResp := new(adapter_api_v1.GetPageResponse)
+
 	err = protojson.Unmarshal([]byte(`{
 		"success": {
 			"objects": [
@@ -207,7 +208,6 @@ func TestSCIMAdapter_User_Curity(t *testing.T) {
 			"nextCursor": "2"
 		}
 	}`), wantResp)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -694,6 +694,7 @@ func TestSCIMAdapter_User_Fictitious_Server(t *testing.T) {
 	}
 
 	wantResp := new(adapter_api_v1.GetPageResponse)
+
 	err = protojson.Unmarshal([]byte(`{
 		"success": {
 			"objects": [
@@ -1392,7 +1393,6 @@ func TestSCIMAdapter_User_Fictitious_Server(t *testing.T) {
 			"nextCursor": ""
 		}
 	}`), wantResp)
-
 	if err != nil {
 		t.Fatal(err)
 	}
