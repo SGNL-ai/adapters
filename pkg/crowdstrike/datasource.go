@@ -20,6 +20,7 @@ const (
 	EndpointIncident string = "endpoint_protection_incident"
 	Detect           string = "endpoint_protection_detect"
 	Alerts           string = "endpoint_protection_alert"
+	CombinedAlerts   string = "endpoint_protection_combined_alerts"
 )
 
 // Datasource directly implements a Client interface to allow querying
@@ -63,6 +64,7 @@ var (
 		Detect:           {UseIntCursor: true},
 		EndpointIncident: {UseIntCursor: true},
 		Alerts:           {UseIntCursor: true},
+		CombinedAlerts:   {UseIntCursor: false},
 	}
 )
 

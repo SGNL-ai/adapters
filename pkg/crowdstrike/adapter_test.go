@@ -918,3 +918,155 @@ func TestAdapterAlertsGetPage(t *testing.T) {
 		})
 	}
 }
+
+func TestAdapterCombinedAlertsGetPage(t *testing.T) {
+	server := httptest.NewTLSServer(TestRESTServerHandler)
+	adapter := crowdstrike_adapter.NewAdapter(&crowdstrike_adapter.Datasource{
+		Client: server.Client(),
+	})
+
+	tests := map[string]struct {
+		request            *framework.Request[crowdstrike_adapter.Config]
+		inputRequestCursor *pagination.CompositeCursor[string]
+		wantResponse       framework.Response
+		wantCursor         *pagination.CompositeCursor[string]
+	}{
+		"first_page": {
+			request: &framework.Request[crowdstrike_adapter.Config]{
+				Address: server.URL,
+				Auth: &framework.DatasourceAuthCredentials{
+					HTTPAuthorization: "Bearer Testtoken",
+				},
+				Config: &crowdstrike_adapter.Config{
+					APIVersion: "v1",
+					Archived:   false,
+					Enabled:    true,
+				},
+				Entity:   *PopulateCombinedAlertsEntityConfig(),
+				PageSize: 2,
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"aggregate_id": string("aggind:test1234567890123456789012345678:625985642613668398"),
+							"composite_id": string("testcid1234567890123456789012345:ind:test1234567890123456789012345678:625985642593750673-20151-7049"),
+							"status":       string("new"),
+						},
+						{
+							"aggregate_id": string("aggind:test2345678901234567890123456789:726196753724579846"),
+							"composite_id": string("testcid1234567890123456789012345:ind:test2345678901234567890123456789:726196753704661621-20152-7050"),
+							"status":       string("in_progress"),
+						},
+					},
+				},
+			},
+			wantCursor: &pagination.CompositeCursor[string]{
+				Cursor: testutil.GenPtr("eyJ2ZXJzaW9uIjoidjEiLCJ0b3RhbF9oaXRzIjoyMywidG90YWxfcmVsYXRpb24iOiJlcSIsImNsdXN0ZXJfaWQiOiJ0ZXN0IiwiYWZ0ZXIiOlsxNzQ5NjExMTU3MjIxLCJ0ZXN0aWQ6aW5kOjUzODhjNTkyMTg5NDQ0YWQ5ZTg0ZGYwNzFjOGYzOTU0Ojk3ODI3ODI2MTQtMTAzMDMtMzE4MzE1NjgiXSwidG90YWxfZmV0Y2hlZCI6Mn0="),
+			},
+		},
+		"middle_page": {
+			request: &framework.Request[crowdstrike_adapter.Config]{
+				Address: server.URL,
+				Auth: &framework.DatasourceAuthCredentials{
+					HTTPAuthorization: "Bearer Testtoken",
+				},
+				Config: &crowdstrike_adapter.Config{
+					APIVersion: "v1",
+					Archived:   false,
+					Enabled:    true,
+				},
+				Entity:   *PopulateCombinedAlertsEntityConfig(),
+				PageSize: 2,
+			},
+			inputRequestCursor: &pagination.CompositeCursor[string]{
+				Cursor: testutil.GenPtr("eyJ2ZXJzaW9uIjoidjEiLCJ0b3RhbF9oaXRzIjoyMywidG90YWxfcmVsYXRpb24iOiJlcSIsImNsdXN0ZXJfaWQiOiJ0ZXN0IiwiYWZ0ZXIiOlsxNzQ5NjExMTU3MjIxLCJ0ZXN0aWQ6aW5kOjUzODhjNTkyMTg5NDQ0YWQ5ZTg0ZGYwNzFjOGYzOTU0Ojk3ODI3ODI2MTQtMTAzMDMtMzE4MzE1NjgiXSwidG90YWxfZmV0Y2hlZCI6Mn0="),
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"aggregate_id": string("aggind:test3456789012345678901234567890:827307864835690957"),
+							"composite_id": string("testcid1234567890123456789012345:ind:test3456789012345678901234567890:827307864815772732-20153-7052"),
+							"status":       string("closed"),
+						},
+					},
+				},
+			},
+			wantCursor: &pagination.CompositeCursor[string]{
+				Cursor: testutil.GenPtr("eyJ2ZXJzaW9uIjoidjEiLCJ0b3RhbF9oaXRzIjoyMywidG90YWxfcmVsYXRpb24iOiJlcSIsImNsdXN0ZXJfaWQiOiJ0ZXN0IiwiYWZ0ZXIiOlsxNzQ5NTEyMzQ1Njc4LCJ0ZXN0aWQ6aW5kOmU0NTY3ODkwMTIzNDU2YWI3ODkwY2RlZjEyMzQ1Njc4LTIwMTUzLTcwNTEiXSwidG90YWxfZmV0Y2hlZCI6NH0="),
+			},
+		},
+		"last_page": {
+			request: &framework.Request[crowdstrike_adapter.Config]{
+				Address: server.URL,
+				Auth: &framework.DatasourceAuthCredentials{
+					HTTPAuthorization: "Bearer Testtoken",
+				},
+				Config: &crowdstrike_adapter.Config{
+					APIVersion: "v1",
+					Archived:   false,
+					Enabled:    true,
+				},
+				Entity:   *PopulateCombinedAlertsEntityConfig(),
+				PageSize: 2,
+			},
+			inputRequestCursor: &pagination.CompositeCursor[string]{
+				Cursor: testutil.GenPtr("eyJ2ZXJzaW9uIjoidjEiLCJ0b3RhbF9oaXRzIjoyMywidG90YWxfcmVsYXRpb24iOiJlcSIsImNsdXN0ZXJfaWQiOiJ0ZXN0IiwiYWZ0ZXIiOlsxNzQ5NTEyMzQ1Njc4LCJ0ZXN0aWQ6aW5kOmU0NTY3ODkwMTIzNDU2Nzg5MGNkZWYxMjM0NTY3ODkwLTIwMTUzLTcwNTEiXSwidG90YWxfZmV0Y2hlZCI6NH0="),
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"aggregate_id": string("aggind:test4567890123456789012345678901:928418975946802068"),
+							"composite_id": string("testcid1234567890123456789012345:ind:test4567890123456789012345678901:928418975926883843-20154-7053"),
+							"status":       string("new"),
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			if tt.inputRequestCursor != nil {
+				encodedCursor, err := pagination.MarshalCursor(tt.inputRequestCursor)
+				if err != nil {
+					t.Error(err)
+				}
+
+				tt.request.Cursor = encodedCursor
+			}
+
+			gotResponse := adapter.GetPage(context.Background(), tt.request)
+			if tt.wantResponse.Success != nil && gotResponse.Success != nil {
+				if diff := cmp.Diff(tt.wantResponse.Success.Objects, gotResponse.Success.Objects); diff != "" {
+					t.Errorf("Response mismatch (-want +got):\n%s", diff)
+				}
+			} else if tt.wantResponse.Success != nil || gotResponse.Success != nil {
+				t.Errorf("gotResponse: %v, wantResponse: %v", gotResponse, tt.wantResponse)
+			}
+
+			if !reflect.DeepEqual(gotResponse.Error, tt.wantResponse.Error) {
+				t.Errorf("gotResponse: %v, wantResponse: %v", gotResponse.Error, tt.wantResponse.Error)
+			}
+
+			// Check cursor comparison
+			if gotResponse.Success != nil && tt.wantCursor != nil {
+				if gotResponse.Success.NextCursor != "" {
+					gotCursor, err := pagination.UnmarshalCursor[string](gotResponse.Success.NextCursor)
+					if err != nil {
+						t.Errorf("error unmarshalling cursor: %v", err)
+					}
+
+					if gotCursor.Cursor == nil || tt.wantCursor.Cursor == nil {
+						t.Errorf("gotCursor or wantCursor is nil: gotCursor: %v, wantCursor: %v", gotCursor, *tt.wantCursor)
+					} else if *gotCursor.Cursor != *tt.wantCursor.Cursor {
+						t.Errorf("gotCursor: %s, wantCursor: %s", *gotCursor.Cursor, *tt.wantCursor.Cursor)
+					}
+				}
+			}
+		})
+	}
+}

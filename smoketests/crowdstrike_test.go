@@ -1235,3 +1235,149 @@ func TestCrowdStrikeAlert(t *testing.T) {
 
 	close(stop)
 }
+
+func TestCrowdStrikeCombinedAlert(t *testing.T) {
+	httpClient, recorder := common.StartRecorder(t, "fixtures/crowdstrike/combinedAlert")
+	defer recorder.Stop()
+
+	port := common.AvailableTestPort(t)
+
+	stop := make(chan struct{})
+
+	// Start Adapter Server
+	go func() {
+		stop = common.StartAdapterServer(t, httpClient, port)
+	}()
+
+	time.Sleep(10 * time.Millisecond)
+
+	adapterClient, conn := common.GetNewAdapterClient(t, port)
+	defer conn.Close()
+
+	ctx, cancelCtx := common.GetAdapterCtx()
+	defer cancelCtx()
+
+	req := &adapter_api_v1.GetPageRequest{
+		Datasource: &adapter_api_v1.DatasourceConfig{
+			Auth: &adapter_api_v1.DatasourceAuthCredentials{
+				AuthMechanism: &adapter_api_v1.DatasourceAuthCredentials_HttpAuthorization{
+					HttpAuthorization: "Bearer {{OMITTED}}",
+				},
+			},
+			Address: "https://api.us-2.crowdstrike.com",
+			Id:      "Test",
+			Type:    "CrowdStrike-1.0.0",
+			Config: []byte(`
+			{
+				"archived": false,
+				"enabled": true,
+				"apiVersion": "v1"
+			}`),
+		},
+		Entity: &adapter_api_v1.EntityConfig{
+			Id:         "CombinedAlert",
+			ExternalId: "endpoint_protection_combined_alerts",
+			Attributes: []*adapter_api_v1.AttributeConfig{
+				{
+					Id:         "CompositeId",
+					ExternalId: "composite_id",
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+					List:       false,
+					UniqueId:   true,
+				},
+				{
+					Id:         "AggregateId",
+					ExternalId: "aggregate_id",
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+				},
+				{
+					Id:         "Status",
+					ExternalId: "status",
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+				},
+			},
+		},
+		PageSize: 2,
+		Cursor:   "",
+	}
+
+	gotResp, err := adapterClient.GetPage(ctx, req)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	wantResp := new(adapter_api_v1.GetPageResponse)
+
+	err = protojson.Unmarshal([]byte(`{
+    "success": {
+        "objects": [
+            {
+                "attributes": [
+                    {
+                        "id": "AggregateId",
+                        "values": [
+                            {
+                                "stringValue": "aggind:test1234567890123456789012345678:625985642613668398"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "CompositeId",
+                        "values": [
+                            {
+                                "stringValue": "testcid1234567890123456789012345:ind:test1234567890123456789012345678:625985642593750673-20151-7049"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "Status",
+                        "values": [
+                            {
+                                "stringValue": "new"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                "attributes": [
+                    {
+                        "id": "AggregateId",
+                        "values": [
+                            {
+                                "stringValue": "aggind:test2345678901234567890123456789:726196753724579846"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "CompositeId",
+                        "values": [
+                            {
+                                "stringValue": "testcid1234567890123456789012345:ind:test2345678901234567890123456789:726196753704661621-20152-7050"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "Status",
+                        "values": [
+                            {
+                                "stringValue": "in_progress"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "nextCursor": "eyJjdXJzb3IiOiJleUoyWlhKemFXOXVJam9pZGpFaUxDSjBiM1JoYkY5b2FYUnpJam95TXl3aWRHOTBZV3hmY21Wc1lYUnBiMjRpT2lKbGNTSXNJbU5zZFhOMFpYSmZhV1FpT2lKMFpYTjBJaXdpWVdaMFpYSWlPbHN4TnpRNU5qRXhNVFUzTWpJeExDSjBaWE4wYVdRNmFXNWtPalV6T0Roak5Ua3lNVGc1TkRRMFlXUTVaVGcwWkdZd056RmpPR1l6T1RVME9qazNPREkzT0RJMk1UUXRNVEF6TURNdE16RTRNekUxTmpnaVhTd2lkRzkwWVd4ZlptVjBZMmhsWkNJNk1uMD0ifQ=="
+    }
+}`), wantResp)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if diff := cmp.Diff(wantResp, gotResp, common.CmpOpts...); diff != "" {
+		t.Fatal(diff)
+	}
+
+	close(stop)
+}

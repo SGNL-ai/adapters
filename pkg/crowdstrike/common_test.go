@@ -240,6 +240,30 @@ func PopulateAlertsEntityConfig() *framework.EntityConfig {
 	}
 }
 
+func PopulateCombinedAlertsEntityConfig() *framework.EntityConfig {
+	return &framework.EntityConfig{
+		ExternalId: crowdstrike.CombinedAlerts,
+		Attributes: []*framework.AttributeConfig{
+			{
+				ExternalId: "composite_id",
+				Type:       framework.AttributeTypeString,
+				List:       false,
+				UniqueId:   true,
+			},
+			{
+				ExternalId: "aggregate_id",
+				Type:       framework.AttributeTypeString,
+				List:       false,
+			},
+			{
+				ExternalId: "status",
+				Type:       framework.AttributeTypeString,
+				List:       false,
+			},
+		},
+	}
+}
+
 // Define the endpoints and responses for the mock server.
 // This handler is intended to be re-used throughout the test package for GraphQL APIs.
 var TestGraphQLServerHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -369,6 +393,27 @@ var TestRESTServerHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http
 
 	case "/alerts/entities/alerts/v2?limit=2&offset=4":
 		w.Write([]byte(AlertDetailedResponseLastPage))
+
+	// ************************ Combined alerts ************************
+	case "/alerts/combined/alerts/v1?limit=2":
+		// Handle POST request for combined alerts
+		if r.Method == "POST" {
+			body, _ := io.ReadAll(r.Body)
+			var reqBody map[string]any
+			json.Unmarshal(body, &reqBody)
+			
+			if reqBody["after"] == nil || reqBody["after"] == "" {
+				w.Write([]byte(CombinedAlertResponseFirstPage))
+			} else if reqBody["after"] == "eyJ2ZXJzaW9uIjoidjEiLCJ0b3RhbF9oaXRzIjoyMywidG90YWxfcmVsYXRpb24iOiJlcSIsImNsdXN0ZXJfaWQiOiJ0ZXN0IiwiYWZ0ZXIiOlsxNzQ5NjExMTU3MjIxLCJ0ZXN0aWQ6aW5kOjUzODhjNTkyMTg5NDQ0YWQ5ZTg0ZGYwNzFjOGYzOTU0Ojk3ODI3ODI2MTQtMTAzMDMtMzE4MzE1NjgiXSwidG90YWxfZmV0Y2hlZCI6Mn0=" {
+				w.Write([]byte(CombinedAlertResponseMiddlePage))
+			} else if reqBody["after"] == "eyJ2ZXJzaW9uIjoidjEiLCJ0b3RhbF9oaXRzIjoyMywidG90YWxfcmVsYXRpb24iOiJlcSIsImNsdXN0ZXJfaWQiOiJ0ZXN0IiwiYWZ0ZXIiOlsxNzQ5NTEyMzQ1Njc4LCJ0ZXN0aWQ6aW5kOmU0NTY3ODkwMTIzNDU2Nzg5MGNkZWYxMjM0NTY3ODkwLTIwMTUzLTcwNTEiXSwidG90YWxfZmV0Y2hlZCI6NH0=" {
+				w.Write([]byte(CombinedAlertResponseLastPage))
+			} else {
+				w.WriteHeader(http.StatusNotFound)
+			}
+		} else {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+		}
 
 	default:
 		w.WriteHeader(http.StatusNotFound)

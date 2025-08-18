@@ -40,6 +40,9 @@ var (
 			ListEndpoint: "alerts/queries/alerts/v2",  // This is implemented over HTTP GET by CRWD
 			GetEndpoint:  "alerts/entities/alerts/v2", // This is implemented over HTTP POST by CRWD
 		},
+		CombinedAlerts: {
+			GetEndpoint:  "alerts/combined/alerts/v1", // This is implemented over HTTP POST by CRWD
+		},
 	}
 )
 
@@ -157,6 +160,13 @@ func ConstructRESTEndpoint(request *Request, path string) (*string, *framework.E
 		}
 
 		offsetStr = *cursor.Cursor
+	}
+
+	// Combined alerts uses POST body parameters, not URL query parameters
+	if request.EntityExternalID == CombinedAlerts {
+		params := fmt.Sprintf("limit=%d", request.PageSize)
+		endpoint := fmt.Sprintf("%s/%s?%s", request.BaseURL, path, params)
+		return &endpoint, nil
 	}
 
 	params := fmt.Sprintf("limit=%d", request.PageSize)

@@ -71,31 +71,58 @@ type DetailedAlertsRequestBody struct {
 	CompositeIDs []string `json:"composite_ids"`
 }
 
+type CombinedAlertsRequestBody struct {
+	Limit  int     `json:"limit"`
+	After  *string `json:"after,omitempty"`
+	Filter *string `json:"filter,omitempty"`
+	Sort   *string `json:"sort,omitempty"`
+}
+
 type DetailedResourceResponse struct {
 	Meta      MetaFields       `json:"meta"`
 	Resources []map[string]any `json:"resources"`
 	Errors    []ErrorItem      `json:"errors"`
 }
 
+type CombinedAlertsResponse struct {
+	Meta      CombinedAlertsMeta `json:"meta"`
+	Resources []map[string]any   `json:"resources"`
+	Errors    []ErrorItem        `json:"errors"`
+}
+
+type CombinedAlertsMeta struct {
+	Pagination CombinedAlertsPagination `json:"pagination"`
+}
+
+type CombinedAlertsPagination struct {
+	After string `json:"after"`
+	Total int    `json:"total"`
+}
+
 func (d *Datasource) getRESTPage(ctx context.Context, request *Request) (*Response, *framework.Error) {
 	// Fetch all resourceIDs before fetching the detailed information, if applicable.
-	resourceIDs, nextCursor, httpResp, listErr := d.getResourceIDs(ctx, request)
-	if listErr != nil {
-		return nil, listErr
-	}
+	// For Alerts we have a combined API which doesn't require to fetch resource IDs separately.
+	var resourceIDs []string
+	var nextCursor *pagination.CompositeCursor[string]
+	if request.EntityExternalID != CombinedAlerts {
+		resourceIDs, nextCursor, httpResp, listErr := d.getResourceIDs(ctx, request)
+		if listErr != nil {
+			return nil, listErr
+		}
 
-	if httpResp != nil && httpResp.StatusCode != http.StatusOK {
-		return &Response{
-			StatusCode:       httpResp.StatusCode,
-			RetryAfterHeader: httpResp.Header.Get("Retry-After"),
-		}, nil
-	}
+		if httpResp != nil && httpResp.StatusCode != http.StatusOK {
+			return &Response{
+				StatusCode:       httpResp.StatusCode,
+				RetryAfterHeader: httpResp.Header.Get("Retry-After"),
+			}, nil
+		}
 
-	// 1 beyond the last page. See why in `parseListScrollResponse`
-	if request.EntityExternalID == Device && len(resourceIDs) == 0 && nextCursor == nil {
-		return &Response{
-			StatusCode: httpResp.StatusCode,
-		}, nil
+		// 1 beyond the last page. See why in `parseListScrollResponse`
+		if request.EntityExternalID == Device && len(resourceIDs) == 0 && nextCursor == nil {
+			return &Response{
+				StatusCode: httpResp.StatusCode,
+			}, nil
+		}
 	}
 
 	// Use resourceIDs to fetch detailed information, if applicable.
@@ -103,16 +130,28 @@ func (d *Datasource) getRESTPage(ctx context.Context, request *Request) (*Respon
 
 	var marshalErr error
 
-	if request.EntityExternalID == Alerts {
-		reqBody := &DetailedAlertsRequestBody{
-			CompositeIDs: resourceIDs,
-		}
-		bodyBytes, marshalErr = json.Marshal(reqBody)
-	} else {
-		reqBody := &DetailedResourceRequestBody{
-			Identifiers: resourceIDs,
-		}
-		bodyBytes, marshalErr = json.Marshal(reqBody)
+	switch request.EntityExternalID {
+		case CombinedAlerts:
+			var after *string
+			if request.RESTCursor != nil && request.RESTCursor.Cursor != nil {
+				after = request.RESTCursor.Cursor
+			}
+			reqBody := &CombinedAlertsRequestBody{
+				Limit:  int(request.PageSize),
+				After:  after,
+				Filter: request.Filter,
+			}
+			bodyBytes, marshalErr = json.Marshal(reqBody)
+		case Alerts:
+			reqBody := &DetailedAlertsRequestBody{
+				CompositeIDs: resourceIDs,
+			}
+			bodyBytes, marshalErr = json.Marshal(reqBody)
+		default:
+			reqBody := &DetailedResourceRequestBody{
+				Identifiers: resourceIDs,
+			}
+			bodyBytes, marshalErr = json.Marshal(reqBody)
 	}
 
 	if marshalErr != nil {
@@ -176,7 +215,15 @@ func (d *Datasource) getRESTPage(ctx context.Context, request *Request) (*Respon
 		return response, nil
 	}
 
-	objects, frameworkErr := parseDetailedResponse(body)
+	var objects []map[string]any
+	var frameworkErr *framework.Error
+
+	if request.EntityExternalID == CombinedAlerts {
+		objects, nextCursor, frameworkErr = parseCombinedAlertsResponse(body)
+	} else {
+		objects, frameworkErr = parseDetailedResponse(body)
+	}
+
 	if frameworkErr != nil {
 		return nil, frameworkErr
 	}
@@ -406,6 +453,44 @@ func parseDetailedResponse(body []byte) ([]map[string]any, *framework.Error) {
 	return data.Resources, nil
 }
 
+// parseCombinedAlertsResponse parses the response from the combined alerts API endpoint
+func parseCombinedAlertsResponse(body []byte) (
+	objects []map[string]any,
+	nextCursor *pagination.CompositeCursor[string],
+	err *framework.Error,
+) {
+	var data *CombinedAlertsResponse
+
+	if unmarshalErr := json.Unmarshal(body, &data); unmarshalErr != nil || data == nil {
+		return nil, nil, &framework.Error{
+			Message: fmt.Sprintf("Failed to unmarshal the combined alerts response: %v.", unmarshalErr),
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}
+	}
+
+	if len(data.Errors) != 0 {
+		return nil, nil, ParseError(data.Errors)
+	}
+
+	if data.Resources == nil {
+		return nil, nil, &framework.Error{
+			Message: "Missing resources in the combined alerts response.",
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}
+	}
+
+	// Set next cursor if there's an "after" token for pagination
+	if data.Meta.Pagination.After != "" {
+		// The Combined Alerts API returns a base64-encoded cursor directly
+		// Use it as-is to maintain consistency with the CrowdStrike API format
+		nextCursor = &pagination.CompositeCursor[string]{
+			Cursor: &data.Meta.Pagination.After,
+		}
+	}
+
+	return data.Resources, nextCursor, nil
+}
+
 func ParseError(errors []ErrorItem) *framework.Error {
 	errorMessages := make([]string, 0, len(errors)+1)
 
@@ -422,3 +507,4 @@ func ParseError(errors []ErrorItem) *framework.Error {
 		Code: api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
 	}
 }
+
