@@ -397,11 +397,11 @@ var TestRESTServerHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http
 	// ************************ Combined alerts ************************
 	case "/alerts/combined/alerts/v1?limit=2":
 		// Handle POST request for combined alerts
-		if r.Method == "POST" {
+		if r.Method == http.MethodPost {
 			body, _ := io.ReadAll(r.Body)
 			var reqBody map[string]any
 			json.Unmarshal(body, &reqBody)
-			
+
 			if reqBody["after"] == nil || reqBody["after"] == "" {
 				w.Write([]byte(CombinedAlertResponseFirstPage))
 			} else if reqBody["after"] == "eyJ2ZXJzaW9uIjoidjEiLCJ0b3RhbF9oaXRzIjoyMywidG90YWxfcmVsYXRpb24iOiJlcSIsImNsdXN0ZXJfaWQiOiJ0ZXN0IiwiYWZ0ZXIiOlsxNzQ5NjExMTU3MjIxLCJ0ZXN0aWQ6aW5kOjUzODhjNTkyMTg5NDQ0YWQ5ZTg0ZGYwNzFjOGYzOTU0Ojk3ODI3ODI2MTQtMTAzMDMtMzE4MzE1NjgiXSwidG90YWxfZmV0Y2hlZCI6Mn0=" {

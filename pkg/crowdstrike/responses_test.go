@@ -2750,7 +2750,7 @@ var (
         ]
     }`
 
-	// Combined Alerts API responses
+	// Combined Alerts API responses.
 	CombinedAlertResponseFirstPage = `{
 		"meta": {
 			"query_time": 0.043633983,

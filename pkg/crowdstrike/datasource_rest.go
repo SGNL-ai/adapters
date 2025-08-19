@@ -102,10 +102,17 @@ type CombinedAlertsPagination struct {
 func (d *Datasource) getRESTPage(ctx context.Context, request *Request) (*Response, *framework.Error) {
 	// Fetch all resourceIDs before fetching the detailed information, if applicable.
 	// For Alerts we have a combined API which doesn't require to fetch resource IDs separately.
-	var resourceIDs []string
-	var nextCursor *pagination.CompositeCursor[string]
+	var (
+		resourceIDs []string
+		nextCursor  *pagination.CompositeCursor[string]
+	)
+
 	if request.EntityExternalID != CombinedAlerts {
-		resourceIDs, nextCursor, httpResp, listErr := d.getResourceIDs(ctx, request)
+		var (
+			httpResp *http.Response
+			listErr  *framework.Error
+		)
+		resourceIDs, nextCursor, httpResp, listErr = d.getResourceIDs(ctx, request)
 		if listErr != nil {
 			return nil, listErr
 		}
@@ -131,27 +138,28 @@ func (d *Datasource) getRESTPage(ctx context.Context, request *Request) (*Respon
 	var marshalErr error
 
 	switch request.EntityExternalID {
-		case CombinedAlerts:
-			var after *string
-			if request.RESTCursor != nil && request.RESTCursor.Cursor != nil {
-				after = request.RESTCursor.Cursor
-			}
-			reqBody := &CombinedAlertsRequestBody{
-				Limit:  int(request.PageSize),
-				After:  after,
-				Filter: request.Filter,
-			}
-			bodyBytes, marshalErr = json.Marshal(reqBody)
-		case Alerts:
-			reqBody := &DetailedAlertsRequestBody{
-				CompositeIDs: resourceIDs,
-			}
-			bodyBytes, marshalErr = json.Marshal(reqBody)
-		default:
-			reqBody := &DetailedResourceRequestBody{
-				Identifiers: resourceIDs,
-			}
-			bodyBytes, marshalErr = json.Marshal(reqBody)
+	case CombinedAlerts:
+		var after *string
+		if request.RESTCursor != nil && request.RESTCursor.Cursor != nil {
+			after = request.RESTCursor.Cursor
+		}
+
+		reqBody := &CombinedAlertsRequestBody{
+			Limit:  int(request.PageSize),
+			After:  after,
+			Filter: request.Filter,
+		}
+		bodyBytes, marshalErr = json.Marshal(reqBody)
+	case Alerts:
+		reqBody := &DetailedAlertsRequestBody{
+			CompositeIDs: resourceIDs,
+		}
+		bodyBytes, marshalErr = json.Marshal(reqBody)
+	default:
+		reqBody := &DetailedResourceRequestBody{
+			Identifiers: resourceIDs,
+		}
+		bodyBytes, marshalErr = json.Marshal(reqBody)
 	}
 
 	if marshalErr != nil {
@@ -215,13 +223,16 @@ func (d *Datasource) getRESTPage(ctx context.Context, request *Request) (*Respon
 		return response, nil
 	}
 
-	var objects []map[string]any
-	var frameworkErr *framework.Error
+	var (
+		objects      []map[string]any
+		frameworkErr *framework.Error
+	)
 
 	if request.EntityExternalID == CombinedAlerts {
 		objects, nextCursor, frameworkErr = parseCombinedAlertsResponse(body)
 	} else {
 		objects, frameworkErr = parseDetailedResponse(body)
+		// nextCursor is already set from getResourceIDs call above
 	}
 
 	if frameworkErr != nil {
@@ -453,7 +464,7 @@ func parseDetailedResponse(body []byte) ([]map[string]any, *framework.Error) {
 	return data.Resources, nil
 }
 
-// parseCombinedAlertsResponse parses the response from the combined alerts API endpoint
+// parseCombinedAlertsResponse parses the response from the combined alerts API endpoint.
 func parseCombinedAlertsResponse(body []byte) (
 	objects []map[string]any,
 	nextCursor *pagination.CompositeCursor[string],
@@ -507,4 +518,3 @@ func ParseError(errors []ErrorItem) *framework.Error {
 		Code: api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
 	}
 }
-
