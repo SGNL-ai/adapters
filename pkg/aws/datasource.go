@@ -518,7 +518,6 @@ func FetchEntities[T any](
 	// Iterate over the entities and process each one concurrently.
 	for i, entity := range entities {
 		wg.Add(1)
-
 		sem <- struct{}{} // Acquire a slot
 
 		go func(i int, entity T) {
@@ -554,7 +553,6 @@ func FetchEntities[T any](
 					case errChan <- fmt.Errorf("Failed to add AccountID to entity: %w", err):
 					default:
 					}
-
 					cancel()
 
 					return
@@ -580,7 +578,6 @@ func FetchEntities[T any](
 	// [IdentityProvider] No pagination support from the AWS side for this entity.
 	if opts.EntityName == IdentityProvider {
 		var paginationErr *framework.Error
-
 		objects, nextMarker, paginationErr = pagination.PaginateObjects(
 			objects, int64(*opts.MaxItems), &pagination.CompositeCursor[string]{
 				Cursor: opts.Marker,
@@ -702,6 +699,7 @@ func (d *Datasource) GetIamClient(ctx context.Context, request *Request) (*iam.C
 		// If you need to differentiate between credentials from different roles, using unique session names helps maintain clarity.
 		RoleSessionName: aws.String(fmt.Sprintf("%s-%d", SessionName, accountCursor.Offset)),
 	})
+
 	if err != nil {
 		return nil, nil, &framework.Error{
 			Message: fmt.Sprintf("Failed to assume role: %v", err),

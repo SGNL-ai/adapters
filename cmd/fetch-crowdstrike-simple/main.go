@@ -1,3 +1,5 @@
+// Copyright 2025 SGNL.ai, Inc.
+
 package main
 
 import (
@@ -75,6 +77,7 @@ func main() {
 
 	// Make the request
 	fmt.Printf("Fetching %s from %s...\n", *entity, *address)
+
 	response := adapter.GetPage(context.Background(), request)
 
 	// Check for errors
@@ -120,6 +123,7 @@ func main() {
 
 	fmt.Printf("Response saved to: %s\n", *output)
 	fmt.Printf("Objects retrieved: %d\n", len(response.Success.Objects))
+
 	if response.Success.NextCursor != "" {
 		fmt.Printf("Next cursor: %s\n", response.Success.NextCursor)
 	} else {

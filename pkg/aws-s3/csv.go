@@ -29,6 +29,7 @@ func handleQuoteChar(reader *bufio.Reader, lineBuffer *bytes.Buffer, bytesRead *
 
 	// We're inside quotes - need to check if this is an escaped quote or closing quote
 	nextBytes, peekErr := reader.Peek(1)
+
 	if peekErr != nil {
 		if peekErr == io.EOF {
 			// End of file - this quote closes the field
@@ -63,6 +64,7 @@ func handleQuoteChar(reader *bufio.Reader, lineBuffer *bytes.Buffer, bytesRead *
 
 func handleLineEnding(reader *bufio.Reader, lineBuffer *bytes.Buffer, bytesRead *int64) error {
 	nextBytes, peekErr := reader.Peek(1)
+
 	if peekErr != nil {
 		if peekErr == io.EOF {
 			// CR at EOF is a valid line ending
@@ -75,6 +77,7 @@ func handleLineEnding(reader *bufio.Reader, lineBuffer *bytes.Buffer, bytesRead 
 	if len(nextBytes) > 0 && nextBytes[0] == '\n' {
 		// This is CRLF - consume the LF
 		nextByte, readErr := reader.ReadByte()
+
 		if readErr != nil {
 			// This shouldn't happen - we just peeked successfully
 			return fmt.Errorf("failed to read LF after CR: %w", readErr)
@@ -142,13 +145,14 @@ func readCSVLine(reader *bufio.Reader, maxRowSizeBytes int64) (
 
 func CSVHeaders(reader *bufio.Reader, maxRowSizeBytes int64) (headers []string, bytesReadForHeader int64, err error) {
 	headerLineBytes, bytesRead, err := readCSVLine(reader, maxRowSizeBytes)
+
 	if err != nil {
 		return nil, 0, fmt.Errorf("CSV header error: %w", err)
 	}
 
 	csvReader := csv.NewReader(bytes.NewReader(headerLineBytes))
-
 	parsedHeaders, parseErr := csvReader.Read()
+
 	if parseErr != nil {
 		return nil, 0, fmt.Errorf("CSV file format is invalid or corrupted: %v", parseErr)
 	}

@@ -199,8 +199,8 @@ func TestS3Handler_GetObjectStream(t *testing.T) {
 				}
 
 				defer response.Body.Close()
-
 				bodyBytes, readErr := io.ReadAll(response.Body)
+
 				if readErr != nil {
 					t.Fatalf("Failed to read response body: %v", readErr)
 				}

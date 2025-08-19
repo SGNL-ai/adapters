@@ -1276,7 +1276,7 @@ func TestCrowdStrikeCombinedAlert(t *testing.T) {
 		},
 		Entity: &adapter_api_v1.EntityConfig{
 			Id:         "CombinedAlert",
-			ExternalId: "endpoint_protection_combined_alerts",
+			ExternalId: "endpoint_protection_combined_alert",
 			Attributes: []*adapter_api_v1.AttributeConfig{
 				{
 					Id:         "CompositeId",

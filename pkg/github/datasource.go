@@ -554,7 +554,6 @@ func ParseGraphQLResponseForOrganization(
 	// If there is a current cursor, we need to decode the PageInfo from it.
 	if currentCursor != nil && currentCursor.Cursor != nil {
 		var err *framework.Error
-
 		currentPageInfo, err = DecodePageInfo(currentCursor.Cursor)
 
 		if err != nil {
@@ -582,8 +581,8 @@ func ParseGraphQLResponseForOrganization(
 
 	if nextPageInfo != nil {
 		nextCursor = &pagination.CompositeCursor[string]{}
-
 		cursorBytes, marshalErr := json.Marshal(nextPageInfo)
+
 		if marshalErr != nil {
 			return nil, nil, &framework.Error{
 				Message: fmt.Sprintf("Failed to create updated cursor: %v.", err),
@@ -644,7 +643,6 @@ func ParseGraphQLResponse(
 	// If there is a current cursor, we need to decode the PageInfo from it.
 	if currentCursor != nil && currentCursor.Cursor != nil {
 		var err *framework.Error
-
 		currentPageInfo, err = DecodePageInfo(currentCursor.Cursor)
 
 		if err != nil {
@@ -1145,7 +1143,6 @@ func UpdatePageInfo(currentPageInfo, newPageInfo *PageInfo) (bool, *PageInfo) {
  */
 func ParseContainerEntity[T any](entities json.RawMessage, entityName string) (*T, *framework.Error) {
 	var container []T
-
 	unmarshalErr := json.Unmarshal(entities, &container)
 
 	if unmarshalErr != nil || container == nil {

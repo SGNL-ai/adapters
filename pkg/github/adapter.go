@@ -101,6 +101,7 @@ func (a *Adapter) RequestPageFromDatasource(
 		),
 		web.WithLocalTimeZoneOffset(commonConfig.LocalTimeZoneOffset),
 	)
+
 	if parserErr != nil {
 		return framework.NewGetPageResponseError(
 			&framework.Error{

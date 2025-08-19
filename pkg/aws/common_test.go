@@ -110,6 +110,7 @@ func Mocker(stack *middleware.Stack) error {
 			getInputOptions,
 		), middleware.Before,
 	)
+
 	if err != nil {
 		return err
 	}

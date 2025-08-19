@@ -424,7 +424,6 @@ func TestGivenOpenLDAPWithMultipleUsers_WhenPagedGetPageIsCalled_ThenAllUsersAre
 	go func() {
 		main()
 	}()
-
 	time.Sleep(500 * time.Millisecond)
 
 	conn, err := grpc.Dial(fmt.Sprintf("localhost:%d", adapterPort), grpc.WithInsecure())
@@ -433,7 +432,6 @@ func TestGivenOpenLDAPWithMultipleUsers_WhenPagedGetPageIsCalled_ThenAllUsersAre
 	}
 
 	defer conn.Close()
-
 	client := api_adapter_v1.NewAdapterClient(conn)
 
 	ldapConfig := map[string]interface{}{
@@ -663,7 +661,6 @@ func TestGivenOpenLDAPWithGroupMembers_WhenGetGroupMemberPageIsCalled_ThenGroupD
 	go func() {
 		main()
 	}()
-
 	time.Sleep(500 * time.Millisecond)
 
 	conn, err := grpc.Dial(fmt.Sprintf("localhost:%d", adapterPort), grpc.WithInsecure())
@@ -672,7 +669,6 @@ func TestGivenOpenLDAPWithGroupMembers_WhenGetGroupMemberPageIsCalled_ThenGroupD
 	}
 
 	defer conn.Close()
-
 	client := api_adapter_v1.NewAdapterClient(conn)
 
 	ldapConfig := map[string]interface{}{

@@ -112,6 +112,7 @@ func (d *Datasource) getRESTPage(ctx context.Context, request *Request) (*Respon
 			httpResp *http.Response
 			listErr  *framework.Error
 		)
+
 		resourceIDs, nextCursor, httpResp, listErr = d.getResourceIDs(ctx, request)
 		if listErr != nil {
 			return nil, listErr
@@ -232,7 +233,6 @@ func (d *Datasource) getRESTPage(ctx context.Context, request *Request) (*Respon
 		objects, nextCursor, frameworkErr = parseCombinedAlertsResponse(body)
 	} else {
 		objects, frameworkErr = parseDetailedResponse(body)
-		// nextCursor is already set from getResourceIDs call above
 	}
 
 	if frameworkErr != nil {

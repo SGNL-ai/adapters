@@ -166,8 +166,8 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	}
 
 	rangeHeaderForData := fmt.Sprintf("bytes=%d-", startBytePos)
-
 	s3DataStreamOutput, err := handler.GetObjectStream(ctx, request.Bucket, objectKey, &rangeHeaderForData)
+
 	if err != nil {
 		return nil, customerror.UpdateError(&framework.Error{
 			Message: fmt.Sprintf("Failed to fetch entity from AWS S3: %v", err),
@@ -187,6 +187,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		d.MaxBytesToProcessPerPage,
 		d.MaxCSVRowSizeBytes,
 	)
+
 	if processErr != nil {
 		return nil, customerror.UpdateError(&framework.Error{
 			Message: fmt.Sprintf("Failed to fetch entity from AWS S3: %s, error: %v.", entityName, processErr),

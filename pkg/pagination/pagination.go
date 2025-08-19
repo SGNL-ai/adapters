@@ -244,8 +244,8 @@ func (c *CompositeCursor[T]) ParseOffsetValue() (int64, *framework.Error) {
 		return *v, nil
 	case *string:
 		offsetStr := *v
-
 		offsetInt, err := strconv.ParseInt(offsetStr, 10, 64)
+
 		if err != nil {
 			return 0, &framework.Error{
 				Message: fmt.Sprintf("unable to parse cursor: want valid number, got {%v}", *c.Cursor),
