@@ -885,6 +885,11 @@ func TestAdapterCombinedAlertsGetPage(t *testing.T) {
 							"composite_id": string("testcid1234567890123456789012345:ind:test3456789012345678901234567890:827307864815772732-20153-7052"),
 							"status":       string("closed"),
 						},
+						{
+							"aggregate_id": string("aggind:test5678901234567890123456789012:129419086057913179"),
+							"composite_id": string("testcid1234567890123456789012345:ind:test5678901234567890123456789012:129419086037994954-20155-7054"),
+							"status":       string("in_progress"),
+						},
 					},
 				},
 			},
@@ -916,6 +921,11 @@ func TestAdapterCombinedAlertsGetPage(t *testing.T) {
 							"aggregate_id": string("aggind:test4567890123456789012345678901:928418975946802068"),
 							"composite_id": string("testcid1234567890123456789012345:ind:test4567890123456789012345678901:928418975926883843-20154-7053"),
 							"status":       string("new"),
+						},
+						{
+							"aggregate_id": string("aggind:test6789012345678901234567890123:230530197169024290"),
+							"composite_id": string("testcid1234567890123456789012345:ind:test6789012345678901234567890123:230530197149106065-20156-7055"),
+							"status":       string("resolved"),
 						},
 					},
 				},

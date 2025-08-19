@@ -62,7 +62,7 @@ var (
 		Device:           {},
 		Detect:           {UseIntCursor: true},
 		EndpointIncident: {UseIntCursor: true},
-		Alerts:           {UseIntCursor: false},
+		Alerts:           {},
 	}
 )
 

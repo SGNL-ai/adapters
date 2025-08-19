@@ -67,17 +67,17 @@ type DetailedResourceRequestBody struct {
 	Identifiers []string `json:"ids"`
 }
 
+type DetailedResourceResponse struct {
+	Meta      MetaFields       `json:"meta"`
+	Resources []map[string]any `json:"resources"`
+	Errors    []ErrorItem      `json:"errors"`
+}
+
 type AlertsRequestBody struct {
 	Limit  int     `json:"limit"`
 	After  *string `json:"after,omitempty"`
 	Filter *string `json:"filter,omitempty"`
 	Sort   *string `json:"sort,omitempty"`
-}
-
-type DetailedResourceResponse struct {
-	Meta      MetaFields       `json:"meta"`
-	Resources []map[string]any `json:"resources"`
-	Errors    []ErrorItem      `json:"errors"`
 }
 
 type AlertsResponse struct {
@@ -95,45 +95,8 @@ type AlertsPagination struct {
 	Total int    `json:"total"`
 }
 
-func (d *Datasource) getRESTPage(ctx context.Context, request *Request) (*Response, *framework.Error) {
-	// Fetch all resourceIDs before fetching the detailed information, if applicable.
-	// For Alerts we have a combined API which doesn't require to fetch resource IDs separately.
-	var (
-		resourceIDs []string
-		nextCursor  *pagination.CompositeCursor[string]
-	)
-
-	if request.EntityExternalID != Alerts {
-		var (
-			httpResp *http.Response
-			listErr  *framework.Error
-		)
-
-		resourceIDs, nextCursor, httpResp, listErr = d.getResourceIDs(ctx, request)
-		if listErr != nil {
-			return nil, listErr
-		}
-
-		if httpResp != nil && httpResp.StatusCode != http.StatusOK {
-			return &Response{
-				StatusCode:       httpResp.StatusCode,
-				RetryAfterHeader: httpResp.Header.Get("Retry-After"),
-			}, nil
-		}
-
-		// 1 beyond the last page. See why in `parseListScrollResponse`
-		if request.EntityExternalID == Device && len(resourceIDs) == 0 && nextCursor == nil {
-			return &Response{
-				StatusCode: httpResp.StatusCode,
-			}, nil
-		}
-	}
-
-	// Use resourceIDs to fetch detailed information, if applicable.
-	var bodyBytes []byte
-
-	var marshalErr error
-
+// generateRequestBodyBytes creates the request body bytes based on the entity type and request parameters.
+func generateRequestBodyBytes(request *Request, resourceIDs []string) ([]byte, error) {
 	if request.EntityExternalID == Alerts {
 		var after *string
 		if request.RESTCursor != nil && request.RESTCursor.Cursor != nil {
@@ -145,14 +108,41 @@ func (d *Datasource) getRESTPage(ctx context.Context, request *Request) (*Respon
 			After:  after,
 			Filter: request.Filter,
 		}
-		bodyBytes, marshalErr = json.Marshal(reqBody)
-	} else {
-		reqBody := &DetailedResourceRequestBody{
-			Identifiers: resourceIDs,
-		}
-		bodyBytes, marshalErr = json.Marshal(reqBody)
+
+		return json.Marshal(reqBody)
 	}
 
+	reqBody := &DetailedResourceRequestBody{
+		Identifiers: resourceIDs,
+	}
+
+	return json.Marshal(reqBody)
+}
+
+func (d *Datasource) getRESTPage(ctx context.Context, request *Request) (*Response, *framework.Error) {
+	// Fetch all resourceIDs before fetching the detailed information, if applicable.
+	// For Alerts we have a combined API which doesn't require to fetch resource IDs separately.
+	resourceIDs, nextCursor, httpResp, listErr := d.getResourceIDs(ctx, request)
+	if listErr != nil {
+		return nil, listErr
+	}
+
+	if httpResp != nil && httpResp.StatusCode != http.StatusOK {
+		return &Response{
+			StatusCode:       httpResp.StatusCode,
+			RetryAfterHeader: httpResp.Header.Get("Retry-After"),
+		}, nil
+	}
+
+	// 1 beyond the last page. See why in `parseListScrollResponse`
+	if request.EntityExternalID == Device && len(resourceIDs) == 0 && nextCursor == nil {
+		return &Response{
+			StatusCode: httpResp.StatusCode,
+		}, nil
+	}
+
+	// Use resourceIDs to fetch detailed information, if applicable.
+	bodyBytes, marshalErr := generateRequestBodyBytes(request, resourceIDs)
 	if marshalErr != nil {
 		return nil, &framework.Error{
 			Message: fmt.Sprintf("Failed to marshal the request body: %v.", marshalErr),
@@ -242,6 +232,10 @@ func (d *Datasource) getResourceIDs(ctx context.Context, request *Request) (
 	*framework.Error,
 ) {
 	endpointInfo := EntityExternalIDToEndpoint[request.EntityExternalID]
+
+	if request.EntityExternalID == Alerts && endpointInfo.ListEndpoint == "" {
+		return []string{}, nil, nil, nil
+	}
 
 	url, urlErr := ConstructRESTEndpoint(request, endpointInfo.ListEndpoint)
 	if urlErr != nil {

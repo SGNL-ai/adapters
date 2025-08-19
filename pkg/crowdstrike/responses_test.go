@@ -2467,6 +2467,32 @@ var (
 				"timestamp": "2025-06-18T09:15:42.678Z",
 				"type": "ldt",
 				"updated_timestamp": "2025-06-18T09:45:12.123456789Z"
+			},
+			{
+				"agent_id": "test5678901234567890123456789012",
+				"aggregate_id": "aggind:test5678901234567890123456789012:129419086057913179",
+				"cid": "testcid1234567890123456789012345",
+				"composite_id": "testcid1234567890123456789012345:ind:test5678901234567890123456789012:129419086037994954-20155-7054",
+				"confidence": 85,
+				"created_timestamp": "2025-06-18T12:30:15.456789012Z",
+				"data_domains": ["Endpoint"],
+				"description": "Suspicious process execution pattern detected.",
+				"display_name": "SuspiciousExecution",
+				"falcon_host_link": "https://falcon.us-2.crowdstrike.com/activity-v2/detections/testcid1234567890123456789012345:ind:test5678901234567890123456789012:129419086037994954-20155-7054?_cid=testcid",
+				"id": "ind:test5678901234567890123456789012:129419086037994954-20155-7054",
+				"platform": "Windows",
+				"priority_value": 70,
+				"severity": 70,
+				"severity_name": "Medium",
+				"show_in_ui": true,
+				"status": "in_progress",
+				"tactic": "Execution",
+				"tactic_id": "TA0002",
+				"technique": "Command and Scripting Interpreter",
+				"technique_id": "T1059",
+				"timestamp": "2025-06-18T12:30:15.456Z",
+				"type": "ldt",
+				"updated_timestamp": "2025-06-18T13:15:22.789012345Z"
 			}
 		]
 	}`
@@ -2509,6 +2535,32 @@ var (
 				"timestamp": "2025-06-19T16:42:18.789Z",
 				"type": "ldt",
 				"updated_timestamp": "2025-06-19T17:01:22.456789123Z"
+			},
+			{
+				"agent_id": "test6789012345678901234567890123",
+				"aggregate_id": "aggind:test6789012345678901234567890123:230530197169024290",
+				"cid": "testcid1234567890123456789012345",
+				"composite_id": "testcid1234567890123456789012345:ind:test6789012345678901234567890123:230530197149106065-20156-7055",
+				"confidence": 75,
+				"created_timestamp": "2025-06-19T18:20:33.234567890Z",
+				"data_domains": ["Endpoint"],
+				"description": "Malicious network communication blocked by firewall.",
+				"display_name": "NetworkThreat",
+				"falcon_host_link": "https://falcon.us-2.crowdstrike.com/activity-v2/detections/testcid1234567890123456789012345:ind:test6789012345678901234567890123:230530197149106065-20156-7055?_cid=testcid",
+				"id": "ind:test6789012345678901234567890123:230530197149106065-20156-7055",
+				"platform": "macOS",
+				"priority_value": 60,
+				"severity": 60,
+				"severity_name": "Medium",
+				"show_in_ui": true,
+				"status": "resolved",
+				"tactic": "Command and Control",
+				"tactic_id": "TA0011",
+				"technique": "Application Layer Protocol",
+				"technique_id": "T1071",
+				"timestamp": "2025-06-19T18:20:33.234Z",
+				"type": "ldt",
+				"updated_timestamp": "2025-06-19T18:55:44.567890123Z"
 			}
 		]
 	}`
