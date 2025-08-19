@@ -538,6 +538,7 @@ func TestGitHubAdapter_Organization(t *testing.T) {
 			"next_cursor": "eyJjdXJzb3IiOiJleUpvWVhOT1pYaDBVR0ZuWlNJNlptRnNjMlVzSW1WdVpFTjFjbk52Y2lJNklsa3pWbmxqTWpsNVQyNVplVTl3UzNGUldFb3lZVmMxYTFRelNtNU5VVlU5SWl3aWIzSm5ZVzVwZW1GMGFXOXVUMlptYzJWMElqb3dMQ0pKYm01bGNsQmhaMlZKYm1adklqcHVkV3hzZlE9PSJ9"
 		}
 	}`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -761,6 +762,7 @@ func TestGitHubAdapter_OrganizationUser(t *testing.T) {
 			"next_cursor": "eyJjb2xsZWN0aW9uQ3Vyc29yIjoiZXlKb1lYTk9aWGgwVUdGblpTSTZabUZzYzJVc0ltVnVaRU4xY25OdmNpSTZJbGt6Vm5sak1qbDVUMjVaZVU5d1MzRlJXRW95WVZjMWExUXpTbTVOVVZVOUlpd2liM0puWVc1cGVtRjBhVzl1VDJabWMyVjBJam93TENKSmJtNWxjbEJoWjJWSmJtWnZJanB1ZFd4c2ZRPT0ifQ=="
 		}
 	}`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1024,6 +1026,7 @@ func TestGitHubAdapter_Repository(t *testing.T) {
 		}
 	}
 	`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1207,6 +1210,7 @@ func TestGitHubAdapter_User(t *testing.T) {
 			"next_cursor": "eyJjdXJzb3IiOiJleUpvWVhOT1pYaDBVR0ZuWlNJNlptRnNjMlVzSW1WdVpFTjFjbk52Y2lJNmJuVnNiQ3dpYjNKbllXNXBlbUYwYVc5dVQyWm1jMlYwSWpvd0xDSkpibTVsY2xCaFoyVkpibVp2SWpwN0ltaGhjMDVsZUhSUVlXZGxJanBtWVd4elpTd2laVzVrUTNWeWMyOXlJam9pV1ROV2VXTXlPWGxQYmxsNVQzQkZSU0lzSW05eVoyRnVhWHBoZEdsdmJrOW1abk5sZENJNk1Dd2lTVzV1WlhKUVlXZGxTVzVtYnlJNmJuVnNiSDE5In0="
 		}
 	}`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1750,6 +1754,7 @@ func TestGitHubAdapter_Team(t *testing.T) {
 			"next_cursor": "eyJjdXJzb3IiOiJleUpvWVhOT1pYaDBVR0ZuWlNJNlptRnNjMlVzSW1WdVpFTjFjbk52Y2lJNklsa3pWbmxqTWpsNVQyNVplVTl3UzNGUldFb3lZVmMxYTFRelNtNU5VVlU5SWl3aWIzSm5ZVzVwZW1GMGFXOXVUMlptYzJWMElqb3dMQ0pKYm01bGNsQmhaMlZKYm1adklqcHVkV3hzZlE9PSJ9"
 		}
 	}`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1933,6 +1938,7 @@ func TestGitHubAdapter_Collaborator(t *testing.T) {
 			"next_cursor": "eyJjdXJzb3IiOiJleUpvWVhOT1pYaDBVR0ZuWlNJNlptRnNjMlVzSW1WdVpFTjFjbk52Y2lJNmJuVnNiQ3dpYjNKbllXNXBlbUYwYVc5dVQyWm1jMlYwSWpvd0xDSkpibTVsY2xCaFoyVkpibVp2SWpwN0ltaGhjMDVsZUhSUVlXZGxJanBtWVd4elpTd2laVzVrUTNWeWMyOXlJanB1ZFd4c0xDSnZjbWRoYm1sNllYUnBiMjVQWm1aelpYUWlPakFzSWtsdWJtVnlVR0ZuWlVsdVptOGlPbnNpYUdGelRtVjRkRkJoWjJVaU9tWmhiSE5sTENKbGJtUkRkWEp6YjNJaU9pSlpNMVo1WXpJNWVVOXVXWGxQY0VWRklpd2liM0puWVc1cGVtRjBhVzl1VDJabWMyVjBJam93TENKSmJtNWxjbEJoWjJWSmJtWnZJanB1ZFd4c2ZYMTkifQ=="
 		}
 	}`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2229,6 +2235,7 @@ func TestGitHubAdapter_Label(t *testing.T) {
 			"next_cursor": "eyJjdXJzb3IiOiJleUpvWVhOT1pYaDBVR0ZuWlNJNlptRnNjMlVzSW1WdVpFTjFjbk52Y2lJNmJuVnNiQ3dpYjNKbllXNXBlbUYwYVc5dVQyWm1jMlYwSWpvd0xDSkpibTVsY2xCaFoyVkpibVp2SWpwN0ltaGhjMDVsZUhSUVlXZGxJanBtWVd4elpTd2laVzVrUTNWeWMyOXlJanB1ZFd4c0xDSnZjbWRoYm1sNllYUnBiMjVQWm1aelpYUWlPakFzSWtsdWJtVnlVR0ZuWlVsdVptOGlPbnNpYUdGelRtVjRkRkJoWjJVaU9tWmhiSE5sTENKbGJtUkRkWEp6YjNJaU9pSk9RU0lzSW05eVoyRnVhWHBoZEdsdmJrOW1abk5sZENJNk1Dd2lTVzV1WlhKUVlXZGxTVzVtYnlJNmJuVnNiSDE5ZlE9PSJ9"
 		}
 	}`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2364,6 +2371,7 @@ func TestGitHubAdapter_IssueLabel(t *testing.T) {
 			"next_cursor": "eyJjdXJzb3IiOiJleUpvWVhOT1pYaDBVR0ZuWlNJNlptRnNjMlVzSW1WdVpFTjFjbk52Y2lJNmJuVnNiQ3dpYjNKbllXNXBlbUYwYVc5dVQyWm1jMlYwSWpvd0xDSkpibTVsY2xCaFoyVkpibVp2SWpwN0ltaGhjMDVsZUhSUVlXZGxJanBtWVd4elpTd2laVzVrUTNWeWMyOXlJanB1ZFd4c0xDSnZjbWRoYm1sNllYUnBiMjVQWm1aelpYUWlPakFzSWtsdWJtVnlVR0ZuWlVsdVptOGlPbnNpYUdGelRtVjRkRkJoWjJVaU9tWmhiSE5sTENKbGJtUkRkWEp6YjNJaU9pSk5VU0lzSW05eVoyRnVhWHBoZEdsdmJrOW1abk5sZENJNk1Dd2lTVzV1WlhKUVlXZGxTVzVtYnlJNmJuVnNiSDE5ZlE9PSJ9"
 		}
 	}`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2499,6 +2507,7 @@ func TestGitHubAdapter_PullRequestLabel(t *testing.T) {
 			"next_cursor": "eyJjdXJzb3IiOiJleUpvWVhOT1pYaDBVR0ZuWlNJNlptRnNjMlVzSW1WdVpFTjFjbk52Y2lJNmJuVnNiQ3dpYjNKbllXNXBlbUYwYVc5dVQyWm1jMlYwSWpvd0xDSkpibTVsY2xCaFoyVkpibVp2SWpwN0ltaGhjMDVsZUhSUVlXZGxJanBtWVd4elpTd2laVzVrUTNWeWMyOXlJanB1ZFd4c0xDSnZjbWRoYm1sNllYUnBiMjVQWm1aelpYUWlPakFzSWtsdWJtVnlVR0ZuWlVsdVptOGlPbnNpYUdGelRtVjRkRkJoWjJVaU9tWmhiSE5sTENKbGJtUkRkWEp6YjNJaU9pSk5VU0lzSW05eVoyRnVhWHBoZEdsdmJrOW1abk5sZENJNk1Dd2lTVzV1WlhKUVlXZGxTVzVtYnlJNmJuVnNiSDE5ZlE9PSJ9"
 		}
 	}`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2721,6 +2730,7 @@ func TestGitHubAdapter_Issue(t *testing.T) {
 			"next_cursor": "eyJjdXJzb3IiOiJleUpvWVhOT1pYaDBVR0ZuWlNJNlptRnNjMlVzSW1WdVpFTjFjbk52Y2lJNmJuVnNiQ3dpYjNKbllXNXBlbUYwYVc5dVQyWm1jMlYwSWpvd0xDSkpibTVsY2xCaFoyVkpibVp2SWpwN0ltaGhjMDVsZUhSUVlXZGxJanBtWVd4elpTd2laVzVrUTNWeWMyOXlJam9pV1ROV2VXTXlPWGxQYmxsNVQzQkZRaUlzSW05eVoyRnVhWHBoZEdsdmJrOW1abk5sZENJNk1Dd2lTVzV1WlhKUVlXZGxTVzVtYnlJNmJuVnNiSDE5In0="
 		}
 	}`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2893,6 +2903,7 @@ func TestGitHubAdapter_IssueAssignee(t *testing.T) {
 			"next_cursor": "eyJjdXJzb3IiOiJleUpvWVhOT1pYaDBVR0ZuWlNJNlptRnNjMlVzSW1WdVpFTjFjbk52Y2lJNmJuVnNiQ3dpYjNKbllXNXBlbUYwYVc5dVQyWm1jMlYwSWpvd0xDSkpibTVsY2xCaFoyVkpibVp2SWpwN0ltaGhjMDVsZUhSUVlXZGxJanBtWVd4elpTd2laVzVrUTNWeWMyOXlJanB1ZFd4c0xDSnZjbWRoYm1sNllYUnBiMjVQWm1aelpYUWlPakFzSWtsdWJtVnlVR0ZuWlVsdVptOGlPbnNpYUdGelRtVjRkRkJoWjJVaU9tWmhiSE5sTENKbGJtUkRkWEp6YjNJaU9pSlpNMVo1WXpJNWVVOXVXWGxQY0VWRUlpd2liM0puWVc1cGVtRjBhVzl1VDJabWMyVjBJam93TENKSmJtNWxjbEJoWjJWSmJtWnZJanB1ZFd4c2ZYMTkifQ=="
 		}
 	}`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -3028,6 +3039,7 @@ func TestGitHubAdapter_IssueParticipant(t *testing.T) {
 			"next_cursor": "eyJjdXJzb3IiOiJleUpvWVhOT1pYaDBVR0ZuWlNJNlptRnNjMlVzSW1WdVpFTjFjbk52Y2lJNmJuVnNiQ3dpYjNKbllXNXBlbUYwYVc5dVQyWm1jMlYwSWpvd0xDSkpibTVsY2xCaFoyVkpibVp2SWpwN0ltaGhjMDVsZUhSUVlXZGxJanBtWVd4elpTd2laVzVrUTNWeWMyOXlJanB1ZFd4c0xDSnZjbWRoYm1sNllYUnBiMjVQWm1aelpYUWlPakFzSWtsdWJtVnlVR0ZuWlVsdVptOGlPbnNpYUdGelRtVjRkRkJoWjJVaU9tWmhiSE5sTENKbGJtUkRkWEp6YjNJaU9pSlpNMVo1WXpJNWVVOXVXWGxQY0VWRUlpd2liM0puWVc1cGVtRjBhVzl1VDJabWMyVjBJam93TENKSmJtNWxjbEJoWjJWSmJtWnZJanB1ZFd4c2ZYMTkifQ=="
 		}
 	}`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -3208,6 +3220,7 @@ func TestGitHubAdapter_PullRequest(t *testing.T) {
 			"next_cursor": "eyJjdXJzb3IiOiJleUpvWVhOT1pYaDBVR0ZuWlNJNlptRnNjMlVzSW1WdVpFTjFjbk52Y2lJNmJuVnNiQ3dpYjNKbllXNXBlbUYwYVc5dVQyWm1jMlYwSWpvd0xDSkpibTVsY2xCaFoyVkpibVp2SWpwN0ltaGhjMDVsZUhSUVlXZGxJanBtWVd4elpTd2laVzVrUTNWeWMyOXlJanB1ZFd4c0xDSnZjbWRoYm1sNllYUnBiMjVQWm1aelpYUWlPakFzSWtsdWJtVnlVR0ZuWlVsdVptOGlPbnNpYUdGelRtVjRkRkJoWjJVaU9tWmhiSE5sTENKbGJtUkRkWEp6YjNJaU9pSlpNMVo1WXpJNWVVOXVXWGxQY0VWQ0lpd2liM0puWVc1cGVtRjBhVzl1VDJabWMyVjBJam93TENKSmJtNWxjbEJoWjJWSmJtWnZJanB1ZFd4c2ZYMTkifQ=="
 		}
 	}`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -3343,6 +3356,7 @@ func TestGitHubAdapter_PullRequestChangedFile(t *testing.T) {
 			"next_cursor": "eyJjdXJzb3IiOiJleUpvWVhOT1pYaDBVR0ZuWlNJNlptRnNjMlVzSW1WdVpFTjFjbk52Y2lJNmJuVnNiQ3dpYjNKbllXNXBlbUYwYVc5dVQyWm1jMlYwSWpvd0xDSkpibTVsY2xCaFoyVkpibVp2SWpwN0ltaGhjMDVsZUhSUVlXZGxJanBtWVd4elpTd2laVzVrUTNWeWMyOXlJam9pV1ROV2VXTXlPWGxQYmxsNVQzQkZRaUlzSW05eVoyRnVhWHBoZEdsdmJrOW1abk5sZENJNk1Dd2lTVzV1WlhKUVlXZGxTVzVtYnlJNmJuVnNiSDE5In0="
 		}
 	}`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -3478,6 +3492,7 @@ func TestGitHubAdapter_PullRequestAssignee(t *testing.T) {
 			"next_cursor": "eyJjdXJzb3IiOiJleUpvWVhOT1pYaDBVR0ZuWlNJNlptRnNjMlVzSW1WdVpFTjFjbk52Y2lJNmJuVnNiQ3dpYjNKbllXNXBlbUYwYVc5dVQyWm1jMlYwSWpvd0xDSkpibTVsY2xCaFoyVkpibVp2SWpwN0ltaGhjMDVsZUhSUVlXZGxJanBtWVd4elpTd2laVzVrUTNWeWMyOXlJanB1ZFd4c0xDSnZjbWRoYm1sNllYUnBiMjVQWm1aelpYUWlPakFzSWtsdWJtVnlVR0ZuWlVsdVptOGlPbnNpYUdGelRtVjRkRkJoWjJVaU9tWmhiSE5sTENKbGJtUkRkWEp6YjNJaU9pSlpNMVo1WXpJNWVVOXVXWGxQY0VWQ0lpd2liM0puWVc1cGVtRjBhVzl1VDJabWMyVjBJam93TENKSmJtNWxjbEJoWjJWSmJtWnZJanB1ZFd4c2ZYMTkifQ=="
 		}
 	}`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -3613,6 +3628,7 @@ func TestGitHubAdapter_PullRequestParticipant(t *testing.T) {
 			"next_cursor": "eyJjdXJzb3IiOiJleUpvWVhOT1pYaDBVR0ZuWlNJNlptRnNjMlVzSW1WdVpFTjFjbk52Y2lJNmJuVnNiQ3dpYjNKbllXNXBlbUYwYVc5dVQyWm1jMlYwSWpvd0xDSkpibTVsY2xCaFoyVkpibVp2SWpwN0ltaGhjMDVsZUhSUVlXZGxJanBtWVd4elpTd2laVzVrUTNWeWMyOXlJanB1ZFd4c0xDSnZjbWRoYm1sNllYUnBiMjVQWm1aelpYUWlPakFzSWtsdWJtVnlVR0ZuWlVsdVptOGlPbnNpYUdGelRtVjRkRkJoWjJVaU9tWmhiSE5sTENKbGJtUkRkWEp6YjNJaU9pSlpNMVo1WXpJNWVVOXVXWGxQY0VWQ0lpd2liM0puWVc1cGVtRjBhVzl1VDJabWMyVjBJam93TENKSmJtNWxjbEJoWjJWSmJtWnZJanB1ZFd4c2ZYMTkifQ=="
 		}
 	}`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -3793,6 +3809,7 @@ func TestGitHubAdapter_PullRequestCommit(t *testing.T) {
 			"next_cursor": "eyJjdXJzb3IiOiJleUpvWVhOT1pYaDBVR0ZuWlNJNlptRnNjMlVzSW1WdVpFTjFjbk52Y2lJNmJuVnNiQ3dpYjNKbllXNXBlbUYwYVc5dVQyWm1jMlYwSWpvd0xDSkpibTVsY2xCaFoyVkpibVp2SWpwN0ltaGhjMDVsZUhSUVlXZGxJanBtWVd4elpTd2laVzVrUTNWeWMyOXlJanB1ZFd4c0xDSnZjbWRoYm1sNllYUnBiMjVQWm1aelpYUWlPakFzSWtsdWJtVnlVR0ZuWlVsdVptOGlPbnNpYUdGelRtVjRkRkJoWjJVaU9tWmhiSE5sTENKbGJtUkRkWEp6YjNJaU9pSlpNMVo1WXpJNWVVOXVXWGxQY0VWQ0lpd2liM0puWVc1cGVtRjBhVzl1VDJabWMyVjBJam93TENKSmJtNWxjbEJoWjJWSmJtWnZJanB1ZFd4c2ZYMTkifQ=="
 		}
 	}`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -4015,6 +4032,7 @@ func TestGitHubAdapter_PullRequestReview(t *testing.T) {
 			"next_cursor": "eyJjdXJzb3IiOiJleUpvWVhOT1pYaDBVR0ZuWlNJNlptRnNjMlVzSW1WdVpFTjFjbk52Y2lJNmJuVnNiQ3dpYjNKbllXNXBlbUYwYVc5dVQyWm1jMlYwSWpvd0xDSkpibTVsY2xCaFoyVkpibVp2SWpwN0ltaGhjMDVsZUhSUVlXZGxJanBtWVd4elpTd2laVzVrUTNWeWMyOXlJanB1ZFd4c0xDSnZjbWRoYm1sNllYUnBiMjVQWm1aelpYUWlPakFzSWtsdWJtVnlVR0ZuWlVsdVptOGlPbnNpYUdGelRtVjRkRkJoWjJVaU9tWmhiSE5sTENKbGJtUkRkWEp6YjNJaU9pSlpNMVo1WXpJNWVVOXVXWGxQY0VWRUlpd2liM0puWVc1cGVtRjBhVzl1VDJabWMyVjBJam93TENKSmJtNWxjbEJoWjJWSmJtWnZJanB1ZFd4c2ZYMTkifQ=="
 		}
 	}`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -4252,6 +4270,7 @@ func TestGitHubAdapter_Repository_Given_Organizations(t *testing.T) {
 		}
 	}
 	`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -4703,6 +4722,7 @@ func TestGitHubAdapter_Team_Given_Organizations(t *testing.T) {
 			}
 		}
 	`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -4824,6 +4844,7 @@ func TestGitHubAdapter_PullRequestLabel_Given_Organizations(t *testing.T) {
 			"nextCursor":"eyJjdXJzb3IiOiJleUpvWVhOT1pYaDBVR0ZuWlNJNlptRnNjMlVzSW1WdVpFTjFjbk52Y2lJNklsa3pWbmxqTWpsNVQyNVplVTl3U0U5T1QyaG9OVkU5UFNJc0ltOXlaMkZ1YVhwaGRHbHZiazltWm5ObGRDSTZNQ3dpU1c1dVpYSlFZV2RsU1c1bWJ5STZiblZzYkgwPSJ9"
 		}
 	}`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -4979,6 +5000,7 @@ func TestGitHubAdapter_User_With_Organizations(t *testing.T) {
 			}
 		}`,
 	), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -5134,6 +5156,7 @@ func TestGitHubAdapter_Collaborator_With_Organizations(t *testing.T) {
 			}
 		}
 	`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -5252,6 +5275,7 @@ func TestGitHubAdapter_Label_With_Organizations(t *testing.T) {
 				"nextCursor":"eyJjdXJzb3IiOiJleUpvWVhOT1pYaDBVR0ZuWlNJNlptRnNjMlVzSW1WdVpFTjFjbk52Y2lJNklsa3pWbmxqTWpsNVQyNVplVTl3U0U5T1QyaG9OVkU5UFNJc0ltOXlaMkZ1YVhwaGRHbHZiazltWm5ObGRDSTZNQ3dpU1c1dVpYSlFZV2RsU1c1bWJ5STZiblZzYkgwPSJ9"
 			}
 		}`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -5376,6 +5400,7 @@ func TestGitHubAdapter_Issue_With_Organizations(t *testing.T) {
 				"nextCursor":"eyJjdXJzb3IiOiJleUpvWVhOT1pYaDBVR0ZuWlNJNlptRnNjMlVzSW1WdVpFTjFjbk52Y2lJNklsa3pWbmxqTWpsNVQyNVplVTl3U0U5TVRGQnZaR2M5UFNJc0ltOXlaMkZ1YVhwaGRHbHZiazltWm5ObGRDSTZNQ3dpU1c1dVpYSlFZV2RsU1c1bWJ5STZiblZzYkgwPSJ9"
 			}
 		}`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -5486,6 +5511,7 @@ func TestGitHubAdapter_IssueLabel_With_Organizations(t *testing.T) {
 				"nextCursor":"eyJjdXJzb3IiOiJleUpvWVhOT1pYaDBVR0ZuWlNJNlptRnNjMlVzSW1WdVpFTjFjbk52Y2lJNklsa3pWbmxqTWpsNVQyNVplVTl3U0U5T1QyaG9OVkU5UFNJc0ltOXlaMkZ1YVhwaGRHbHZiazltWm5ObGRDSTZNQ3dpU1c1dVpYSlFZV2RsU1c1bWJ5STZiblZzYkgwPSJ9"
 			}
 		}`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -5617,6 +5643,7 @@ func TestGitHubAdapter_PullRequest_With_Organizations(t *testing.T) {
 				"nextCursor":"eyJjdXJzb3IiOiJleUpvWVhOT1pYaDBVR0ZuWlNJNlptRnNjMlVzSW1WdVpFTjFjbk52Y2lJNmJuVnNiQ3dpYjNKbllXNXBlbUYwYVc5dVQyWm1jMlYwSWpvd0xDSkpibTVsY2xCaFoyVkpibVp2SWpwN0ltaGhjMDVsZUhSUVlXZGxJanBtWVd4elpTd2laVzVrUTNWeWMyOXlJam9pV1ROV2VXTXlPWGxQYmxsNVQzQklUMmRtZUZWM1VUMDlJaXdpYjNKbllXNXBlbUYwYVc5dVQyWm1jMlYwSWpvd0xDSkpibTVsY2xCaFoyVkpibVp2SWpwdWRXeHNmWDA9In0="
 			}
 		}`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -5727,6 +5754,7 @@ func TestGitHubAdapter_PullRequestChangedFile_With_Organizations(t *testing.T) {
 				"nextCursor":"eyJjdXJzb3IiOiJleUpvWVhOT1pYaDBVR0ZuWlNJNlptRnNjMlVzSW1WdVpFTjFjbk52Y2lJNmJuVnNiQ3dpYjNKbllXNXBlbUYwYVc5dVQyWm1jMlYwSWpvd0xDSkpibTVsY2xCaFoyVkpibVp2SWpwN0ltaGhjMDVsZUhSUVlXZGxJanBtWVd4elpTd2laVzVrUTNWeWMyOXlJam9pV1ROV2VXTXlPWGxQYmxsNVQzQklUMmRtZUZWM1VUMDlJaXdpYjNKbllXNXBlbUYwYVc5dVQyWm1jMlYwSWpvd0xDSkpibTVsY2xCaFoyVkpibVp2SWpwdWRXeHNmWDA9In0="
 			}
 		}`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -5837,6 +5865,7 @@ func TestGitHubAdapter_PullRequestAssignee_With_Organizations(t *testing.T) {
 				"nextCursor":"eyJjdXJzb3IiOiJleUpvWVhOT1pYaDBVR0ZuWlNJNlptRnNjMlVzSW1WdVpFTjFjbk52Y2lJNmJuVnNiQ3dpYjNKbllXNXBlbUYwYVc5dVQyWm1jMlYwSWpvd0xDSkpibTVsY2xCaFoyVkpibVp2SWpwN0ltaGhjMDVsZUhSUVlXZGxJanBtWVd4elpTd2laVzVrUTNWeWMyOXlJam9pV1ROV2VXTXlPWGxQYmxsNVQzQklUMmRtZUZWM1VUMDlJaXdpYjNKbllXNXBlbUYwYVc5dVQyWm1jMlYwSWpvd0xDSkpibTVsY2xCaFoyVkpibVp2SWpwdWRXeHNmWDA9In0="
 			}
 		}`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -5947,6 +5976,7 @@ func TestGitHubAdapter_PullRequestParticipant_With_Organizations(t *testing.T) {
 				"nextCursor":"eyJjdXJzb3IiOiJleUpvWVhOT1pYaDBVR0ZuWlNJNlptRnNjMlVzSW1WdVpFTjFjbk52Y2lJNmJuVnNiQ3dpYjNKbllXNXBlbUYwYVc5dVQyWm1jMlYwSWpvd0xDSkpibTVsY2xCaFoyVkpibVp2SWpwN0ltaGhjMDVsZUhSUVlXZGxJanBtWVd4elpTd2laVzVrUTNWeWMyOXlJam9pV1ROV2VXTXlPWGxQYmxsNVQzQklUMmRtZUZWM1VUMDlJaXdpYjNKbllXNXBlbUYwYVc5dVQyWm1jMlYwSWpvd0xDSkpibTVsY2xCaFoyVkpibVp2SWpwdWRXeHNmWDA9In0="
 			}
 		}`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -6078,6 +6108,7 @@ func TestGitHubAdapter_PullRequestCommit_With_Organizations(t *testing.T) {
 				"nextCursor":"eyJjdXJzb3IiOiJleUpvWVhOT1pYaDBVR0ZuWlNJNlptRnNjMlVzSW1WdVpFTjFjbk52Y2lJNmJuVnNiQ3dpYjNKbllXNXBlbUYwYVc5dVQyWm1jMlYwSWpvd0xDSkpibTVsY2xCaFoyVkpibVp2SWpwN0ltaGhjMDVsZUhSUVlXZGxJanBtWVd4elpTd2laVzVrUTNWeWMyOXlJam9pV1ROV2VXTXlPWGxQYmxsNVQzQklUMmRtZUZWM1VUMDlJaXdpYjNKbllXNXBlbUYwYVc5dVQyWm1jMlYwSWpvd0xDSkpibTVsY2xCaFoyVkpibVp2SWpwdWRXeHNmWDA9In0="
 			}
 		}`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -6190,6 +6221,7 @@ func TestGitHubAdapter_PullRequestReview_With_Organizations(t *testing.T) {
 				"nextCursor":"eyJjdXJzb3IiOiJleUpvWVhOT1pYaDBVR0ZuWlNJNlptRnNjMlVzSW1WdVpFTjFjbk52Y2lJNmJuVnNiQ3dpYjNKbllXNXBlbUYwYVc5dVQyWm1jMlYwSWpvd0xDSkpibTVsY2xCaFoyVkpibVp2SWpwN0ltaGhjMDVsZUhSUVlXZGxJanBtWVd4elpTd2laVzVrUTNWeWMyOXlJam9pV1ROV2VXTXlPWGxQYmxsNVQzQklUMmRtZUZWM1VUMDlJaXdpYjNKbllXNXBlbUYwYVc5dVQyWm1jMlYwSWpvd0xDSkpibTVsY2xCaFoyVkpibVp2SWpwdWRXeHNmWDA9In0="
 			}
 		}`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -6306,6 +6338,7 @@ func TestGitHubAdapter_IssueAssignee_With_Organizations(t *testing.T) {
 			]
 		}
 	}`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -6424,6 +6457,7 @@ func TestGitHubAdapter_IssueParticipant_With_Organizations(t *testing.T) {
 			}
 		}
 	`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -6761,6 +6795,7 @@ func TestGitHubAdapter_Organization_When_Organization_given(t *testing.T) {
 				"nextCursor":""
 			}
 		}`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -6892,6 +6927,7 @@ func TestGitHubAdapter_OrganizationUser_When_Organization_given(t *testing.T) {
 				"nextCursor":"eyJjdXJzb3IiOiJleUpvWVhOT1pYaDBVR0ZuWlNJNlptRnNjMlVzSW1WdVpFTjFjbk52Y2lJNklsa3pWbmxqTWpsNVQyNVplVTl3U0U5Q2QwOWtSSGM5UFNJc0ltOXlaMkZ1YVhwaGRHbHZiazltWm5ObGRDSTZNQ3dpU1c1dVpYSlFZV2RsU1c1bWJ5STZiblZzYkgwPSJ9"
 			}
 		}`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}

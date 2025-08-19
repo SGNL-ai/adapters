@@ -57,6 +57,10 @@ linters:
       - linters:
           - wsl_v5
         path: (.+)_test.go
+      - linters:
+          - revive
+        path: smoketests/common/
+        text: "var-naming: avoid meaningless package names"
     paths:
       - third_party$
       - builtin$

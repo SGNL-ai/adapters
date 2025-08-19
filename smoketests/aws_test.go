@@ -192,6 +192,7 @@ func TestAWSAdapter_User(t *testing.T) {
 		}
 	}
 	`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -382,6 +383,7 @@ func TestAWSAdapter_Group(t *testing.T) {
 		}
 	}
 	`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -625,6 +627,7 @@ func TestAWSAdapter_Role(t *testing.T) {
 		}
 	}
 	`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -914,6 +917,7 @@ func TestAWSAdapter_Policy(t *testing.T) {
 			}
 		}
 		`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1080,6 +1084,7 @@ func TestAWSAdapter_IdentityProvider(t *testing.T) {
 			}
 	}
 		`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1196,6 +1201,7 @@ func TestAWSAdapter_GroupPolicy(t *testing.T) {
 		}
 	}
 	`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1312,6 +1318,7 @@ func TestAWSAdapter_RolePolicy(t *testing.T) {
 		}
 	}
 	`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1428,6 +1435,7 @@ func TestAWSAdapter_UserPolicy(t *testing.T) {
 		}
 	}
 	`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1544,6 +1552,7 @@ func TestAWSAdapter_GroupMember(t *testing.T) {
 		}
 	}
 	`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1734,6 +1743,7 @@ func TestAWSAdapterWithMultipleAccounts_User(t *testing.T) {
 		}
 	}
 	`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1834,6 +1844,7 @@ func TestAWSAdapterWithMultipleAccounts_Group(t *testing.T) {
 		}
 	}
 	`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2072,6 +2083,7 @@ func TestAWSAdapterWithMultipleAccounts_Role(t *testing.T) {
 		}
 	}
 	`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2369,6 +2381,7 @@ func TestAWSAdapterWithMultipleAccounts_Policy(t *testing.T) {
 			}
 		}
 		`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2455,6 +2468,7 @@ func TestAWSAdapterWithMultipleAccounts_GroupPolicy(t *testing.T) {
 		}
 	}
 	`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2571,6 +2585,7 @@ func TestAWSAdapterWithMultipleAccounts_RolePolicy(t *testing.T) {
 		}
 	}
 	`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2687,6 +2702,7 @@ func TestAWSAdapterWithMultipleAccounts_UserPolicy(t *testing.T) {
 		}
 	}
 	`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -2773,6 +2789,7 @@ func TestAWSAdapterWithMultipleAccounts_GroupMember(t *testing.T) {
 		}
 	}
 	`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}

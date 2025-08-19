@@ -229,6 +229,7 @@ func TestCrowdStrikeUser(t *testing.T) {
         "nextCursor": "eyJjdXJzb3IiOiJleUp5YVhOclUyTnZjbVVpT2pBdU5qUTFOVGswTnpjMU5UQTJNRFE0TkN3aVgybGtJam9pT0ROaE5EbGxaakV0TVRkaE55MDBabUUwTFdJNU1HWXRPVEUwTW1SbVlUUTVOVGMzSW4wPSJ9"
     }
 }`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -456,6 +457,7 @@ func TestCrowdStrikeEndpoint(t *testing.T) {
         "nextCursor": "eyJjdXJzb3IiOiJleUp5YVhOclUyTnZjbVVpT2pBdU5EYzVNaXdpWDJsa0lqb2lPRGxpWlRRM1l6TXRaalV4WWkwME9HRm1MVGc0TkdFdFpXTmlNREpsWkRBNE1EZGhJbjA9In0="
     }
 }`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -683,6 +685,7 @@ func TestCrowdStrikeIncident(t *testing.T) {
         "nextCursor": "eyJjdXJzb3IiOiJleUpsYm1SVWFXMWxJanA3SWlSa1lYUmxJam9pTWpBeU5DMHdPUzB5TUZRd01UbzFOVG94TUM0eU56UmFJbjBzSW5ObGNYVmxibU5sU1dRaU9qRTFmUT09In0="
     }
 }`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -788,6 +791,7 @@ func TestCrowdStrikeEndpointIncident(t *testing.T) {
         "nextCursor": "eyJjdXJzb3IiOiIxIn0="
     }
 }`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -921,6 +925,7 @@ func TestCrowdStrikeDevice(t *testing.T) {
         "nextCursor": "eyJjdXJzb3IiOiJGR2x1WTJ4MVpHVmZZMjl1ZEdWNGRGOTFkV2xrRG5GMVpYSjVWR2hsYmtabGRHTm9BaFp2YmtreFRUVnRhVlEzVTBZMVNteDBSbU4wYzNsbkFBQUFBQ1o4MFNNV2FrNVNkR3B2V2xsVVIyRlhja3N5Um10U1pHRXRkeFozY1dsNFFuRkRTRkZOWVRNMVkycDVSbkJNYmxOUkFBQUFBQ2JXOTlvV1Mzb3RjRGx2VFRsVVVrTk9hMWhtTjFaWlVWTkZRUT09In0="
     }
 }`), wantResp)
+
 	if err != nil {
 		t.Fatal(err)
 	}
