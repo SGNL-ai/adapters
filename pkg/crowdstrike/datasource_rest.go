@@ -67,11 +67,7 @@ type DetailedResourceRequestBody struct {
 	Identifiers []string `json:"ids"`
 }
 
-type DetailedAlertsRequestBody struct {
-	CompositeIDs []string `json:"composite_ids"`
-}
-
-type CombinedAlertsRequestBody struct {
+type AlertsRequestBody struct {
 	Limit  int     `json:"limit"`
 	After  *string `json:"after,omitempty"`
 	Filter *string `json:"filter,omitempty"`
@@ -84,17 +80,17 @@ type DetailedResourceResponse struct {
 	Errors    []ErrorItem      `json:"errors"`
 }
 
-type CombinedAlertsResponse struct {
-	Meta      CombinedAlertsMeta `json:"meta"`
-	Resources []map[string]any   `json:"resources"`
-	Errors    []ErrorItem        `json:"errors"`
+type AlertsResponse struct {
+	Meta      AlertsMeta       `json:"meta"`
+	Resources []map[string]any `json:"resources"`
+	Errors    []ErrorItem      `json:"errors"`
 }
 
-type CombinedAlertsMeta struct {
-	Pagination CombinedAlertsPagination `json:"pagination"`
+type AlertsMeta struct {
+	Pagination AlertsPagination `json:"pagination"`
 }
 
-type CombinedAlertsPagination struct {
+type AlertsPagination struct {
 	After string `json:"after"`
 	Total int    `json:"total"`
 }
@@ -107,7 +103,7 @@ func (d *Datasource) getRESTPage(ctx context.Context, request *Request) (*Respon
 		nextCursor  *pagination.CompositeCursor[string]
 	)
 
-	if request.EntityExternalID != CombinedAlerts {
+	if request.EntityExternalID != Alerts {
 		var (
 			httpResp *http.Response
 			listErr  *framework.Error
@@ -138,25 +134,19 @@ func (d *Datasource) getRESTPage(ctx context.Context, request *Request) (*Respon
 
 	var marshalErr error
 
-	switch request.EntityExternalID {
-	case CombinedAlerts:
+	if request.EntityExternalID == Alerts {
 		var after *string
 		if request.RESTCursor != nil && request.RESTCursor.Cursor != nil {
 			after = request.RESTCursor.Cursor
 		}
 
-		reqBody := &CombinedAlertsRequestBody{
+		reqBody := &AlertsRequestBody{
 			Limit:  int(request.PageSize),
 			After:  after,
 			Filter: request.Filter,
 		}
 		bodyBytes, marshalErr = json.Marshal(reqBody)
-	case Alerts:
-		reqBody := &DetailedAlertsRequestBody{
-			CompositeIDs: resourceIDs,
-		}
-		bodyBytes, marshalErr = json.Marshal(reqBody)
-	default:
+	} else {
 		reqBody := &DetailedResourceRequestBody{
 			Identifiers: resourceIDs,
 		}
@@ -229,8 +219,8 @@ func (d *Datasource) getRESTPage(ctx context.Context, request *Request) (*Respon
 		frameworkErr *framework.Error
 	)
 
-	if request.EntityExternalID == CombinedAlerts {
-		objects, nextCursor, frameworkErr = parseCombinedAlertsResponse(body)
+	if request.EntityExternalID == Alerts {
+		objects, nextCursor, frameworkErr = parseAlertsResponse(body)
 	} else {
 		objects, frameworkErr = parseDetailedResponse(body)
 	}
@@ -464,17 +454,17 @@ func parseDetailedResponse(body []byte) ([]map[string]any, *framework.Error) {
 	return data.Resources, nil
 }
 
-// parseCombinedAlertsResponse parses the response from the combined alerts API endpoint.
-func parseCombinedAlertsResponse(body []byte) (
+// parseAlertsResponse parses the response from the alerts API endpoint.
+func parseAlertsResponse(body []byte) (
 	objects []map[string]any,
 	nextCursor *pagination.CompositeCursor[string],
 	err *framework.Error,
 ) {
-	var data *CombinedAlertsResponse
+	var data *AlertsResponse
 
 	if unmarshalErr := json.Unmarshal(body, &data); unmarshalErr != nil || data == nil {
 		return nil, nil, &framework.Error{
-			Message: fmt.Sprintf("Failed to unmarshal the combined alerts response: %v.", unmarshalErr),
+			Message: fmt.Sprintf("Failed to unmarshal the alerts response: %v.", unmarshalErr),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		}
 	}

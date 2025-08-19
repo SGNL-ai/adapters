@@ -236,25 +236,6 @@ func PopulateAlertsEntityConfig() *framework.EntityConfig {
 				Type:       framework.AttributeTypeString,
 				List:       false,
 			},
-		},
-	}
-}
-
-func PopulateCombinedAlertsEntityConfig() *framework.EntityConfig {
-	return &framework.EntityConfig{
-		ExternalId: crowdstrike.CombinedAlerts,
-		Attributes: []*framework.AttributeConfig{
-			{
-				ExternalId: "composite_id",
-				Type:       framework.AttributeTypeString,
-				List:       false,
-				UniqueId:   true,
-			},
-			{
-				ExternalId: "aggregate_id",
-				Type:       framework.AttributeTypeString,
-				List:       false,
-			},
 			{
 				ExternalId: "status",
 				Type:       framework.AttributeTypeString,
@@ -373,26 +354,6 @@ var TestRESTServerHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http
 	// Page 999 mimics a specialized error from CRWD REST APIs
 	case "/detects/entities/summaries/GET/v1?limit=2&offset=999":
 		w.Write([]byte(DetectResponseSpecializedErr))
-
-	// ************************ List alerts ************************
-	case "/alerts/queries/alerts/v2?limit=2":
-		w.Write([]byte(AlertListResponseFirstPage))
-
-	case "/alerts/queries/alerts/v2?limit=2&offset=2":
-		w.Write([]byte(AlertListResponseMiddlePage))
-
-	case "/alerts/queries/alerts/v2?limit=2&offset=4":
-		w.Write([]byte(AlertListResponseLastPage))
-
-	// ************************ Detailed alerts ************************
-	case "/alerts/entities/alerts/v2?limit=2":
-		w.Write([]byte(AlertDetailedResponseFirstPage))
-
-	case "/alerts/entities/alerts/v2?limit=2&offset=2":
-		w.Write([]byte(AlertDetailedResponseMiddlePage))
-
-	case "/alerts/entities/alerts/v2?limit=2&offset=4":
-		w.Write([]byte(AlertDetailedResponseLastPage))
 
 	// ************************ Combined alerts ************************
 	case "/alerts/combined/alerts/v1?limit=2":

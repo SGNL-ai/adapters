@@ -11,7 +11,6 @@ import (
 var (
 	SupportedAPIVersions = map[string]struct{}{
 		"v1": {},
-		"v2": {},
 	}
 )
 

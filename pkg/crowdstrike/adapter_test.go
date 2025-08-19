@@ -813,111 +813,6 @@ func TestAdapterDetectionGetPage(t *testing.T) {
 		})
 	}
 }
-func TestAdapterAlertsGetPage(t *testing.T) {
-	server := httptest.NewTLSServer(TestRESTServerHandler)
-	adapter := crowdstrike_adapter.NewAdapter(&crowdstrike_adapter.Datasource{
-		Client: server.Client(),
-	})
-
-	tests := map[string]struct {
-		request            *framework.Request[crowdstrike_adapter.Config]
-		inputRequestCursor *pagination.CompositeCursor[string]
-		wantResponse       framework.Response
-		wantCursor         *pagination.CompositeCursor[string]
-	}{
-		"first_page": {
-			request: &framework.Request[crowdstrike_adapter.Config]{
-				Address: server.URL,
-				Auth: &framework.DatasourceAuthCredentials{
-					HTTPAuthorization: "Bearer Testtoken",
-				},
-				Config: &crowdstrike_adapter.Config{
-					APIVersion: "v2",
-					Archived:   false,
-					Enabled:    true,
-				},
-				Entity:   *PopulateAlertsEntityConfig(),
-				PageSize: 2,
-			},
-			wantResponse: framework.Response{
-				Success: &framework.Page{
-					Objects: []framework.Object{
-						{
-							"composite_id": string("1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7086C"),
-							"aggregate_id": string("aggind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7086C"),
-						},
-						{
-							"composite_id": string("1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7087D"),
-							"aggregate_id": string("aggind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7087D"),
-						},
-					},
-					NextCursor: "eyJjdXJzb3IiOjJ9",
-				},
-			},
-			wantCursor: &pagination.CompositeCursor[string]{
-				Cursor: testutil.GenPtr("2"),
-			},
-		},
-		"last_page": {
-			request: &framework.Request[crowdstrike_adapter.Config]{
-				Address: server.URL,
-				Auth: &framework.DatasourceAuthCredentials{
-					HTTPAuthorization: "Bearer Testtoken",
-				},
-				Config: &crowdstrike_adapter.Config{
-					APIVersion: "v2",
-					Archived:   false,
-					Enabled:    true,
-				},
-				Entity:   *PopulateAlertsEntityConfig(),
-				PageSize: 2,
-			},
-			inputRequestCursor: &pagination.CompositeCursor[string]{
-				Cursor: testutil.GenPtr("4"),
-			},
-			wantResponse: framework.Response{
-				Success: &framework.Page{
-					Objects: []framework.Object{
-						{
-							"composite_id": string("1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7090A"),
-							"aggregate_id": string("aggind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7090A"),
-						},
-						{
-							"composite_id": string("1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7091B"),
-							"aggregate_id": string("aggind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7091B"),
-						},
-					},
-				},
-			},
-		},
-	}
-
-	for name, tt := range tests {
-		t.Run(name, func(t *testing.T) {
-			if tt.inputRequestCursor != nil {
-				encodedCursor, err := pagination.MarshalCursor(tt.inputRequestCursor)
-				if err != nil {
-					t.Error(err)
-				}
-
-				tt.request.Cursor = encodedCursor
-			}
-
-			gotResponse := adapter.GetPage(context.Background(), tt.request)
-			if tt.wantResponse.Success != nil && gotResponse.Success != nil {
-				if diff := cmp.Diff(tt.wantResponse.Success.Objects, gotResponse.Success.Objects); diff != "" {
-					t.Errorf("Response mismatch (-want +got):\n%s", diff)
-				}
-			} else if tt.wantResponse.Success != nil || gotResponse.Success != nil {
-				t.Errorf("gotResponse: %v, wantResponse: %v", gotResponse, tt.wantResponse)
-			}
-
-			if !reflect.DeepEqual(gotResponse.Error, tt.wantResponse.Error) {
-				t.Errorf("gotResponse: %v, wantResponse: %v", gotResponse.Error, tt.wantResponse.Error)
-			}
-		})
-	}
-}
 
 func TestAdapterCombinedAlertsGetPage(t *testing.T) {
 	server := httptest.NewTLSServer(TestRESTServerHandler)
@@ -942,7 +837,7 @@ func TestAdapterCombinedAlertsGetPage(t *testing.T) {
 					Archived:   false,
 					Enabled:    true,
 				},
-				Entity:   *PopulateCombinedAlertsEntityConfig(),
+				Entity:   *PopulateAlertsEntityConfig(),
 				PageSize: 2,
 			},
 			wantResponse: framework.Response{
@@ -976,7 +871,7 @@ func TestAdapterCombinedAlertsGetPage(t *testing.T) {
 					Archived:   false,
 					Enabled:    true,
 				},
-				Entity:   *PopulateCombinedAlertsEntityConfig(),
+				Entity:   *PopulateAlertsEntityConfig(),
 				PageSize: 2,
 			},
 			inputRequestCursor: &pagination.CompositeCursor[string]{
@@ -1008,7 +903,7 @@ func TestAdapterCombinedAlertsGetPage(t *testing.T) {
 					Archived:   false,
 					Enabled:    true,
 				},
-				Entity:   *PopulateCombinedAlertsEntityConfig(),
+				Entity:   *PopulateAlertsEntityConfig(),
 				PageSize: 2,
 			},
 			inputRequestCursor: &pagination.CompositeCursor[string]{

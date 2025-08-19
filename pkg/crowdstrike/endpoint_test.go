@@ -86,34 +86,6 @@ func TestConstructRESTEndpoint(t *testing.T) {
 				"https://api.crowdstrike.com/detects/queries/detects/v1?limit=100&offset=10",
 			),
 		},
-		"valid_alert_request_with_cursor": {
-			request: &crowdstrike.Request{
-				BaseURL:          "https://api.crowdstrike.com",
-				PageSize:         100,
-				EntityExternalID: crowdstrike.Alerts,
-				RESTCursor: &pagination.CompositeCursor[string]{
-					Cursor: testutil.GenPtr("10"),
-				},
-			},
-			path: "alerts/queries/alerts/v2",
-			wantURL: testutil.GenPtr(
-				"https://api.crowdstrike.com/alerts/queries/alerts/v2?limit=100&offset=10",
-			),
-		},
-		"valid_alert_request_without_cursor": {
-			request: &crowdstrike.Request{
-				BaseURL:          "https://api.crowdstrike.com",
-				PageSize:         100,
-				EntityExternalID: crowdstrike.Alerts,
-				RESTCursor: &pagination.CompositeCursor[string]{
-					Cursor: nil,
-				},
-			},
-			path: "alerts/queries/alerts/v2",
-			wantURL: testutil.GenPtr(
-				"https://api.crowdstrike.com/alerts/queries/alerts/v2?limit=100",
-			),
-		},
 		"valid_request_without_cursor_string_offset": {
 			request: &crowdstrike.Request{
 				BaseURL:          "https://api.crowdstrike.com",
