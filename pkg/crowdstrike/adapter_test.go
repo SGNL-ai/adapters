@@ -1076,18 +1076,16 @@ func TestAdapterAlertGetPage(t *testing.T) {
 				}
 
 				// Check cursor comparison
-				if tt.wantCursor != nil {
-					if gotResponse.Success.NextCursor != "" {
-						gotCursor, err := pagination.UnmarshalCursor[string](gotResponse.Success.NextCursor)
-						if err != nil {
-							t.Fatalf("error unmarshalling cursor: %v", err)
-						}
+				if tt.wantCursor != nil && gotResponse.Success.NextCursor != "" {
+					gotCursor, err := pagination.UnmarshalCursor[string](gotResponse.Success.NextCursor)
+					if err != nil {
+						t.Fatalf("error unmarshalling cursor: %v", err)
+					}
 
-						if gotCursor.Cursor == nil || tt.wantCursor.Cursor == nil {
-							t.Fatalf("gotCursor or wantCursor is nil: gotCursor: %v, wantCursor: %v", gotCursor, *tt.wantCursor)
-						} else if *gotCursor.Cursor != *tt.wantCursor.Cursor {
-							t.Fatalf("gotCursor: %s, wantCursor: %s", *gotCursor.Cursor, *tt.wantCursor.Cursor)
-						}
+					if gotCursor.Cursor == nil || tt.wantCursor.Cursor == nil {
+						t.Fatalf("gotCursor or wantCursor is nil: gotCursor: %v, wantCursor: %v", gotCursor, *tt.wantCursor)
+					} else if *gotCursor.Cursor != *tt.wantCursor.Cursor {
+						t.Fatalf("gotCursor: %s, wantCursor: %s", *gotCursor.Cursor, *tt.wantCursor.Cursor)
 					}
 				}
 			}
