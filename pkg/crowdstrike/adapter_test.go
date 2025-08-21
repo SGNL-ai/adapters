@@ -1068,32 +1068,33 @@ func TestAdapterAlertGetPage(t *testing.T) {
 			}
 
 			gotResponse := adapter.GetPage(context.Background(), tt.request)
-			if tt.wantResponse.Success != nil && gotResponse.Success != nil {
-				if diff := cmp.Diff(tt.wantResponse.Success.Objects, gotResponse.Success.Objects); diff != "" {
-					t.Errorf("Response mismatch (-want +got):\n%s", diff)
+
+			// Check success response.
+			if tt.wantResponse.Error == nil {
+				if !reflect.DeepEqual(gotResponse.Success.Objects, tt.wantResponse.Success.Objects) {
+					t.Fatalf("gotResponse: %v, wantResponse: %v", gotResponse, tt.wantResponse)
 				}
-			} else if tt.wantResponse.Success != nil || gotResponse.Success != nil {
-				t.Errorf("gotResponse: %v, wantResponse: %v", gotResponse, tt.wantResponse)
+
+				// Check cursor comparison
+				if tt.wantCursor != nil {
+					if gotResponse.Success.NextCursor != "" {
+						gotCursor, err := pagination.UnmarshalCursor[string](gotResponse.Success.NextCursor)
+						if err != nil {
+							t.Fatalf("error unmarshalling cursor: %v", err)
+						}
+
+						if gotCursor.Cursor == nil || tt.wantCursor.Cursor == nil {
+							t.Fatalf("gotCursor or wantCursor is nil: gotCursor: %v, wantCursor: %v", gotCursor, *tt.wantCursor)
+						} else if *gotCursor.Cursor != *tt.wantCursor.Cursor {
+							t.Fatalf("gotCursor: %s, wantCursor: %s", *gotCursor.Cursor, *tt.wantCursor.Cursor)
+						}
+					}
+				}
 			}
 
+			// Check error respose.
 			if !reflect.DeepEqual(gotResponse.Error, tt.wantResponse.Error) {
-				t.Errorf("gotResponse: %v, wantResponse: %v", gotResponse.Error, tt.wantResponse.Error)
-			}
-
-			// Check cursor comparison
-			if gotResponse.Success != nil && tt.wantCursor != nil {
-				if gotResponse.Success.NextCursor != "" {
-					gotCursor, err := pagination.UnmarshalCursor[string](gotResponse.Success.NextCursor)
-					if err != nil {
-						t.Errorf("error unmarshalling cursor: %v", err)
-					}
-
-					if gotCursor.Cursor == nil || tt.wantCursor.Cursor == nil {
-						t.Errorf("gotCursor or wantCursor is nil: gotCursor: %v, wantCursor: %v", gotCursor, *tt.wantCursor)
-					} else if *gotCursor.Cursor != *tt.wantCursor.Cursor {
-						t.Errorf("gotCursor: %s, wantCursor: %s", *gotCursor.Cursor, *tt.wantCursor.Cursor)
-					}
-				}
+				t.Fatalf("gotResponse: %v, wantResponse: %v", gotResponse.Error, tt.wantResponse.Error)
 			}
 		})
 	}
