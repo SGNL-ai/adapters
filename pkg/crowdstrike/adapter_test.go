@@ -844,14 +844,64 @@ func TestAdapterCombinedAlertsGetPage(t *testing.T) {
 				Success: &framework.Page{
 					Objects: []framework.Object{
 						{
-							"aggregate_id": string("aggind:test1234567890123456789012345678:625985642613668398"),
-							"composite_id": string("testcid1234567890123456789012345:ind:test1234567890123456789012345678:625985642593750673-20151-7049"),
+							"aggregate_id": string("aggind:c36c42b64ce54b39a32e1d57240704c8:625985642613668398"),
+							"composite_id": string("8693deb4bf134cfb8855ee118d9a0243:ind:c36c42b64ce54b39a32e1d57240704c8:625985642593750673-20151-7049"),
 							"status":       string("new"),
+							"$.files_accessed": []framework.Object{
+								{
+									"filename": string("cat"),
+									"filepath": string("/bin/"),
+								},
+								{
+									"filename": string("zshnW4W3l"),
+									"filepath": string("/private/tmp/"),
+								},
+							},
+							"$.files_written": []framework.Object{
+								{
+									"filename": string("eicar.com"),
+									"filepath": string("/Users/joe/Desktop/"),
+								},
+								{
+									"filename": string("zshnW4W3l"),
+									"filepath": string("/private/tmp/"),
+								},
+							},
+							"$.mitre_attack": []framework.Object{
+								{
+									"pattern_id": int64(20151),
+								},
+							},
 						},
 						{
-							"aggregate_id": string("aggind:test2345678901234567890123456789:726196753724579846"),
-							"composite_id": string("testcid1234567890123456789012345:ind:test2345678901234567890123456789:726196753704661621-20152-7050"),
-							"status":       string("in_progress"),
+							"aggregate_id": string("aggind:5388c592189444ad9e84df071c8f3954:8592364792"),
+							"composite_id": string("8693deb4bf134cfb8855ee118d9a0243:ind:5388c592189444ad9e84df071c8f3954:12119912898-10304-117513744"),
+							"status":       string("closed"),
+							"$.files_accessed": []framework.Object{
+								{
+									"filename": string("cat"),
+									"filepath": string("/bin/"),
+								},
+								{
+									"filename": string("zshnW4W3l"),
+									"filepath": string("/private/tmp/"),
+								},
+							},
+							"$.files_written": []framework.Object{
+								{
+									"filename": string("eicar.com"),
+									"filepath": string("/Users/joe/Desktop/"),
+								},
+								{
+									"filename": string("zshnW4W3l"),
+									"filepath": string("/private/tmp/"),
+								},
+							},
+							"$.mitre_attack": []framework.Object{
+								{
+									"pattern_id": int64(10304),
+								},
+							},
 						},
 					},
 				},
@@ -881,14 +931,24 @@ func TestAdapterCombinedAlertsGetPage(t *testing.T) {
 				Success: &framework.Page{
 					Objects: []framework.Object{
 						{
-							"aggregate_id": string("aggind:test3456789012345678901234567890:827307864835690957"),
-							"composite_id": string("testcid1234567890123456789012345:ind:test3456789012345678901234567890:827307864815772732-20153-7052"),
+							"aggregate_id": string("aggind:5388c592189444ad9e84df071c8f3954:8592364792"),
+							"composite_id": string("8693deb4bf134cfb8855ee118d9a0243:ind:5388c592189444ad9e84df071c8f3954:10653769300-10304-81908752"),
 							"status":       string("closed"),
+							"$.mitre_attack": []framework.Object{
+								{
+									"pattern_id": int64(10304),
+								},
+							},
 						},
 						{
-							"aggregate_id": string("aggind:test5678901234567890123456789012:129419086057913179"),
-							"composite_id": string("testcid1234567890123456789012345:ind:test5678901234567890123456789012:129419086037994954-20155-7054"),
-							"status":       string("in_progress"),
+							"aggregate_id": string("aggind:5388c592189444ad9e84df071c8f3954:8592364792"),
+							"composite_id": string("8693deb4bf134cfb8855ee118d9a0243:ind:5388c592189444ad9e84df071c8f3954:10557972040-10304-81543952"),
+							"status":       string("closed"),
+							"$.mitre_attack": []framework.Object{
+								{
+									"pattern_id": int64(10304),
+								},
+							},
 						},
 					},
 				},
@@ -918,14 +978,24 @@ func TestAdapterCombinedAlertsGetPage(t *testing.T) {
 				Success: &framework.Page{
 					Objects: []framework.Object{
 						{
-							"aggregate_id": string("aggind:test4567890123456789012345678901:928418975946802068"),
-							"composite_id": string("testcid1234567890123456789012345:ind:test4567890123456789012345678901:928418975926883843-20154-7053"),
-							"status":       string("new"),
+							"aggregate_id": string("aggind:5388c592189444ad9e84df071c8f3954:8591071260"),
+							"composite_id": string("8693deb4bf134cfb8855ee118d9a0243:ind:5388c592189444ad9e84df071c8f3954:10230629714-10303-52340240"),
+							"status":       string("closed"),
+							"$.mitre_attack": []framework.Object{
+								{
+									"pattern_id": int64(10303),
+								},
+							},
 						},
 						{
-							"aggregate_id": string("aggind:test6789012345678901234567890123:230530197169024290"),
-							"composite_id": string("testcid1234567890123456789012345:ind:test6789012345678901234567890123:230530197149106065-20156-7055"),
-							"status":       string("resolved"),
+							"aggregate_id": string("aggind:5388c592189444ad9e84df071c8f3954:8591071260"),
+							"composite_id": string("8693deb4bf134cfb8855ee118d9a0243:ind:5388c592189444ad9e84df071c8f3954:10208107226-10304-52110864"),
+							"status":       string("closed"),
+							"$.mitre_attack": []framework.Object{
+								{
+									"pattern_id": int64(10304),
+								},
+							},
 						},
 					},
 				},

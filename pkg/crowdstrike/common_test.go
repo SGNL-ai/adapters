@@ -242,6 +242,51 @@ func PopulateAlertsEntityConfig() *framework.EntityConfig {
 				List:       false,
 			},
 		},
+		ChildEntities: []*framework.EntityConfig{
+			{
+				ExternalId: "$.files_accessed",
+				Attributes: []*framework.AttributeConfig{
+					{
+						ExternalId: "filename",
+						Type:       framework.AttributeTypeString,
+						List:       false,
+						UniqueId:   false,
+					},
+					{
+						ExternalId: "filepath",
+						Type:       framework.AttributeTypeString,
+						List:       false,
+					},
+				},
+			},
+			{
+				ExternalId: "$.files_written",
+				Attributes: []*framework.AttributeConfig{
+					{
+						ExternalId: "filename",
+						Type:       framework.AttributeTypeString,
+						List:       false,
+						UniqueId:   false,
+					},
+					{
+						ExternalId: "filepath",
+						Type:       framework.AttributeTypeString,
+						List:       false,
+					},
+				},
+			},
+			{
+				ExternalId: "$.mitre_attack",
+				Attributes: []*framework.AttributeConfig{
+					{
+						ExternalId: "pattern_id",
+						Type:       framework.AttributeTypeInt64,
+						List:       false,
+						UniqueId:   true,
+					},
+				},
+			},
+		},
 	}
 }
 
