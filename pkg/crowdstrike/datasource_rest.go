@@ -469,7 +469,7 @@ func parseAlertsResponse(body []byte) (
 
 	if data.Resources == nil {
 		return nil, nil, &framework.Error{
-			Message: "Missing resources in the combined alerts response.",
+			Message: "Missing resources in the alerts response.",
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		}
 	}

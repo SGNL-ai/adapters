@@ -400,20 +400,24 @@ var TestRESTServerHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http
 	case "/detects/entities/summaries/GET/v1?limit=2&offset=999":
 		w.Write([]byte(DetectResponseSpecializedErr))
 
-	// ************************ Combined alerts ************************
+	// ************************ Alerts ************************
 	case "/alerts/combined/alerts/v1?limit=2":
-		// Handle POST request for combined alerts
+		// Handle POST request for alerts
 		if r.Method == http.MethodPost {
 			body, _ := io.ReadAll(r.Body)
 			var reqBody map[string]any
 			json.Unmarshal(body, &reqBody)
 
 			if reqBody["after"] == nil || reqBody["after"] == "" {
-				w.Write([]byte(CombinedAlertResponseFirstPage))
+				w.Write([]byte(AlertResponseFirstPage))
 			} else if reqBody["after"] == "eyJ2ZXJzaW9uIjoidjEiLCJ0b3RhbF9oaXRzIjoyMywidG90YWxfcmVsYXRpb24iOiJlcSIsImNsdXN0ZXJfaWQiOiJ0ZXN0IiwiYWZ0ZXIiOlsxNzQ5NjExMTU3MjIxLCJ0ZXN0aWQ6aW5kOjUzODhjNTkyMTg5NDQ0YWQ5ZTg0ZGYwNzFjOGYzOTU0Ojk3ODI3ODI2MTQtMTAzMDMtMzE4MzE1NjgiXSwidG90YWxfZmV0Y2hlZCI6Mn0=" {
-				w.Write([]byte(CombinedAlertResponseMiddlePage))
+				w.Write([]byte(AlertResponseMiddlePage))
 			} else if reqBody["after"] == "eyJ2ZXJzaW9uIjoidjEiLCJ0b3RhbF9oaXRzIjoyMywidG90YWxfcmVsYXRpb24iOiJlcSIsImNsdXN0ZXJfaWQiOiJ0ZXN0IiwiYWZ0ZXIiOlsxNzQ5NTEyMzQ1Njc4LCJ0ZXN0aWQ6aW5kOmU0NTY3ODkwMTIzNDU2Nzg5MGNkZWYxMjM0NTY3ODkwLTIwMTUzLTcwNTEiXSwidG90YWxfZmV0Y2hlZCI6NH0=" {
-				w.Write([]byte(CombinedAlertResponseLastPage))
+				w.Write([]byte(AlertResponseLastPage))
+			} else if reqBody["after"] == "1000" { // Non existent page - triggers 404
+				w.WriteHeader(http.StatusNotFound)
+			} else if reqBody["after"] == "999" { // Non existent page - triggers specialized error
+				w.Write([]byte(AlertResponseSpecializedErr))
 			} else {
 				w.WriteHeader(http.StatusNotFound)
 			}

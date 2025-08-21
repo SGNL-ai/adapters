@@ -814,7 +814,7 @@ func TestAdapterDetectionGetPage(t *testing.T) {
 	}
 }
 
-func TestAdapterCombinedAlertsGetPage(t *testing.T) {
+func TestAdapterAlertGetPage(t *testing.T) {
 	server := httptest.NewTLSServer(TestRESTServerHandler)
 	adapter := crowdstrike_adapter.NewAdapter(&crowdstrike_adapter.Datasource{
 		Client: server.Client(),
@@ -998,6 +998,59 @@ func TestAdapterCombinedAlertsGetPage(t *testing.T) {
 							},
 						},
 					},
+				},
+			},
+		},
+		// Non existent page
+		"err_404": {
+			request: &framework.Request[crowdstrike_adapter.Config]{
+				Address: server.URL,
+				Auth: &framework.DatasourceAuthCredentials{
+					HTTPAuthorization: "Bearer Testtoken",
+				},
+				Config: &crowdstrike_adapter.Config{
+					APIVersion: "v1",
+					Archived:   false,
+					Enabled:    true,
+				},
+				Entity:   *PopulateAlertsEntityConfig(),
+				PageSize: 2,
+			},
+
+			inputRequestCursor: &pagination.CompositeCursor[string]{
+				Cursor: testutil.GenPtr("1000"), // Non existent page
+			},
+			wantResponse: framework.Response{
+				Error: &framework.Error{
+					Message: "Datasource rejected request, returned status code: 404.",
+					Code:    v1.ErrorCode_ERROR_CODE_INTERNAL,
+				},
+			},
+		},
+		// Specialized error from CRWD APIs
+		"err_specialized": {
+			request: &framework.Request[crowdstrike_adapter.Config]{
+				Address: server.URL,
+				Auth: &framework.DatasourceAuthCredentials{
+					HTTPAuthorization: "Bearer Testtoken",
+				},
+				Config: &crowdstrike_adapter.Config{
+					APIVersion: "v1",
+					Archived:   false,
+					Enabled:    true,
+				},
+				Entity:   *PopulateAlertsEntityConfig(),
+				PageSize: 2,
+			},
+
+			inputRequestCursor: &pagination.CompositeCursor[string]{
+				Cursor: testutil.GenPtr("999"), // Non existent page
+			},
+			wantResponse: framework.Response{
+				Error: &framework.Error{
+					Message: "Failed to query the datasource.\n" +
+						"Got errors: Code: 404, Message: 404: Page Not Found.",
+					Code: v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
 				},
 			},
 		},

@@ -1083,8 +1083,8 @@ func TestCrowdStrikeDetection(t *testing.T) {
 	close(stop)
 }
 
-func TestCrowdStrikeCombinedAlert(t *testing.T) {
-	httpClient, recorder := common.StartRecorder(t, "fixtures/crowdstrike/combinedAlert")
+func TestCrowdStrikeAlert(t *testing.T) {
+	httpClient, recorder := common.StartRecorder(t, "fixtures/crowdstrike/alert")
 	defer recorder.Stop()
 
 	port := common.AvailableTestPort(t)

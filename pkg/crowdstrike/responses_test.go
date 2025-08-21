@@ -2318,8 +2318,8 @@ var (
         ]
     }`
 
-	// Combined Alerts API responses.
-	CombinedAlertResponseFirstPage = `{
+	// Alerts API responses.
+	AlertResponseFirstPage = `{
   "meta": {
     "query_time": 0.043633983,
     "pagination": {
@@ -2729,7 +2729,7 @@ var (
 }
 `
 
-	CombinedAlertResponseMiddlePage = `{
+	AlertResponseMiddlePage = `{
   "meta": {
     "query_time": 0.028765432,
     "pagination": {
@@ -3120,7 +3120,7 @@ var (
 }
 `
 
-	CombinedAlertResponseLastPage = `{
+	AlertResponseLastPage = `{
 		"meta": {
 			"query_time": 0.015432109,
 			"pagination": {
@@ -3539,4 +3539,18 @@ var (
 		]
 	}
 `
+
+	AlertResponseSpecializedErr = `{
+        "meta": {
+            "query_time": 1.64e-7,
+            "powered_by": "crowdstrike-api-gateway",
+            "trace_id": "968dc340-a865-4065-a4d3-e6ecd94dea74"
+        },
+        "errors": [
+            {
+                "code": 404,
+                "message": "404: Page Not Found"
+            }
+        ]
+    }`
 )

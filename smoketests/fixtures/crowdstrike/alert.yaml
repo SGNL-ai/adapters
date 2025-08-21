@@ -1,91 +1,26 @@
 ---
 version: 2
 interactions:
+  # First page - initial request with low limit to test pagination
   - id: 0
     request:
       proto: HTTP/1.1
       proto_major: 1
       proto_minor: 1
-      content_length: 0
+      content_length: 14
       transfer_encoding: []
       trailer: {}
       host: api.us-2.crowdstrike.com
       remote_addr: ""
       request_uri: ""
-      body: ""
-      form: {}
-      headers:
-        Authorization:
-          - Bearer {{OMITTED}}
-      url: https://api.us-2.crowdstrike.com/alerts/queries/alerts/v2?limit=2
-      method: GET
-    response:
-      proto: HTTP/1.1
-      proto_major: 1
-      proto_minor: 1
-      transfer_encoding: []
-      trailer: {}
-      content_length: -1
-      uncompressed: true
-      body: |-
-        {
-         "meta": {
-          "query_time": 0.003,
-          "pagination": {
-           "offset": 0,
-           "limit": 2,
-           "total": 2
-          },
-          "powered_by": "alerts-api",
-          "trace_id": "test-trace-123"
-         },
-         "resources": [
-          "1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7086C"
-         ],
-         "errors": []
-        }
-      headers:
-        Connection:
-          - keep-alive
-        Content-Type:
-          - application/json
-        Date:
-          - Sat, 25 Jan 2025 21:04:13 GMT
-        Server:
-          - nginx
-        Strict-Transport-Security:
-          - max-age=31536000; includeSubDomains
-          - max-age=31536000; includeSubDomains
-        X-Cs-Region:
-          - us-2
-        X-Cs-Traceid:
-          - test-trace-123
-        X-Ratelimit-Limit:
-          - "6000"
-        X-Ratelimit-Remaining:
-          - "5985"
-      status: 200 OK
-      code: 200
-      duration: 140.345514ms
-  - id: 1
-    request:
-      proto: HTTP/1.1
-      proto_major: 1
-      proto_minor: 1
-      content_length: 55
-      transfer_encoding: []
-      trailer: {}
-      host: api.us-2.crowdstrike.com
-      remote_addr: ""
-      request_uri: ""
-      body: '{"composite_ids":["abc123:def456","xyz789:uvw012"]}'
+      body: '{"limit":2}'
       form: {}
       headers:
         Authorization:
           - Bearer {{OMITTED}}
         Content-Type:
           - application/json
-      url: https://api.us-2.crowdstrike.com/alerts/entities/alerts/v2?limit=2
+      url: https://api.us-2.crowdstrike.com/alerts/combined/alerts/v1?limit=2
       method: POST
     response:
       proto: HTTP/1.1
@@ -99,78 +34,410 @@ interactions:
       body: |-
         {
           "meta": {
-              "query_time": 0.126953871,
-              "writes": {
-                  "resources_affected": 0
-              },
-              "powered_by": "detectsapi",
-              "trace_id": "69d1aded-6520-4c4e-a418-1fd7866c6611"
+            "query_time": 0.043633983,
+            "pagination": {
+              "total": 23,
+              "limit": 2,
+              "after": "eyJ2ZXJzaW9uIjoidjEiLCJ0b3RhbF9oaXRzIjoyMywidG90YWxfcmVsYXRpb24iOiJlcSIsImNsdXN0ZXJfaWQiOiJ0ZXN0IiwiYWZ0ZXIiOlsxNzQ5NjExMTU3MjIxLCJ0ZXN0aWQ6aW5kOjUzODhjNTkyMTg5NDQ0YWQ5ZTg0ZGYwNzFjOGYzOTU0Ojk3ODI3ODI2MTQtMTAzMDMtMzE4MzE1NjgiXSwidG90YWxfZmV0Y2hlZCI6Mn0="
+            },
+            "powered_by": "detectsapi",
+            "trace_id": "00774ad1-9fbf-43c2-9d9e-d90ea9216ba0"
           },
+          "errors": [],
           "resources": [
-              {
-                  "added_privileges": [
-                      "AdministratorsRole"
-                  ],
-                  "aggregate_id": "aggind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7086C",
-                  "cid": "1234567890abcdef1234567890abcdef",
-                  "composite_id": "1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7086C",
-                  "confidence": 20,
-                  "context_timestamp": "2025-08-01T19:22:34.233Z",
-                  "crawled_timestamp": "2025-08-01T20:22:36.344689563Z",
-                  "created_timestamp": "2025-08-01T19:23:36.547858841Z",
-                  "data_domains": [
-                      "Identity"
-                  ],
-                  "description": "A user received new privileges",
-                  "display_name": "Privilege escalation (user)",
-                  "end_time": "2025-08-01T19:22:34.233Z",
-                  "falcon_host_link": "https://falcon.us-2.crowdstrike.com/identity-protection/detections/1234567890abcdef1234567890abcdef:ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7086C?_cid=test123456789abcdef0123456789abc",
-                  "id": "ind:1234567890abcdef1234567890abcdef:B75E9689-C82E-4EC9-B972-E807CFE7086C",
-                  "mitre_attack": [
-                      {
-                          "pattern_id": 51113,
-                          "tactic_id": "TA0004",
-                          "technique_id": "T1078",
-                          "tactic": "Privilege Escalation",
-                          "technique": "Valid Accounts"
-                      }
-                  ],
-                  "name": "IdpEntityPrivilegeEscalationUser",
-                  "objective": "Gain Access",
-                  "pattern_id": 51113,
-                  "poly_id": "AACGk960vxNM-4hV7hGNmgJDLHuOENREmtsZGwxsXx_rpwAATiHWsiR7jY1eZfzHO9v5bTBiDJpIT3MtfdjRLhQS-VD_0g==",
-                  "previous_privileges": "0",
-                  "privileges": "2177",
-                  "product": "idp",
-                  "scenario": "privilege_escalation",
-                  "seconds_to_resolved": 0,
-                  "seconds_to_triaged": 0,
-                  "severity": 10,
-                  "severity_name": "Informational",
-                  "show_in_ui": true,
-                  "source_account_domain": "TESTDOMAIN.COM",
-                  "source_account_name": "test.user",
-                  "source_account_object_guid": "9160F713-360C-4331-AC61-EBBAD741A7BD",
-                  "source_account_object_sid": "S-1-5-21-2931850618-1476300705-2742956860-1105",
-                  "source_account_sam_account_name": "test.user",
-                  "source_account_upn": "test.user@testdomain.com",
-                  "source_products": [
-                      "Falcon Identity Protection"
-                  ],
-                  "source_vendors": [
-                      "CrowdStrike"
-                  ],
-                  "start_time": "2025-08-01T19:22:34.233Z",
-                  "status": "new",
-                  "tactic": "Privilege Escalation",
-                  "tactic_id": "TA0004",
-                  "technique": "Valid Accounts",
-                  "technique_id": "T1078",
-                  "timestamp": "2025-08-01T19:22:34.848Z",
-                  "type": "idp-user-endpoint-app-info",
-                  "updated_timestamp": "2025-08-01T20:22:36.344680541Z",
-                  "user_name": "test.user"
-              }
+            {
+              "agent_id": "c36c42b64ce54b39a32e1d57240704c8",
+              "aggregate_id": "aggind:c36c42b64ce54b39a32e1d57240704c8:625985642613668398",
+              "cid": "8693deb4bf134cfb8855ee118d9a0243",
+              "cloud_indicator": "false",
+              "cmdline": "cat",
+              "composite_id": "8693deb4bf134cfb8855ee118d9a0243:ind:c36c42b64ce54b39a32e1d57240704c8:625985642593750673-20151-7049",
+              "confidence": 80,
+              "context_timestamp": "2025-06-16T18:46:54.925Z",
+              "control_graph_id": "ctg:c36c42b64ce54b39a32e1d57240704c8:625985642613668398",
+              "crawled_timestamp": "2025-06-16T19:46:56.218776698Z",
+              "created_timestamp": "2025-06-16T18:47:56.231503572Z",
+              "data_domains": ["Endpoint"],
+              "description": "A process has written a known EICAR test file. Review the files written by the triggered process.",
+              "device": {
+                "agent_load_flags": "0",
+                "agent_local_time": "2610-01-05T13:11:22.705Z",
+                "agent_version": "7.24.19504.0",
+                "cid": "8693deb4bf134cfb8855ee118d9a0243",
+                "config_id_base": "65994763",
+                "config_id_build": "19504",
+                "config_id_platform": "4",
+                "device_id": "c36c42b64ce54b39a32e1d57240704c8",
+                "external_ip": "209.122.93.17",
+                "first_seen": "2025-06-16T17:30:34Z",
+                "hostinfo": {
+                  "domain": ""
+                },
+                "hostname": "MLX40LWGRK.localdomain",
+                "last_seen": "2025-06-16T19:36:52Z",
+                "local_ip": "192.168.1.15",
+                "mac_address": "4e-93-8a-29-49-64",
+                "machine_domain": "",
+                "major_version": "24",
+                "minor_version": "5",
+                "modified_timestamp": "2025-06-16T19:44:11Z",
+                "os_version": "Sequoia (15)",
+                "ou": null,
+                "platform_id": "1",
+                "platform_name": "Mac",
+                "product_type_desc": "Workstation",
+                "status": "normal",
+                "system_manufacturer": "Apple Inc.",
+                "system_product_name": "MacBookPro18,1"
+              },
+              "display_name": "EICARTestFileWrittenMac",
+              "email_sent": true,
+              "falcon_host_link": "https://falcon.us-2.crowdstrike.com/activity-v2/detections/8693deb4bf134cfb8855ee118d9a0243:ind:c36c42b64ce54b39a32e1d57240704c8:625985642593750673-20151-7049?_cid=g04000s6h3lrs7encahh67joerwbbsje",
+              "filename": "cat",
+              "filepath": "/bin/cat",
+              "files_accessed": [
+                {
+                  "filename": "cat",
+                  "filepath": "/bin/",
+                  "timestamp": "1750099615"
+                },
+                {
+                  "filename": "zshnW4W3l",
+                  "filepath": "/private/tmp/",
+                  "timestamp": "1750099615"
+                }
+              ],
+              "files_written": [
+                {
+                  "filename": "eicar.com",
+                  "filepath": "/Users/joe/Desktop/",
+                  "timestamp": "1750099614"
+                },
+                {
+                  "filename": "zshnW4W3l",
+                  "filepath": "/private/tmp/",
+                  "timestamp": "1750099614"
+                }
+              ],
+              "global_prevalence": "common",
+              "id": "ind:c36c42b64ce54b39a32e1d57240704c8:625985642593750673-20151-7049",
+              "incident": {
+                "created": "2025-06-16T18:46:54Z",
+                "end": "2025-06-16T18:46:54Z",
+                "id": "inc:c36c42b64ce54b39a32e1d57240704c8:2343cc087cce4683a3c96b49a1e8c863",
+                "score": "8.59047945539694",
+                "start": "2025-06-16T18:26:55Z"
+              },
+              "indicator_id": "ind:c36c42b64ce54b39a32e1d57240704c8:625985642593750673-20151-7049",
+              "ioc_context": [],
+              "local_prevalence": "unique",
+              "local_process_id": "4077",
+              "md5": "27549b2faf16aed0ea0a74bd35c6694e",
+              "mitre_attack": [
+                {
+                  "pattern_id": 20151,
+                  "tactic_id": "TA0002",
+                  "technique_id": "T1204",
+                  "tactic": "Execution",
+                  "technique": "User Execution"
+                }
+              ],
+              "name": "EICARTestFileWrittenMac",
+              "objective": "Follow Through",
+              "parent_details": {
+                "cmdline": "/bin/zsh -l",
+                "filename": "zsh",
+                "filepath": "/bin/zsh",
+                "local_process_id": "2887",
+                "md5": "822dfa404c17133a55fa86c8160b0a1c",
+                "process_graph_id": "pid:c36c42b64ce54b39a32e1d57240704c8:625985535262558233",
+                "process_id": "625985535262558233",
+                "sha256": "7da41b0c36d724529a0769f48635459bbb66cd021f12d16e11245afeb52c4937",
+                "timestamp": "2025-06-16T18:47:35Z",
+                "user_graph_id": "uid:c36c42b64ce54b39a32e1d57240704c8:502",
+                "user_id": "S-1-5-21-4013840944-2679614602-1372758803-2004",
+                "user_name": "joe"
+              },
+              "parent_process_id": "625985535262558233",
+              "pattern_disposition": 0,
+              "pattern_disposition_description": "Detection, standard detection.",
+              "pattern_disposition_details": {
+                "blocking_unsupported_or_disabled": false,
+                "bootup_safeguard_enabled": false,
+                "containment_file_system": false,
+                "critical_process_disabled": false,
+                "detect": false,
+                "fs_operation_blocked": false,
+                "handle_operation_downgraded": false,
+                "inddet_mask": false,
+                "indicator": false,
+                "kill_action_failed": false,
+                "kill_parent": false,
+                "kill_process": false,
+                "kill_subprocess": false,
+                "mfa_required": false,
+                "operation_blocked": false,
+                "policy_disabled": false,
+                "prevention_provisioning_enabled": false,
+                "process_blocked": false,
+                "quarantine_file": false,
+                "quarantine_machine": false,
+                "registry_operation_blocked": false,
+                "response_action_already_applied": false,
+                "response_action_failed": false,
+                "response_action_triggered": false,
+                "rooting": false,
+                "sensor_only": false,
+                "suspend_parent": false,
+                "suspend_process": false
+              },
+              "pattern_id": 20151,
+              "platform": "Mac",
+              "poly_id": "AACGk960vxNM-4hV7hGNmgJDOQuL6SeY1glLi1xxStXoNQAATiEmNBGGHdYjbo4Hiun25IaeWlNeHeyGfDLO3FYg9vTTuw==",
+              "priority_explanation": [
+                "[MOD] The severity of the detection: Informational"
+              ],
+              "priority_value": 10,
+              "process_end_time": "1750099614",
+              "process_id": "625985642593750673",
+              "process_start_time": "1750099614",
+              "product": "epp",
+              "scenario": "attacker_methodology",
+              "seconds_to_resolved": 0,
+              "seconds_to_triaged": 0,
+              "severity": 10,
+              "severity_name": "Informational",
+              "sha1": "0000000000000000000000000000000000000000",
+              "sha256": "9844bd3abe6c59d9cc1ddba3ba35aab555d5ec483db326c183af3c4a6caefbc1",
+              "show_in_ui": true,
+              "source_products": ["Falcon Insight"],
+              "source_vendors": ["CrowdStrike"],
+              "status": "new",
+              "tactic": "Execution",
+              "tactic_id": "TA0002",
+              "technique": "User Execution",
+              "technique_id": "T1204",
+              "template_instance_id": "7990",
+              "timestamp": "2025-06-16T18:46:54.988Z",
+              "tree_id": "625985642613668398",
+              "tree_root": "625985642593750673",
+              "triggering_process_graph_id": "pid:c36c42b64ce54b39a32e1d57240704c8:625985642593750673",
+              "type": "ldt",
+              "updated_timestamp": "2025-06-16T19:46:56.218762664Z",
+              "user_id": "S-1-5-21-4013840944-2679614602-1372758803-2004",
+              "user_name": "joe",
+              "user_principal": "joe@MLX40LWGRK.localdomain"
+            },
+            {
+              "agent_id": "5388c592189444ad9e84df071c8f3954",
+              "aggregate_id": "aggind:5388c592189444ad9e84df071c8f3954:8592364792",
+              "alleged_filetype": "exe",
+              "cid": "8693deb4bf134cfb8855ee118d9a0243",
+              "cloud_indicator": "false",
+              "cmdline": "cmd  crowdstrike_test_high",
+              "composite_id": "8693deb4bf134cfb8855ee118d9a0243:ind:5388c592189444ad9e84df071c8f3954:12119912898-10304-117513744",
+              "confidence": 100,
+              "context_timestamp": "2025-06-13T02:01:54.602Z",
+              "control_graph_id": "ctg:5388c592189444ad9e84df071c8f3954:8592364792",
+              "crawled_timestamp": "2025-06-13T03:01:57.180370024Z",
+              "created_timestamp": "2025-06-13T02:02:57.209949732Z",
+              "data_domains": ["Endpoint"],
+              "description": "A high level detection was triggered on this process for testing purposes.",
+              "device": {
+                "agent_load_flags": "1",
+                "agent_local_time": "2025-06-10T14:00:03.712Z",
+                "agent_version": "7.24.19607.0",
+                "bios_manufacturer": "Microsoft Corporation",
+                "bios_version": "Hyper-V UEFI Release v4.1",
+                "cid": "8693deb4bf134cfb8855ee118d9a0243",
+                "config_id_base": "65994767",
+                "config_id_build": "19607",
+                "config_id_platform": "3",
+                "device_id": "5388c592189444ad9e84df071c8f3954",
+                "external_ip": "20.83.184.209",
+                "first_seen": "2025-06-10T01:49:09Z",
+                "groups": ["2a8b900d486e4e9eaa024723d6f3742a"],
+                "hostinfo": {
+                  "active_directory_dn_display": ["Domain Controllers"],
+                  "domain": "normcorp.ai"
+                },
+                "hostname": "SGNL-CRWD-Proto",
+                "instance_id": "3bfaa67d-0dbd-4d49-8a0a-1cb2b0d2e1af",
+                "last_seen": "2025-06-13T03:00:17Z",
+                "local_ip": "10.3.0.4",
+                "mac_address": "00-0d-3a-56-11-c1",
+                "machine_domain": "normcorp.ai",
+                "major_version": "10",
+                "minor_version": "0",
+                "modified_timestamp": "2025-06-13T03:01:35Z",
+                "os_version": "Windows Server 2022",
+                "ou": ["Domain Controllers"],
+                "platform_id": "0",
+                "platform_name": "Windows",
+                "product_type": "2",
+                "product_type_desc": "Domain Controller",
+                "service_provider": "AZURE",
+                "service_provider_account_id": "9405b466-dc55-4b34-a424-2059ff303a68",
+                "site_name": "Default-First-Site-Name",
+                "status": "normal",
+                "system_manufacturer": "Microsoft Corporation",
+                "system_product_name": "Virtual Machine"
+              },
+              "display_name": "TestTriggerHigh",
+              "email_sent": true,
+              "falcon_host_link": "https://falcon.us-2.crowdstrike.com/activity-v2/detections/8693deb4bf134cfb8855ee118d9a0243:ind:5388c592189444ad9e84df071c8f3954:12119912898-10304-117513744?_cid=g04000s6h3lrs7encahh67joerwbbsje",
+              "filename": "cmd.exe",
+              "filepath": "\\Device\\HarddiskVolume4\\Windows\\System32\\cmd.exe",
+              "global_prevalence": "common",
+              "files_accessed": [
+                {
+                  "filename": "cat",
+                  "filepath": "/bin/",
+                  "timestamp": "1750099615"
+                },
+                {
+                  "filename": "zshnW4W3l",
+                  "filepath": "/private/tmp/",
+                  "timestamp": "1750099615"
+                }
+              ],
+              "files_written": [
+                {
+                  "filename": "eicar.com",
+                  "filepath": "/Users/joe/Desktop/",
+                  "timestamp": "1750099614"
+                },
+                {
+                  "filename": "zshnW4W3l",
+                  "filepath": "/private/tmp/",
+                  "timestamp": "1750099614"
+                }
+              ],
+              "grandparent_details": {
+                "cmdline": "cmd  crowdstrike_test_high",
+                "filename": "cmd.exe",
+                "filepath": "\\Device\\HarddiskVolume4\\Windows\\System32\\cmd.exe",
+                "local_process_id": "8868",
+                "md5": "22cdd5b627bed769783a7928efed69ae",
+                "process_graph_id": "pid:5388c592189444ad9e84df071c8f3954:10557972040",
+                "process_id": "10557972040",
+                "sha256": "fc45691495eec0f9de50ccd574ead3a2d83e3088f1a3ad514f46ed84a70efa21",
+                "timestamp": "2025-06-11T17:13:16Z",
+                "user_graph_id": "uid:5388c592189444ad9e84df071c8f3954:S-1-5-21-2931850618-1476300705-2742956860-1104",
+                "user_id": "S-1-5-21-2931850618-1476300705-2742956860-1104",
+                "user_name": "user6"
+              },
+              "incident": {
+                "created": "2025-06-16T18:46:54Z",
+                "end": "2025-06-16T18:46:54Z",
+                "id": "inc:c36c42b64ce54b39a32e1d57240704c8:2343cc087cce4683a3c96b49a1e8c864",
+                "score": "8.59047945539694",
+                "start": "2025-06-16T18:26:55Z"
+              },
+              "id": "ind:5388c592189444ad9e84df071c8f3954:12119912898-10304-117513744",
+              "indicator_id": "ind:5388c592189444ad9e84df071c8f3954:12119912898-10304-117513744",
+              "ioc_context": [],
+              "local_prevalence": "low",
+              "local_process_id": "3044",
+              "logon_domain": "normcorp",
+              "md5": "22cdd5b627bed769783a7928efed69ae",
+              "mitre_attack": [
+                {
+                  "pattern_id": 10304,
+                  "tactic_id": "CSTA0006",
+                  "technique_id": "CST0002",
+                  "tactic": "Falcon Overwatch",
+                  "technique": "Malicious Activity"
+                }
+              ],
+              "name": "DemoHighPattern",
+              "objective": "Falcon Detection Method",
+              "parent_details": {
+                "cmdline": "cmd  crowdstrike_test_high",
+                "filename": "cmd.exe",
+                "filepath": "\\Device\\HarddiskVolume4\\Windows\\System32\\cmd.exe",
+                "local_process_id": "8000",
+                "md5": "22cdd5b627bed769783a7928efed69ae",
+                "process_graph_id": "pid:5388c592189444ad9e84df071c8f3954:10653769300",
+                "process_id": "10653769300",
+                "sha256": "fc45691495eec0f9de50ccd574ead3a2d83e3088f1a3ad514f46ed84a70efa21",
+                "timestamp": "2025-06-11T18:39:26Z",
+                "user_graph_id": "uid:5388c592189444ad9e84df071c8f3954:S-1-5-21-2931850618-1476300705-2742956860-1104",
+                "user_id": "S-1-5-21-2931850618-1476300705-2742956860-1104",
+                "user_name": "user6"
+              },
+              "parent_process_id": "10653769300",
+              "pattern_disposition": 0,
+              "pattern_disposition_description": "Detection, standard detection.",
+              "pattern_disposition_details": {
+                "blocking_unsupported_or_disabled": false,
+                "bootup_safeguard_enabled": false,
+                "containment_file_system": false,
+                "critical_process_disabled": false,
+                "detect": false,
+                "fs_operation_blocked": false,
+                "handle_operation_downgraded": false,
+                "inddet_mask": false,
+                "indicator": false,
+                "kill_action_failed": false,
+                "kill_parent": false,
+                "kill_process": false,
+                "kill_subprocess": false,
+                "mfa_required": false,
+                "operation_blocked": false,
+                "policy_disabled": false,
+                "prevention_provisioning_enabled": false,
+                "process_blocked": false,
+                "quarantine_file": false,
+                "quarantine_machine": false,
+                "registry_operation_blocked": false,
+                "response_action_already_applied": false,
+                "response_action_failed": false,
+                "response_action_triggered": false,
+                "rooting": false,
+                "sensor_only": false,
+                "suspend_parent": false,
+                "suspend_process": false
+              },
+              "pattern_id": 10304,
+              "platform": "Windows",
+              "poly_id": "AACGk960vxNM-4hV7hGNmgJDGMt_f4XsjSvL9TV99OnITAAATiFkg-CA2Yr0NE5EuxICl1TEUCcCRNBbBp_d2KLZk9JttA==",
+              "priority_explanation": [
+                "[MOD] The detection is based on Pattern 10304: A high level detection was triggered on this process for testing purposes.",
+                "[MOD] The disposition for the detection: no preventative action was taken",
+                "[MOD] The parent process was identified as: cmd.exe"
+              ],
+              "priority_value": 10,
+              "process_id": "12119912898",
+              "process_start_time": "1749780114",
+              "product": "epp",
+              "resolution": "ignored",
+              "scenario": "suspicious_activity",
+              "seconds_to_resolved": 0,
+              "seconds_to_triaged": 0,
+              "severity": 70,
+              "severity_name": "High",
+              "sha1": "0000000000000000000000000000000000000000",
+              "sha256": "fc45691495eec0f9de50ccd574ead3a2d83e3088f1a3ad514f46ed84a70efa21",
+              "show_in_ui": true,
+              "source_products": ["Falcon Insight"],
+              "source_vendors": ["CrowdStrike"],
+              "status": "closed",
+              "tactic": "Falcon Overwatch",
+              "tactic_id": "CSTA0006",
+              "tags": ["ignored"],
+              "technique": "Malicious Activity",
+              "technique_id": "CST0002",
+              "template_instance_id": "1342",
+              "timestamp": "2025-06-13T02:01:55.147Z",
+              "tree_id": "8592364792",
+              "tree_root": "10557972040",
+              "triggering_process_graph_id": "pid:5388c592189444ad9e84df071c8f3954:12119912898",
+              "type": "ldt",
+              "updated_timestamp": "2025-06-18T20:23:35.340932619Z",
+              "user_id": "S-1-5-21-2931850618-1476300705-2742956860-1104",
+              "user_name": "user6"
+            }
           ]
         }
       headers:
@@ -179,20 +446,934 @@ interactions:
         Content-Type:
           - application/json
         Date:
-          - Sat, 25 Jan 2025 21:04:13 GMT
+          - Sun, 18 Aug 2025 20:30:00 GMT
         Server:
           - nginx
         Strict-Transport-Security:
           - max-age=31536000; includeSubDomains
+        X-Cs-Region:
+          - us-2
+        X-Cs-Traceid:
+          - combined-alerts-smoke-001
+        X-Ratelimit-Limit:
+          - "6000"
+        X-Ratelimit-Remaining:
+          - "5999"
+      status: 200 OK
+      code: 200
+      duration: 145.678901ms
+
+  # Second page - test pagination with cursor token
+  - id: 1
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 155
+      transfer_encoding: []
+      trailer: {}
+      host: api.us-2.crowdstrike.com
+      remote_addr: ""
+      request_uri: ""
+      body: '{"limit":2,"after":"eyJ2ZXJzaW9uIjoidjEiLCJ0b3RhbF9oaXRzIjoyMywidG90YWxfcmVsYXRpb24iOiJlcSIsImNsdXN0ZXJfaWQiOiJ0ZXN0IiwiYWZ0ZXIiOlsxNzQ5NjExMTU3MjIxLCJ0ZXN0aWQ6aW5kOjUzODhjNTkyMTg5NDQ0YWQ5ZTg0ZGYwNzFjOGYzOTU0Ojk3ODI3ODI2MTQtMTAzMDMtMzE4MzE1NjgiXSwidG90YWxfZmV0Y2hlZCI6Mn0="}'
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+        Content-Type:
+          - application/json
+      url: https://api.us-2.crowdstrike.com/alerts/combined/alerts/v1?limit=2
+      method: POST
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding:
+        - chunked
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: |-
+        {
+          "meta": {
+            "query_time": 0.028765432,
+            "pagination": {
+              "total": 23,
+              "limit": 2,
+              "after": "eyJ2ZXJzaW9uIjoidjEiLCJ0b3RhbF9oaXRzIjoyMywidG90YWxfcmVsYXRpb24iOiJlcSIsImNsdXN0ZXJfaWQiOiJ0ZXN0IiwiYWZ0ZXIiOlsxNzQ5NTEyMzQ1Njc4LCJ0ZXN0aWQ6aW5kOmU0NTY3ODkwMTIzNDU2Nzg5MGNkZWYxMjM0NTY3ODkwLTIwMTUzLTcwNTEiXSwidG90YWxfZmV0Y2hlZCI6NH0="
+            },
+            "powered_by": "detectsapi",
+            "trace_id": "11885be2-0gcd-54d3-ae0f-e91fb0327cb1"
+          },
+          "errors": [],
+          "resources": [
+            {
+              "agent_id": "5388c592189444ad9e84df071c8f3954",
+              "aggregate_id": "aggind:5388c592189444ad9e84df071c8f3954:8592364792",
+              "alleged_filetype": "exe",
+              "cid": "8693deb4bf134cfb8855ee118d9a0243",
+              "cloud_indicator": "false",
+              "cmdline": "cmd  crowdstrike_test_high",
+              "composite_id": "8693deb4bf134cfb8855ee118d9a0243:ind:5388c592189444ad9e84df071c8f3954:10653769300-10304-81908752",
+              "confidence": 100,
+              "context_timestamp": "2025-06-11T18:39:26.317Z",
+              "control_graph_id": "ctg:5388c592189444ad9e84df071c8f3954:8592364792",
+              "crawled_timestamp": "2025-06-11T19:39:28.826476115Z",
+              "created_timestamp": "2025-06-11T18:40:29.064309181Z",
+              "data_domains": ["Endpoint"],
+              "description": "A high level detection was triggered on this process for testing purposes.",
+              "device": {
+                "agent_load_flags": "1",
+                "agent_local_time": "2025-06-10T14:00:03.712Z",
+                "agent_version": "7.24.19607.0",
+                "bios_manufacturer": "Microsoft Corporation",
+                "bios_version": "Hyper-V UEFI Release v4.1",
+                "cid": "8693deb4bf134cfb8855ee118d9a0243",
+                "config_id_base": "65994767",
+                "config_id_build": "19607",
+                "config_id_platform": "3",
+                "device_id": "5388c592189444ad9e84df071c8f3954",
+                "external_ip": "20.83.184.209",
+                "first_seen": "2025-06-10T01:49:09Z",
+                "groups": ["2a8b900d486e4e9eaa024723d6f3742a"],
+                "hostinfo": {
+                  "active_directory_dn_display": ["Domain Controllers"],
+                  "domain": "normcorp.ai"
+                },
+                "hostname": "SGNL-CRWD-Proto",
+                "instance_id": "3bfaa67d-0dbd-4d49-8a0a-1cb2b0d2e1af",
+                "last_seen": "2025-06-11T19:36:15Z",
+                "local_ip": "10.3.0.4",
+                "mac_address": "00-0d-3a-56-11-c1",
+                "machine_domain": "normcorp.ai",
+                "major_version": "10",
+                "minor_version": "0",
+                "modified_timestamp": "2025-06-11T19:38:14Z",
+                "os_version": "Windows Server 2022",
+                "ou": ["Domain Controllers"],
+                "platform_id": "0",
+                "platform_name": "Windows",
+                "product_type": "2",
+                "product_type_desc": "Domain Controller",
+                "service_provider": "AZURE",
+                "service_provider_account_id": "9405b466-dc55-4b34-a424-2059ff303a68",
+                "site_name": "Default-First-Site-Name",
+                "status": "normal",
+                "system_manufacturer": "Microsoft Corporation",
+                "system_product_name": "Virtual Machine"
+              },
+              "display_name": "TestTriggerHigh",
+              "email_sent": true,
+              "falcon_host_link": "https://falcon.us-2.crowdstrike.com/activity-v2/detections/8693deb4bf134cfb8855ee118d9a0243:ind:5388c592189444ad9e84df071c8f3954:10653769300-10304-81908752?_cid=g04000s6h3lrs7encahh67joerwbbsje",
+              "filename": "cmd.exe",
+              "filepath": "\\Device\\HarddiskVolume4\\Windows\\System32\\cmd.exe",
+              "global_prevalence": "common",
+              "grandparent_details": {
+                "cmdline": "\"C:\\Windows\\system32\\cmd.exe\" ",
+                "filename": "cmd.exe",
+                "filepath": "\\Device\\HarddiskVolume4\\Windows\\System32\\cmd.exe",
+                "local_process_id": "7744",
+                "md5": "22cdd5b627bed769783a7928efed69ae",
+                "process_graph_id": "pid:5388c592189444ad9e84df071c8f3954:10465963482",
+                "process_id": "10465963482",
+                "sha256": "fc45691495eec0f9de50ccd574ead3a2d83e3088f1a3ad514f46ed84a70efa21",
+                "timestamp": "2025-06-11T17:15:02Z",
+                "user_graph_id": "uid:5388c592189444ad9e84df071c8f3954:S-1-5-21-2931850618-1476300705-2742956860-1104",
+                "user_id": "S-1-5-21-2931850618-1476300705-2742956860-1104",
+                "user_name": "user6"
+              },
+              "id": "ind:5388c592189444ad9e84df071c8f3954:10653769300-10304-81908752",
+              "indicator_id": "ind:5388c592189444ad9e84df071c8f3954:10653769300-10304-81908752",
+              "ioc_context": [],
+              "local_prevalence": "low",
+              "local_process_id": "8000",
+              "logon_domain": "normcorp",
+              "md5": "22cdd5b627bed769783a7928efed69ae",
+              "mitre_attack": [
+                {
+                  "pattern_id": 10304,
+                  "tactic_id": "CSTA0006",
+                  "technique_id": "CST0002",
+                  "tactic": "Falcon Overwatch",
+                  "technique": "Malicious Activity"
+                }
+              ],
+              "name": "DemoHighPattern",
+              "objective": "Falcon Detection Method",
+              "parent_details": {
+                "cmdline": "cmd  crowdstrike_test_high",
+                "filename": "cmd.exe",
+                "filepath": "\\Device\\HarddiskVolume4\\Windows\\System32\\cmd.exe",
+                "local_process_id": "8868",
+                "md5": "22cdd5b627bed769783a7928efed69ae",
+                "process_graph_id": "pid:5388c592189444ad9e84df071c8f3954:10557972040",
+                "process_id": "10557972040",
+                "sha256": "fc45691495eec0f9de50ccd574ead3a2d83e3088f1a3ad514f46ed84a70efa21",
+                "timestamp": "2025-06-11T17:13:16Z",
+                "user_graph_id": "uid:5388c592189444ad9e84df071c8f3954:S-1-5-21-2931850618-1476300705-2742956860-1104",
+                "user_id": "S-1-5-21-2931850618-1476300705-2742956860-1104",
+                "user_name": "user6"
+              },
+              "parent_process_id": "10557972040",
+              "pattern_disposition": 0,
+              "pattern_disposition_description": "Detection, standard detection.",
+              "pattern_disposition_details": {
+                "blocking_unsupported_or_disabled": false,
+                "bootup_safeguard_enabled": false,
+                "containment_file_system": false,
+                "critical_process_disabled": false,
+                "detect": false,
+                "fs_operation_blocked": false,
+                "handle_operation_downgraded": false,
+                "inddet_mask": false,
+                "indicator": false,
+                "kill_action_failed": false,
+                "kill_parent": false,
+                "kill_process": false,
+                "kill_subprocess": false,
+                "mfa_required": false,
+                "operation_blocked": false,
+                "policy_disabled": false,
+                "prevention_provisioning_enabled": false,
+                "process_blocked": false,
+                "quarantine_file": false,
+                "quarantine_machine": false,
+                "registry_operation_blocked": false,
+                "response_action_already_applied": false,
+                "response_action_failed": false,
+                "response_action_triggered": false,
+                "rooting": false,
+                "sensor_only": false,
+                "suspend_parent": false,
+                "suspend_process": false
+              },
+              "pattern_id": 10304,
+              "platform": "Windows",
+              "poly_id": "AACGk960vxNM-4hV7hGNmgJDHT6rPr9ZY7tVWH9KAC5SPAAATiGvJPYbMEpy79ExehQ0j-pi2dGo2QkQs0W4JkPzDurcDg==",
+              "priority_explanation": [
+                "[MOD] The detection is based on Pattern 10304: A high level detection was triggered on this process for testing purposes.",
+                "[MOD] The disposition for the detection: no preventative action was taken",
+                "[MOD] The parent process was identified as: cmd.exe"
+              ],
+              "priority_value": 10,
+              "process_id": "10653769300",
+              "process_start_time": "1749667166",
+              "product": "epp",
+              "resolution": "ignored",
+              "scenario": "suspicious_activity",
+              "seconds_to_resolved": 0,
+              "seconds_to_triaged": 0,
+              "severity": 70,
+              "severity_name": "High",
+              "sha1": "0000000000000000000000000000000000000000",
+              "sha256": "fc45691495eec0f9de50ccd574ead3a2d83e3088f1a3ad514f46ed84a70efa21",
+              "show_in_ui": true,
+              "source_products": ["Falcon Insight"],
+              "source_vendors": ["CrowdStrike"],
+              "status": "closed",
+              "tactic": "Falcon Overwatch",
+              "tactic_id": "CSTA0006",
+              "tags": ["", "ignored"],
+              "technique": "Malicious Activity",
+              "technique_id": "CST0002",
+              "template_instance_id": "1342",
+              "timestamp": "2025-06-11T18:39:26.881Z",
+              "tree_id": "8592364792",
+              "tree_root": "10557972040",
+              "triggering_process_graph_id": "pid:5388c592189444ad9e84df071c8f3954:10653769300",
+              "type": "ldt",
+              "updated_timestamp": "2025-06-18T20:23:35.340932619Z",
+              "user_id": "S-1-5-21-2931850618-1476300705-2742956860-1104",
+              "user_name": "user6",
+              "user_principal": "user6@normcorp.ai",
+              "incident": {
+                "created": "2025-06-16T18:46:54Z",
+                "end": "2025-06-16T18:46:54Z",
+                "id": "inc:5388c592189444ad9e84df071c8f3954:2343cc087cce4683a3c96b49a1e8c865",
+                "score": "8.59047945539694",
+                "start": "2025-06-16T18:26:55Z"
+              }
+            },
+            {
+              "agent_id": "5388c592189444ad9e84df071c8f3954",
+              "aggregate_id": "aggind:5388c592189444ad9e84df071c8f3954:8592364792",
+              "alleged_filetype": "exe",
+              "cid": "8693deb4bf134cfb8855ee118d9a0243",
+              "cloud_indicator": "false",
+              "cmdline": "cmd  crowdstrike_test_high",
+              "composite_id": "8693deb4bf134cfb8855ee118d9a0243:ind:5388c592189444ad9e84df071c8f3954:10557972040-10304-81543952",
+              "confidence": 100,
+              "context_timestamp": "2025-06-11T17:13:03.154Z",
+              "control_graph_id": "ctg:5388c592189444ad9e84df071c8f3954:8592364792",
+              "crawled_timestamp": "2025-06-11T18:13:05.294666965Z",
+              "created_timestamp": "2025-06-11T17:14:05.265128027Z",
+              "data_domains": ["Endpoint"],
+              "description": "A high level detection was triggered on this process for testing purposes.",
+              "device": {
+                "agent_load_flags": "1",
+                "agent_local_time": "2025-06-10T14:00:03.712Z",
+                "agent_version": "7.24.19607.0",
+                "bios_manufacturer": "Microsoft Corporation",
+                "bios_version": "Hyper-V UEFI Release v4.1",
+                "cid": "8693deb4bf134cfb8855ee118d9a0243",
+                "config_id_base": "65994767",
+                "config_id_build": "19607",
+                "config_id_platform": "3",
+                "device_id": "5388c592189444ad9e84df071c8f3954",
+                "external_ip": "20.83.184.209",
+                "first_seen": "2025-06-10T01:49:09Z",
+                "groups": ["2a8b900d486e4e9eaa024723d6f3742a"],
+                "hostinfo": {
+                  "active_directory_dn_display": ["Domain Controllers"],
+                  "domain": "normcorp.ai"
+                },
+                "hostname": "SGNL-CRWD-Proto",
+                "instance_id": "3bfaa67d-0dbd-4d49-8a0a-1cb2b0d2e1af",
+                "last_seen": "2025-06-11T18:00:17Z",
+                "local_ip": "10.3.0.4",
+                "mac_address": "00-0d-3a-56-11-c1",
+                "machine_domain": "normcorp.ai",
+                "major_version": "10",
+                "minor_version": "0",
+                "modified_timestamp": "2025-06-11T18:12:11Z",
+                "os_version": "Windows Server 2022",
+                "ou": ["Domain Controllers"],
+                "platform_id": "0",
+                "platform_name": "Windows",
+                "product_type": "2",
+                "product_type_desc": "Domain Controller",
+                "service_provider": "AZURE",
+                "service_provider_account_id": "9405b466-dc55-4b34-a424-2059ff303a68",
+                "site_name": "Default-First-Site-Name",
+                "status": "normal",
+                "system_manufacturer": "Microsoft Corporation",
+                "system_product_name": "Virtual Machine"
+              },
+              "display_name": "TestTriggerHigh",
+              "email_sent": true,
+              "falcon_host_link": "https://falcon.us-2.crowdstrike.com/activity-v2/detections/8693deb4bf134cfb8855ee118d9a0243:ind:5388c592189444ad9e84df071c8f3954:10557972040-10304-81543952?_cid=g04000s6h3lrs7encahh67joerwbbsje",
+              "filename": "cmd.exe",
+              "filepath": "\\Device\\HarddiskVolume4\\Windows\\System32\\cmd.exe",
+              "global_prevalence": "common",
+              "grandparent_details": {
+                "cmdline": "C:\\Windows\\Explorer.EXE",
+                "filename": "explorer.exe",
+                "filepath": "\\Device\\HarddiskVolume4\\Windows\\explorer.exe",
+                "local_process_id": "7740",
+                "md5": "d5eaf29530d7c7d703fa0e1f45ff47ba",
+                "process_graph_id": "pid:5388c592189444ad9e84df071c8f3954:8933771842",
+                "process_id": "8933771842",
+                "sha256": "e939e7a66aa1e5dfdae89dfd7ee314b60e95cba447082e3f17bc936a22bb6bde",
+                "timestamp": "2025-06-11T18:09:49Z",
+                "user_graph_id": "uid:5388c592189444ad9e84df071c8f3954:S-1-5-21-2931850618-1476300705-2742956860-1104",
+                "user_id": "S-1-5-21-2931850618-1476300705-2742956860-1104",
+                "user_name": "user6"
+              },
+              "id": "ind:5388c592189444ad9e84df071c8f3954:10557972040-10304-81543952",
+              "indicator_id": "ind:5388c592189444ad9e84df071c8f3954:10557972040-10304-81543952",
+              "ioc_context": [],
+              "local_prevalence": "low",
+              "local_process_id": "8868",
+              "logon_domain": "normcorp",
+              "md5": "22cdd5b627bed769783a7928efed69ae",
+              "mitre_attack": [
+                {
+                  "pattern_id": 10304,
+                  "tactic_id": "CSTA0006",
+                  "technique_id": "CST0002",
+                  "tactic": "Falcon Overwatch",
+                  "technique": "Malicious Activity"
+                }
+              ],
+              "name": "DemoHighPattern",
+              "objective": "Falcon Detection Method",
+              "parent_details": {
+                "cmdline": "\"C:\\Windows\\system32\\cmd.exe\" ",
+                "filename": "cmd.exe",
+                "filepath": "\\Device\\HarddiskVolume4\\Windows\\System32\\cmd.exe",
+                "local_process_id": "7744",
+                "md5": "22cdd5b627bed769783a7928efed69ae",
+                "process_graph_id": "pid:5388c592189444ad9e84df071c8f3954:10465963482",
+                "process_id": "10465963482",
+                "sha256": "fc45691495eec0f9de50ccd574ead3a2d83e3088f1a3ad514f46ed84a70efa21",
+                "timestamp": "2025-06-11T17:15:02Z",
+                "user_graph_id": "uid:5388c592189444ad9e84df071c8f3954:S-1-5-21-2931850618-1476300705-2742956860-1104",
+                "user_id": "S-1-5-21-2931850618-1476300705-2742956860-1104",
+                "user_name": "user6"
+              },
+              "parent_process_id": "10465963482",
+              "pattern_disposition": 0,
+              "pattern_disposition_description": "Detection, standard detection.",
+              "pattern_disposition_details": {
+                "blocking_unsupported_or_disabled": false,
+                "bootup_safeguard_enabled": false,
+                "containment_file_system": false,
+                "critical_process_disabled": false,
+                "detect": false,
+                "fs_operation_blocked": false,
+                "handle_operation_downgraded": false,
+                "inddet_mask": false,
+                "indicator": false,
+                "kill_action_failed": false,
+                "kill_parent": false,
+                "kill_process": false,
+                "kill_subprocess": false,
+                "mfa_required": false,
+                "operation_blocked": false,
+                "policy_disabled": false,
+                "prevention_provisioning_enabled": false,
+                "process_blocked": false,
+                "quarantine_file": false,
+                "quarantine_machine": false,
+                "registry_operation_blocked": false,
+                "response_action_already_applied": false,
+                "response_action_failed": false,
+                "response_action_triggered": false,
+                "rooting": false,
+                "sensor_only": false,
+                "suspend_parent": false,
+                "suspend_process": false
+              },
+              "pattern_id": 10304,
+              "platform": "Windows",
+              "poly_id": "AACGk960vxNM-4hV7hGNmgJD4A99upX2wfL2y8cFb1M_IgAATiFIDOrk-LktPmcljfnMt9o2NxfND4170PJjqSEguTv-tQ==",
+              "priority_explanation": [
+                "[MOD] The detection is based on Pattern 10304: A high level detection was triggered on this process for testing purposes.",
+                "[MOD] The disposition for the detection: no preventative action was taken",
+                "[MOD] The parent process was identified as: cmd.exe"
+              ],
+              "priority_value": 10,
+              "process_id": "10557972040",
+              "process_start_time": "1749661983",
+              "product": "epp",
+              "resolution": "ignored",
+              "scenario": "suspicious_activity",
+              "seconds_to_resolved": 0,
+              "seconds_to_triaged": 0,
+              "severity": 70,
+              "severity_name": "High",
+              "sha1": "0000000000000000000000000000000000000000",
+              "sha256": "fc45691495eec0f9de50ccd574ead3a2d83e3088f1a3ad514f46ed84a70efa21",
+              "show_in_ui": true,
+              "source_products": ["Falcon Insight"],
+              "source_vendors": ["CrowdStrike"],
+              "status": "closed",
+              "tactic": "Falcon Overwatch",
+              "tactic_id": "CSTA0006",
+              "tags": ["", "ignored"],
+              "technique": "Malicious Activity",
+              "technique_id": "CST0002",
+              "template_instance_id": "1342",
+              "timestamp": "2025-06-11T17:13:03.734Z",
+              "tree_id": "8592364792",
+              "tree_root": "10557972040",
+              "triggering_process_graph_id": "pid:5388c592189444ad9e84df071c8f3954:10557972040",
+              "type": "ldt",
+              "updated_timestamp": "2025-06-18T20:23:35.340932619Z",
+              "user_id": "S-1-5-21-2931850618-1476300705-2742956860-1104",
+              "user_name": "user6",
+              "user_principal": "user6@normcorp.ai",
+              "incident": {
+                "created": "2025-06-16T18:46:54Z",
+                "end": "2025-06-16T18:46:54Z",
+                "id": "inc:5388c592189444ad9e84df071c8f3954:2343cc087cce4683a3c96b49a1e8c866",
+                "score": "8.59047945539694",
+                "start": "2025-06-16T18:26:55Z"
+              }
+            }
+          ]
+        }
+      headers:
+        Connection:
+          - keep-alive
+        Content-Type:
+          - application/json
+        Date:
+          - Sun, 18 Aug 2025 20:30:01 GMT
+        Server:
+          - nginx
+        Strict-Transport-Security:
           - max-age=31536000; includeSubDomains
         X-Cs-Region:
           - us-2
         X-Cs-Traceid:
-          - test-trace-456
+          - combined-alerts-smoke-002
         X-Ratelimit-Limit:
           - "6000"
         X-Ratelimit-Remaining:
-          - "5984"
+          - "5998"
       status: 200 OK
       code: 200
-      duration: 53.851934ms
+      duration: 112.345678ms
+
+  # Final page - test end of pagination (empty after token)
+  - id: 2
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 155
+      transfer_encoding: []
+      trailer: {}
+      host: api.us-2.crowdstrike.com
+      remote_addr: ""
+      request_uri: ""
+      body: '{"limit":2,"after":"eyJ2ZXJzaW9uIjoidjEiLCJ0b3RhbF9oaXRzIjoyMywidG90YWxfcmVsYXRpb24iOiJlcSIsImNsdXN0ZXJfaWQiOiJ0ZXN0IiwiYWZ0ZXIiOlsxNzQ5NTEyMzQ1Njc4LCJ0ZXN0aWQ6aW5kOmU0NTY3ODkwMTIzNDU2Nzg5MGNkZWYxMjM0NTY3ODkwLTIwMTUzLTcwNTEiXSwidG90YWxfZmV0Y2hlZCI6NH0="}'
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+        Content-Type:
+          - application/json
+      url: https://api.us-2.crowdstrike.com/alerts/combined/alerts/v1?limit=2
+      method: POST
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding:
+        - chunked
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: |-
+        {
+          "meta": {
+            "query_time": 0.015432109,
+            "pagination": {
+              "total": 23,
+              "limit": 2,
+              "after": ""
+            },
+            "powered_by": "detectsapi",
+            "trace_id": "22996cf3-1hde-65e4-bf1g-f02gc1438dc2"
+          },
+          "errors": [],
+          "resources": [
+            {
+                "agent_id": "5388c592189444ad9e84df071c8f3954",
+                "aggregate_id": "aggind:5388c592189444ad9e84df071c8f3954:8591071260",
+                "alleged_filetype": "exe",
+                "cid": "8693deb4bf134cfb8855ee118d9a0243",
+                "cloud_indicator": "false",
+                "cmdline": "cmd  crowdstrike_test_critical",
+                "composite_id": "8693deb4bf134cfb8855ee118d9a0243:ind:5388c592189444ad9e84df071c8f3954:10230629714-10303-52340240",
+                "confidence": 100,
+                "context_timestamp": "2025-06-11T12:58:25.721Z",
+                "control_graph_id": "ctg:5388c592189444ad9e84df071c8f3954:8591071260",
+                "crawled_timestamp": "2025-06-11T13:58:27.941298086Z",
+                "created_timestamp": "2025-06-11T12:59:27.950939533Z",
+                "data_domains": [
+                    "Endpoint"
+                ],
+                "description": "A critical level detection was triggered on this process for testing purposes.",
+                "device": {
+                    "agent_load_flags": "1",
+                    "agent_local_time": "2025-06-10T14:00:03.712Z",
+                    "agent_version": "7.24.19607.0",
+                    "bios_manufacturer": "Microsoft Corporation",
+                    "bios_version": "Hyper-V UEFI Release v4.1",
+                    "cid": "8693deb4bf134cfb8855ee118d9a0243",
+                    "config_id_base": "65994767",
+                    "config_id_build": "19607",
+                    "config_id_platform": "3",
+                    "device_id": "5388c592189444ad9e84df071c8f3954",
+                    "external_ip": "20.83.184.209",
+                    "first_seen": "2025-06-10T01:49:09Z",
+                    "groups": [
+                        "2a8b900d486e4e9eaa024723d6f3742a"
+                    ],
+                    "hostinfo": {
+                        "active_directory_dn_display": [
+                            "Domain Controllers"
+                        ],
+                        "domain": "normcorp.ai"
+                    },
+                    "hostname": "SGNL-CRWD-Proto",
+                    "instance_id": "3bfaa67d-0dbd-4d49-8a0a-1cb2b0d2e1af",
+                    "last_seen": "2025-06-11T13:00:17Z",
+                    "local_ip": "10.3.0.4",
+                    "mac_address": "00-0d-3a-56-11-c1",
+                    "machine_domain": "normcorp.ai",
+                    "major_version": "10",
+                    "minor_version": "0",
+                    "modified_timestamp": "2025-06-11T13:54:50Z",
+                    "os_version": "Windows Server 2022",
+                    "ou": [
+                        "Domain Controllers"
+                    ],
+                    "platform_id": "0",
+                    "platform_name": "Windows",
+                    "product_type": "2",
+                    "product_type_desc": "Domain Controller",
+                    "service_provider": "AZURE",
+                    "service_provider_account_id": "9405b466-dc55-4b34-a424-2059ff303a68",
+                    "site_name": "Default-First-Site-Name",
+                    "status": "normal",
+                    "system_manufacturer": "Microsoft Corporation",
+                    "system_product_name": "Virtual Machine"
+                },
+                "display_name": "TestTriggerCritical",
+                "email_sent": true,
+                "falcon_host_link": "https://falcon.us-2.crowdstrike.com/activity-v2/detections/8693deb4bf134cfb8855ee118d9a0243:ind:5388c592189444ad9e84df071c8f3954:10230629714-10303-52340240?_cid=g04000s6h3lrs7encahh67joerwbbsje",
+                "filename": "cmd.exe",
+                "filepath": "\\Device\\HarddiskVolume4\\Windows\\System32\\cmd.exe",
+                "global_prevalence": "common",
+                "grandparent_details": {
+                    "cmdline": "cmd  crowdstrike_test_critical",
+                    "filename": "cmd.exe",
+                    "filepath": "\\Device\\HarddiskVolume4\\Windows\\System32\\cmd.exe",
+                    "local_process_id": "4584",
+                    "md5": "22cdd5b627bed769783a7928efed69ae",
+                    "process_graph_id": "pid:5388c592189444ad9e84df071c8f3954:9781782614",
+                    "process_id": "9781782614",
+                    "sha256": "fc45691495eec0f9de50ccd574ead3a2d83e3088f1a3ad514f46ed84a70efa21",
+                    "timestamp": "2025-06-11T03:05:36Z",
+                    "user_graph_id": "uid:5388c592189444ad9e84df071c8f3954:S-1-5-21-2931850618-1476300705-2742956860-1104",
+                    "user_id": "S-1-5-21-2931850618-1476300705-2742956860-1104",
+                    "user_name": "user6"
+                },
+                "id": "ind:5388c592189444ad9e84df071c8f3954:10230629714-10303-52340240",
+                "indicator_id": "ind:5388c592189444ad9e84df071c8f3954:10230629714-10303-52340240",
+                "ioc_context": [],
+                "local_prevalence": "low",
+                "local_process_id": "6344",
+                "logon_domain": "normcorp",
+                "md5": "22cdd5b627bed769783a7928efed69ae",
+                "mitre_attack": [
+                    {
+                        "pattern_id": 10303,
+                        "tactic_id": "CSTA0006",
+                        "technique_id": "CST0002",
+                        "tactic": "Falcon Overwatch",
+                        "technique": "Malicious Activity"
+                    }
+                ],
+                "name": "DemoCriticalPattern",
+                "objective": "Falcon Detection Method",
+                "parent_details": {
+                    "cmdline": "cmd  crowdstrike_test_high",
+                    "filename": "cmd.exe",
+                    "filepath": "\\Device\\HarddiskVolume4\\Windows\\System32\\cmd.exe",
+                    "local_process_id": "6880",
+                    "md5": "22cdd5b627bed769783a7928efed69ae",
+                    "process_graph_id": "pid:5388c592189444ad9e84df071c8f3954:10208107226",
+                    "process_id": "10208107226",
+                    "sha256": "fc45691495eec0f9de50ccd574ead3a2d83e3088f1a3ad514f46ed84a70efa21",
+                    "timestamp": "2025-06-11T12:39:56Z",
+                    "user_graph_id": "uid:5388c592189444ad9e84df071c8f3954:S-1-5-21-2931850618-1476300705-2742956860-1104",
+                    "user_id": "S-1-5-21-2931850618-1476300705-2742956860-1104",
+                    "user_name": "user6"
+                },
+                "parent_process_id": "10208107226",
+                "pattern_disposition": 0,
+                "pattern_disposition_description": "Detection, standard detection.",
+                "pattern_disposition_details": {
+                    "blocking_unsupported_or_disabled": false,
+                    "bootup_safeguard_enabled": false,
+                    "containment_file_system": false,
+                    "critical_process_disabled": false,
+                    "detect": false,
+                    "fs_operation_blocked": false,
+                    "handle_operation_downgraded": false,
+                    "inddet_mask": false,
+                    "indicator": false,
+                    "kill_action_failed": false,
+                    "kill_parent": false,
+                    "kill_process": false,
+                    "kill_subprocess": false,
+                    "mfa_required": false,
+                    "operation_blocked": false,
+                    "policy_disabled": false,
+                    "prevention_provisioning_enabled": false,
+                    "process_blocked": false,
+                    "quarantine_file": false,
+                    "quarantine_machine": false,
+                    "registry_operation_blocked": false,
+                    "response_action_already_applied": false,
+                    "response_action_failed": false,
+                    "response_action_triggered": false,
+                    "rooting": false,
+                    "sensor_only": false,
+                    "suspend_parent": false,
+                    "suspend_process": false
+                },
+                "pattern_id": 10303,
+                "platform": "Windows",
+                "poly_id": "AACGk960vxNM-4hV7hGNmgJDUtB2ek1C9RLLaLDRC_hZRQAATiF9rOpMFBt5RWVI-qoMwwpDwkpragqZs7tzcxm_4PlnDQ==",
+                "priority_explanation": [
+                    "[MOD] The detection is based on Pattern 10303: A critical level detection was triggered on this process for testing purposes.",
+                    "[MOD] The disposition for the detection: no preventative action was taken",
+                    "[MOD] The parent process was identified as: cmd.exe"
+                ],
+                "priority_value": 10,
+                "process_id": "10230629714",
+                "process_start_time": "1749646705",
+                "product": "epp",
+                "resolution": "ignored",
+                "scenario": "suspicious_activity",
+                "seconds_to_resolved": 7573,
+                "seconds_to_triaged": 0,
+                "severity": 90,
+                "severity_name": "Critical",
+                "sha1": "0000000000000000000000000000000000000000",
+                "sha256": "fc45691495eec0f9de50ccd574ead3a2d83e3088f1a3ad514f46ed84a70efa21",
+                "show_in_ui": true,
+                "source_products": [
+                    "Falcon Insight"
+                ],
+                "source_vendors": [
+                    "CrowdStrike"
+                ],
+                "status": "closed",
+                "tactic": "Falcon Overwatch",
+                "tactic_id": "CSTA0006",
+                "tags": [
+                    "ignored"
+                ],
+                "technique": "Malicious Activity",
+                "technique_id": "CST0002",
+                "template_instance_id": "1343",
+                "timestamp": "2025-06-11T12:58:26.269Z",
+                "tree_id": "8591071260",
+                "tree_root": "9781782614",
+                "triggering_process_graph_id": "pid:5388c592189444ad9e84df071c8f3954:10230629714",
+                "type": "ldt",
+                "updated_timestamp": "2025-06-11T16:08:05.654536486Z",
+                "user_id": "S-1-5-21-2931850618-1476300705-2742956860-1104",
+                "user_name": "user6",
+                "incident": {
+                    "created": "2025-06-16T18:46:54Z",
+                    "end": "2025-06-16T18:46:54Z",
+                    "id": "inc:5388c592189444ad9e84df071c8f3954:2343cc087cce4683a3c96b49a1e8c895",
+                    "score": "8.59047945539694",
+                    "start": "2025-06-16T18:26:55Z"
+                }
+            },
+            {
+                "agent_id": "5388c592189444ad9e84df071c8f3954",
+                "aggregate_id": "aggind:5388c592189444ad9e84df071c8f3954:8591071260",
+                "alleged_filetype": "exe",
+                "child_process_ids": [
+                    "pid:5388c592189444ad9e84df071c8f3954:10230629714"
+                ],
+                "cid": "8693deb4bf134cfb8855ee118d9a0243",
+                "cloud_indicator": "false",
+                "cmdline": "cmd  crowdstrike_test_high",
+                "composite_id": "8693deb4bf134cfb8855ee118d9a0243:ind:5388c592189444ad9e84df071c8f3954:10208107226-10304-52110864",
+                "confidence": 100,
+                "context_timestamp": "2025-06-11T12:39:56.399Z",
+                "control_graph_id": "ctg:5388c592189444ad9e84df071c8f3954:8591071260",
+                "crawled_timestamp": "2025-06-11T13:39:58.354773222Z",
+                "created_timestamp": "2025-06-11T12:40:58.360279214Z",
+                "data_domains": [
+                    "Endpoint"
+                ],
+                "description": "A high level detection was triggered on this process for testing purposes.",
+                "device": {
+                    "agent_load_flags": "1",
+                    "agent_local_time": "2025-06-10T14:00:03.712Z",
+                    "agent_version": "7.24.19607.0",
+                    "bios_manufacturer": "Microsoft Corporation",
+                    "bios_version": "Hyper-V UEFI Release v4.1",
+                    "cid": "8693deb4bf134cfb8855ee118d9a0243",
+                    "config_id_base": "65994767",
+                    "config_id_build": "19607",
+                    "config_id_platform": "3",
+                    "device_id": "5388c592189444ad9e84df071c8f3954",
+                    "external_ip": "20.83.184.209",
+                    "first_seen": "2025-06-10T01:49:09Z",
+                    "groups": [
+                        "2a8b900d486e4e9eaa024723d6f3742a"
+                    ],
+                    "hostinfo": {
+                        "active_directory_dn_display": [
+                            "Domain Controllers"
+                        ],
+                        "domain": "normcorp.ai"
+                    },
+                    "hostname": "SGNL-CRWD-Proto",
+                    "instance_id": "3bfaa67d-0dbd-4d49-8a0a-1cb2b0d2e1af",
+                    "last_seen": "2025-06-11T13:00:17Z",
+                    "local_ip": "10.3.0.4",
+                    "mac_address": "00-0d-3a-56-11-c1",
+                    "machine_domain": "normcorp.ai",
+                    "major_version": "10",
+                    "minor_version": "0",
+                    "modified_timestamp": "2025-06-11T13:36:06Z",
+                    "os_version": "Windows Server 2022",
+                    "ou": [
+                        "Domain Controllers"
+                    ],
+                    "platform_id": "0",
+                    "platform_name": "Windows",
+                    "product_type": "2",
+                    "product_type_desc": "Domain Controller",
+                    "service_provider": "AZURE",
+                    "service_provider_account_id": "9405b466-dc55-4b34-a424-2059ff303a68",
+                    "site_name": "Default-First-Site-Name",
+                    "status": "normal",
+                    "system_manufacturer": "Microsoft Corporation",
+                    "system_product_name": "Virtual Machine"
+                },
+                "display_name": "TestTriggerHigh",
+                "email_sent": true,
+                "falcon_host_link": "https://falcon.us-2.crowdstrike.com/activity-v2/detections/8693deb4bf134cfb8855ee118d9a0243:ind:5388c592189444ad9e84df071c8f3954:10208107226-10304-52110864?_cid=g04000s6h3lrs7encahh67joerwbbsje",
+                "filename": "cmd.exe",
+                "filepath": "\\Device\\HarddiskVolume4\\Windows\\System32\\cmd.exe",
+                "global_prevalence": "common",
+                "grandparent_details": {
+                    "cmdline": "\"C:\\Windows\\system32\\cmd.exe\" ",
+                    "filename": "cmd.exe",
+                    "filepath": "\\Device\\HarddiskVolume4\\Windows\\System32\\cmd.exe",
+                    "local_process_id": "4468",
+                    "md5": "22cdd5b627bed769783a7928efed69ae",
+                    "process_graph_id": "pid:5388c592189444ad9e84df071c8f3954:9770699358",
+                    "process_id": "9770699358",
+                    "sha256": "fc45691495eec0f9de50ccd574ead3a2d83e3088f1a3ad514f46ed84a70efa21",
+                    "timestamp": "2025-06-11T03:06:36Z",
+                    "user_graph_id": "uid:5388c592189444ad9e84df071c8f3954:S-1-5-21-2931850618-1476300705-2742956860-1104",
+                    "user_id": "S-1-5-21-2931850618-1476300705-2742956860-1104",
+                    "user_name": "user6"
+                },
+                "id": "ind:5388c592189444ad9e84df071c8f3954:10208107226-10304-52110864",
+                "indicator_id": "ind:5388c592189444ad9e84df071c8f3954:10208107226-10304-52110864",
+                "ioc_context": [],
+                "local_prevalence": "low",
+                "local_process_id": "6880",
+                "logon_domain": "normcorp",
+                "md5": "22cdd5b627bed769783a7928efed69ae",
+                "mitre_attack": [
+                    {
+                        "pattern_id": 10304,
+                        "tactic_id": "CSTA0006",
+                        "technique_id": "CST0002",
+                        "tactic": "Falcon Overwatch",
+                        "technique": "Malicious Activity"
+                    }
+                ],
+                "name": "DemoHighPattern",
+                "objective": "Falcon Detection Method",
+                "parent_details": {
+                    "cmdline": "cmd  crowdstrike_test_critical",
+                    "filename": "cmd.exe",
+                    "filepath": "\\Device\\HarddiskVolume4\\Windows\\System32\\cmd.exe",
+                    "local_process_id": "4584",
+                    "md5": "22cdd5b627bed769783a7928efed69ae",
+                    "process_graph_id": "pid:5388c592189444ad9e84df071c8f3954:9781782614",
+                    "process_id": "9781782614",
+                    "sha256": "fc45691495eec0f9de50ccd574ead3a2d83e3088f1a3ad514f46ed84a70efa21",
+                    "timestamp": "2025-06-11T03:05:36Z",
+                    "user_graph_id": "uid:5388c592189444ad9e84df071c8f3954:S-1-5-21-2931850618-1476300705-2742956860-1104",
+                    "user_id": "S-1-5-21-2931850618-1476300705-2742956860-1104",
+                    "user_name": "user6"
+                },
+                "parent_process_id": "9781782614",
+                "pattern_disposition": 0,
+                "pattern_disposition_description": "Detection, standard detection.",
+                "pattern_disposition_details": {
+                    "blocking_unsupported_or_disabled": false,
+                    "bootup_safeguard_enabled": false,
+                    "containment_file_system": false,
+                    "critical_process_disabled": false,
+                    "detect": false,
+                    "fs_operation_blocked": false,
+                    "handle_operation_downgraded": false,
+                    "inddet_mask": false,
+                    "indicator": false,
+                    "kill_action_failed": false,
+                    "kill_parent": false,
+                    "kill_process": false,
+                    "kill_subprocess": false,
+                    "mfa_required": false,
+                    "operation_blocked": false,
+                    "policy_disabled": false,
+                    "prevention_provisioning_enabled": false,
+                    "process_blocked": false,
+                    "quarantine_file": false,
+                    "quarantine_machine": false,
+                    "registry_operation_blocked": false,
+                    "response_action_already_applied": false,
+                    "response_action_failed": false,
+                    "response_action_triggered": false,
+                    "rooting": false,
+                    "sensor_only": false,
+                    "suspend_parent": false,
+                    "suspend_process": false
+                },
+                "pattern_id": 10304,
+                "platform": "Windows",
+                "poly_id": "AACGk960vxNM-4hV7hGNmgJDdUpaVtDy_D2QDjhaJeLQWwAATiE6fBKVPmYoRXI_ArwBiCnbF2zzntSdA9OHNKWVWTkQ-w==",
+                "priority_explanation": [
+                    "[MOD] The detection is based on Pattern 10304: A high level detection was triggered on this process for testing purposes.",
+                    "[MOD] The disposition for the detection: no preventative action was taken",
+                    "[MOD] The parent process was identified as: cmd.exe"
+                ],
+                "priority_value": 10,
+                "process_id": "10208107226",
+                "process_start_time": "1749645596",
+                "product": "epp",
+                "resolution": "ignored",
+                "scenario": "suspicious_activity",
+                "seconds_to_resolved": 0,
+                "seconds_to_triaged": 0,
+                "severity": 70,
+                "severity_name": "High",
+                "sha1": "0000000000000000000000000000000000000000",
+                "sha256": "fc45691495eec0f9de50ccd574ead3a2d83e3088f1a3ad514f46ed84a70efa21",
+                "show_in_ui": true,
+                "source_products": [
+                    "Falcon Insight"
+                ],
+                "source_vendors": [
+                    "CrowdStrike"
+                ],
+                "status": "closed",
+                "tactic": "Falcon Overwatch",
+                "tactic_id": "CSTA0006",
+                "tags": [
+                    "ignored"
+                ],
+                "technique": "Malicious Activity",
+                "technique_id": "CST0002",
+                "template_instance_id": "1342",
+                "timestamp": "2025-06-11T12:39:56.948Z",
+                "tree_id": "8591071260",
+                "tree_root": "9781782614",
+                "triggering_process_graph_id": "pid:5388c592189444ad9e84df071c8f3954:10208107226",
+                "type": "ldt",
+                "updated_timestamp": "2025-06-11T16:08:05.654536486Z",
+                "user_id": "S-1-5-21-2931850618-1476300705-2742956860-1104",
+                "user_name": "user6",
+                "incident": {
+                    "created": "2025-06-16T18:46:54Z",
+                    "end": "2025-06-16T18:46:54Z",
+                    "id": "inc:5388c592189444ad9e84df071c8f3954:2343cc087cce4683a3c96b49a1e8c867",
+                    "score": "8.59047945539694",
+                    "start": "2025-06-16T18:26:55Z"
+                }
+            }
+          ]
+        }
+      headers:
+        Connection:
+          - keep-alive
+        Content-Type:
+          - application/json
+        Date:
+          - Sun, 18 Aug 2025 20:30:02 GMT
+        Server:
+          - nginx
+        Strict-Transport-Security:
+          - max-age=31536000; includeSubDomains
+        X-Cs-Region:
+          - us-2
+        X-Cs-Traceid:
+          - combined-alerts-smoke-003
+        X-Ratelimit-Limit:
+          - "6000"
+        X-Ratelimit-Remaining:
+          - "5997"
+      status: 200 OK
+      code: 200
+      duration: 89.123456ms
