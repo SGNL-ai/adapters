@@ -1143,6 +1143,59 @@ func TestCrowdStrikeCombinedAlert(t *testing.T) {
 					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
 				},
 			},
+			ChildEntities: []*adapter_api_v1.EntityConfig{
+				{
+					Id:         "files_accessed",
+					ExternalId: "$.files_accessed",
+					Attributes: []*adapter_api_v1.AttributeConfig{
+						{
+							Id:         "filename",
+							ExternalId: "filename",
+							Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+							List:       false,
+							UniqueId:   false,
+						},
+						{
+							Id:         "filepath",
+							ExternalId: "filepath",
+							Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+							List:       false,
+						},
+					},
+				},
+				{
+					Id:         "files_written",
+					ExternalId: "$.files_written",
+					Attributes: []*adapter_api_v1.AttributeConfig{
+						{
+							Id:         "filename",
+							ExternalId: "filename",
+							Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+							List:       false,
+							UniqueId:   false,
+						},
+						{
+							Id:         "filepath",
+							ExternalId: "filepath",
+							Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+							List:       false,
+						},
+					},
+				},
+				{
+					Id:         "mitre_attack",
+					ExternalId: "$.mitre_attack",
+					Attributes: []*adapter_api_v1.AttributeConfig{
+						{
+							Id:         "pattern_id",
+							ExternalId: "pattern_id",
+							Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_INT64,
+							List:       false,
+							UniqueId:   true,
+						},
+					},
+				},
+			},
 		},
 		PageSize: 2,
 		Cursor:   "",
@@ -1156,67 +1209,285 @@ func TestCrowdStrikeCombinedAlert(t *testing.T) {
 	wantResp := new(adapter_api_v1.GetPageResponse)
 
 	err = protojson.Unmarshal([]byte(`{
-    "success": {
-        "objects": [
-            {
-                "attributes": [
-                    {
-                        "id": "AggregateId",
-                        "values": [
-                            {
-                                "stringValue": "aggind:test1234567890123456789012345678:625985642613668398"
-                            }
-                        ]
-                    },
-                    {
-                        "id": "CompositeId",
-                        "values": [
-                            {
-                                "stringValue": "testcid1234567890123456789012345:ind:test1234567890123456789012345678:625985642593750673-20151-7049"
-                            }
-                        ]
-                    },
-                    {
-                        "id": "Status",
-                        "values": [
-                            {
-                                "stringValue": "new"
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
-                "attributes": [
-                    {
-                        "id": "AggregateId",
-                        "values": [
-                            {
-                                "stringValue": "aggind:test2345678901234567890123456789:726196753724579846"
-                            }
-                        ]
-                    },
-                    {
-                        "id": "CompositeId",
-                        "values": [
-                            {
-                                "stringValue": "testcid1234567890123456789012345:ind:test2345678901234567890123456789:726196753704661621-20152-7050"
-                            }
-                        ]
-                    },
-                    {
-                        "id": "Status",
-                        "values": [
-                            {
-                                "stringValue": "in_progress"
-                            }
-                        ]
-                    }
-                ]
-            }
-        ],
-        "nextCursor": "eyJjdXJzb3IiOiJleUoyWlhKemFXOXVJam9pZGpFaUxDSjBiM1JoYkY5b2FYUnpJam95TXl3aWRHOTBZV3hmY21Wc1lYUnBiMjRpT2lKbGNTSXNJbU5zZFhOMFpYSmZhV1FpT2lKMFpYTjBJaXdpWVdaMFpYSWlPbHN4TnpRNU5qRXhNVFUzTWpJeExDSjBaWE4wYVdRNmFXNWtPalV6T0Roak5Ua3lNVGc1TkRRMFlXUTVaVGcwWkdZd056RmpPR1l6T1RVME9qazNPREkzT0RJMk1UUXRNVEF6TURNdE16RTRNekUxTmpnaVhTd2lkRzkwWVd4ZlptVjBZMmhsWkNJNk1uMD0ifQ=="
-    }
+		"success": {
+			"objects": [
+			{
+				"attributes": [
+				{
+					"id": "AggregateId",
+					"values": [
+					{
+						"stringValue": "aggind:c36c42b64ce54b39a32e1d57240704c8:625985642613668398"
+					}
+					]
+				},
+				{
+					"id": "CompositeId",
+					"values": [
+					{
+						"stringValue": "8693deb4bf134cfb8855ee118d9a0243:ind:c36c42b64ce54b39a32e1d57240704c8:625985642593750673-20151-7049"
+					}
+					]
+				},
+				{
+					"id": "Status",
+					"values": [
+					{
+						"stringValue": "new"
+					}
+					]
+				}
+				],
+				"childObjects": [
+				{
+					"entityId": "files_accessed",
+					"objects": [
+					{
+						"attributes": [
+						{
+							"id": "filename",
+							"values": [
+							{
+								"stringValue": "cat"
+							}
+							]
+						},
+						{
+							"id": "filepath",
+							"values": [
+							{
+								"stringValue": "/bin/"
+							}
+							]
+						}
+						]
+					},
+					{
+						"attributes": [
+						{
+							"id": "filename",
+							"values": [
+							{
+								"stringValue": "zshnW4W3l"
+							}
+							]
+						},
+						{
+							"id": "filepath",
+							"values": [
+							{
+								"stringValue": "/private/tmp/"
+							}
+							]
+						}
+						]
+					}
+					]
+				},
+				{
+					"entityId": "files_written",
+					"objects": [
+					{
+						"attributes": [
+						{
+							"id": "filename",
+							"values": [
+							{
+								"stringValue": "eicar.com"
+							}
+							]
+						},
+						{
+							"id": "filepath",
+							"values": [
+							{
+								"stringValue": "/Users/joe/Desktop/"
+							}
+							]
+						}
+						]
+					},
+					{
+						"attributes": [
+						{
+							"id": "filename",
+							"values": [
+							{
+								"stringValue": "zshnW4W3l"
+							}
+							]
+						},
+						{
+							"id": "filepath",
+							"values": [
+							{
+								"stringValue": "/private/tmp/"
+							}
+							]
+						}
+						]
+					}
+					]
+				},
+				{
+					"entityId": "mitre_attack",
+					"objects": [
+					{
+						"attributes": [
+						{
+							"id": "pattern_id",
+							"values": [
+							{
+								"int64Value": 20151
+							}
+							]
+						}
+						]
+					}
+					]
+				}
+				]
+			},
+			{
+				"attributes": [
+				{
+					"id": "AggregateId",
+					"values": [
+					{
+						"stringValue": "aggind:5388c592189444ad9e84df071c8f3954:8592364792"
+					}
+					]
+				},
+				{
+					"id": "CompositeId",
+					"values": [
+					{
+						"stringValue": "8693deb4bf134cfb8855ee118d9a0243:ind:5388c592189444ad9e84df071c8f3954:12119912898-10304-117513744"
+					}
+					]
+				},
+				{
+					"id": "Status",
+					"values": [
+					{
+						"stringValue": "closed"
+					}
+					]
+				}
+				],
+				"childObjects": [
+				{
+					"entityId": "files_accessed",
+					"objects": [
+					{
+						"attributes": [
+						{
+							"id": "filename",
+							"values": [
+							{
+								"stringValue": "cat"
+							}
+							]
+						},
+						{
+							"id": "filepath",
+							"values": [
+							{
+								"stringValue": "/bin/"
+							}
+							]
+						}
+						]
+					},
+					{
+						"attributes": [
+						{
+							"id": "filename",
+							"values": [
+							{
+								"stringValue": "zshnW4W3l"
+							}
+							]
+						},
+						{
+							"id": "filepath",
+							"values": [
+							{
+								"stringValue": "/private/tmp/"
+							}
+							]
+						}
+						]
+					}
+					]
+				},
+				{
+					"entityId": "files_written",
+					"objects": [
+					{
+						"attributes": [
+						{
+							"id": "filename",
+							"values": [
+							{
+								"stringValue": "eicar.com"
+							}
+							]
+						},
+						{
+							"id": "filepath",
+							"values": [
+							{
+								"stringValue": "/Users/joe/Desktop/"
+							}
+							]
+						}
+						]
+					},
+					{
+						"attributes": [
+						{
+							"id": "filename",
+							"values": [
+							{
+								"stringValue": "zshnW4W3l"
+							}
+							]
+						},
+						{
+							"id": "filepath",
+							"values": [
+							{
+								"stringValue": "/private/tmp/"
+							}
+							]
+						}
+						]
+					}
+					]
+				},
+				{
+					"entityId": "mitre_attack",
+					"objects": [
+					{
+						"attributes": [
+						{
+							"id": "pattern_id",
+							"values": [
+							{
+								"int64Value": 10304
+							}
+							]
+						}
+						]
+					}
+					]
+				}
+				]
+			}
+			],
+			"nextCursor": "eyJjdXJzb3IiOiJleUoyWlhKemFXOXVJam9pZGpFaUxDSjBiM1JoYkY5b2FYUnpJam95TXl3aWRHOTBZV3hmY21Wc1lYUnBiMjRpT2lKbGNTSXNJbU5zZFhOMFpYSmZhV1FpT2lKMFpYTjBJaXdpWVdaMFpYSWlPbHN4TnpRNU5qRXhNVFUzTWpJeExDSjBaWE4wYVdRNmFXNWtPalV6T0Roak5Ua3lNVGc1TkRRMFlXUTVaVGcwWkdZd056RmpPR1l6T1RVME9qazNPREkzT0RJMk1UUXRNVEF6TURNdE16RTRNekUxTmpnaVhTd2lkRzkwWVd4ZlptVjBZMmhsWkNJNk1uMD0ifQ=="
+		}
 }`), wantResp)
 	if err != nil {
 		t.Fatal(err)
