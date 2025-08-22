@@ -32,10 +32,6 @@ var (
 			ListEndpoint: "incidents/queries/incidents/v1",      // This is implemented over HTTP GET by CRWD
 			GetEndpoint:  "incidents/entities/incidents/GET/v1", // This is implemented over HTTP POST by CRWD
 		},
-		Detect: {
-			ListEndpoint: "detects/queries/detects/v1",        // This is implemented over HTTP GET by CRWD
-			GetEndpoint:  "detects/entities/summaries/GET/v1", // This is implemented over HTTP POST by CRWD
-		},
 		// https://www.falconpy.io/Service-Collections/Alerts.html#postcombinedalertsv1
 		Alerts: {
 			GetEndpoint: "alerts/combined/alerts/v1", // This is implemented over HTTP POST by CRWD

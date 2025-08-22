@@ -197,30 +197,6 @@ func PopulateIncidentEntityConfig() *framework.EntityConfig {
 	}
 }
 
-func PopulateDetectionEntityConfig() *framework.EntityConfig {
-	return &framework.EntityConfig{
-		ExternalId: crowdstrike.Detect,
-		Attributes: []*framework.AttributeConfig{
-			{
-				ExternalId: "detection_id",
-				Type:       framework.AttributeTypeString,
-				List:       false,
-				UniqueId:   true,
-			},
-			{
-				ExternalId: "email_sent",
-				Type:       framework.AttributeTypeBool,
-				List:       false,
-			},
-			{
-				ExternalId: "status",
-				Type:       framework.AttributeTypeString,
-				List:       false,
-			},
-		},
-	}
-}
-
 func PopulateAlertsEntityConfig() *framework.EntityConfig {
 	return &framework.EntityConfig{
 		ExternalId: crowdstrike.Alerts,
@@ -372,33 +348,6 @@ var TestRESTServerHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http
 		}`))
 	}
 	switch r.URL.RequestURI() {
-	// ************************ List detections ************************
-	case "/detects/queries/detects/v1?limit=2":
-		w.Write([]byte(DetectListResponseFirstPage))
-
-	case "/detects/queries/detects/v1?limit=2&offset=2":
-		w.Write([]byte(DetectListResponseMiddlePage))
-
-	case "/detects/queries/detects/v1?limit=2&offset=4":
-		w.Write([]byte(DetectListResponseLastPage))
-
-	// Page 999 mimics a specialized error from CRWD REST APIs
-	case "/detects/queries/detects/v1?limit=2&offset=999":
-		w.Write([]byte(DetectResponseSpecializedErr))
-
-	// ************************ Detailed detections ************************
-	case "/detects/entities/summaries/GET/v1?limit=2":
-		w.Write([]byte(DetectDetailedResponseFirstPage))
-
-	case "/detects/entities/summaries/GET/v1?limit=2&offset=2":
-		w.Write([]byte(DetectDetailedResponseMiddlePage))
-
-	case "/detects/entities/summaries/GET/v1?limit=2&offset=4":
-		w.Write([]byte(DetectDetailedResponseLastPage))
-
-	// Page 999 mimics a specialized error from CRWD REST APIs
-	case "/detects/entities/summaries/GET/v1?limit=2&offset=999":
-		w.Write([]byte(DetectResponseSpecializedErr))
 
 	// ************************ Alerts ************************
 	case "/alerts/combined/alerts/v1?limit=2":
