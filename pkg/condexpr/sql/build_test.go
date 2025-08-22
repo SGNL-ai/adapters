@@ -147,7 +147,7 @@ func TestBuild(t *testing.T) {
 					{Field: "name"},
 				},
 			},
-			wantError: errors.New("failed to build OR condition at index 1: missing required value"),
+			wantError: errors.New("failed to build OR condition at index 1: missing required operator"),
 		},
 		"invalid_chars_in_field": {
 			condition: condexpr.Condition{
@@ -156,6 +156,36 @@ func TestBuild(t *testing.T) {
 				Value:    "active",
 			},
 			wantError: errors.New("field validation failed for 'id; DROP TABLE Users;': unsupported characters found or length is not in range 1-128"),
+		},
+		"is_null_condition": {
+			condition: condexpr.Condition{
+				Field:    "email",
+				Operator: "IS NULL",
+			},
+			wantExpr: goqu.C("email").IsNull(),
+		},
+		"is_not_null_condition": {
+			condition: condexpr.Condition{
+				Field:    "phone",
+				Operator: "IS NOT NULL",
+			},
+			wantExpr: goqu.C("phone").IsNotNull(),
+		},
+		"is_null_with_value_should_error": {
+			condition: condexpr.Condition{
+				Field:    "email",
+				Operator: "IS NULL",
+				Value:    "something",
+			},
+			wantError: errors.New("value should not be provided for IS NULL operator"),
+		},
+		"is_not_null_with_value_should_error": {
+			condition: condexpr.Condition{
+				Field:    "phone",
+				Operator: "IS NOT NULL",
+				Value:    "something",
+			},
+			wantError: errors.New("value should not be provided for IS NOT NULL operator"),
 		},
 		"invalid_condition": {
 			condition: condexpr.Condition{

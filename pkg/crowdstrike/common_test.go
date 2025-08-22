@@ -221,6 +221,75 @@ func PopulateDetectionEntityConfig() *framework.EntityConfig {
 	}
 }
 
+func PopulateAlertsEntityConfig() *framework.EntityConfig {
+	return &framework.EntityConfig{
+		ExternalId: crowdstrike.Alerts,
+		Attributes: []*framework.AttributeConfig{
+			{
+				ExternalId: "composite_id",
+				Type:       framework.AttributeTypeString,
+				List:       false,
+				UniqueId:   true,
+			},
+			{
+				ExternalId: "aggregate_id",
+				Type:       framework.AttributeTypeString,
+				List:       false,
+			},
+			{
+				ExternalId: "status",
+				Type:       framework.AttributeTypeString,
+				List:       false,
+			},
+		},
+		ChildEntities: []*framework.EntityConfig{
+			{
+				ExternalId: "$.files_accessed",
+				Attributes: []*framework.AttributeConfig{
+					{
+						ExternalId: "filename",
+						Type:       framework.AttributeTypeString,
+						List:       false,
+						UniqueId:   false,
+					},
+					{
+						ExternalId: "filepath",
+						Type:       framework.AttributeTypeString,
+						List:       false,
+					},
+				},
+			},
+			{
+				ExternalId: "$.files_written",
+				Attributes: []*framework.AttributeConfig{
+					{
+						ExternalId: "filename",
+						Type:       framework.AttributeTypeString,
+						List:       false,
+						UniqueId:   false,
+					},
+					{
+						ExternalId: "filepath",
+						Type:       framework.AttributeTypeString,
+						List:       false,
+					},
+				},
+			},
+			{
+				ExternalId: "$.mitre_attack",
+				Attributes: []*framework.AttributeConfig{
+					{
+						ExternalId: "pattern_id",
+						Type:       framework.AttributeTypeInt64,
+						List:       false,
+						UniqueId:   true,
+					},
+				},
+			},
+		},
+	}
+}
+
 // Define the endpoints and responses for the mock server.
 // This handler is intended to be re-used throughout the test package for GraphQL APIs.
 var TestGraphQLServerHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -330,6 +399,31 @@ var TestRESTServerHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http
 	// Page 999 mimics a specialized error from CRWD REST APIs
 	case "/detects/entities/summaries/GET/v1?limit=2&offset=999":
 		w.Write([]byte(DetectResponseSpecializedErr))
+
+	// ************************ Alerts ************************
+	case "/alerts/combined/alerts/v1?limit=2":
+		// Handle POST request for alerts
+		if r.Method == http.MethodPost {
+			body, _ := io.ReadAll(r.Body)
+			var reqBody map[string]any
+			json.Unmarshal(body, &reqBody)
+
+			if reqBody["after"] == nil || reqBody["after"] == "" {
+				w.Write([]byte(AlertResponseFirstPage))
+			} else if reqBody["after"] == "eyJ2ZXJzaW9uIjoidjEiLCJ0b3RhbF9oaXRzIjoyMywidG90YWxfcmVsYXRpb24iOiJlcSIsImNsdXN0ZXJfaWQiOiJ0ZXN0IiwiYWZ0ZXIiOlsxNzQ5NjExMTU3MjIxLCJ0ZXN0aWQ6aW5kOjUzODhjNTkyMTg5NDQ0YWQ5ZTg0ZGYwNzFjOGYzOTU0Ojk3ODI3ODI2MTQtMTAzMDMtMzE4MzE1NjgiXSwidG90YWxfZmV0Y2hlZCI6Mn0=" {
+				w.Write([]byte(AlertResponseMiddlePage))
+			} else if reqBody["after"] == "eyJ2ZXJzaW9uIjoidjEiLCJ0b3RhbF9oaXRzIjoyMywidG90YWxfcmVsYXRpb24iOiJlcSIsImNsdXN0ZXJfaWQiOiJ0ZXN0IiwiYWZ0ZXIiOlsxNzQ5NTEyMzQ1Njc4LCJ0ZXN0aWQ6aW5kOmU0NTY3ODkwMTIzNDU2Nzg5MGNkZWYxMjM0NTY3ODkwLTIwMTUzLTcwNTEiXSwidG90YWxfZmV0Y2hlZCI6NH0=" {
+				w.Write([]byte(AlertResponseLastPage))
+			} else if reqBody["after"] == "1000" { // Non existent page - triggers 404
+				w.WriteHeader(http.StatusNotFound)
+			} else if reqBody["after"] == "999" { // Non existent page - triggers specialized error
+				w.Write([]byte(AlertResponseSpecializedErr))
+			} else {
+				w.WriteHeader(http.StatusNotFound)
+			}
+		} else {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+		}
 
 	default:
 		w.WriteHeader(http.StatusNotFound)
