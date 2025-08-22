@@ -36,6 +36,10 @@ var (
 			ListEndpoint: "detects/queries/detects/v1",        // This is implemented over HTTP GET by CRWD
 			GetEndpoint:  "detects/entities/summaries/GET/v1", // This is implemented over HTTP POST by CRWD
 		},
+		// https://www.falconpy.io/Service-Collections/Alerts.html#postcombinedalertsv1
+		Alerts: {
+			GetEndpoint: "alerts/combined/alerts/v1", // This is implemented over HTTP POST by CRWD
+		},
 	}
 )
 
@@ -47,6 +51,7 @@ func buildGQLRequest(request *Request) (*graphql.Request, *framework.Error) {
 
 	if request.GraphQLCursor != nil && request.GraphQLCursor.Cursor != nil {
 		var err *framework.Error
+
 		pageInfo, err = DecodePageInfo(request.GraphQLCursor.Cursor)
 
 		if err != nil {
@@ -152,6 +157,14 @@ func ConstructRESTEndpoint(request *Request, path string) (*string, *framework.E
 		}
 
 		offsetStr = *cursor.Cursor
+	}
+
+	// Combined alerts uses POST body parameters, not URL query parameters
+	if request.EntityExternalID == Alerts {
+		params := fmt.Sprintf("limit=%d", request.PageSize)
+		endpoint := fmt.Sprintf("%s/%s?%s", request.BaseURL, path, params)
+
+		return &endpoint, nil
 	}
 
 	params := fmt.Sprintf("limit=%d", request.PageSize)

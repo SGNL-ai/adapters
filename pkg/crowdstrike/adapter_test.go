@@ -813,3 +813,287 @@ func TestAdapterDetectionGetPage(t *testing.T) {
 		})
 	}
 }
+
+func TestAdapterAlertGetPage(t *testing.T) {
+	server := httptest.NewTLSServer(TestRESTServerHandler)
+	adapter := crowdstrike_adapter.NewAdapter(&crowdstrike_adapter.Datasource{
+		Client: server.Client(),
+	})
+
+	tests := map[string]struct {
+		request            *framework.Request[crowdstrike_adapter.Config]
+		inputRequestCursor *pagination.CompositeCursor[string]
+		wantResponse       framework.Response
+		wantCursor         *pagination.CompositeCursor[string]
+	}{
+		"first_page": {
+			request: &framework.Request[crowdstrike_adapter.Config]{
+				Address: server.URL,
+				Auth: &framework.DatasourceAuthCredentials{
+					HTTPAuthorization: "Bearer Testtoken",
+				},
+				Config: &crowdstrike_adapter.Config{
+					APIVersion: "v1",
+					Archived:   false,
+					Enabled:    true,
+				},
+				Entity:   *PopulateAlertsEntityConfig(),
+				PageSize: 2,
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"aggregate_id": string("aggind:c36c42b64ce54b39a32e1d57240704c8:625985642613668398"),
+							"composite_id": string("8693deb4bf134cfb8855ee118d9a0243:ind:c36c42b64ce54b39a32e1d57240704c8:625985642593750673-20151-7049"),
+							"status":       string("new"),
+							"$.files_accessed": []framework.Object{
+								{
+									"filename": string("cat"),
+									"filepath": string("/bin/"),
+								},
+								{
+									"filename": string("zshnW4W3l"),
+									"filepath": string("/private/tmp/"),
+								},
+							},
+							"$.files_written": []framework.Object{
+								{
+									"filename": string("eicar.com"),
+									"filepath": string("/Users/joe/Desktop/"),
+								},
+								{
+									"filename": string("zshnW4W3l"),
+									"filepath": string("/private/tmp/"),
+								},
+							},
+							"$.mitre_attack": []framework.Object{
+								{
+									"pattern_id": int64(20151),
+								},
+							},
+						},
+						{
+							"aggregate_id": string("aggind:5388c592189444ad9e84df071c8f3954:8592364792"),
+							"composite_id": string("8693deb4bf134cfb8855ee118d9a0243:ind:5388c592189444ad9e84df071c8f3954:12119912898-10304-117513744"),
+							"status":       string("closed"),
+							"$.files_accessed": []framework.Object{
+								{
+									"filename": string("cat"),
+									"filepath": string("/bin/"),
+								},
+								{
+									"filename": string("zshnW4W3l"),
+									"filepath": string("/private/tmp/"),
+								},
+							},
+							"$.files_written": []framework.Object{
+								{
+									"filename": string("eicar.com"),
+									"filepath": string("/Users/joe/Desktop/"),
+								},
+								{
+									"filename": string("zshnW4W3l"),
+									"filepath": string("/private/tmp/"),
+								},
+							},
+							"$.mitre_attack": []framework.Object{
+								{
+									"pattern_id": int64(10304),
+								},
+							},
+						},
+					},
+				},
+			},
+			wantCursor: &pagination.CompositeCursor[string]{
+				Cursor: testutil.GenPtr("eyJ2ZXJzaW9uIjoidjEiLCJ0b3RhbF9oaXRzIjoyMywidG90YWxfcmVsYXRpb24iOiJlcSIsImNsdXN0ZXJfaWQiOiJ0ZXN0IiwiYWZ0ZXIiOlsxNzQ5NjExMTU3MjIxLCJ0ZXN0aWQ6aW5kOjUzODhjNTkyMTg5NDQ0YWQ5ZTg0ZGYwNzFjOGYzOTU0Ojk3ODI3ODI2MTQtMTAzMDMtMzE4MzE1NjgiXSwidG90YWxfZmV0Y2hlZCI6Mn0="),
+			},
+		},
+		"middle_page": {
+			request: &framework.Request[crowdstrike_adapter.Config]{
+				Address: server.URL,
+				Auth: &framework.DatasourceAuthCredentials{
+					HTTPAuthorization: "Bearer Testtoken",
+				},
+				Config: &crowdstrike_adapter.Config{
+					APIVersion: "v1",
+					Archived:   false,
+					Enabled:    true,
+				},
+				Entity:   *PopulateAlertsEntityConfig(),
+				PageSize: 2,
+			},
+			inputRequestCursor: &pagination.CompositeCursor[string]{
+				Cursor: testutil.GenPtr("eyJ2ZXJzaW9uIjoidjEiLCJ0b3RhbF9oaXRzIjoyMywidG90YWxfcmVsYXRpb24iOiJlcSIsImNsdXN0ZXJfaWQiOiJ0ZXN0IiwiYWZ0ZXIiOlsxNzQ5NjExMTU3MjIxLCJ0ZXN0aWQ6aW5kOjUzODhjNTkyMTg5NDQ0YWQ5ZTg0ZGYwNzFjOGYzOTU0Ojk3ODI3ODI2MTQtMTAzMDMtMzE4MzE1NjgiXSwidG90YWxfZmV0Y2hlZCI6Mn0="),
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"aggregate_id": string("aggind:5388c592189444ad9e84df071c8f3954:8592364792"),
+							"composite_id": string("8693deb4bf134cfb8855ee118d9a0243:ind:5388c592189444ad9e84df071c8f3954:10653769300-10304-81908752"),
+							"status":       string("closed"),
+							"$.mitre_attack": []framework.Object{
+								{
+									"pattern_id": int64(10304),
+								},
+							},
+						},
+						{
+							"aggregate_id": string("aggind:5388c592189444ad9e84df071c8f3954:8592364792"),
+							"composite_id": string("8693deb4bf134cfb8855ee118d9a0243:ind:5388c592189444ad9e84df071c8f3954:10557972040-10304-81543952"),
+							"status":       string("closed"),
+							"$.mitre_attack": []framework.Object{
+								{
+									"pattern_id": int64(10304),
+								},
+							},
+						},
+					},
+				},
+			},
+			wantCursor: &pagination.CompositeCursor[string]{
+				Cursor: testutil.GenPtr("eyJ2ZXJzaW9uIjoidjEiLCJ0b3RhbF9oaXRzIjoyMywidG90YWxfcmVsYXRpb24iOiJlcSIsImNsdXN0ZXJfaWQiOiJ0ZXN0IiwiYWZ0ZXIiOlsxNzQ5NTEyMzQ1Njc4LCJ0ZXN0aWQ6aW5kOmU0NTY3ODkwMTIzNDU2YWI3ODkwY2RlZjEyMzQ1Njc4LTIwMTUzLTcwNTEiXSwidG90YWxfZmV0Y2hlZCI6NH0="),
+			},
+		},
+		"last_page": {
+			request: &framework.Request[crowdstrike_adapter.Config]{
+				Address: server.URL,
+				Auth: &framework.DatasourceAuthCredentials{
+					HTTPAuthorization: "Bearer Testtoken",
+				},
+				Config: &crowdstrike_adapter.Config{
+					APIVersion: "v1",
+					Archived:   false,
+					Enabled:    true,
+				},
+				Entity:   *PopulateAlertsEntityConfig(),
+				PageSize: 2,
+			},
+			inputRequestCursor: &pagination.CompositeCursor[string]{
+				Cursor: testutil.GenPtr("eyJ2ZXJzaW9uIjoidjEiLCJ0b3RhbF9oaXRzIjoyMywidG90YWxfcmVsYXRpb24iOiJlcSIsImNsdXN0ZXJfaWQiOiJ0ZXN0IiwiYWZ0ZXIiOlsxNzQ5NTEyMzQ1Njc4LCJ0ZXN0aWQ6aW5kOmU0NTY3ODkwMTIzNDU2Nzg5MGNkZWYxMjM0NTY3ODkwLTIwMTUzLTcwNTEiXSwidG90YWxfZmV0Y2hlZCI6NH0="),
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"aggregate_id": string("aggind:5388c592189444ad9e84df071c8f3954:8591071260"),
+							"composite_id": string("8693deb4bf134cfb8855ee118d9a0243:ind:5388c592189444ad9e84df071c8f3954:10230629714-10303-52340240"),
+							"status":       string("closed"),
+							"$.mitre_attack": []framework.Object{
+								{
+									"pattern_id": int64(10303),
+								},
+							},
+						},
+						{
+							"aggregate_id": string("aggind:5388c592189444ad9e84df071c8f3954:8591071260"),
+							"composite_id": string("8693deb4bf134cfb8855ee118d9a0243:ind:5388c592189444ad9e84df071c8f3954:10208107226-10304-52110864"),
+							"status":       string("closed"),
+							"$.mitre_attack": []framework.Object{
+								{
+									"pattern_id": int64(10304),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		// Non existent page
+		"err_404": {
+			request: &framework.Request[crowdstrike_adapter.Config]{
+				Address: server.URL,
+				Auth: &framework.DatasourceAuthCredentials{
+					HTTPAuthorization: "Bearer Testtoken",
+				},
+				Config: &crowdstrike_adapter.Config{
+					APIVersion: "v1",
+					Archived:   false,
+					Enabled:    true,
+				},
+				Entity:   *PopulateAlertsEntityConfig(),
+				PageSize: 2,
+			},
+
+			inputRequestCursor: &pagination.CompositeCursor[string]{
+				Cursor: testutil.GenPtr("1000"), // Non existent page
+			},
+			wantResponse: framework.Response{
+				Error: &framework.Error{
+					Message: "Datasource rejected request, returned status code: 404.",
+					Code:    v1.ErrorCode_ERROR_CODE_INTERNAL,
+				},
+			},
+		},
+		// Specialized error from CRWD APIs
+		"err_specialized": {
+			request: &framework.Request[crowdstrike_adapter.Config]{
+				Address: server.URL,
+				Auth: &framework.DatasourceAuthCredentials{
+					HTTPAuthorization: "Bearer Testtoken",
+				},
+				Config: &crowdstrike_adapter.Config{
+					APIVersion: "v1",
+					Archived:   false,
+					Enabled:    true,
+				},
+				Entity:   *PopulateAlertsEntityConfig(),
+				PageSize: 2,
+			},
+
+			inputRequestCursor: &pagination.CompositeCursor[string]{
+				Cursor: testutil.GenPtr("999"), // Non existent page
+			},
+			wantResponse: framework.Response{
+				Error: &framework.Error{
+					Message: "Failed to query the datasource.\n" +
+						"Got errors: Code: 404, Message: 404: Page Not Found.",
+					Code: v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
+				},
+			},
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			if tt.inputRequestCursor != nil {
+				encodedCursor, err := pagination.MarshalCursor(tt.inputRequestCursor)
+				if err != nil {
+					t.Error(err)
+				}
+
+				tt.request.Cursor = encodedCursor
+			}
+
+			gotResponse := adapter.GetPage(context.Background(), tt.request)
+
+			// Check success response.
+			if tt.wantResponse.Error == nil {
+				if !reflect.DeepEqual(gotResponse.Success.Objects, tt.wantResponse.Success.Objects) {
+					t.Fatalf("gotResponse: %v, wantResponse: %v", gotResponse, tt.wantResponse)
+				}
+
+				// Check cursor comparison
+				if tt.wantCursor != nil && gotResponse.Success.NextCursor != "" {
+					gotCursor, err := pagination.UnmarshalCursor[string](gotResponse.Success.NextCursor)
+					if err != nil {
+						t.Fatalf("error unmarshalling cursor: %v", err)
+					}
+
+					if gotCursor.Cursor == nil || tt.wantCursor.Cursor == nil {
+						t.Fatalf("gotCursor or wantCursor is nil: gotCursor: %v, wantCursor: %v", gotCursor, *tt.wantCursor)
+					} else if *gotCursor.Cursor != *tt.wantCursor.Cursor {
+						t.Fatalf("gotCursor: %s, wantCursor: %s", *gotCursor.Cursor, *tt.wantCursor.Cursor)
+					}
+				}
+			}
+
+			// Check error respose.
+			if !reflect.DeepEqual(gotResponse.Error, tt.wantResponse.Error) {
+				t.Fatalf("gotResponse: %v, wantResponse: %v", gotResponse.Error, tt.wantResponse.Error)
+			}
+		})
+	}
+}

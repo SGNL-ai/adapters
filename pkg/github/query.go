@@ -1698,6 +1698,7 @@ func ConstructQuery(request *Request) (string, *framework.Error) {
 
 	if request.Cursor != nil && request.Cursor.Cursor != nil {
 		var err *framework.Error
+
 		pageInfo, err = DecodePageInfo(request.Cursor.Cursor)
 
 		if err != nil {

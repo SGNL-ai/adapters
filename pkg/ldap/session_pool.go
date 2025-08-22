@@ -129,6 +129,7 @@ func (sp *SessionPool) startCleanupLoop() {
 			now := time.Now()
 
 			sp.mu.Lock()
+
 			for key, session := range sp.pool {
 				if now.Sub(session.lastUsed) > sp.ttl {
 					if session.conn != nil {
@@ -138,6 +139,7 @@ func (sp *SessionPool) startCleanupLoop() {
 					delete(sp.pool, key)
 				}
 			}
+
 			sp.mu.Unlock()
 		}
 	}()
