@@ -883,7 +883,7 @@ func (s *LDAPTestSuite) Test_AdapterGetPage_MissingAttributes_PanicRegression() 
 	}
 
 	for name, tt := range tests {
-		s.T().Run(name, func(t *testing.T) {
+		s.T().Run(name, func(_ *testing.T) {
 			if tt.inputRequestCursor != nil {
 				encodedCursor, err := pagination.MarshalCursor(tt.inputRequestCursor)
 				if err != nil {
@@ -906,6 +906,7 @@ func (s *LDAPTestSuite) Test_AdapterGetPage_MissingAttributes_PanicRegression() 
 			// If successful, verify we got some objects
 			if gotResponse.Success == nil {
 				s.T().Errorf("got nil success response when error was also nil")
+
 				return
 			}
 
@@ -915,6 +916,7 @@ func (s *LDAPTestSuite) Test_AdapterGetPage_MissingAttributes_PanicRegression() 
 
 			// Log the objects to see what we got
 			s.T().Logf("Successfully retrieved %d objects without panic", len(gotResponse.Success.Objects))
+
 			for i, obj := range gotResponse.Success.Objects {
 				s.T().Logf("Object %d: %+v", i, obj)
 			}
@@ -922,10 +924,9 @@ func (s *LDAPTestSuite) Test_AdapterGetPage_MissingAttributes_PanicRegression() 
 	}
 }
 
+// Test_EmptyAttributeValues_DirectPanicRegression tests for the specific case where
+// empty attribute values cause a panic.
 func (s *LDAPTestSuite) Test_EmptyAttributeValues_DirectPanicRegression() {
-	// This test directly creates the problematic scenario that caused the original panic
-	// by simulating what happens when LDAP returns attributes with empty values
-
 	tests := []struct {
 		name        string
 		attr        *ldap_v3.EntryAttribute
@@ -1003,14 +1004,18 @@ func (s *LDAPTestSuite) Test_EmptyAttributeValues_DirectPanicRegression() {
 			if tt.expectError {
 				if err == nil {
 					t.Errorf("expected error, got nil")
+
 					return
 				}
+
 				if err.Message != tt.errorMsg {
 					t.Errorf("expected error message '%s', got '%s'", tt.errorMsg, err.Message)
 				}
+
 				if err.Code != api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ATTRIBUTE_TYPE {
 					t.Errorf("expected error code ERROR_CODE_INVALID_ATTRIBUTE_TYPE, got %v", err.Code)
 				}
+
 				if result != nil {
 					t.Errorf("expected nil result when error occurs, got %v", result)
 				}

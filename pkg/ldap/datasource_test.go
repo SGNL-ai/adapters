@@ -516,19 +516,24 @@ func TestStringAttrValuesToRequestedType_EmptyValuesHandling(t *testing.T) {
 			if tt.expectError {
 				if err == nil {
 					t.Errorf("expected error, got nil")
+
 					return
 				}
+
 				if err.Message != tt.errorMsg {
 					t.Errorf("expected error message '%s', got '%s'", tt.errorMsg, err.Message)
 				}
+
 				if err.Code != api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ATTRIBUTE_TYPE {
 					t.Errorf("expected error code ERROR_CODE_INVALID_ATTRIBUTE_TYPE, got %v", err.Code)
 				}
 			} else {
 				if err != nil {
 					t.Errorf("unexpected error: %v", err)
+
 					return
 				}
+
 				// For list type with empty values, should return empty slice
 				if tt.isList {
 					if result == nil {
@@ -646,11 +651,14 @@ func TestStringAttrValuesToRequestedType_EmptyByteValuesHandling(t *testing.T) {
 			if tt.expectError {
 				if err == nil {
 					t.Errorf("expected error, got nil")
+
 					return
 				}
+
 				if err.Message != tt.errorMsg {
 					t.Errorf("expected error message '%s', got '%s'", tt.errorMsg, err.Message)
 				}
+
 				if err.Code != api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ATTRIBUTE_TYPE {
 					t.Errorf("expected error code ERROR_CODE_INVALID_ATTRIBUTE_TYPE, got %v", err.Code)
 				}
@@ -658,6 +666,7 @@ func TestStringAttrValuesToRequestedType_EmptyByteValuesHandling(t *testing.T) {
 				if err != nil {
 					t.Errorf("unexpected error: %v", err)
 				}
+
 				if result == nil {
 					t.Errorf("expected result, got nil")
 				}

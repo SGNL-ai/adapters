@@ -736,6 +736,7 @@ func StringAttrValuesToRequestedType(
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ATTRIBUTE_TYPE,
 				}
 			}
+
 			guid, err := uuid.Parse(hex.EncodeToString(attr.ByteValues[0]))
 			if err != nil {
 				return nil, &framework.Error{
@@ -757,6 +758,7 @@ func StringAttrValuesToRequestedType(
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ATTRIBUTE_TYPE,
 				}
 			}
+
 			sid := objectsid.Decode(attr.ByteValues[0])
 
 			return sid.String(), nil
