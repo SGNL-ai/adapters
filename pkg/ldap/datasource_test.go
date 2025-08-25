@@ -5,6 +5,7 @@ package ldap_test
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -13,8 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"crypto/tls"
-
+	ldap_v3 "github.com/go-ldap/ldap/v3"
 	"github.com/google/go-cmp/cmp"
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
@@ -416,6 +416,250 @@ func TestGetTLSConfig(t *testing.T) {
 			if tt.expectedConfig != nil {
 				if config.ServerName != tt.expectedConfig.ServerName {
 					t.Errorf("expected server name %v, got %v", tt.expectedConfig.ServerName, config.ServerName)
+				}
+			}
+		})
+	}
+}
+
+func TestStringAttrValuesToRequestedType_EmptyValuesHandling(t *testing.T) {
+	tests := []struct {
+		name        string
+		attr        *ldap_v3.EntryAttribute
+		isList      bool
+		attrType    framework.AttributeType
+		expectError bool
+		errorMsg    string
+	}{
+		{
+			name: "empty_values_string_type",
+			attr: &ldap_v3.EntryAttribute{
+				Name:   "testAttr",
+				Values: []string{},
+			},
+			isList:      false,
+			attrType:    framework.AttributeTypeString,
+			expectError: true,
+			errorMsg:    "Attribute testAttr has no values",
+		},
+		{
+			name: "empty_values_bool_type",
+			attr: &ldap_v3.EntryAttribute{
+				Name:   "testBool",
+				Values: []string{},
+			},
+			isList:      false,
+			attrType:    framework.AttributeTypeBool,
+			expectError: true,
+			errorMsg:    "Attribute testBool has no values",
+		},
+		{
+			name: "empty_values_double_type",
+			attr: &ldap_v3.EntryAttribute{
+				Name:   "testDouble",
+				Values: []string{},
+			},
+			isList:      false,
+			attrType:    framework.AttributeTypeDouble,
+			expectError: true,
+			errorMsg:    "Attribute testDouble has no values",
+		},
+		{
+			name: "empty_values_int64_type",
+			attr: &ldap_v3.EntryAttribute{
+				Name:   "testInt",
+				Values: []string{},
+			},
+			isList:      false,
+			attrType:    framework.AttributeTypeInt64,
+			expectError: true,
+			errorMsg:    "Attribute testInt has no values",
+		},
+		{
+			name: "empty_values_duration_type",
+			attr: &ldap_v3.EntryAttribute{
+				Name:   "testDuration",
+				Values: []string{},
+			},
+			isList:      false,
+			attrType:    framework.AttributeTypeDuration,
+			expectError: true,
+			errorMsg:    "Attribute testDuration has no values",
+		},
+		{
+			name: "empty_values_datetime_type",
+			attr: &ldap_v3.EntryAttribute{
+				Name:   "testDateTime",
+				Values: []string{},
+			},
+			isList:      false,
+			attrType:    framework.AttributeTypeDateTime,
+			expectError: true,
+			errorMsg:    "Attribute testDateTime has no values",
+		},
+		{
+			name: "empty_values_list_type_returns_empty_slice",
+			attr: &ldap_v3.EntryAttribute{
+				Name:   "testList",
+				Values: []string{},
+			},
+			isList:      true,
+			attrType:    framework.AttributeTypeString,
+			expectError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := ldap.StringAttrValuesToRequestedType(tt.attr, tt.isList, tt.attrType)
+
+			if tt.expectError {
+				if err == nil {
+					t.Errorf("expected error, got nil")
+					return
+				}
+				if err.Message != tt.errorMsg {
+					t.Errorf("expected error message '%s', got '%s'", tt.errorMsg, err.Message)
+				}
+				if err.Code != api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ATTRIBUTE_TYPE {
+					t.Errorf("expected error code ERROR_CODE_INVALID_ATTRIBUTE_TYPE, got %v", err.Code)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("unexpected error: %v", err)
+					return
+				}
+				// For list type with empty values, should return empty slice
+				if tt.isList {
+					if result == nil {
+						t.Errorf("expected empty slice, got nil")
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestStringAttrValuesToRequestedType_EmptyByteValuesHandling(t *testing.T) {
+	tests := []struct {
+		name        string
+		attr        *ldap_v3.EntryAttribute
+		expectError bool
+		errorMsg    string
+	}{
+		{
+			name: "empty_byte_values_objectGUID",
+			attr: &ldap_v3.EntryAttribute{
+				Name:       "objectGUID",
+				Values:     []string{"dummy"}, // Values present but ByteValues empty
+				ByteValues: [][]byte{},
+			},
+			expectError: true,
+			errorMsg:    "Missing or nil GUID bytes for attribute: objectGUID",
+		},
+		{
+			name: "nil_byte_values_objectGUID",
+			attr: &ldap_v3.EntryAttribute{
+				Name:       "objectGUID",
+				Values:     []string{"dummy"},
+				ByteValues: [][]byte{nil},
+			},
+			expectError: true,
+			errorMsg:    "Missing or nil GUID bytes for attribute: objectGUID",
+		},
+		{
+			name: "empty_byte_values_objectSid",
+			attr: &ldap_v3.EntryAttribute{
+				Name:       "objectSid",
+				Values:     []string{"dummy"},
+				ByteValues: [][]byte{},
+			},
+			expectError: true,
+			errorMsg:    "Missing or nil SID bytes for attribute: objectSid",
+		},
+		{
+			name: "nil_byte_values_objectSid",
+			attr: &ldap_v3.EntryAttribute{
+				Name:       "objectSid",
+				Values:     []string{"dummy"},
+				ByteValues: [][]byte{nil},
+			},
+			expectError: true,
+			errorMsg:    "Missing or nil SID bytes for attribute: objectSid",
+		},
+		{
+			name: "empty_byte_values_sidHistory",
+			attr: &ldap_v3.EntryAttribute{
+				Name:       "SIDHistory",
+				Values:     []string{"dummy"},
+				ByteValues: [][]byte{},
+			},
+			expectError: true,
+			errorMsg:    "Missing or nil SID bytes for attribute: SIDHistory",
+		},
+		{
+			name: "empty_byte_values_creatorSID",
+			attr: &ldap_v3.EntryAttribute{
+				Name:       "mS-DS-CreatorSID",
+				Values:     []string{"dummy"},
+				ByteValues: [][]byte{},
+			},
+			expectError: true,
+			errorMsg:    "Missing or nil SID bytes for attribute: mS-DS-CreatorSID",
+		},
+		{
+			name: "empty_byte_values_securityIdentifier",
+			attr: &ldap_v3.EntryAttribute{
+				Name:       "securityIdentifier",
+				Values:     []string{"dummy"},
+				ByteValues: [][]byte{},
+			},
+			expectError: true,
+			errorMsg:    "Missing or nil SID bytes for attribute: securityIdentifier",
+		},
+		{
+			name: "empty_byte_values_nTSecurityDescriptor",
+			attr: &ldap_v3.EntryAttribute{
+				Name:       "nTSecurityDescriptor",
+				Values:     []string{"dummy"},
+				ByteValues: [][]byte{},
+			},
+			expectError: true,
+			errorMsg:    "Missing or nil security descriptor bytes for attribute: nTSecurityDescriptor",
+		},
+		{
+			name: "nil_byte_values_nTSecurityDescriptor",
+			attr: &ldap_v3.EntryAttribute{
+				Name:       "nTSecurityDescriptor",
+				Values:     []string{"dummy"},
+				ByteValues: [][]byte{nil},
+			},
+			expectError: true,
+			errorMsg:    "Missing or nil security descriptor bytes for attribute: nTSecurityDescriptor",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := ldap.StringAttrValuesToRequestedType(tt.attr, false, framework.AttributeTypeString)
+
+			if tt.expectError {
+				if err == nil {
+					t.Errorf("expected error, got nil")
+					return
+				}
+				if err.Message != tt.errorMsg {
+					t.Errorf("expected error message '%s', got '%s'", tt.errorMsg, err.Message)
+				}
+				if err.Code != api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ATTRIBUTE_TYPE {
+					t.Errorf("expected error code ERROR_CODE_INVALID_ATTRIBUTE_TYPE, got %v", err.Code)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("unexpected error: %v", err)
+				}
+				if result == nil {
+					t.Errorf("expected result, got nil")
 				}
 			}
 		})
