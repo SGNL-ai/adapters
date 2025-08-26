@@ -3,6 +3,7 @@
 package ldap
 
 import (
+	"log"
 	"sync"
 	"time"
 
@@ -27,12 +28,16 @@ func (s *Session) GetOrCreateConn(
 
 	if c, ok := s.conn.(*ldap_v3.Conn); ok && c != nil {
 		// Health check: WhoAmI
+		healthCheckStart := time.Now()
 		_, err := c.WhoAmI(nil)
+		healthCheckDuration := time.Since(healthCheckStart)
 		if err == nil {
+			log.Printf("[Connection] Health check (WhoAmI) succeeded in %v", healthCheckDuration)
 			s.lastUsed = time.Now()
 
 			return c, nil
 		}
+		log.Printf("[Connection] Health check (WhoAmI) failed in %v: %v", healthCheckDuration, err)
 		// If WhoAmI fails, close and reset
 		c.Close()
 
@@ -40,19 +45,26 @@ func (s *Session) GetOrCreateConn(
 	}
 
 	// Dial and bind new connection
+	dialStart := time.Now()
 	conn, err := ldap_v3.DialURL(
 		address,
 		ldap_v3.DialWithTLSConfig(tlsConfig),
 	)
 	if err != nil {
+		log.Printf("[Connection] Dial failed after %v: %v", time.Since(dialStart), err)
 		return nil, err
 	}
+	dialDuration := time.Since(dialStart)
 
+	bindStart := time.Now()
 	if err := conn.Bind(bindDN, bindPassword); err != nil {
+		log.Printf("[Connection] Bind failed after %v: %v", time.Since(bindStart), err)
 		conn.Close()
 
 		return nil, err
 	}
+	bindDuration := time.Since(bindStart)
+	log.Printf("[Connection] New connection established - Dial: %v, Bind: %v", dialDuration, bindDuration)
 
 	s.conn = conn
 	s.lastUsed = time.Now()

@@ -181,13 +181,20 @@ func (c *ldapClient) Request(_ context.Context, request *Request) (*Response, *f
 	address := request.BaseURL
 	key := sessionKey(address, cookie)
 
+	// Time session pool operations
+	sessionStart := time.Now()
 	session, found := c.sessionPool.Get(key)
 	if !found {
+		log.Printf("[Session Pool] Creating new session for key: %s", key[:50]) // Truncate key for logging
 		session = &Session{}
 		c.sessionPool.Set(key, session)
+	} else {
+		log.Printf("[Session Pool] Reusing existing session for key: %s", key[:50])
 	}
 
 	conn, err := session.GetOrCreateConn(request.BaseURL, tlsConfig, request.BindDN, request.BindPassword)
+	sessionDuration := time.Since(sessionStart)
+	log.Printf("[Session Pool] Connection established in %v, reused: %v", sessionDuration, found)
 	if err != nil {
 		if ldapErr, ok := err.(*ldap_v3.Error); ok && ldapErr.ResultCode == 49 {
 			return nil, &framework.Error{
@@ -283,11 +290,15 @@ func (c *ldapClient) Request(_ context.Context, request *Request) (*Response, *f
 	// returning LDAP Result Code Success(0) equivalent to HTTP status code StatusOK.
 	response.StatusCode = http.StatusOK
 
+	processingStart := time.Now()
 	if err := ProcessLDAPSearchResult(searchResult, response, request); err != nil {
 		return nil, err
 	}
+	processingDuration := time.Since(processingStart)
+	log.Printf("[Result Processing] Duration: %v for %d entries", processingDuration, resultCount)
 
 	// Handle paging: store or cleanup session
+	pagingStart := time.Now()
 	var nextCookie []byte
 
 	if response.NextCursor != nil && response.NextCursor.Cursor != nil {
@@ -309,9 +320,11 @@ func (c *ldapClient) Request(_ context.Context, request *Request) (*Response, *f
 		// Move the session to the new cookie key: remove old key, add new key (without closing conn)
 		nextKey := sessionKey(address, nextCookie)
 		c.sessionPool.UpdateKey(key, nextKey)
+		log.Printf("[Paging] Session updated for next page, duration: %v", time.Since(pagingStart))
 	} else {
 		// Paging done, cleanup
 		c.sessionPool.Delete(key)
+		log.Printf("[Paging] Paging complete, session cleaned up, duration: %v", time.Since(pagingStart))
 	}
 
 	return response, nil
@@ -414,11 +427,21 @@ const (
 )
 
 func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, *framework.Error) {
+	getPageStart := time.Now()
+	log.Printf("[GetPage Start] Entity: %s, PageSize: %d, HasCursor: %v",
+		request.EntityExternalID, request.PageSize, request.Cursor != nil)
+	defer func() {
+		log.Printf("[GetPage End] Entity: %s, Total Duration: %v",
+			request.EntityExternalID, time.Since(getPageStart))
+	}()
+	
 	entityConfig := request.EntityConfigMap[request.EntityExternalID]
 	memberOf := entityConfig.MemberOf
 
 	// nolint: nestif
 	if memberOf != nil {
+		memberStart := time.Now()
+		log.Printf("[Member Enumeration] Starting for entity: %s", request.EntityExternalID)
 		// Update required attribute for [Member] Entity
 		request.Attributes = append(request.Attributes, &framework.AttributeConfig{
 			ExternalId: *entityConfig.MemberUniqueIDAttribute,
@@ -502,10 +525,12 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		}
 
 		if isEmptyLastPage {
+			log.Printf("[Member Enumeration] Completed (empty page) in %v", time.Since(memberStart))
 			return &Response{
 				StatusCode: http.StatusOK,
 			}, nil
 		}
+		log.Printf("[Member Enumeration] Completed in %v", time.Since(memberStart))
 	}
 
 	validationErr := pagination.ValidateCompositeCursor(
