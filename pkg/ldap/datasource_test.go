@@ -439,8 +439,7 @@ func TestStringAttrValuesToRequestedType_EmptyValuesHandling(t *testing.T) {
 			},
 			isList:      false,
 			attrType:    framework.AttributeTypeString,
-			expectError: true,
-			errorMsg:    "Attribute testAttr has no values",
+			expectError: false,
 		},
 		{
 			name: "empty_values_bool_type",
@@ -450,8 +449,7 @@ func TestStringAttrValuesToRequestedType_EmptyValuesHandling(t *testing.T) {
 			},
 			isList:      false,
 			attrType:    framework.AttributeTypeBool,
-			expectError: true,
-			errorMsg:    "Attribute testBool has no values",
+			expectError: false,
 		},
 		{
 			name: "empty_values_double_type",
@@ -461,8 +459,7 @@ func TestStringAttrValuesToRequestedType_EmptyValuesHandling(t *testing.T) {
 			},
 			isList:      false,
 			attrType:    framework.AttributeTypeDouble,
-			expectError: true,
-			errorMsg:    "Attribute testDouble has no values",
+			expectError: false,
 		},
 		{
 			name: "empty_values_int64_type",
@@ -472,8 +469,7 @@ func TestStringAttrValuesToRequestedType_EmptyValuesHandling(t *testing.T) {
 			},
 			isList:      false,
 			attrType:    framework.AttributeTypeInt64,
-			expectError: true,
-			errorMsg:    "Attribute testInt has no values",
+			expectError: false,
 		},
 		{
 			name: "empty_values_duration_type",
@@ -483,8 +479,7 @@ func TestStringAttrValuesToRequestedType_EmptyValuesHandling(t *testing.T) {
 			},
 			isList:      false,
 			attrType:    framework.AttributeTypeDuration,
-			expectError: true,
-			errorMsg:    "Attribute testDuration has no values",
+			expectError: false,
 		},
 		{
 			name: "empty_values_datetime_type",
@@ -494,8 +489,7 @@ func TestStringAttrValuesToRequestedType_EmptyValuesHandling(t *testing.T) {
 			},
 			isList:      false,
 			attrType:    framework.AttributeTypeDateTime,
-			expectError: true,
-			errorMsg:    "Attribute testDateTime has no values",
+			expectError: false,
 		},
 		{
 			name: "empty_values_list_type_returns_empty_slice",
@@ -538,6 +532,11 @@ func TestStringAttrValuesToRequestedType_EmptyValuesHandling(t *testing.T) {
 				if tt.isList {
 					if result == nil {
 						t.Errorf("expected empty slice, got nil")
+					}
+				} else {
+					// For non-list types with empty values, should return empty string
+					if result != "" {
+						t.Errorf("expected empty string, got %v", result)
 					}
 				}
 			}

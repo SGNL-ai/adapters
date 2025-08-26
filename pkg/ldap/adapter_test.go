@@ -941,8 +941,7 @@ func (s *LDAPTestSuite) Test_EmptyAttributeValues_DirectPanicRegression() {
 				Values: []string{}, // This is the condition that caused the original panic
 			},
 			attrType:    framework.AttributeTypeString,
-			expectError: true,
-			errorMsg:    "Attribute description has no values",
+			expectError: false,
 		},
 		{
 			name: "empty_values_with_requested_bool",
@@ -951,8 +950,7 @@ func (s *LDAPTestSuite) Test_EmptyAttributeValues_DirectPanicRegression() {
 				Values: []string{}, // Empty values that would cause panic on attr.Values[0]
 			},
 			attrType:    framework.AttributeTypeBool,
-			expectError: true,
-			errorMsg:    "Attribute accountDisabled has no values",
+			expectError: false,
 		},
 		{
 			name: "empty_values_with_requested_int",
@@ -961,8 +959,7 @@ func (s *LDAPTestSuite) Test_EmptyAttributeValues_DirectPanicRegression() {
 				Values: []string{}, // Empty values that would cause panic
 			},
 			attrType:    framework.AttributeTypeInt64,
-			expectError: true,
-			errorMsg:    "Attribute employeeNumber has no values",
+			expectError: false,
 		},
 		{
 			name: "empty_values_with_requested_double",
@@ -971,8 +968,7 @@ func (s *LDAPTestSuite) Test_EmptyAttributeValues_DirectPanicRegression() {
 				Values: []string{}, // Empty values that would cause panic
 			},
 			attrType:    framework.AttributeTypeDouble,
-			expectError: true,
-			errorMsg:    "Attribute salary has no values",
+			expectError: false,
 		},
 		{
 			name: "empty_values_with_requested_datetime",
@@ -981,8 +977,7 @@ func (s *LDAPTestSuite) Test_EmptyAttributeValues_DirectPanicRegression() {
 				Values: []string{}, // Empty values that would cause panic
 			},
 			attrType:    framework.AttributeTypeDateTime,
-			expectError: true,
-			errorMsg:    "Attribute whenCreated has no values",
+			expectError: false,
 		},
 		{
 			name: "empty_values_with_requested_duration",
@@ -991,8 +986,7 @@ func (s *LDAPTestSuite) Test_EmptyAttributeValues_DirectPanicRegression() {
 				Values: []string{}, // Empty values that would cause panic
 			},
 			attrType:    framework.AttributeTypeDuration,
-			expectError: true,
-			errorMsg:    "Attribute lockoutDuration has no values",
+			expectError: false,
 		},
 	}
 
@@ -1022,6 +1016,10 @@ func (s *LDAPTestSuite) Test_EmptyAttributeValues_DirectPanicRegression() {
 			} else {
 				if err != nil {
 					t.Errorf("unexpected error: %v", err)
+				}
+				// For non-list types with empty values, should return empty string
+				if result != "" {
+					t.Errorf("expected empty string, got %v", result)
 				}
 			}
 		})

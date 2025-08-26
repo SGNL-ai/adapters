@@ -717,12 +717,9 @@ func StringAttrValuesToRequestedType(
 		return values, nil
 	}
 
-	// Check if attr.Values is empty to prevent panic
+	// Return an empty string in case of no values
 	if len(attr.Values) == 0 {
-		return nil, &framework.Error{
-			Message: fmt.Sprintf("Attribute %s has no values", attr.Name),
-			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ATTRIBUTE_TYPE,
-		}
+		return "", nil
 	}
 
 	switch attrType {
