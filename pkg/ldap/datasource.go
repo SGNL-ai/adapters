@@ -233,9 +233,16 @@ func (c *ldapClient) Request(_ context.Context, request *Request) (*Response, *f
 
 	response := &Response{}
 
+	// Log LDAP query details with timing
+	queryStart := time.Now()
+	log.Printf("[LDAP Query Start] BaseDN: %s, Filter: %s, Attributes: %v, PageSize: %d",
+		request.BaseDN, filters, attributes, request.PageSize)
+
 	// Perform search
 	searchResult, err := conn.Search(searchRequest)
+	queryDuration := time.Since(queryStart)
 	if err != nil {
+		log.Printf("[LDAP Query Failed] Duration: %v, Error: %v", queryDuration, err)
 		// Extract LDAP result code from the error
 		if ldapErr, ok := err.(*ldap_v3.Error); ok {
 			statusCode := ldapErrToHTTPStatusCode(ldapErr)
@@ -254,6 +261,13 @@ func (c *ldapClient) Request(_ context.Context, request *Request) (*Response, *f
 			),
 		)
 	}
+
+	// Log successful query with result count
+	resultCount := 0
+	if searchResult != nil {
+		resultCount = len(searchResult.Entries)
+	}
+	log.Printf("[LDAP Query Success] Duration: %v, Results: %d entries", queryDuration, resultCount)
 
 	isEmptyResult := searchResult == nil || len(searchResult.Entries) == 0
 	isEmptyCursor := request.Cursor == nil || request.Cursor.CollectionID == nil
