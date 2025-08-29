@@ -4,12 +4,12 @@ go 1.24.2
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
-	github.com/aws/aws-sdk-go-v2 v1.38.1
-	github.com/aws/aws-sdk-go-v2/config v1.30.2
-	github.com/aws/aws-sdk-go-v2/credentials v1.18.2
+	github.com/aws/aws-sdk-go-v2 v1.38.2
+	github.com/aws/aws-sdk-go-v2/config v1.31.5
+	github.com/aws/aws-sdk-go-v2/credentials v1.18.9
 	github.com/aws/aws-sdk-go-v2/service/iam v1.45.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.81.0
-	github.com/aws/smithy-go v1.22.5
+	github.com/aws/smithy-go v1.23.0
 	github.com/bwmarrin/go-objectsid v0.0.0-20191126144531-5fee401a2f37
 	github.com/docker/go-connections v0.5.0
 	github.com/doug-martin/goqu/v9 v9.19.0
@@ -60,18 +60,18 @@ require (
 	github.com/PaesslerAG/gval v1.2.4 // indirect
 	github.com/PaesslerAG/jsonpath v0.1.1 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.11 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.1 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.2 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.2 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.5 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.5 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.5 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.3 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.3.36 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.7.4 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.18.17 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.26.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.31.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.36.0
+	github.com/aws/aws-sdk-go-v2/service/sso v1.29.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.34.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.38.1
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
