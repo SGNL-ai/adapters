@@ -634,7 +634,7 @@ func TestOktaAdapter_GroupMember(t *testing.T) {
 	close(stop)
 }
 
-func TestOktaAdapter_Application(t *testing.T) {
+func TestOktaAdapter_Applications(t *testing.T) {
 	httpClient, recorder := common.StartRecorder(t, "fixtures/okta/application")
 	defer recorder.Stop()
 
