@@ -633,3 +633,228 @@ func TestOktaAdapter_GroupMember(t *testing.T) {
 
 	close(stop)
 }
+
+func TestOktaAdapter_Application(t *testing.T) {
+	httpClient, recorder := common.StartRecorder(t, "fixtures/okta/application")
+	defer recorder.Stop()
+
+	port := common.AvailableTestPort(t)
+
+	stop := make(chan struct{})
+
+	// Start Adapter Server
+	go func() {
+		stop = common.StartAdapterServer(t, httpClient, port)
+	}()
+
+	time.Sleep(10 * time.Millisecond)
+
+	adapterClient, conn := common.GetNewAdapterClient(t, port)
+	defer conn.Close()
+
+	ctx, cancelCtx := common.GetAdapterCtx()
+	defer cancelCtx()
+
+	gotResp, err := adapterClient.GetPage(ctx, &adapter_api_v1.GetPageRequest{
+		Datasource: &adapter_api_v1.DatasourceConfig{
+			Auth: &adapter_api_v1.DatasourceAuthCredentials{
+				AuthMechanism: &adapter_api_v1.DatasourceAuthCredentials_HttpAuthorization{
+					HttpAuthorization: "SSWS {{OMITTED}}",
+				},
+			},
+			Address: "test-instance.okta.com",
+			Id:      "Okta",
+			Type:    "Okta-1.0.1",
+			Config:  []byte(`{"apiVersion":"v1"}`),
+		},
+		Entity: &adapter_api_v1.EntityConfig{
+			Id:         "OktaApplication",
+			ExternalId: "Application",
+			Ordered:    false,
+			Attributes: []*adapter_api_v1.AttributeConfig{
+				{
+					Id:         "id",
+					ExternalId: "id",
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+				},
+				{
+					Id:         "name",
+					ExternalId: "name",
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+				},
+				{
+					Id:         "label",
+					ExternalId: "label",
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+				},
+				{
+					Id:         "status",
+					ExternalId: "status",
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+				},
+				{
+					Id:         "signOnMode",
+					ExternalId: "signOnMode",
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+				},
+			},
+		},
+		PageSize: 3,
+		Cursor:   "",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	wantResp := new(adapter_api_v1.GetPageResponse)
+
+	err = protojson.Unmarshal([]byte(`
+		{
+			"success": {
+				"objects": [
+					{
+						"attributes": [
+							{
+								"id": "id",
+								"values": [
+									{
+										"string_value": "0oav0szjt4RXG5wFN697"
+									}
+								]
+							},
+							{
+								"id": "label",
+								"values": [
+									{
+										"string_value": "Okta Admin Console"
+									}
+								]
+							},
+							{
+								"id": "name",
+								"values": [
+									{
+										"string_value": "saasure"
+									}
+								]
+							},
+							{
+								"id": "signOnMode",
+								"values": [
+									{
+										"string_value": "OPENID_CONNECT"
+									}
+								]
+							},
+							{
+								"id": "status",
+								"values": [
+									{
+										"string_value": "ACTIVE"
+									}
+								]
+							}
+						]
+					},
+					{
+						"attributes": [
+							{
+								"id": "id",
+								"values": [
+									{
+										"string_value": "0oav0t9spdHM3sWaO697"
+									}
+								]
+							},
+							{
+								"id": "label",
+								"values": [
+									{
+										"string_value": "Okta Dashboard"
+									}
+								]
+							},
+							{
+								"id": "name",
+								"values": [
+									{
+										"string_value": "okta_enduser"
+									}
+								]
+							},
+							{
+								"id": "signOnMode",
+								"values": [
+									{
+										"string_value": "OPENID_CONNECT"
+									}
+								]
+							},
+							{
+								"id": "status",
+								"values": [
+									{
+										"string_value": "ACTIVE"
+									}
+								]
+							}
+						]
+					},
+					{
+						"attributes": [
+							{
+								"id": "id",
+								"values": [
+									{
+										"string_value": "0oav0t9srlTfo2iV0697"
+									}
+								]
+							},
+							{
+								"id": "label",
+								"values": [
+									{
+										"string_value": "Okta Browser Plugin"
+									}
+								]
+							},
+							{
+								"id": "name",
+								"values": [
+									{
+										"string_value": "okta_browser_plugin"
+									}
+								]
+							},
+							{
+								"id": "signOnMode",
+								"values": [
+									{
+										"string_value": "OPENID_CONNECT"
+									}
+								]
+							},
+							{
+								"id": "status",
+								"values": [
+									{
+										"string_value": "ACTIVE"
+									}
+								]
+							}
+						]
+					}
+				]
+			}
+		}
+	`), wantResp)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if diff := cmp.Diff(gotResp, wantResp, common.CmpOpts...); diff != "" {
+		t.Fatal(diff)
+	}
+
+	close(stop)
+}
