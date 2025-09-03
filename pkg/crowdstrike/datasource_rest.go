@@ -73,8 +73,55 @@ type DetailedResourceResponse struct {
 	Errors    []ErrorItem      `json:"errors"`
 }
 
+type AlertsRequestBody struct {
+	Limit  int     `json:"limit"`
+	After  *string `json:"after,omitempty"`
+	Filter *string `json:"filter,omitempty"`
+	Sort   *string `json:"sort,omitempty"`
+}
+
+type AlertsResponse struct {
+	Meta      AlertsMeta       `json:"meta"`
+	Resources []map[string]any `json:"resources"`
+	Errors    []ErrorItem      `json:"errors"`
+}
+
+type AlertsMeta struct {
+	Pagination AlertsPagination `json:"pagination"`
+}
+
+type AlertsPagination struct {
+	After string `json:"after"`
+	Total int    `json:"total"`
+}
+
+// generateRequestBodyBytes creates the request body bytes based on the entity type and request parameters.
+func generateRequestBodyBytes(request *Request, resourceIDs []string) ([]byte, error) {
+	if request.EntityExternalID == Alerts {
+		var after *string
+		if request.RESTCursor != nil && request.RESTCursor.Cursor != nil {
+			after = request.RESTCursor.Cursor
+		}
+
+		reqBody := &AlertsRequestBody{
+			Limit:  int(request.PageSize),
+			After:  after,
+			Filter: request.Filter,
+		}
+
+		return json.Marshal(reqBody)
+	}
+
+	reqBody := &DetailedResourceRequestBody{
+		Identifiers: resourceIDs,
+	}
+
+	return json.Marshal(reqBody)
+}
+
 func (d *Datasource) getRESTPage(ctx context.Context, request *Request) (*Response, *framework.Error) {
 	// Fetch all resourceIDs before fetching the detailed information, if applicable.
+	// For Alerts we have a combined API which doesn't require to fetch resource IDs separately.
 	resourceIDs, nextCursor, httpResp, listErr := d.getResourceIDs(ctx, request)
 	if listErr != nil {
 		return nil, listErr
@@ -95,11 +142,7 @@ func (d *Datasource) getRESTPage(ctx context.Context, request *Request) (*Respon
 	}
 
 	// Use resourceIDs to fetch detailed information, if applicable.
-	reqBody := &DetailedResourceRequestBody{
-		Identifiers: resourceIDs,
-	}
-
-	bodyBytes, marshalErr := json.Marshal(reqBody)
+	bodyBytes, marshalErr := generateRequestBodyBytes(request, resourceIDs)
 	if marshalErr != nil {
 		return nil, &framework.Error{
 			Message: fmt.Sprintf("Failed to marshal the request body: %v.", marshalErr),
@@ -161,7 +204,17 @@ func (d *Datasource) getRESTPage(ctx context.Context, request *Request) (*Respon
 		return response, nil
 	}
 
-	objects, frameworkErr := parseDetailedResponse(body)
+	var (
+		objects      []map[string]any
+		frameworkErr *framework.Error
+	)
+
+	if request.EntityExternalID == Alerts {
+		objects, nextCursor, frameworkErr = parseAlertsResponse(body)
+	} else {
+		objects, frameworkErr = parseDetailedResponse(body)
+	}
+
 	if frameworkErr != nil {
 		return nil, frameworkErr
 	}
@@ -179,6 +232,10 @@ func (d *Datasource) getResourceIDs(ctx context.Context, request *Request) (
 	*framework.Error,
 ) {
 	endpointInfo := EntityExternalIDToEndpoint[request.EntityExternalID]
+
+	if request.EntityExternalID == Alerts && endpointInfo.ListEndpoint == "" {
+		return []string{}, nil, nil, nil
+	}
 
 	url, urlErr := ConstructRESTEndpoint(request, endpointInfo.ListEndpoint)
 	if urlErr != nil {
@@ -389,6 +446,44 @@ func parseDetailedResponse(body []byte) ([]map[string]any, *framework.Error) {
 	}
 
 	return data.Resources, nil
+}
+
+// parseAlertsResponse parses the response from the alerts API endpoint.
+func parseAlertsResponse(body []byte) (
+	objects []map[string]any,
+	nextCursor *pagination.CompositeCursor[string],
+	err *framework.Error,
+) {
+	var data *AlertsResponse
+
+	if unmarshalErr := json.Unmarshal(body, &data); unmarshalErr != nil || data == nil {
+		return nil, nil, &framework.Error{
+			Message: fmt.Sprintf("Failed to unmarshal the alerts response: %v.", unmarshalErr),
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}
+	}
+
+	if len(data.Errors) != 0 {
+		return nil, nil, ParseError(data.Errors)
+	}
+
+	if data.Resources == nil {
+		return nil, nil, &framework.Error{
+			Message: "Missing resources in the alerts response.",
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}
+	}
+
+	// Set next cursor if there's an "after" token for pagination
+	if data.Meta.Pagination.After != "" {
+		// The Combined Alerts API returns a base64-encoded cursor directly
+		// Use it as-is to maintain consistency with the CrowdStrike API format
+		nextCursor = &pagination.CompositeCursor[string]{
+			Cursor: &data.Meta.Pagination.After,
+		}
+	}
+
+	return data.Resources, nextCursor, nil
 }
 
 func ParseError(errors []ErrorItem) *framework.Error {

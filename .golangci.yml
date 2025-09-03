@@ -30,7 +30,7 @@ linters:
     - unused
     - usestdlibvars
     - wastedassign
-    - wsl
+    - wsl_v5
   settings:
     goheader:
       values:
@@ -39,6 +39,10 @@ linters:
       template: Copyright {{ YEAR }} {{ COMPANY }}
     nestif:
       min-complexity: 10
+    wsl_v5:
+      allow-first-in-block: true
+      allow-whole-block: false
+      branch-max-lines: 5
   exclusions:
     generated: lax
     presets:
@@ -50,6 +54,13 @@ linters:
       - linters:
           - dupl
         path: (.+)_test.go
+      - linters:
+          - wsl_v5
+        path: (.+)_test.go
+      - linters:
+          - revive
+        path: smoketests/common/
+        text: "var-naming: avoid meaningless package names"
     paths:
       - third_party$
       - builtin$

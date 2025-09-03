@@ -1,5 +1,5 @@
 // Copyright 2025 SGNL.ai, Inc.
-package github
+package rootly
 
 import (
 	"context"
@@ -11,19 +11,18 @@ import (
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	"github.com/sgnl-ai/adapter-framework/web"
 	"github.com/sgnl-ai/adapters/pkg/config"
-	"github.com/sgnl-ai/adapters/pkg/pagination"
 )
 
 // Adapter implements the framework.Adapter interface to query pages of objects
 // from datasources.
 type Adapter struct {
-	GithubClient Client
+	RootlyClient Client
 }
 
 // NewAdapter instantiates a new Adapter.
 func NewAdapter(client Client) framework.Adapter[Config] {
 	return &Adapter{
-		GithubClient: client,
+		RootlyClient: client,
 	}
 }
 
@@ -49,54 +48,49 @@ func (a *Adapter) RequestPageFromDatasource(
 	commonConfig = config.SetMissingCommonConfigDefaults(commonConfig)
 
 	if !strings.HasPrefix(request.Address, "https://") {
-		request.Address = "https://" + request.Address
+		request.Address = fmt.Sprintf("https://%s", request.Address)
 	}
 
-	// Unmarshal the current cursor.
-	cursor, err := pagination.UnmarshalCursor[string](request.Cursor)
-	if err != nil {
-		return framework.NewGetPageResponseError(err)
+	if !strings.HasSuffix(request.Address, "/") {
+		request.Address = fmt.Sprintf("%s/", request.Address)
 	}
 
-	githubReq := &Request{
-		BaseURL:               request.Address,
-		Token:                 request.Auth.HTTPAuthorization,
-		EnterpriseSlug:        request.Config.EnterpriseSlug,
-		APIVersion:            request.Config.APIVersion,
-		IsEnterpriseCloud:     request.Config.IsEnterpriseCloud,
-		EntityConfig:          &request.Entity,
+	baseURL := fmt.Sprintf("%s%s", request.Address, request.Config.APIVersion)
+
+	var authorizationHeader string
+	if request.Auth != nil && request.Auth.HTTPAuthorization != "" {
+		authorizationHeader = request.Auth.HTTPAuthorization
+	}
+
+	var cursor *string
+	if request.Cursor != "" {
+		cursor = &request.Cursor
+	}
+
+	apiRequest := &Request{
+		BaseURL:               baseURL,
+		HTTPAuthorization:     authorizationHeader,
 		EntityExternalID:      request.Entity.ExternalId,
-		Cursor:                cursor,
 		PageSize:              request.PageSize,
-		Organizations:         request.Config.Organizations,
+		Cursor:                cursor,
 		RequestTimeoutSeconds: *commonConfig.RequestTimeoutSeconds,
+		Filter:                a.getFilterForEntity(request),
 	}
 
-	resp, err := a.GithubClient.GetPage(ctx, githubReq)
+	response, err := a.RootlyClient.GetPage(ctx, apiRequest)
 	if err != nil {
 		return framework.NewGetPageResponseError(err)
 	}
 
-	// An adapter error message is generated if the response status code is not
-	// successful (i.e. if not statusCode >= 200 && statusCode < 300).
-	if adapterErr := web.HTTPError(resp.StatusCode, resp.RetryAfterHeader); adapterErr != nil {
-		return framework.NewGetPageResponseError(adapterErr)
-	}
-
-	// GitHub GraphQL API dates are represented using ISO 8601.
-	// https://docs.github.com/en/enterprise-cloud@latest/graphql/reference/scalars#datetime.
+	// Convert JSON objects to framework objects
 	parsedObjects, parserErr := web.ConvertJSONObjectList(
 		&request.Entity,
-		resp.Objects,
+		response.Objects,
 		web.WithJSONPathAttributeNames(),
 		web.WithDateTimeFormats(
 			[]web.DateTimeFormatWithTimeZone{
-				// While the API technically specifies ISO 8601, RFC 3339 is a profile (subset) of ISO 8601 and it
-				// appears datetimes in API response are RFC 3339 compliant, so we'll be using the RFC 3339 predefined
-				// layout since golang does not have built-in support for ISO 8601. However, this cannot be guaranteed
-				// so additional formats should be added here as necessary.
-				// https://datatracker.ietf.org/doc/html/rfc3339
 				{Format: time.RFC3339, HasTimeZone: true},
+				{Format: time.DateOnly, HasTimeZone: false},
 			}...,
 		),
 		web.WithLocalTimeZoneOffset(commonConfig.LocalTimeZoneOffset),
@@ -110,14 +104,26 @@ func (a *Adapter) RequestPageFromDatasource(
 		)
 	}
 
-	// Marshal the next cursor.
-	nextCursor, err := pagination.MarshalCursor(resp.NextCursor)
-	if err != nil {
-		return framework.NewGetPageResponseError(err)
+	page := &framework.Page{
+		Objects: parsedObjects,
 	}
 
-	return framework.NewGetPageResponseSuccess(&framework.Page{
-		Objects:    parsedObjects,
-		NextCursor: nextCursor,
-	})
+	if response.NextCursor != nil {
+		page.NextCursor = *response.NextCursor
+	}
+
+	return framework.NewGetPageResponseSuccess(page)
+}
+
+// getFilterForEntity builds the filter string for the given entity from the config.
+func (a *Adapter) getFilterForEntity(request *framework.Request[Config]) string {
+	if request.Config == nil || request.Config.Filters == nil {
+		return ""
+	}
+
+	if filter, exists := request.Config.Filters[request.Entity.ExternalId]; exists {
+		return filter
+	}
+
+	return ""
 }

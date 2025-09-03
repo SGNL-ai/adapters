@@ -199,8 +199,8 @@ func (d *Datasource) getResourcePage(
 	ctx context.Context,
 	request *Request) (*Response, *framework.Error) {
 	url := ConstructEndpoint(request)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, &framework.Error{
 			Message: fmt.Sprintf("Failed to create request to datasource: %v.", err),
@@ -401,6 +401,7 @@ func (d *Datasource) getCollectionResourcePage(
 		collectionID := fmt.Sprintf("%s-%s", parentID, parentEntity)
 
 		var err *framework.Error
+
 		nextCursor, err = d.getMarshalledCursor(memberNextCursor, &collectionID, parentNextCursor)
 
 		if err != nil {
