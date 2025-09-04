@@ -20,7 +20,7 @@ require (
 	github.com/machinebox/graphql v0.2.2
 	github.com/sgnl-ai/adapter-framework v0.18.0
 	github.com/spf13/viper v1.20.1
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.38.0
 	google.golang.org/grpc v1.74.2
 	google.golang.org/protobuf v1.36.6
