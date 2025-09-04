@@ -743,11 +743,23 @@ func StringAttrValuesToRequestedType(
 		return values, nil
 	}
 
+	// Return an empty string in case of no values
+	if len(attr.Values) == 0 {
+		return "", nil
+	}
+
 	switch attrType {
 	case getAttrType(api_adapter_v1.AttributeType_ATTRIBUTE_TYPE_STRING):
 		switch attr.Name {
 		// Special AD syntaxes.
 		case objectGUID:
+			if len(attr.ByteValues) == 0 || attr.ByteValues[0] == nil {
+				return nil, &framework.Error{
+					Message: fmt.Sprintf("Missing or nil GUID bytes for attribute: %s", attr.Name),
+					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ATTRIBUTE_TYPE,
+				}
+			}
+
 			guid, err := uuid.Parse(hex.EncodeToString(attr.ByteValues[0]))
 			if err != nil {
 				return nil, &framework.Error{
@@ -763,6 +775,13 @@ func StringAttrValuesToRequestedType(
 
 			return guid.String(), nil
 		case objectSid, sidHistory, creatorSID, securityIdentifier:
+			if len(attr.ByteValues) == 0 || attr.ByteValues[0] == nil {
+				return nil, &framework.Error{
+					Message: fmt.Sprintf("Missing or nil SID bytes for attribute: %s", attr.Name),
+					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ATTRIBUTE_TYPE,
+				}
+			}
+
 			sid := objectsid.Decode(attr.ByteValues[0])
 
 			return sid.String(), nil
