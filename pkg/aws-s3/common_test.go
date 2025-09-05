@@ -56,7 +56,7 @@ var (
 4.4,710D4dA2FAa96B5,James,Walters,Kline and Sons,Donhaven,Bahrain,+1-985-596-1072x3040,(528)734-8924x054,dochoa@carey-morse.com,2022-01-18,https://brennan.com/,"[{""alias"": ""Do Choa"", ""primary"": true}]"
 5.5,3c44ed62d7BfEBC,Leslie,Snyder,"Price, Mason and Doyle",Mossfort,Central African Republic,812-016-9904x8231,254.631.9380,darrylbarber@warren.org,2020-01-25,http://www.trujillo-sullivan.info/,"[{""alias"": ""Darryl Barber"", ""primary"": true}"`
 
-	// CSV data with decimal scores for Double conversion testing  
+	// CSV data with decimal scores for Double conversion testing
 	// nolint: lll
 	doubleCSVData = `Score,Customer Id,First Name,Last Name,Company,City,Country,Phone 1,Phone 2,Email,Subscription Date,Website,KnownAliases
 1.1,e685B8690f9fbce,Erik,Little,Blankenship PLC,Caitlynmouth,Sao Tome and Principe,457-542-6899,055.415.2664x5425,shanehester@campbell.org,2021-12-23,https://wagner.com/,"[{""alias"": ""Shane Hester"", ""primary"": true},{""alias"": ""Cheyne Hester"", ""primary"": false}]"

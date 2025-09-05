@@ -101,7 +101,7 @@ func (m *mockS3Middleware) mockHeadObject(
 		default:
 			contentLength = int64(len(validCSVData))
 		}
-		
+
 		out.Result = &s3.HeadObjectOutput{
 			ContentLength: aws.Int64(contentLength),
 			ContentType:   aws.String("text/csv"),
