@@ -253,7 +253,7 @@ func StreamingCSVToPage(
 			}
 
 			switch attrConfig.Type {
-			case framework.AttributeTypeInt64, framework.AttributeTypeDouble:
+			case framework.AttributeTypeDouble:
 				floatValue, convErr := strconv.ParseFloat(value, 64)
 				if convErr != nil {
 					return nil, 0, false, fmt.Errorf(
@@ -263,6 +263,16 @@ func StreamingCSVToPage(
 				}
 
 				row[headerName] = floatValue
+			case framework.AttributeTypeInt64:
+				intValue, convErr := strconv.ParseInt(value, 10, 64)
+				if convErr != nil {
+					return nil, 0, false, fmt.Errorf(
+						`CSV contains invalid integer value "%s" in column "%s"`,
+						value, headerName,
+					)
+				}
+
+				row[headerName] = intValue
 			default:
 				row[headerName] = value
 			}

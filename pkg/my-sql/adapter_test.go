@@ -377,7 +377,7 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
-					Message: `Failed to parse attribute: (name) strconv.ParseFloat: parsing "Erica Meadows": invalid syntax.`,
+					Message: `Failed to parse attribute: (name) strconv.ParseInt: parsing "Erica Meadows": invalid syntax.`,
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ATTRIBUTE_TYPE,
 				},
 			},
