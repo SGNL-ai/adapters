@@ -25,6 +25,9 @@ const (
 	headersOnlyCSVFileCode       = 801
 	largeCSVFileCode             = -300
 	largeFileHeaderIndicatorCode = -301
+	integerCSVFileCode           = 802
+	stringCSVFileCode            = 803
+	doubleCSVFileCode            = 804
 )
 
 type mockS3Middleware struct {
@@ -80,8 +83,27 @@ func (m *mockS3Middleware) mockHeadObject(
 
 	switch m.headStatusCode {
 	case http.StatusOK:
+		// Determine content length based on what GetObject will return
+		var contentLength int64
+		switch m.getStatusCode {
+		case emptyCSVFileCode:
+			contentLength = 0
+		case headersOnlyCSVFileCode:
+			contentLength = int64(len(headersOnlyCSVData))
+		case integerCSVFileCode:
+			contentLength = int64(len(integerCSVData))
+		case stringCSVFileCode:
+			contentLength = int64(len(stringCSVData))
+		case doubleCSVFileCode:
+			contentLength = int64(len(doubleCSVData))
+		case -200:
+			contentLength = int64(len(corruptCSVData))
+		default:
+			contentLength = int64(len(validCSVData))
+		}
+		
 		out.Result = &s3.HeadObjectOutput{
-			ContentLength: aws.Int64(int64(len(validCSVData))),
+			ContentLength: aws.Int64(contentLength),
 			ContentType:   aws.String("text/csv"),
 			ETag:          aws.String("\"f8a7b3f9be0e4c3d2e1a0b9c8d7e6f5\""),
 			LastModified:  aws.Time(time.Now()),
@@ -163,6 +185,12 @@ func (m *mockS3Middleware) mockGetObject(
 		fullDataString = generateLargeCSVData()
 	case -200:
 		fullDataString = corruptCSVData
+	case integerCSVFileCode:
+		fullDataString = integerCSVData
+	case stringCSVFileCode:
+		fullDataString = stringCSVData
+	case doubleCSVFileCode:
+		fullDataString = doubleCSVData
 	case http.StatusOK:
 		fullDataString = validCSVData
 	default:

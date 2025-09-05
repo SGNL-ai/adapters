@@ -230,10 +230,10 @@ func ParseResponse(rows *sql.Rows, request *Request) ([]map[string]any, *framewo
 			switch attribute.Type {
 			case framework.AttributeTypeBool:
 				objects[idx][columnName], castErr = strconv.ParseBool(str)
-			// The adapter framework expects all numbers to be passed as floats, so parse all
-			// numeric types as floats here.
-			case framework.AttributeTypeDouble, framework.AttributeTypeInt64:
+			case framework.AttributeTypeDouble:
 				objects[idx][columnName], castErr = strconv.ParseFloat(str, 64)
+			case framework.AttributeTypeInt64:
+				objects[idx][columnName], castErr = strconv.ParseInt(str, 10, 64)
 			case framework.AttributeTypeString, framework.AttributeTypeDuration, framework.AttributeTypeDateTime:
 				objects[idx][columnName] = str
 			default:

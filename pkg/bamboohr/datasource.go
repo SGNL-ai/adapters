@@ -267,8 +267,10 @@ func ProcessAttribute(
 	var err error
 
 	switch attr.Type {
-	case framework.AttributeTypeInt64, framework.AttributeTypeDouble:
+	case framework.AttributeTypeDouble:
 		convertedVal, err = strconv.ParseFloat(attrStringValue, 64)
+	case framework.AttributeTypeInt64:
+		convertedVal, err = strconv.ParseInt(attrStringValue, 10, 64)
 	case framework.AttributeTypeBool:
 		convertedVal, err = ParseBool(attrStringValue, mappings.BoolMappings)
 	default:
@@ -305,8 +307,10 @@ func ParseBool(value string, mappings *BoolAttributeMappings) (bool, error) {
 
 func attrTypeToString(t framework.AttributeType) string {
 	switch t {
-	case framework.AttributeTypeInt64, framework.AttributeTypeDouble:
+	case framework.AttributeTypeDouble:
 		return "Float"
+	case framework.AttributeTypeInt64:
+		return "Int64"
 	case framework.AttributeTypeBool:
 		return "Bool"
 	default:

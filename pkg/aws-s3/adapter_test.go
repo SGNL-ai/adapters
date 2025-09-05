@@ -32,7 +32,7 @@ func TestAdapterGetPage(t *testing.T) {
 	}{
 		"success_HeadObject_200_GetObject_200_first_page": {
 			headObjectStatusCode: 200,
-			getObjectStatusCode:  200,
+			getObjectStatusCode:  integerCSVFileCode,
 			ctx:                  context.Background(),
 			request: &framework.Request[s3_adapter.Config]{
 				Auth:   validAuthCredentials,
@@ -62,25 +62,25 @@ func TestAdapterGetPage(t *testing.T) {
 					Objects: []framework.Object{
 						{
 							"Email":             "shanehester@campbell.org",
-							"Score":             int64(1),
+							"Score":             int64(11),
 							"Subscription Date": time.Date(2021, 12, 23, 0, 0, 0, 0, time.UTC),
 						},
 						{
 							"Email":             "kleinluis@vang.com",
-							"Score":             int64(2),
+							"Score":             int64(22),
 							"Subscription Date": time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 						},
 					},
-					NextCursor: "eyJjdXJzb3IiOjY1NX0=",
+					NextCursor: "eyJjdXJzb3IiOjY1M30=",
 				},
 			},
 			wantCursor: &pagination.CompositeCursor[int64]{
-				Cursor: testutil.GenPtr(int64(655)),
+				Cursor: testutil.GenPtr(int64(653)),
 			},
 		},
 		"success_HeadObject_200_GetObject_200_middle_page": {
 			headObjectStatusCode: 200,
-			getObjectStatusCode:  200,
+			getObjectStatusCode:  integerCSVFileCode,
 			ctx:                  context.Background(),
 			request: &framework.Request[s3_adapter.Config]{
 				Auth:   validAuthCredentials,
@@ -104,29 +104,29 @@ func TestAdapterGetPage(t *testing.T) {
 					},
 				},
 				PageSize: 2,
-				Cursor:   "eyJjdXJzb3IiOjY1NX0=",
+				Cursor:   "eyJjdXJzb3IiOjY1M30=",
 			},
 			wantResponse: framework.Response{
 				Success: &framework.Page{
 					Objects: []framework.Object{
 						{
 							"Email":             "deckerjamie@bartlett.biz",
-							"Score":             int64(3),
+							"Score":             int64(33),
 							"Subscription Date": time.Date(2020, 3, 30, 0, 0, 0, 0, time.UTC),
 						},
 						{
 							"Email":             "dochoa@carey-morse.com",
-							"Score":             int64(4),
+							"Score":             int64(44),
 							"Subscription Date": time.Date(2022, 1, 18, 0, 0, 0, 0, time.UTC),
 						},
 					},
-					NextCursor: "eyJjdXJzb3IiOjEwOTV9",
+					NextCursor: "eyJjdXJzb3IiOjEwOTJ9",
 				},
 			},
 		},
 		"success_HeadObject_200_GetObject_200_last_page": {
 			headObjectStatusCode: 200,
-			getObjectStatusCode:  200,
+			getObjectStatusCode:  integerCSVFileCode,
 			ctx:                  context.Background(),
 			request: &framework.Request[s3_adapter.Config]{
 				Auth:   validAuthCredentials,
@@ -150,14 +150,14 @@ func TestAdapterGetPage(t *testing.T) {
 					},
 				},
 				PageSize: 2,
-				Cursor:   "eyJjdXJzb3IiOjEwOTV9",
+				Cursor:   "eyJjdXJzb3IiOjEwOTJ9",
 			},
 			wantResponse: framework.Response{
 				Success: &framework.Page{
 					Objects: []framework.Object{
 						{
 							"Email":             "darrylbarber@warren.org",
-							"Score":             int64(5),
+							"Score":             int64(55),
 							"Subscription Date": time.Date(2020, 1, 25, 0, 0, 0, 0, time.UTC),
 						},
 					},
@@ -200,7 +200,7 @@ func TestAdapterGetPage(t *testing.T) {
 		// Check if a number in the CSV can be ingested as a string type based on entity configuration
 		"success_read_numbers_as_strings_HeadObject_200_GetObject_200": {
 			headObjectStatusCode: 200,
-			getObjectStatusCode:  200,
+			getObjectStatusCode:  stringCSVFileCode,
 			ctx:                  context.Background(),
 			request: &framework.Request[s3_adapter.Config]{
 				Auth:   validAuthCredentials,
@@ -314,7 +314,7 @@ func TestAdapterGetPage(t *testing.T) {
 		// Check if a number in the CSV can be ingested as a double type based on entity configuration
 		"success_read_numbers_as_double_HeadObject_200_GetObject_200": {
 			headObjectStatusCode: 200,
-			getObjectStatusCode:  200,
+			getObjectStatusCode:  doubleCSVFileCode,
 			ctx:                  context.Background(),
 			request: &framework.Request[s3_adapter.Config]{
 				Auth:   validAuthCredentials,
@@ -383,9 +383,8 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
-					// nolint: lll
-					Message: "Unable to parse CSV file headers: CSV header error: empty or missing",
-					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+					Message: "The file for entity customers is empty.",
+					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
 				},
 			},
 		},

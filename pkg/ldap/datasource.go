@@ -807,8 +807,7 @@ func StringAttrValuesToRequestedType(
 
 		return value, nil
 	case getAttrType(api_adapter_v1.AttributeType_ATTRIBUTE_TYPE_INT64):
-		// All numbers are unmarshalled into float64. Further framework converts into int64.
-		value, err := strconv.ParseFloat(attr.Values[0], 64)
+		value, err := strconv.ParseInt(attr.Values[0], 10, 64)
 		if err != nil {
 			return nil, &framework.Error{
 				Message: fmt.Sprintf(ErrorMsgAttributeTypeDoesNotMatchFmt,
