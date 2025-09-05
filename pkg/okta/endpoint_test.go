@@ -116,6 +116,54 @@ func TestConstructEndpoint(t *testing.T) {
 			},
 			wantEndpoint: "https://test-instance.oktapreview.com/api/v1/groups?after=00g3zvuhepAwReSDo1d7&limit=100",
 		},
+		"applications_simple": {
+			request: &okta.Request{
+				BaseURL:          "https://test-instance.oktapreview.com",
+				APIVersion:       "v1",
+				EntityExternalID: "Application",
+				PageSize:         100,
+				Token:            "SSWS testtoken",
+			},
+			wantEndpoint: "https://test-instance.oktapreview.com/api/v1/apps?limit=100",
+		},
+		"applications_simple_filter": {
+			request: &okta.Request{
+				BaseURL:          "https://test-instance.oktapreview.com",
+				APIVersion:       "v1",
+				EntityExternalID: "Application",
+				PageSize:         100,
+				Filter:           "status eq \"ACTIVE\"",
+				Token:            "SSWS testtoken",
+			},
+			wantEndpoint: "https://test-instance.oktapreview.com/api/v1/apps?filter=status+eq+%22ACTIVE%22&limit=100",
+		},
+		"applications_cursor": {
+			request: &okta.Request{
+				BaseURL:          "https://test-instance.oktapreview.com",
+				APIVersion:       "v1",
+				EntityExternalID: "Application",
+				PageSize:         100,
+				Cursor: &pagination.CompositeCursor[string]{
+					Cursor: testutil.GenPtr("https://test-instance.oktapreview.com/api/v1/apps?after=0oav0szjt4RXG5wFN697&limit=100"),
+				},
+				Token: "SSWS testtoken",
+			},
+			wantEndpoint: "https://test-instance.oktapreview.com/api/v1/apps?after=0oav0szjt4RXG5wFN697&limit=100",
+		},
+		"applications_cursor_filter": {
+			request: &okta.Request{
+				BaseURL:          "https://test-instance.oktapreview.com",
+				APIVersion:       "v1",
+				EntityExternalID: "Application",
+				PageSize:         100,
+				Filter:           "status eq \"ACTIVE\"",
+				Cursor: &pagination.CompositeCursor[string]{
+					Cursor: testutil.GenPtr("https://test-instance.oktapreview.com/api/v1/apps?filter=status+eq+%22ACTIVE%22&after=0oav0szjt4RXG5wFN697&limit=100"),
+				},
+				Token: "SSWS testtoken",
+			},
+			wantEndpoint: "https://test-instance.oktapreview.com/api/v1/apps?filter=status+eq+%22ACTIVE%22&after=0oav0szjt4RXG5wFN697&limit=100",
+		},
 		"invalid_entity": {
 			request: &okta.Request{
 				BaseURL:          "https://test-instance.oktapreview.com",
@@ -158,6 +206,20 @@ func TestConstructEndpoint(t *testing.T) {
 			},
 			wantError: &framework.Error{
 				Message: "Provided search syntax is invalid.",
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
+			},
+		},
+		"invalid_application_filter": {
+			request: &okta.Request{
+				BaseURL:          "https://test-instance.oktapreview.com",
+				APIVersion:       "v1",
+				EntityExternalID: "Application",
+				PageSize:         100,
+				Token:            "SSWS testtoken",
+				Filter:           "id eq ",
+			},
+			wantError: &framework.Error{
+				Message: "Provided filter is invalid.",
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
 			},
 		},
