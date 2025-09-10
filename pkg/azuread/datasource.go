@@ -228,12 +228,14 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		if readErr != nil {
 			slog.Error(
 				"Failed to read error response body",
+				slog.String("endpoint", endpoint),
 				"error", readErr,
 			)
 		} else {
 			slog.Error(
 				"Azure AD API error",
 				slog.Int("status", res.StatusCode),
+				slog.String("endpoint", endpoint),
 				slog.String("response", string(body)),
 			)
 		}
