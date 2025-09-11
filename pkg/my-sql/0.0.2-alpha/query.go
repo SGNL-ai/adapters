@@ -34,7 +34,7 @@ func ConstructQuery(request *Request) (string, []any, error) {
 			// on the same field we're sorting on.
 			Field:    "str_id",
 			Operator: ">",
-			Value:    request.Cursor,
+			Value:    *request.Cursor,
 		}
 	}
 
