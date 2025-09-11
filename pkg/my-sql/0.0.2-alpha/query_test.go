@@ -10,37 +10,37 @@ import (
 
 	framework "github.com/sgnl-ai/adapter-framework"
 	"github.com/sgnl-ai/adapters/pkg/condexpr"
-	mysql "github.com/sgnl-ai/adapters/pkg/my-sql"
+	mysql_0_0_2_alpha "github.com/sgnl-ai/adapters/pkg/my-sql/0.0.2-alpha"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 )
 
 // nolint: lll
 func TestConstructQuery(t *testing.T) {
 	tests := map[string]struct {
-		inputRequest *mysql.Request
+		inputRequest *mysql_0_0_2_alpha.Request
 
 		wantQuery string
 		wantAttrs []any
 		wantErr   error
 	}{
 		"simple": {
-			inputRequest: &mysql.Request{
+			inputRequest: &mysql_0_0_2_alpha.Request{
 				EntityConfig: framework.EntityConfig{
 					ExternalId: "users",
 				},
 				Filter:                    nil,
 				UniqueAttributeExternalID: "id",
 				PageSize:                  100,
-				Cursor:                    testutil.GenPtr(int64(500)),
+				Cursor:                    testutil.GenPtr("500"),
 			},
-			wantQuery: "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT ? OFFSET ?",
+			wantQuery: "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE (`str_id` > ?) ORDER BY `str_id` ASC LIMIT ?",
 			wantAttrs: []any{
+				string("500"),
 				int64(100),
-				int64(500),
 			},
 		},
 		"simple_with_filter": {
-			inputRequest: &mysql.Request{
+			inputRequest: &mysql_0_0_2_alpha.Request{
 				EntityConfig: framework.EntityConfig{
 					ExternalId: "groups",
 				},
@@ -59,7 +59,7 @@ func TestConstructQuery(t *testing.T) {
 			},
 		},
 		"simple_with_complex_filter": {
-			inputRequest: &mysql.Request{
+			inputRequest: &mysql_0_0_2_alpha.Request{
 				EntityConfig: framework.EntityConfig{
 					ExternalId: "users",
 				},
@@ -95,7 +95,7 @@ func TestConstructQuery(t *testing.T) {
 			},
 		},
 		"query_empty_filter": {
-			inputRequest: &mysql.Request{
+			inputRequest: &mysql_0_0_2_alpha.Request{
 				EntityConfig: framework.EntityConfig{
 					ExternalId: "users",
 				},
@@ -105,7 +105,7 @@ func TestConstructQuery(t *testing.T) {
 			wantErr: errors.New("invalid condition: specify exactly one of And, Or, or a valid leaf condition"),
 		},
 		"invalid_condition_structure": {
-			inputRequest: &mysql.Request{
+			inputRequest: &mysql_0_0_2_alpha.Request{
 				EntityConfig: framework.EntityConfig{
 					ExternalId: "groups",
 				},
@@ -130,48 +130,8 @@ func TestConstructQuery(t *testing.T) {
 			inputRequest: nil,
 			wantErr:      errors.New("nil request provided"),
 		},
-		"valid_large_cursor": {
-			inputRequest: &mysql.Request{
-				EntityConfig: framework.EntityConfig{
-					ExternalId: "users",
-				},
-				Filter:                    nil,
-				UniqueAttributeExternalID: "id",
-				PageSize:                  100,
-				Cursor:                    testutil.GenPtr(int64(math.MaxUint32)),
-			},
-			wantQuery: "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT ? OFFSET ?",
-			wantAttrs: []any{
-				int64(100),
-				int64(4294967295),
-			},
-		},
-		"invalid_cursor_too_large": {
-			inputRequest: &mysql.Request{
-				EntityConfig: framework.EntityConfig{
-					ExternalId: "users",
-				},
-				Filter:                    nil,
-				UniqueAttributeExternalID: "id",
-				PageSize:                  100,
-				Cursor:                    testutil.GenPtr(int64(math.MaxUint32 + 1)),
-			},
-			wantErr: errors.New("cursor value exceeds maximum allowed value"),
-		},
-		"invalid_cursor_negative": {
-			inputRequest: &mysql.Request{
-				EntityConfig: framework.EntityConfig{
-					ExternalId: "users",
-				},
-				Filter:                    nil,
-				UniqueAttributeExternalID: "id",
-				PageSize:                  100,
-				Cursor:                    testutil.GenPtr(int64(-1)),
-			},
-			wantErr: errors.New("invalid negative cursor provided"),
-		},
 		"invalid_page_size_too_large": {
-			inputRequest: &mysql.Request{
+			inputRequest: &mysql_0_0_2_alpha.Request{
 				EntityConfig: framework.EntityConfig{
 					ExternalId: "users",
 				},
@@ -182,7 +142,7 @@ func TestConstructQuery(t *testing.T) {
 			wantErr: errors.New("pageSize value exceeds maximum allowed value"),
 		},
 		"invalid_page_size_negative": {
-			inputRequest: &mysql.Request{
+			inputRequest: &mysql_0_0_2_alpha.Request{
 				EntityConfig: framework.EntityConfig{
 					ExternalId: "users",
 				},
@@ -193,7 +153,7 @@ func TestConstructQuery(t *testing.T) {
 			wantErr: errors.New("invalid negative pageSize provided"),
 		},
 		"validation_prevents_sql_injection_via_filter_value": {
-			inputRequest: &mysql.Request{
+			inputRequest: &mysql_0_0_2_alpha.Request{
 				EntityConfig: framework.EntityConfig{
 					ExternalId: "users",
 				},
@@ -204,17 +164,17 @@ func TestConstructQuery(t *testing.T) {
 				}),
 				UniqueAttributeExternalID: "id",
 				PageSize:                  100,
-				Cursor:                    testutil.GenPtr(int64(500)),
+				Cursor:                    testutil.GenPtr("500"),
 			},
-			wantQuery: "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE (`status` = ?) ORDER BY `str_id` ASC LIMIT ? OFFSET ?",
+			wantQuery: "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE ((`str_id` > ?) AND (`status` = ?)) ORDER BY `str_id` ASC LIMIT ?",
 			wantAttrs: []any{
+				string("500"),
 				"active';DROP sampletable;--",
 				int64(100),
-				int64(500),
 			},
 		},
 		"filter_all_types_anded": {
-			inputRequest: &mysql.Request{
+			inputRequest: &mysql_0_0_2_alpha.Request{
 				EntityConfig: framework.EntityConfig{
 					ExternalId: "groups",
 				},
@@ -302,7 +262,7 @@ func TestConstructQuery(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			gotQuery, gotAttrs, gotErr := mysql.ConstructQuery(tt.inputRequest)
+			gotQuery, gotAttrs, gotErr := mysql_0_0_2_alpha.ConstructQuery(tt.inputRequest)
 
 			assert.Equal(t, tt.wantQuery, gotQuery)
 			assert.Equal(t, tt.wantAttrs, gotAttrs)
