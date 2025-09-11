@@ -99,6 +99,7 @@ func (a *Adapter) RequestPageFromDatasource(
 		nextCursor = *resp.NextCursor
 
 	}
+
 	return framework.NewGetPageResponseSuccess(&framework.Page{
 		Objects:    parsedObjects,
 		NextCursor: nextCursor,
