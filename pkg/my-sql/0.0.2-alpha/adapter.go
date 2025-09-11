@@ -97,7 +97,6 @@ func (a *Adapter) RequestPageFromDatasource(
 
 	if resp.NextCursor != nil {
 		nextCursor = *resp.NextCursor
-
 	}
 
 	return framework.NewGetPageResponseSuccess(&framework.Page{
