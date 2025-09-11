@@ -1882,6 +1882,25 @@ func TestEncodedAttributes(t *testing.T) {
 			},
 			want: "id%2Ckey%2Csummary", // URL encoded "id,key,summary" (sorted)
 		},
+		{
+			name: "array indices in field names",
+			attributes: []*framework.AttributeConfig{
+				{ExternalId: "$.fields.customfield_10209[0].value"},
+				{ExternalId: "$.fields.customfield_10210[0]"},
+				{ExternalId: "$.fields.assignee[0].key"},
+			},
+			want: "assignee%2Ccustomfield_10209%2Ccustomfield_10210", // URL encoded and sorted, array indices removed
+		},
+		{
+			name: "mixed array and non-array fields with deduplication",
+			attributes: []*framework.AttributeConfig{
+				{ExternalId: "$.fields.customfield_10209[0].value"},
+				{ExternalId: "$.fields.customfield_10209.id"},  // same field without array index
+				{ExternalId: "$.fields.assignee[0].key"},
+				{ExternalId: "$.fields.assignee.name"},         // same field without array index
+			},
+			want: "assignee%2Ccustomfield_10209", // URL encoded and sorted, deduplicated
+		},
 	}
 
 	for _, tt := range tests {

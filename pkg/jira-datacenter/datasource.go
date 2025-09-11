@@ -610,17 +610,30 @@ func filterAndPaginateGroups(
 	return objects, nextCursor
 }
 
+// removeArrayIndices removes array indices (like [0]) from field names.
+// Examples:
+//   - customfield_10209[0] → customfield_10209
+//   - assignee[0] → assignee
+//   - summary → summary (unchanged)
+func removeArrayIndices(fieldName string) string {
+	if idx := strings.Index(fieldName, "["); idx != -1 {
+		return fieldName[:idx]
+	}
+	return fieldName
+}
+
 // extractFieldFromJSONPath extracts the Jira field name from a JSON path.
 // Examples:
 //   - $.fields.summary → summary
 //   - $.fields.issuetype.id → issuetype
 //   - $.fields.assignee.key → assignee
+//   - $.fields.customfield_10209[0].value → customfield_10209
 //   - $.id → id
 //   - id → id (handles non-JSON path field names)
 func extractFieldFromJSONPath(jsonPath string) string {
 	// Handle non-JSON path field names (like "id", "key", "self")
 	if !strings.HasPrefix(jsonPath, "$.") {
-		return jsonPath
+		return removeArrayIndices(jsonPath)
 	}
 
 	// Remove the "$." prefix
@@ -631,17 +644,18 @@ func extractFieldFromJSONPath(jsonPath string) string {
 
 	// For paths like "$.id", return "id"
 	if len(segments) == 1 {
-		return segments[0]
+		return removeArrayIndices(segments[0])
 	}
 
 	// For paths like "$.fields.summary", return "summary"
 	// For paths like "$.fields.issuetype.id", return "issuetype"
+	// For paths like "$.fields.customfield_10209[0].value", return "customfield_10209"
 	if len(segments) >= 2 && segments[0] == JiraFieldsPrefix {
-		return segments[1]
+		return removeArrayIndices(segments[1])
 	}
 
 	// For other cases, return the first segment
-	return segments[0]
+	return removeArrayIndices(segments[0])
 }
 
 // EncodedAttributes constructs the fields parameter for Jira API requests.
