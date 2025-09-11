@@ -138,12 +138,18 @@ func (d *Datasource) Request(_ context.Context, request *Request) (*Response, *f
 
 		lastId, ok := lastObj[request.UniqueAttributeExternalID]
 		if !ok {
-			// TODO: Error
+			return nil, &framework.Error{
+				Message: fmt.Sprintf("Failed to extract the unique attribute from the last object for the cursor: %v.", err),
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
+			}
 		}
 
 		lastIdStr, ok := lastId.(string)
 		if !ok {
-			// TODO: Error
+			return nil, &framework.Error{
+				Message: fmt.Sprintf("Failed to cast the unique attribute from the last object to a string for the cursor: %v.", err),
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
+			}
 		}
 
 		response.NextCursor = &lastIdStr

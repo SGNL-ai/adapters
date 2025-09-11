@@ -30,7 +30,9 @@ func ConstructQuery(request *Request) (string, []any, error) {
 
 	if request.Cursor != nil && *request.Cursor != "" {
 		cond = &condexpr.Condition{
-			Field:    "str_id", // TODO: Verify & add explanation
+			// We filter on the string casted id value to ensure that we're paginating
+			// on the same field we're sorting on.
+			Field:    "str_id",
 			Operator: ">",
 			Value:    request.Cursor,
 		}
