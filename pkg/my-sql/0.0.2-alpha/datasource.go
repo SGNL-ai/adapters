@@ -133,6 +133,8 @@ func (d *Datasource) Request(_ context.Context, request *Request) (*Response, *f
 
 	// If we have less objects than the current PageSize, this is the last page and
 	// we should not set a NextCursor.
+	//
+	// We perform a redundant check to ensure we don't hit a NPE with an invalid page size.
 	if len(objs) >= int(request.PageSize) && len(objs) >= 1 {
 		lastObj := objs[len(objs)-1]
 
