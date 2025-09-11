@@ -51,7 +51,7 @@ func (c *MockSQLClient) Connect(datasourceName string) error {
 func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 	var (
 		pageSize int64
-		cursor   int64
+		cursor   string
 		ok       bool
 	)
 
@@ -64,20 +64,20 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 			return nil, errors.New("mock sql client called with invalid arg[1], unable to cast `pageSize` to int64")
 		}
 	default:
-		pageSize, ok = args[len(args)-2].(int64)
+		cursor, ok = args[0].(string)
 		if !ok {
-			return nil, errors.New("mock sql client called with invalid arg[1], unable to cast `pageSize` to int64")
+			return nil, errors.New("mock sql client called with invalid arg[1], unable to cast `cursor` to string")
 		}
 
-		cursor, ok = args[len(args)-1].(int64)
+		pageSize, ok = args[len(args)-1].(int64)
 		if !ok {
-			return nil, errors.New("mock sql client called with invalid arg[2], unable to cast `cursor` to int64")
+			return nil, errors.New("mock sql client called with invalid arg[2], unable to cast `pageSize` to int64")
 		}
 	}
 
 	switch {
 	// First page of users.
-	case pageSize == 5 && cursor == 0:
+	case pageSize == 5 && cursor == "":
 		columns := []*sqlmock.Column{
 			sqlmock.NewColumn("id").OfType("VARCHAR", ""),
 			sqlmock.NewColumn("name").OfType("VARCHAR", ""),
@@ -105,7 +105,7 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 		).WithArgs(values...).WillReturnRows(mockRows)
 
 	// Second (middle) page of users. Tests providing BOOLs as TINYINT.
-	case pageSize == 5 && cursor == 5:
+	case pageSize == 5 && cursor == "5":
 		columns := []*sqlmock.Column{
 			sqlmock.NewColumn("id").OfType("VARCHAR", ""),
 			sqlmock.NewColumn("name").OfType("VARCHAR", ""),
@@ -129,11 +129,11 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 		}
 
 		c.Mock.ExpectQuery(
-			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT ? OFFSET ?"),
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE (`str_id` > ?) ORDER BY `str_id` ASC LIMIT ?"),
 		).WithArgs(values...).WillReturnRows(mockRows)
 
 	// Third (last) page of users.
-	case pageSize == 5 && cursor == 10:
+	case pageSize == 5 && cursor == "10":
 		columns := []*sqlmock.Column{
 			sqlmock.NewColumn("id").OfType("VARCHAR", ""),
 			sqlmock.NewColumn("name").OfType("VARCHAR", ""),
@@ -154,15 +154,15 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 		}
 
 		c.Mock.ExpectQuery(
-			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT ? OFFSET ?"),
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE (`str_id` > ?) ORDER BY `str_id` ASC LIMIT ?"),
 		).WithArgs(values...).WillReturnRows(mockRows)
 
 	// Test: Failed to query datasource
-	case pageSize == 1 && cursor == 101:
+	case pageSize == 1 && cursor == "101":
 		return nil, errors.New("failed to query mock sql service")
 
 	// Test: Edge case with large values
-	case pageSize == 5 && cursor == 202:
+	case pageSize == 5 && cursor == "202":
 		columns := []*sqlmock.Column{
 			sqlmock.NewColumn("id").OfType("VARCHAR", ""),
 			sqlmock.NewColumn("name").OfType("VARCHAR", ""),
@@ -187,11 +187,11 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 		}
 
 		c.Mock.ExpectQuery(
-			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT ? OFFSET ?"),
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE (`str_id` > ?) ORDER BY `str_id` ASC LIMIT ?"),
 		).WithArgs(values...).WillReturnRows(mockRows)
 
 	// Test: Edge case with empty values
-	case pageSize == 5 && cursor == 203:
+	case pageSize == 5 && cursor == "203":
 		columns := []*sqlmock.Column{
 			sqlmock.NewColumn("id").OfType("VARCHAR", ""),
 			sqlmock.NewColumn("name").OfType("VARCHAR", ""),
@@ -213,11 +213,11 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 		}
 
 		c.Mock.ExpectQuery(
-			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT ? OFFSET ?"),
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE (`str_id` > ?) ORDER BY `str_id` ASC LIMIT ?"),
 		).WithArgs(values...).WillReturnRows(mockRows)
 
 	// Test: First page of users filtered active only and risk > 2
-	case pageSize == 5 && cursor == 204:
+	case pageSize == 5 && cursor == "204":
 		columns := []*sqlmock.Column{
 			sqlmock.NewColumn("id").OfType("VARCHAR", ""),
 			sqlmock.NewColumn("name").OfType("VARCHAR", ""),
@@ -238,7 +238,7 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 		}
 
 		c.Mock.ExpectQuery(
-			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE ((`active` IS TRUE) AND (`risk_score` > ?)) ORDER BY `str_id` ASC LIMIT ? OFFSET ?"),
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE ((`str_id` > ?) AND ((`active` IS TRUE) AND (`risk_score` > ?))) ORDER BY `str_id` ASC LIMIT ?"),
 		).WithArgs(values...).WillReturnRows(mockRows)
 
 	default:

@@ -33,12 +33,5 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 		}
 	}
 
-	if !request.Ordered {
-		return &framework.Error{
-			Message: "Ordered must be set to true.",
-			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
-		}
-	}
-
 	return nil
 }

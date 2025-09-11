@@ -4,7 +4,6 @@ package mysql
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
@@ -48,10 +47,7 @@ func (a *Adapter) RequestPageFromDatasource(
 	}
 
 	if request.Cursor != "" {
-		cursor, err := strconv.ParseInt(request.Cursor, 10, 64)
-		if err == nil {
-			req.Cursor = &cursor
-		}
+		req.Cursor = &request.Cursor
 	}
 
 	for _, attribute := range request.Entity.Attributes {
@@ -100,9 +96,9 @@ func (a *Adapter) RequestPageFromDatasource(
 	var nextCursor string
 
 	if resp.NextCursor != nil {
-		nextCursor = strconv.FormatInt(*resp.NextCursor, 10)
-	}
+		nextCursor = *resp.NextCursor
 
+	}
 	return framework.NewGetPageResponseSuccess(&framework.Page{
 		Objects:    parsedObjects,
 		NextCursor: nextCursor,

@@ -31,12 +31,12 @@ func TestConstructQuery(t *testing.T) {
 				Filter:                    nil,
 				UniqueAttributeExternalID: "id",
 				PageSize:                  100,
-				Cursor:                    testutil.GenPtr(int64(500)),
+				Cursor:                    testutil.GenPtr("500"),
 			},
-			wantQuery: "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT ? OFFSET ?",
+			wantQuery: "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE (`str_id` > ?) ORDER BY `str_id` ASC LIMIT ?",
 			wantAttrs: []any{
+				string("500"),
 				int64(100),
-				int64(500),
 			},
 		},
 		"simple_with_filter": {
@@ -130,46 +130,6 @@ func TestConstructQuery(t *testing.T) {
 			inputRequest: nil,
 			wantErr:      errors.New("nil request provided"),
 		},
-		"valid_large_cursor": {
-			inputRequest: &mysql_0_0_2_alpha.Request{
-				EntityConfig: framework.EntityConfig{
-					ExternalId: "users",
-				},
-				Filter:                    nil,
-				UniqueAttributeExternalID: "id",
-				PageSize:                  100,
-				Cursor:                    testutil.GenPtr(int64(math.MaxUint32)),
-			},
-			wantQuery: "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT ? OFFSET ?",
-			wantAttrs: []any{
-				int64(100),
-				int64(4294967295),
-			},
-		},
-		"invalid_cursor_too_large": {
-			inputRequest: &mysql_0_0_2_alpha.Request{
-				EntityConfig: framework.EntityConfig{
-					ExternalId: "users",
-				},
-				Filter:                    nil,
-				UniqueAttributeExternalID: "id",
-				PageSize:                  100,
-				Cursor:                    testutil.GenPtr(int64(math.MaxUint32 + 1)),
-			},
-			wantErr: errors.New("cursor value exceeds maximum allowed value"),
-		},
-		"invalid_cursor_negative": {
-			inputRequest: &mysql_0_0_2_alpha.Request{
-				EntityConfig: framework.EntityConfig{
-					ExternalId: "users",
-				},
-				Filter:                    nil,
-				UniqueAttributeExternalID: "id",
-				PageSize:                  100,
-				Cursor:                    testutil.GenPtr(int64(-1)),
-			},
-			wantErr: errors.New("invalid negative cursor provided"),
-		},
 		"invalid_page_size_too_large": {
 			inputRequest: &mysql_0_0_2_alpha.Request{
 				EntityConfig: framework.EntityConfig{
@@ -204,13 +164,13 @@ func TestConstructQuery(t *testing.T) {
 				}),
 				UniqueAttributeExternalID: "id",
 				PageSize:                  100,
-				Cursor:                    testutil.GenPtr(int64(500)),
+				Cursor:                    testutil.GenPtr("500"),
 			},
-			wantQuery: "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE (`status` = ?) ORDER BY `str_id` ASC LIMIT ? OFFSET ?",
+			wantQuery: "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE ((`str_id` > ?) AND (`status` = ?)) ORDER BY `str_id` ASC LIMIT ?",
 			wantAttrs: []any{
+				string("500"),
 				"active';DROP sampletable;--",
 				int64(100),
-				int64(500),
 			},
 		},
 		"filter_all_types_anded": {

@@ -133,14 +133,20 @@ func (d *Datasource) Request(_ context.Context, request *Request) (*Response, *f
 
 	// If we have less objects than the current PageSize, this is the last page and
 	// we should not set a NextCursor.
-	if len(objs) == int(request.PageSize) {
-		if request.Cursor == nil {
-			response.NextCursor = &request.PageSize
-		} else {
-			nextCursor := (*request.Cursor) + request.PageSize
+	if len(objs) >= int(request.PageSize) && len(objs) >= 1 {
+		lastObj := objs[len(objs)-1]
 
-			response.NextCursor = &nextCursor
+		lastId, ok := lastObj[request.UniqueAttributeExternalID]
+		if !ok {
+			// TODO: Error
 		}
+
+		lastIdStr, ok := lastId.(string)
+		if !ok {
+			// TODO: Error
+		}
+
+		response.NextCursor = &lastIdStr
 	}
 
 	return response, nil

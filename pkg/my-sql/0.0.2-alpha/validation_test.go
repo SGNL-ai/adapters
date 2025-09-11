@@ -257,7 +257,7 @@ func TestValidationGetPageRequest(t *testing.T) {
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
 			},
 		},
-		"invalid_ordered_false": {
+		"allow_ordered_false": {
 			request: &framework.Request[mysql_0_0_2_alpha.Config]{
 				Address: "sgnl.testaddress.us-east-1.rds.amazonaws.com",
 				Auth: &framework.DatasourceAuthCredentials{
@@ -293,10 +293,7 @@ func TestValidationGetPageRequest(t *testing.T) {
 				Ordered:  false,
 				PageSize: 100,
 			},
-			wantErr: &framework.Error{
-				Message: "Ordered must be set to true.",
-				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
-			},
+			wantErr: nil,
 		},
 	}
 

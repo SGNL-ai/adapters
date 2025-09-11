@@ -40,7 +40,7 @@ type Request struct {
 	// Cursor identifies the first object of the page to return, as returned by
 	// the last request for the entity.
 	// nil in the request for the first page.
-	Cursor *int64 `json:"cursor,omitempty"`
+	Cursor *string `json:"cursor,omitempty"`
 
 	// MySQL database to connect to.
 	Database string `json:"database"`
@@ -91,5 +91,5 @@ type Response struct {
 
 	// NextCursor is the cursor that identifies the first object of the next page.
 	// nil if this is the last page in this full sync.
-	NextCursor *int64 `json:"nextCursor,omitempty"`
+	NextCursor *string `json:"nextCursor,omitempty"`
 }
