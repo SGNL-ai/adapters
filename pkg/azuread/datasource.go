@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
@@ -222,6 +223,24 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	}
 
 	if res.StatusCode != http.StatusOK {
+		// TEMP: Log the response body for debugging purposes.
+		body, readErr := io.ReadAll(res.Body)
+		if readErr != nil {
+			slog.Error(
+				"Failed to read error response body",
+				slog.String("endpoint", endpoint),
+				"error", readErr,
+			)
+		} else {
+			slog.Error(
+				"Azure AD API error",
+				slog.Int("status", res.StatusCode),
+				slog.String("endpoint", endpoint),
+				slog.String("response", string(body)),
+			)
+		}
+		// END TEMP.
+
 		return response, nil
 	}
 
