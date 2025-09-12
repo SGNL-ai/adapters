@@ -7,7 +7,6 @@ import (
 	"math"
 
 	"github.com/doug-martin/goqu/v9"
-	"github.com/sgnl-ai/adapters/pkg/condexpr"
 	condexprsql "github.com/sgnl-ai/adapters/pkg/condexpr/sql"
 
 	_ "github.com/doug-martin/goqu/v9/dialect/mysql" // goqu MySQL Dialect required for constructing correct queries.
@@ -25,38 +24,14 @@ func ConstructQuery(request *Request) (string, []any, error) {
 		goqu.Cast(goqu.I(request.UniqueAttributeExternalID), "CHAR(50)").As("str_id"),
 	).From(request.EntityConfig.ExternalId).Prepared(true)
 
-	// Create a shared condition object for pagination and request filtering.
-	var cond *condexpr.Condition
-
 	if request.Cursor != nil && *request.Cursor != "" {
-		cond = &condexpr.Condition{
-			// We filter on the string casted id value to ensure that we're paginating
-			// on the same field we're sorting on.
-			Field:    "str_id",
-			Operator: ">",
-			Value:    *request.Cursor,
-		}
+		expr = expr.Where(goqu.Cast(goqu.I(request.UniqueAttributeExternalID), "CHAR(50)").Gt(*request.Cursor))
 	}
 
 	if request.Filter != nil {
-		// If we already have a condition already set from pagination, create a new composite condition
-		// with both.
-		if cond != nil {
-			cond = &condexpr.Condition{
-				And: []condexpr.Condition{
-					*cond,
-					*request.Filter,
-				},
-			}
-		} else {
-			cond = request.Filter
-		}
-	}
-
-	if cond != nil {
 		builder := condexprsql.NewConditionBuilder()
 
-		whereExpr, err := builder.Build(*cond)
+		whereExpr, err := builder.Build(*request.Filter)
 		if err != nil {
 			return "", nil, err
 		}
