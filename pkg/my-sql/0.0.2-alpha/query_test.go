@@ -33,7 +33,7 @@ func TestConstructQuery(t *testing.T) {
 				PageSize:                  100,
 				Cursor:                    testutil.GenPtr("500"),
 			},
-			wantQuery: "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE (`str_id` > ?) ORDER BY `str_id` ASC LIMIT ?",
+			wantQuery: "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE (CAST(`id` AS CHAR(50)) > ?) ORDER BY `str_id` ASC LIMIT ?",
 			wantAttrs: []any{
 				string("500"),
 				int64(100),
@@ -166,7 +166,7 @@ func TestConstructQuery(t *testing.T) {
 				PageSize:                  100,
 				Cursor:                    testutil.GenPtr("500"),
 			},
-			wantQuery: "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE ((`str_id` > ?) AND (`status` = ?)) ORDER BY `str_id` ASC LIMIT ?",
+			wantQuery: "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE ((CAST(`id` AS CHAR(50)) > ?) AND (`status` = ?)) ORDER BY `str_id` ASC LIMIT ?",
 			wantAttrs: []any{
 				string("500"),
 				"active';DROP sampletable;--",

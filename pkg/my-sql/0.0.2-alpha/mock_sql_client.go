@@ -129,7 +129,7 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 		}
 
 		c.Mock.ExpectQuery(
-			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE (`str_id` > ?) ORDER BY `str_id` ASC LIMIT ?"),
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE (CAST(`id` AS CHAR(50)) > ?) ORDER BY `str_id` ASC LIMIT ?"),
 		).WithArgs(values...).WillReturnRows(mockRows)
 
 	// Third (last) page of users.
@@ -154,7 +154,7 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 		}
 
 		c.Mock.ExpectQuery(
-			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE (`str_id` > ?) ORDER BY `str_id` ASC LIMIT ?"),
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE (CAST(`id` AS CHAR(50)) > ?) ORDER BY `str_id` ASC LIMIT ?"),
 		).WithArgs(values...).WillReturnRows(mockRows)
 
 	// Test: Failed to query datasource
@@ -187,7 +187,7 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 		}
 
 		c.Mock.ExpectQuery(
-			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE (`str_id` > ?) ORDER BY `str_id` ASC LIMIT ?"),
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE (CAST(`id` AS CHAR(50)) > ?) ORDER BY `str_id` ASC LIMIT ?"),
 		).WithArgs(values...).WillReturnRows(mockRows)
 
 	// Test: Edge case with empty values
@@ -213,7 +213,7 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 		}
 
 		c.Mock.ExpectQuery(
-			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE (`str_id` > ?) ORDER BY `str_id` ASC LIMIT ?"),
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE (CAST(`id` AS CHAR(50)) > ?) ORDER BY `str_id` ASC LIMIT ?"),
 		).WithArgs(values...).WillReturnRows(mockRows)
 
 	// Test: First page of users filtered active only and risk > 2
@@ -238,7 +238,7 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 		}
 
 		c.Mock.ExpectQuery(
-			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE ((`str_id` > ?) AND ((`active` IS TRUE) AND (`risk_score` > ?))) ORDER BY `str_id` ASC LIMIT ?"),
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE ((CAST(`id` AS CHAR(50)) > ?) AND ((`active` IS TRUE) AND (`risk_score` > ?))) ORDER BY `str_id` ASC LIMIT ?"),
 		).WithArgs(values...).WillReturnRows(mockRows)
 
 	default:
