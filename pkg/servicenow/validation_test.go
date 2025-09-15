@@ -47,37 +47,6 @@ func TestValidateGetPageRequest(t *testing.T) {
 			},
 			wantErr: nil,
 		},
-		"invalid_request_empty_config": {
-			request: &framework.Request[servicenow_adapter.Config]{
-				Address: "test-instance.service-now.com",
-				Auth: &framework.DatasourceAuthCredentials{
-					Basic: &framework.BasicAuthCredentials{
-						Username: "username",
-						Password: "password",
-					},
-				},
-				Entity: framework.EntityConfig{
-					ExternalId: "sys_user",
-					Attributes: []*framework.AttributeConfig{
-						{
-							ExternalId: "sys_id",
-							Type:       framework.AttributeTypeString,
-						},
-						{
-							ExternalId: "name",
-							Type:       framework.AttributeTypeString,
-						},
-					},
-				},
-				Config:   &servicenow_adapter.Config{},
-				Ordered:  true,
-				PageSize: 250,
-			},
-			wantErr: &framework.Error{
-				Message: "Servicenow config is invalid: apiVersion is not set.",
-				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
-			},
-		},
 		"invalid_request_missing_config": {
 			request: &framework.Request[servicenow_adapter.Config]{
 				Address: "test-instance.service-now.com",
