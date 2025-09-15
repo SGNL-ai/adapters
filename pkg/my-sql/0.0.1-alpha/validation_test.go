@@ -8,17 +8,18 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	"github.com/sgnl-ai/adapters/pkg/config"
-	mysql "github.com/sgnl-ai/adapters/pkg/my-sql"
+	mysql_0_0_1_alpha "github.com/sgnl-ai/adapters/pkg/my-sql/0.0.1-alpha"
+
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 )
 
 func TestValidationGetPageRequest(t *testing.T) {
 	tests := map[string]struct {
-		request *framework.Request[mysql.Config]
+		request *framework.Request[mysql_0_0_1_alpha.Config]
 		wantErr *framework.Error
 	}{
 		"valid_request": {
-			request: &framework.Request[mysql.Config]{
+			request: &framework.Request[mysql_0_0_1_alpha.Config]{
 				Address: "sgnl.testaddress.us-east-1.rds.amazonaws.com",
 				Auth: &framework.DatasourceAuthCredentials{
 					Basic: &framework.BasicAuthCredentials{
@@ -43,7 +44,7 @@ func TestValidationGetPageRequest(t *testing.T) {
 						},
 					},
 				},
-				Config: &mysql.Config{
+				Config: &mysql_0_0_1_alpha.Config{
 					CommonConfig: &config.CommonConfig{
 						RequestTimeoutSeconds: testutil.GenPtr(10),
 						LocalTimeZoneOffset:   -18000, // UTC−05:00 (EST)
@@ -56,7 +57,7 @@ func TestValidationGetPageRequest(t *testing.T) {
 			wantErr: nil,
 		},
 		"invalid_request_empty_config": {
-			request: &framework.Request[mysql.Config]{
+			request: &framework.Request[mysql_0_0_1_alpha.Config]{
 				Address: "sgnl.testaddress.us-east-1.rds.amazonaws.com",
 				Auth: &framework.DatasourceAuthCredentials{
 					Basic: &framework.BasicAuthCredentials{
@@ -81,7 +82,7 @@ func TestValidationGetPageRequest(t *testing.T) {
 						},
 					},
 				},
-				Config:   &mysql.Config{},
+				Config:   &mysql_0_0_1_alpha.Config{},
 				Ordered:  true,
 				PageSize: 100,
 			},
@@ -91,7 +92,7 @@ func TestValidationGetPageRequest(t *testing.T) {
 			},
 		},
 		"invalid_nil_config": {
-			request: &framework.Request[mysql.Config]{
+			request: &framework.Request[mysql_0_0_1_alpha.Config]{
 				Address: "sgnl.testaddress.us-east-1.rds.amazonaws.com",
 				Auth: &framework.DatasourceAuthCredentials{
 					Basic: &framework.BasicAuthCredentials{
@@ -126,7 +127,7 @@ func TestValidationGetPageRequest(t *testing.T) {
 			},
 		},
 		"invalid_request_missing_auth": {
-			request: &framework.Request[mysql.Config]{
+			request: &framework.Request[mysql_0_0_1_alpha.Config]{
 				Address: "sgnl.testaddress.us-east-1.rds.amazonaws.com",
 				Auth:    &framework.DatasourceAuthCredentials{},
 				Entity: framework.EntityConfig{
@@ -146,7 +147,7 @@ func TestValidationGetPageRequest(t *testing.T) {
 						},
 					},
 				},
-				Config: &mysql.Config{
+				Config: &mysql_0_0_1_alpha.Config{
 					CommonConfig: &config.CommonConfig{
 						RequestTimeoutSeconds: testutil.GenPtr(10),
 						LocalTimeZoneOffset:   -18000, // UTC−05:00 (EST)
@@ -162,7 +163,7 @@ func TestValidationGetPageRequest(t *testing.T) {
 			},
 		},
 		"invalid_request_missing_auth_password": {
-			request: &framework.Request[mysql.Config]{
+			request: &framework.Request[mysql_0_0_1_alpha.Config]{
 				Address: "sgnl.testaddress.us-east-1.rds.amazonaws.com",
 				Auth: &framework.DatasourceAuthCredentials{
 					Basic: &framework.BasicAuthCredentials{
@@ -186,7 +187,7 @@ func TestValidationGetPageRequest(t *testing.T) {
 						},
 					},
 				},
-				Config: &mysql.Config{
+				Config: &mysql_0_0_1_alpha.Config{
 					CommonConfig: &config.CommonConfig{
 						RequestTimeoutSeconds: testutil.GenPtr(10),
 						LocalTimeZoneOffset:   -18000, // UTC−05:00 (EST)
@@ -202,7 +203,7 @@ func TestValidationGetPageRequest(t *testing.T) {
 			},
 		},
 		"invalid_configured_child_entities": {
-			request: &framework.Request[mysql.Config]{
+			request: &framework.Request[mysql_0_0_1_alpha.Config]{
 				Address: "sgnl.testaddress.us-east-1.rds.amazonaws.com",
 				Auth: &framework.DatasourceAuthCredentials{
 					Basic: &framework.BasicAuthCredentials{
@@ -242,7 +243,7 @@ func TestValidationGetPageRequest(t *testing.T) {
 						},
 					},
 				},
-				Config: &mysql.Config{
+				Config: &mysql_0_0_1_alpha.Config{
 					CommonConfig: &config.CommonConfig{
 						RequestTimeoutSeconds: testutil.GenPtr(10),
 						LocalTimeZoneOffset:   -18000, // UTC−05:00 (EST)
@@ -258,7 +259,7 @@ func TestValidationGetPageRequest(t *testing.T) {
 			},
 		},
 		"invalid_ordered_false": {
-			request: &framework.Request[mysql.Config]{
+			request: &framework.Request[mysql_0_0_1_alpha.Config]{
 				Address: "sgnl.testaddress.us-east-1.rds.amazonaws.com",
 				Auth: &framework.DatasourceAuthCredentials{
 					Basic: &framework.BasicAuthCredentials{
@@ -283,7 +284,7 @@ func TestValidationGetPageRequest(t *testing.T) {
 						},
 					},
 				},
-				Config: &mysql.Config{
+				Config: &mysql_0_0_1_alpha.Config{
 					CommonConfig: &config.CommonConfig{
 						RequestTimeoutSeconds: testutil.GenPtr(10),
 						LocalTimeZoneOffset:   -18000, // UTC−05:00 (EST)
@@ -300,7 +301,7 @@ func TestValidationGetPageRequest(t *testing.T) {
 		},
 	}
 
-	adapter := mysql.Adapter{}
+	adapter := mysql_0_0_1_alpha.Adapter{}
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
