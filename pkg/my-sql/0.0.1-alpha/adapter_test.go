@@ -15,22 +15,22 @@ import (
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	"github.com/sgnl-ai/adapters/pkg/condexpr"
 	"github.com/sgnl-ai/adapters/pkg/config"
-	mysql "github.com/sgnl-ai/adapters/pkg/my-sql"
+	mysql_0_0_1_alpha "github.com/sgnl-ai/adapters/pkg/my-sql/0.0.1-alpha"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 )
 
 func TestAdapterGetPage(t *testing.T) {
-	adapter := mysql.NewAdapter(mysql.NewClient(mysql.NewMockSQLClient()))
+	adapter := mysql_0_0_1_alpha.NewAdapter(mysql_0_0_1_alpha.NewClient(mysql_0_0_1_alpha.NewMockSQLClient()))
 
 	tests := map[string]struct {
-		request            *framework.Request[mysql.Config]
+		request            *framework.Request[mysql_0_0_1_alpha.Config]
 		inputRequestCursor interface{}
 		wantResponse       framework.Response
 		wantCursor         *pagination.CompositeCursor[string]
 	}{
 		"valid_request_first_page": {
-			request: &framework.Request[mysql.Config]{
+			request: &framework.Request[mysql_0_0_1_alpha.Config]{
 				Address: "127.0.0.1",
 				Auth: &framework.DatasourceAuthCredentials{
 					Basic: &framework.BasicAuthCredentials{
@@ -72,7 +72,7 @@ func TestAdapterGetPage(t *testing.T) {
 						},
 					},
 				},
-				Config: &mysql.Config{
+				Config: &mysql_0_0_1_alpha.Config{
 					CommonConfig: &config.CommonConfig{
 						RequestTimeoutSeconds: testutil.GenPtr(10),
 						LocalTimeZoneOffset:   -18000, // UTC−05:00 (EST)
@@ -131,7 +131,7 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 		},
 		"valid_request_second_middle_page": {
-			request: &framework.Request[mysql.Config]{
+			request: &framework.Request[mysql_0_0_1_alpha.Config]{
 				Address: "127.0.0.1",
 				Auth: &framework.DatasourceAuthCredentials{
 					Basic: &framework.BasicAuthCredentials{
@@ -157,7 +157,7 @@ func TestAdapterGetPage(t *testing.T) {
 						},
 					},
 				},
-				Config: &mysql.Config{
+				Config: &mysql_0_0_1_alpha.Config{
 					CommonConfig: &config.CommonConfig{
 						RequestTimeoutSeconds: testutil.GenPtr(10),
 						LocalTimeZoneOffset:   -18000, // UTC−05:00 (EST)
@@ -197,7 +197,7 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 		},
 		"valid_request_third_last_page": {
-			request: &framework.Request[mysql.Config]{
+			request: &framework.Request[mysql_0_0_1_alpha.Config]{
 				Address: "127.0.0.1",
 				Auth: &framework.DatasourceAuthCredentials{
 					Basic: &framework.BasicAuthCredentials{
@@ -223,7 +223,7 @@ func TestAdapterGetPage(t *testing.T) {
 						},
 					},
 				},
-				Config: &mysql.Config{
+				Config: &mysql_0_0_1_alpha.Config{
 					CommonConfig: &config.CommonConfig{
 						RequestTimeoutSeconds: testutil.GenPtr(10),
 						LocalTimeZoneOffset:   -18000, // UTC−05:00 (EST)
@@ -250,7 +250,7 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 		},
 		"failed_to_connect_to_datasource": {
-			request: &framework.Request[mysql.Config]{
+			request: &framework.Request[mysql_0_0_1_alpha.Config]{
 				Address: "127.0.0.1",
 				Auth: &framework.DatasourceAuthCredentials{
 					Basic: &framework.BasicAuthCredentials{
@@ -276,12 +276,12 @@ func TestAdapterGetPage(t *testing.T) {
 						},
 					},
 				},
-				Config: &mysql.Config{
+				Config: &mysql_0_0_1_alpha.Config{
 					CommonConfig: &config.CommonConfig{
 						RequestTimeoutSeconds: testutil.GenPtr(10),
 						LocalTimeZoneOffset:   -18000, // UTC−05:00 (EST)
 					},
-					Database: mysql.TestDatasourceForConnectFailure,
+					Database: mysql_0_0_1_alpha.TestDatasourceForConnectFailure,
 				},
 				Ordered:  true,
 				PageSize: 5,
@@ -295,7 +295,7 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 		},
 		"failed_to_query_datasource": {
-			request: &framework.Request[mysql.Config]{
+			request: &framework.Request[mysql_0_0_1_alpha.Config]{
 				Address: "127.0.0.1",
 				Auth: &framework.DatasourceAuthCredentials{
 					Basic: &framework.BasicAuthCredentials{
@@ -321,7 +321,7 @@ func TestAdapterGetPage(t *testing.T) {
 						},
 					},
 				},
-				Config: &mysql.Config{
+				Config: &mysql_0_0_1_alpha.Config{
 					CommonConfig: &config.CommonConfig{
 						RequestTimeoutSeconds: testutil.GenPtr(10),
 						LocalTimeZoneOffset:   -18000, // UTC−05:00 (EST)
@@ -341,7 +341,7 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 		},
 		"failed_to_cast_to_type": {
-			request: &framework.Request[mysql.Config]{
+			request: &framework.Request[mysql_0_0_1_alpha.Config]{
 				Address: "127.0.0.1",
 				Auth: &framework.DatasourceAuthCredentials{
 					Basic: &framework.BasicAuthCredentials{
@@ -364,7 +364,7 @@ func TestAdapterGetPage(t *testing.T) {
 						},
 					},
 				},
-				Config: &mysql.Config{
+				Config: &mysql_0_0_1_alpha.Config{
 					CommonConfig: &config.CommonConfig{
 						RequestTimeoutSeconds: testutil.GenPtr(10),
 						LocalTimeZoneOffset:   -18000, // UTC−05:00 (EST)
@@ -383,7 +383,7 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 		},
 		"max_int_float": {
-			request: &framework.Request[mysql.Config]{
+			request: &framework.Request[mysql_0_0_1_alpha.Config]{
 				Address: "127.0.0.1",
 				Auth: &framework.DatasourceAuthCredentials{
 					Basic: &framework.BasicAuthCredentials{
@@ -425,7 +425,7 @@ func TestAdapterGetPage(t *testing.T) {
 						},
 					},
 				},
-				Config: &mysql.Config{
+				Config: &mysql_0_0_1_alpha.Config{
 					CommonConfig: &config.CommonConfig{
 						RequestTimeoutSeconds: testutil.GenPtr(10),
 						LocalTimeZoneOffset:   -18000, // UTC−05:00 (EST)
@@ -461,7 +461,7 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 		},
 		"null_values": {
-			request: &framework.Request[mysql.Config]{
+			request: &framework.Request[mysql_0_0_1_alpha.Config]{
 				Address: "127.0.0.1",
 				Auth: &framework.DatasourceAuthCredentials{
 					Basic: &framework.BasicAuthCredentials{
@@ -503,7 +503,7 @@ func TestAdapterGetPage(t *testing.T) {
 						},
 					},
 				},
-				Config: &mysql.Config{
+				Config: &mysql_0_0_1_alpha.Config{
 					CommonConfig: &config.CommonConfig{
 						RequestTimeoutSeconds: testutil.GenPtr(10),
 						LocalTimeZoneOffset:   -18000, // UTC−05:00 (EST)
@@ -536,7 +536,7 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 		},
 		"validation_prevent_sql_injection_table": {
-			request: &framework.Request[mysql.Config]{
+			request: &framework.Request[mysql_0_0_1_alpha.Config]{
 				Address: "127.0.0.1",
 				Auth: &framework.DatasourceAuthCredentials{
 					Basic: &framework.BasicAuthCredentials{
@@ -554,7 +554,7 @@ func TestAdapterGetPage(t *testing.T) {
 						},
 					},
 				},
-				Config: &mysql.Config{
+				Config: &mysql_0_0_1_alpha.Config{
 					CommonConfig: &config.CommonConfig{
 						RequestTimeoutSeconds: testutil.GenPtr(10),
 						LocalTimeZoneOffset:   -18000, // UTC−05:00 (EST)
@@ -573,7 +573,7 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 		},
 		"validation_prevent_sql_injection_unique_attribute": {
-			request: &framework.Request[mysql.Config]{
+			request: &framework.Request[mysql_0_0_1_alpha.Config]{
 				Address: "127.0.0.1",
 				Auth: &framework.DatasourceAuthCredentials{
 					Basic: &framework.BasicAuthCredentials{
@@ -591,7 +591,7 @@ func TestAdapterGetPage(t *testing.T) {
 						},
 					},
 				},
-				Config: &mysql.Config{
+				Config: &mysql_0_0_1_alpha.Config{
 					CommonConfig: &config.CommonConfig{
 						RequestTimeoutSeconds: testutil.GenPtr(10),
 						LocalTimeZoneOffset:   -18000, // UTC−05:00 (EST)
@@ -610,7 +610,7 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 		},
 		"valid_request_first_page_cast_multiple_fields_to_string": {
-			request: &framework.Request[mysql.Config]{
+			request: &framework.Request[mysql_0_0_1_alpha.Config]{
 				Address: "127.0.0.1",
 				Auth: &framework.DatasourceAuthCredentials{
 					Basic: &framework.BasicAuthCredentials{
@@ -652,7 +652,7 @@ func TestAdapterGetPage(t *testing.T) {
 						},
 					},
 				},
-				Config: &mysql.Config{
+				Config: &mysql_0_0_1_alpha.Config{
 					CommonConfig: &config.CommonConfig{
 						RequestTimeoutSeconds: testutil.GenPtr(10),
 						LocalTimeZoneOffset:   -18000, // UTC−05:00 (EST)
@@ -711,7 +711,7 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 		},
 		"valid_request_fields_not_in_db": {
-			request: &framework.Request[mysql.Config]{
+			request: &framework.Request[mysql_0_0_1_alpha.Config]{
 				Address: "127.0.0.1",
 				Auth: &framework.DatasourceAuthCredentials{
 					Basic: &framework.BasicAuthCredentials{
@@ -733,7 +733,7 @@ func TestAdapterGetPage(t *testing.T) {
 						},
 					},
 				},
-				Config: &mysql.Config{
+				Config: &mysql_0_0_1_alpha.Config{
 					CommonConfig: &config.CommonConfig{
 						RequestTimeoutSeconds: testutil.GenPtr(10),
 						LocalTimeZoneOffset:   -18000, // UTC−05:00 (EST)
@@ -767,7 +767,7 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 		},
 		"valid_request_first_page_filtered": {
-			request: &framework.Request[mysql.Config]{
+			request: &framework.Request[mysql_0_0_1_alpha.Config]{
 				Address: "127.0.0.1",
 				Auth: &framework.DatasourceAuthCredentials{
 					Basic: &framework.BasicAuthCredentials{
@@ -809,7 +809,7 @@ func TestAdapterGetPage(t *testing.T) {
 						},
 					},
 				},
-				Config: &mysql.Config{
+				Config: &mysql_0_0_1_alpha.Config{
 					CommonConfig: &config.CommonConfig{
 						RequestTimeoutSeconds: testutil.GenPtr(10),
 						LocalTimeZoneOffset:   -18000, // UTC−05:00 (EST)
