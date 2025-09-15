@@ -24,7 +24,8 @@ import (
 	"github.com/sgnl-ai/adapters/pkg/identitynow"
 	"github.com/sgnl-ai/adapters/pkg/jira"
 	jiradatacenter "github.com/sgnl-ai/adapters/pkg/jira-datacenter"
-	mysql "github.com/sgnl-ai/adapters/pkg/my-sql"
+	mysql_0_0_1_alpha "github.com/sgnl-ai/adapters/pkg/my-sql/0.0.1-alpha"
+	mysql_0_0_2_alpha "github.com/sgnl-ai/adapters/pkg/my-sql/0.0.2-alpha"
 	"github.com/sgnl-ai/adapters/pkg/okta"
 	"github.com/sgnl-ai/adapters/pkg/pagerduty"
 	"github.com/sgnl-ai/adapters/pkg/rootly"
@@ -200,7 +201,14 @@ func main() {
 	server.RegisterAdapter(
 		adapterServer,
 		"MySQL-0.0.1-alpha",
-		mysql.NewAdapter(mysql.NewClient(mysql.NewDefaultSQLClient(
+		mysql_0_0_1_alpha.NewAdapter(mysql_0_0_1_alpha.NewClient(mysql_0_0_1_alpha.NewDefaultSQLClient(
+			grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
+		))),
+	)
+	server.RegisterAdapter(
+		adapterServer,
+		"MySQL-0.0.2-alpha",
+		mysql_0_0_2_alpha.NewAdapter(mysql_0_0_2_alpha.NewClient(mysql_0_0_2_alpha.NewDefaultSQLClient(
 			grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
 		))),
 	)
