@@ -697,7 +697,7 @@ func ExtractEntityFieldNames(prefix string, entity *framework.EntityConfig) map[
 
 	encodedAttrs := ExtractFieldNamesFromAttributes(prefix, entity.Attributes)
 
-	// Include field attribute names from chaild entities.
+	// Include field attribute names from child entities.
 	for _, childEntity := range entity.ChildEntities {
 		if prefix != "" {
 			prefix += "."
