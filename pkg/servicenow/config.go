@@ -48,17 +48,16 @@ type Config struct {
 
 // ValidateConfig validates that a Config received in a GetPage call is valid.
 func (c *Config) Validate(_ context.Context) error {
-	switch {
-	case c == nil:
+	if c == nil {
 		return errors.New("request contains no config")
-	default:
-		// Only validate apiVersion if it's supplied
-		if c.APIVersion != "" {
-			if _, found := supportedAPIVersions[c.APIVersion]; !found {
-				return fmt.Errorf("apiVersion is not supported: %v", c.APIVersion)
-			}
-		}
-
-		return nil
 	}
+
+	// Only validate apiVersion if it's supplied
+	if c.APIVersion != "" {
+		if _, found := supportedAPIVersions[c.APIVersion]; !found {
+			return fmt.Errorf("apiVersion is not supported: %v", c.APIVersion)
+		}
+	}
+
+	return nil
 }
