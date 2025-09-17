@@ -72,6 +72,7 @@ func (a *Adapter) RequestPageFromDatasource(
 		PageSize:              request.PageSize,
 		EntityExternalID:      request.Entity.ExternalId,
 		RequestTimeoutSeconds: *commonConfig.RequestTimeoutSeconds,
+		Entity:                &request.Entity,
 	}
 
 	if request.Config != nil {
