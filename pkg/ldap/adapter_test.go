@@ -471,10 +471,12 @@ func (s *LDAPTestSuite) Test_AdapterGetGroupMemberPage() {
 						},
 						"GroupMember": {
 							MemberOf:                  testutil.GenPtr("Group"),
-							CollectionAttribute:       testutil.GenPtr("dn"),
-							Query:                     "(&(memberOf={{CollectionId}}))",
+							CollectionAttribute:       testutil.GenPtr("entryDN"),
+							Query:                     "(&(objectClass=groupofuniquenames)({{CollectionAttribute}}={{CollectionId}}))",
 							MemberUniqueIDAttribute:   testutil.GenPtr("dn"),
 							MemberOfUniqueIDAttribute: testutil.GenPtr("dn"),
+							MemberAttribute:           testutil.GenPtr("uniqueMember"),
+							MemberOfGroupBatchSize:    10,
 						},
 					},
 				},
@@ -515,7 +517,95 @@ func (s *LDAPTestSuite) Test_AdapterGetGroupMemberPage() {
 							"member_dn": "cn=leonardo,ou=People,dc=example,dc=org",
 						},
 					},
-					NextCursor: "eyJjb2xsZWN0aW9uSWQiOiJjbj1BZG1pbmlzdHJhdG9yLG91PUdyb3VwcyxkYz1leGFtcGxlLGRjPW9yZyIsImNvbGxlY3Rpb25DdXJzb3IiOiJleUpqYjJ4c1pXTjBhVzl1SWpwN0ltUnVJam9pWTI0OVFXUnRhVzVwYzNSeVlYUnZjaXh2ZFQxSGNtOTFjSE1zWkdNOVpYaGhiWEJzWlN4a1l6MXZjbWNpZlN3aWJtVjRkRkJoWjJWRGRYSnpiM0lpT2lKRVFVRkJRVUZCUVVGQlFUMGlmUT09In0=",
+					NextCursor: "eyJjdXJzb3IiOiJleUpqYjJ4c1pXTjBhVzl1SWpwdWRXeHNMQ0p1WlhoMFVHRm5aVU4xY25OdmNpSTZiblZzYkN3aWJHRnpkRWR5YjNWd1VISnZZMlZ6YzJWa0lqb2lZMjQ5UkdWMlpXeHZjR1Z5Y3l4dmRUMUhjbTkxY0hNc1pHTTlaWGhoYlhCc1pTeGtZejF2Y21jaWZRPT0ifQ==",
+				},
+			},
+		},
+		"valid_request_all_pages": {
+			ctx: context.Background(),
+			request: &framework.Request[ldap_adapter.Config]{
+				Address: s.ldapHost,
+				Auth:    validAuthCredentials,
+				Config: &ldap_adapter.Config{
+					BaseDN: "dc=example,dc=org",
+					EntityConfigMap: map[string]*ldap_adapter.EntityConfig{
+						"Group": {
+							Query: "(objectClass=groupofuniquenames)",
+						},
+						"GroupMember": {
+							MemberOf:                  testutil.GenPtr("Group"),
+							CollectionAttribute:       testutil.GenPtr("entryDN"),
+							Query:                     "(&(objectClass=groupofuniquenames)({{CollectionAttribute}}={{CollectionId}}))",
+							MemberUniqueIDAttribute:   testutil.GenPtr("dn"),
+							MemberOfUniqueIDAttribute: testutil.GenPtr("dn"),
+							MemberAttribute:           testutil.GenPtr("uniqueMember"),
+							MemberOfGroupBatchSize:    10,
+						},
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "GroupMember",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "id",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+							UniqueId:   true,
+						},
+						{
+							ExternalId: "group_dn",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+						{
+							ExternalId: "member_dn",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+					},
+				},
+				PageSize: 20,
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"id":        "cn=marpontes,ou=People,dc=example,dc=org-cn=Administrator,ou=Groups,dc=example,dc=org",
+							"group_dn":  "cn=Administrator,ou=Groups,dc=example,dc=org",
+							"member_dn": "cn=marpontes,ou=People,dc=example,dc=org",
+						},
+						{
+							"id":        "cn=leonardo,ou=People,dc=example,dc=org-cn=Administrator,ou=Groups,dc=example,dc=org",
+							"group_dn":  "cn=Administrator,ou=Groups,dc=example,dc=org",
+							"member_dn": "cn=leonardo,ou=People,dc=example,dc=org",
+						},
+						{
+							"id":        "cn=marpontes,ou=People,dc=example,dc=org-cn=Developers,ou=Groups,dc=example,dc=org",
+							"group_dn":  "cn=Developers,ou=Groups,dc=example,dc=org",
+							"member_dn": "cn=marpontes,ou=People,dc=example,dc=org",
+						},
+						{
+							"id":        "cn=zach,ou=People,dc=example,dc=org-cn=Developers,ou=Groups,dc=example,dc=org",
+							"group_dn":  "cn=Developers,ou=Groups,dc=example,dc=org",
+							"member_dn": "cn=zach,ou=People,dc=example,dc=org",
+						},
+						{
+							"id":        "cn=leonardo,ou=People,dc=example,dc=org-cn=Developers,ou=Groups,dc=example,dc=org",
+							"group_dn":  "cn=Developers,ou=Groups,dc=example,dc=org",
+							"member_dn": "cn=leonardo,ou=People,dc=example,dc=org",
+						},
+						{
+							"id":        "cn=lorem,ou=People,dc=example,dc=org-cn=Science,ou=Groups,dc=example,dc=org",
+							"group_dn":  "cn=Science,ou=Groups,dc=example,dc=org",
+							"member_dn": "cn=lorem,ou=People,dc=example,dc=org",
+						},
+						{
+							"id":        "cn=bobby,ou=People,dc=example,dc=org-cn=Science,ou=Groups,dc=example,dc=org",
+							"group_dn":  "cn=Science,ou=Groups,dc=example,dc=org",
+							"member_dn": "cn=bobby,ou=People,dc=example,dc=org",
+						},
+					},
+					NextCursor: "",
 				},
 			},
 		},
@@ -532,10 +622,12 @@ func (s *LDAPTestSuite) Test_AdapterGetGroupMemberPage() {
 						},
 						"GroupMember": {
 							MemberOf:                  testutil.GenPtr("Group"),
-							CollectionAttribute:       testutil.GenPtr("dn"),
-							Query:                     "(&(memberOf={{CollectionId}}))",
+							CollectionAttribute:       testutil.GenPtr("entryDN"),
+							Query:                     "(&(objectClass=groupofuniquenames)({{CollectionAttribute}}={{CollectionId}}))",
 							MemberUniqueIDAttribute:   testutil.GenPtr("dn"),
 							MemberOfUniqueIDAttribute: testutil.GenPtr("dn"),
+							MemberAttribute:           testutil.GenPtr("uniqueMember"),
+							MemberOfGroupBatchSize:    10,
 						},
 					},
 				},
@@ -582,10 +674,12 @@ func (s *LDAPTestSuite) Test_AdapterGetGroupMemberPage() {
 						},
 						"GroupMember": {
 							MemberOf:                  testutil.GenPtr("Group"),
-							CollectionAttribute:       testutil.GenPtr("dn"),
-							Query:                     "(&(memberOf={{CollectionId}}))",
+							CollectionAttribute:       testutil.GenPtr("entryDN"),
+							Query:                     "(&(objectClass=groupofuniquenames)({{CollectionAttribute}}=cn=Science,ou=Groups,dc=example,dc=org))",
 							MemberUniqueIDAttribute:   testutil.GenPtr("dn"),
 							MemberOfUniqueIDAttribute: testutil.GenPtr("dn"),
+							MemberAttribute:           testutil.GenPtr("uniqueMember"),
+							MemberOfGroupBatchSize:    10,
 						},
 					},
 				},
@@ -616,14 +710,14 @@ func (s *LDAPTestSuite) Test_AdapterGetGroupMemberPage() {
 				Success: &framework.Page{
 					Objects: []framework.Object{
 						{
-							"id":        "cn=bobby,ou=People,dc=example,dc=org-cn=Science,ou=Groups,dc=example,dc=org",
-							"group_dn":  "cn=Science,ou=Groups,dc=example,dc=org",
-							"member_dn": "cn=bobby,ou=People,dc=example,dc=org",
-						},
-						{
 							"id":        "cn=lorem,ou=People,dc=example,dc=org-cn=Science,ou=Groups,dc=example,dc=org",
 							"group_dn":  "cn=Science,ou=Groups,dc=example,dc=org",
 							"member_dn": "cn=lorem,ou=People,dc=example,dc=org",
+						},
+						{
+							"id":        "cn=bobby,ou=People,dc=example,dc=org-cn=Science,ou=Groups,dc=example,dc=org",
+							"group_dn":  "cn=Science,ou=Groups,dc=example,dc=org",
+							"member_dn": "cn=bobby,ou=People,dc=example,dc=org",
 						},
 					},
 					NextCursor: "",

@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"os"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -26,6 +27,7 @@ import (
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	"github.com/sgnl-ai/adapter-framework/pkg/connector"
 	grpc_proxy_v1 "github.com/sgnl-ai/adapter-framework/pkg/grpc_proxy/v1"
+	"github.com/sgnl-ai/adapter-framework/web"
 	customerror "github.com/sgnl-ai/adapters/pkg/errors"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 	"google.golang.org/grpc/status"
@@ -200,6 +202,7 @@ func (c *ldapClient) Request(_ context.Context, request *Request) (*Response, *f
 		}
 	}
 
+	// get existing session or create a new one
 	address := request.BaseURL
 	key := sessionKey(address, cookie)
 
@@ -253,17 +256,15 @@ func (c *ldapClient) Request(_ context.Context, request *Request) (*Response, *f
 		[]ldap_v3.Control{pageControl}, // Controls
 	)
 
-	response := &Response{}
-
 	// Perform search
 	searchResult, err := conn.Search(searchRequest)
 	if err != nil {
 		// Extract LDAP result code from the error
 		if ldapErr, ok := err.(*ldap_v3.Error); ok {
-			statusCode := ldapErrToHTTPStatusCode(ldapErr)
-			response.StatusCode = statusCode
 
-			return response, nil
+			return &Response{
+				StatusCode: ldapErrToHTTPStatusCode(ldapErr),
+			}, nil
 		}
 
 		return nil, customerror.UpdateError(
@@ -281,29 +282,25 @@ func (c *ldapClient) Request(_ context.Context, request *Request) (*Response, *f
 	isEmptyCursor := request.Cursor == nil || request.Cursor.CollectionID == nil
 
 	if isEmptyResult && isEmptyCursor {
-		response.StatusCode = http.StatusNotFound
-
-		return response, nil
+		return &Response{
+			StatusCode: http.StatusNotFound,
+		}, nil
 	}
 
-	// Indicating a successful LDAP search operation.
-	// In case of no error (err == nil), ldap_v3.Search is considered successful,
-	// returning LDAP Result Code Success(0) equivalent to HTTP status code StatusOK.
-	response.StatusCode = http.StatusOK
-
-	if err := ProcessLDAPSearchResult(searchResult, response, request); err != nil {
-		return nil, err
+	response, ferr := ProcessLDAPSearchResult(searchResult, request)
+	if ferr != nil {
+		return nil, ferr
 	}
 
 	// Handle paging: store or cleanup session
-	var nextCookie []byte
+	cookie = cookie[:0]
 
 	if response.NextCursor != nil && response.NextCursor.Cursor != nil {
 		pageInfo, decodeErr := DecodePageInfo(response.NextCursor.Cursor)
 		if decodeErr == nil && pageInfo.NextPageCursor != nil {
 			var err error
 
-			nextCookie, err = OctetStringToBytes(*pageInfo.NextPageCursor)
+			cookie, err = OctetStringToBytes(*pageInfo.NextPageCursor)
 			if err != nil {
 				return nil, &framework.Error{
 					Message: fmt.Sprintf("Failed to encode next page cursor received from LDAP server: %v.", err),
@@ -313,9 +310,10 @@ func (c *ldapClient) Request(_ context.Context, request *Request) (*Response, *f
 		}
 	}
 
-	if len(nextCookie) > 0 {
+	// If we have a cookie, update the session with the new cookie for the next request.
+	if len(cookie) > 0 {
 		// Move the session to the new cookie key: remove old key, add new key (without closing conn)
-		nextKey := sessionKey(address, nextCookie)
+		nextKey := sessionKey(address, cookie)
 		c.sessionPool.UpdateKey(key, nextKey)
 	} else {
 		// Paging done, cleanup
@@ -369,15 +367,17 @@ func setPageControl(request *Request) (*ldap_v3.ControlPaging, *framework.Error)
 			return nil, decodeErr
 		}
 
-		cookie, err := OctetStringToBytes(*pageInfo.NextPageCursor)
-		if err != nil {
-			return nil, &framework.Error{
-				Message: fmt.Sprintf("Failed to parse cursor value: %v.", err),
-				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		if pageInfo.NextPageCursor != nil {
+			cookie, err := OctetStringToBytes(*pageInfo.NextPageCursor)
+			if err != nil {
+				return nil, &framework.Error{
+					Message: fmt.Sprintf("Failed to parse cursor value: %v.", err),
+					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+				}
 			}
-		}
 
-		pageControl.SetCookie(cookie)
+			pageControl.SetCookie(cookie)
+		}
 	}
 
 	return pageControl, nil
@@ -389,6 +389,28 @@ type PageInfo struct {
 
 	// NextPageCursor is the cursor to the next page of results.
 	NextPageCursor *string `json:"nextPageCursor"`
+
+	// LastGroupProcessed tracks the last group DN processed (for resuming)
+	LastGroupProcessed string `json:"lastGroupProcessed,omitempty"`
+
+	// LastMemberProcessed tracks the last member DN processed (for resuming)
+	LastMemberProcessed int64 `json:"lastMemberProcessed,omitempty"`
+
+	// RangeAttribute is the attribute used for range queries.
+	RangeAttribute bool `json:"rangeAttribute,omitempty"`
+}
+
+func getPageInfo(req *Request) (*PageInfo, *framework.Error) {
+	if req.Cursor != nil && req.Cursor.Cursor != nil {
+		pageInfo, decodeErr := DecodePageInfo(req.Cursor.Cursor)
+		if decodeErr == nil {
+			return pageInfo, nil
+		}
+
+		return nil, decodeErr
+	}
+
+	return &PageInfo{}, nil
 }
 
 const (
@@ -421,108 +443,13 @@ const (
 	msDFSLinkSecurityDescriptorv2           = "msDFS-LinkSecurityDescriptorv2"
 )
 
-func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, *framework.Error) {
-	entityConfig := request.EntityConfigMap[request.EntityExternalID]
-	memberOf := entityConfig.MemberOf
-
-	// nolint: nestif
-	if memberOf != nil {
-		// Update required attribute for [Member] Entity
-		request.Attributes = append(request.Attributes, &framework.AttributeConfig{
-			ExternalId: *entityConfig.MemberUniqueIDAttribute,
-			Type:       framework.AttributeTypeString,
-		})
-
-		collectionAttribute := entityConfig.CollectionAttribute
-		memberOfUniqueIDAttribute := entityConfig.MemberOfUniqueIDAttribute
-		memberOfAttributes := []*framework.AttributeConfig{
-			{
-				ExternalId: *memberOfUniqueIDAttribute,
-				Type:       framework.AttributeTypeString,
-				UniqueId:   true,
-			},
-		}
-
-		// For a member's entity.query, {{CollectionID}} is typically replaced by collectionAttribute
-		// to filter the member entity. The collectionAttribute and memberOfUniqueIdAttribute can be the identical.
-		// If they are not identical, add the collectionAttribute request attributes.
-		if collectionAttribute != memberOfUniqueIDAttribute {
-			memberOfAttributes = append(memberOfAttributes, &framework.AttributeConfig{
-				ExternalId: *collectionAttribute,
-				Type:       framework.AttributeTypeString,
-			})
-		}
-
-		memberOfReq := &Request{
-			BaseURL:               request.BaseURL,
-			Attributes:            memberOfAttributes,
-			ConnectionParams:      request.ConnectionParams,
-			UniqueIDAttribute:     *memberOfUniqueIDAttribute,
-			EntityExternalID:      *memberOf,
-			EntityConfigMap:       map[string]*EntityConfig{*memberOf: request.EntityConfigMap[*memberOf]},
-			PageSize:              1,
-			RequestTimeoutSeconds: request.RequestTimeoutSeconds,
-		}
-
-		// If the CollectionCursor is set, use that as the Cursor for the next call to `GetPage`.
-		if request.Cursor != nil && request.Cursor.CollectionCursor != nil {
-			memberOfReq.Cursor = &pagination.CompositeCursor[string]{
-				Cursor: request.Cursor.CollectionCursor,
-			}
-		}
-
-		if request.Cursor == nil {
-			request.Cursor = &pagination.CompositeCursor[string]{}
-		}
-
-		// Update filter for member entity if the cursor is set.
-		if request.Cursor.Cursor != nil {
-			query := entityConfig.Query
-			entityConfig.Query = strings.Replace(query, "{{CollectionId}}", *request.Cursor.CollectionID, -1)
-		}
-
-		isEmptyLastPage, cursorErr := pagination.UpdateNextCursorFromCollectionAPI(
-			ctx,
-			request.Cursor,
-			func(ctx context.Context, _ *Request) (
-				int, string, []map[string]any, *pagination.CompositeCursor[string], *framework.Error,
-			) {
-				resp, err := d.GetPage(ctx, memberOfReq)
-				if err != nil || resp == nil {
-					return 0, "", nil, nil, err
-				}
-
-				if len(resp.Objects) > 0 {
-					if collectionID, ok := resp.Objects[0][*collectionAttribute].(string); ok {
-						query := entityConfig.Query
-						entityConfig.Query = strings.Replace(query, "{{CollectionId}}", collectionID, -1)
-					}
-				}
-
-				return resp.StatusCode, resp.RetryAfterHeader, resp.Objects, resp.NextCursor, nil
-			},
-			memberOfReq,
-			*collectionAttribute,
-		)
-
-		if cursorErr != nil {
-			return nil, cursorErr
-		}
-
-		if isEmptyLastPage {
-			return &Response{
-				StatusCode: http.StatusOK,
-			}, nil
-		}
-	}
-
-	validationErr := pagination.ValidateCompositeCursor(
+func (d *Datasource) getPage(ctx context.Context, request *Request, memberOf *string) (*Response, *framework.Error) {
+	if validationErr := pagination.ValidateCompositeCursor(
 		request.Cursor,
 		request.EntityExternalID,
 		// Send a bool indicating if the entity is a member of a collection.
 		memberOf != nil,
-	)
-	if validationErr != nil {
+	); validationErr != nil {
 		return nil, validationErr
 	}
 
@@ -533,31 +460,349 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		}
 	}
 
-	return d.Client.Request(ctx, request)
-}
-
-func ProcessLDAPSearchResult(result *ldap_v3.SearchResult, response *Response, request *Request) *framework.Error {
-	requestAttributeMap := attrIDToConfig(request.Attributes)
-	entityConfig := request.EntityConfigMap[request.EntityExternalID]
-	memberOf := entityConfig.MemberOf
-
-	objects, pageInfo, frameworkErr := ParseResponse(result, requestAttributeMap)
-	if frameworkErr != nil {
-		return frameworkErr
+	resp, err := d.Client.Request(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	if resp != nil {
+		// An adapter error message is generated if the response status code from the
+		// collection API is not successful (i.e. if not statusCode >= 200 && statusCode < 300).
+		if adapterErr := web.HTTPError(resp.StatusCode, resp.RetryAfterHeader); adapterErr != nil {
+			return nil, adapterErr
+		}
 	}
 
-	// we query only 1 page at a time for collections
-	if pageInfo != nil && len(objects) == 1 && memberOf == nil {
-		pageInfo.Collection = make(map[string]any, 1)
-		if uniqueID, ok := objects[0][request.UniqueIDAttribute].(string); ok {
-			pageInfo.Collection[request.UniqueIDAttribute] = uniqueID
+	return resp, nil
+}
+
+func (d *Datasource) getMemberOfPage(
+	ctx context.Context, request *Request, entityConfig *EntityConfig,
+) (*Response, *framework.Error) {
+	// TODO: this is the top-level cursor/pageinfo - only gets updated when the
+	// entityConfig.MemeberOfBatchSize is processed completely.
+	pageInfo, ferr := getPageInfo(request)
+	if ferr != nil {
+		return nil, ferr
+	}
+
+	collectionAttribute := entityConfig.CollectionAttribute
+	memberOfUniqueIDAttribute := entityConfig.MemberOfUniqueIDAttribute
+	memberOfAttributes := []*framework.AttributeConfig{
+		{
+			ExternalId: *memberOfUniqueIDAttribute,
+			Type:       framework.AttributeTypeString,
+			UniqueId:   true,
+		},
+	}
+
+	// TODO: Update comments
+	// For a member's entity.query, {{CollectionID}} is typically replaced by collectionAttribute
+	// to filter the member entity. The collectionAttribute and memberOfUniqueIdAttribute can be the identical.
+	// If they are not identical, add the collectionAttribute request attributes.
+	if collectionAttribute != nil && *collectionAttribute != *memberOfUniqueIDAttribute {
+		memberOfAttributes = append(memberOfAttributes, &framework.AttributeConfig{
+			ExternalId: *collectionAttribute,
+			Type:       framework.AttributeTypeString,
+		})
+	}
+
+	memberOfReq := &Request{
+		BaseURL:           request.BaseURL,
+		Attributes:        memberOfAttributes,
+		ConnectionParams:  request.ConnectionParams,
+		UniqueIDAttribute: *memberOfUniqueIDAttribute,
+		EntityExternalID:  *entityConfig.MemberOf,
+		EntityConfigMap: map[string]*EntityConfig{
+			*entityConfig.MemberOf: request.EntityConfigMap[*entityConfig.MemberOf],
+		},
+		PageSize:              entityConfig.MemberOfGroupBatchSize,
+		RequestTimeoutSeconds: request.RequestTimeoutSeconds,
+		Cursor:                request.Cursor,
+	}
+
+	memberOfResp, err := d.getPage(ctx, memberOfReq, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// Process groups one by one, making individual range queries for each group
+	var allGroupMembers []map[string]any
+	targetPageSize := int(request.PageSize)
+	var lastProcessedGroupID string
+	var lastMemberOffset int64
+	isRangeAttribute := false
+
+	if memberOfResp.Objects != nil {
+		skipToGroup := pageInfo != nil && pageInfo.LastGroupProcessed != ""
+		for _, groupObj := range memberOfResp.Objects {
+			// Get the group's unique ID value
+			groupUniqueIDValue, ok := groupObj[*entityConfig.MemberOfUniqueIDAttribute].(string)
+			if !ok {
+				continue
+			}
+
+			// Skip groups until we reach the last processed group
+			if skipToGroup {
+				if groupUniqueIDValue != pageInfo.LastGroupProcessed {
+					continue // Skip this group, haven't reached the current one yet
+				}
+				skipToGroup = false // Found the group, stop skipping
+			}
+
+			// Calculate how many members we still need
+			remainingNeeded := targetPageSize - len(allGroupMembers)
+			if remainingNeeded <= 0 {
+				lastProcessedGroupID = groupUniqueIDValue
+
+				break // We have enough members, don't process this group
+			}
+
+			// Calculate member offset within this specific group
+			memberOffsetInGroup := int64(0)
+			if pageInfo != nil && groupUniqueIDValue == pageInfo.LastGroupProcessed {
+				// We're resuming from this group, use the stored offset
+				memberOffsetInGroup = pageInfo.LastMemberProcessed
+				isRangeAttribute = pageInfo.RangeAttribute
+			}
+			memberOffsetEnd := memberOffsetInGroup + int64(remainingNeeded)
+
+			var memberAttribute string
+			if isRangeAttribute {
+				memberAttribute = fmt.Sprintf("member;range=%d-%d", memberOffsetInGroup, memberOffsetEnd)
+			} else if entityConfig.MemberAttribute != nil {
+				memberAttribute = fmt.Sprintf("%s", *entityConfig.MemberAttribute)
+			} else {
+				memberAttribute = "member"
+			}
+
+			//memberOffsetInGroup += int64(remainingNeeded)
+
+			// Create a Group request for this specific group
+			// Create a modified entity config that filters for this specific group
+			modifiedGroupMemberQuery := strings.ReplaceAll(
+				entityConfig.Query, "{{CollectionAttribute}}", *entityConfig.CollectionAttribute,
+			)
+			modifiedGroupMemberQuery = strings.ReplaceAll(modifiedGroupMemberQuery, "{{CollectionId}}", groupUniqueIDValue)
+
+			//		fmt.Sprintf("(&(objectClass=group)(distinguishedName=%s))", groupUniqueIDValue)
+			modifiedEntityConfigMap := make(map[string]*EntityConfig)
+			for k, v := range request.EntityConfigMap {
+				entityConfigCopy := *v
+				modifiedEntityConfigMap[k] = &entityConfigCopy
+			}
+			modifiedEntityConfigMap[request.EntityExternalID].Query = modifiedGroupMemberQuery
+
+			memberRequest := &Request{
+				ConnectionParams:      request.ConnectionParams,
+				BaseURL:               request.BaseURL,
+				PageSize:              1,                        // Only get this specific group
+				EntityExternalID:      request.EntityExternalID, // Group entity, not GroupMember
+				UniqueIDAttribute:     request.UniqueIDAttribute,
+				EntityConfigMap:       modifiedEntityConfigMap,
+				RequestTimeoutSeconds: request.RequestTimeoutSeconds,
+				Attributes: []*framework.AttributeConfig{
+					{
+						ExternalId: *entityConfig.MemberOfUniqueIDAttribute,
+						Type:       framework.AttributeTypeString,
+						UniqueId:   true,
+					},
+					{
+						ExternalId: memberAttribute, // Request the specific range query
+						Type:       framework.AttributeTypeString,
+						List:       true,
+					},
+				},
+				Cursor: &pagination.CompositeCursor[string]{
+					CollectionID: &groupUniqueIDValue,
+				},
+			}
+
+			memberResp, err := d.getPage(ctx, memberRequest, entityConfig.MemberOf)
+			if err != nil {
+				return nil, err
+			}
+
+			if len(memberResp.Objects) > 0 {
+				memberObj := memberResp.Objects[0]
+
+				// Extract member DNs from this group
+				memberDNS, action := extractMemberDNSFromGroup(memberObj, int(memberOffsetEnd)-int(memberOffsetInGroup))
+				memberOffsetEnd = memberOffsetInGroup + int64(len(memberDNS))
+
+				// Convert member DNs to GroupMember objects
+				objects := make([]map[string]any, len(memberDNS))
+
+				// id
+				memberOfUniqueIDAttribute := fmt.Sprintf("group_%s", *entityConfig.MemberOfUniqueIDAttribute)
+
+				// member_<memberUniqueIDAttribute>
+				memberUniqueIDAttribute := fmt.Sprintf("member_%s", *entityConfig.MemberUniqueIDAttribute)
+
+				for idx, memberDN := range memberDNS {
+					objects[idx] = map[string]any{
+						request.UniqueIDAttribute: fmt.Sprintf("%s-%s", memberDN, groupUniqueIDValue),
+						memberUniqueIDAttribute:   memberDN,
+						memberOfUniqueIDAttribute: groupUniqueIDValue,
+					}
+				}
+
+				allGroupMembers = append(allGroupMembers, objects...)
+
+				remainingNeeded := targetPageSize - len(allGroupMembers)
+				if remainingNeeded <= 0 && action != MemberExtractionActionDone {
+					// Handle pagination for more members
+					lastProcessedGroupID = groupUniqueIDValue
+					lastMemberOffset = memberOffsetEnd
+					if action == MemberExtractionActionContinueRange {
+						isRangeAttribute = true
+					}
+
+					break // We have enough members, don't process this group
+				}
+				lastProcessedGroupID = ""
+				lastMemberOffset = 0
+			}
 		}
+	}
+
+	// Create response
+	response := &Response{
+		StatusCode: http.StatusOK,
+		Objects:    allGroupMembers,
+	}
+
+	// Handle pagination cursor if needed
+
+	if memberOfResp.NextCursor != nil || lastProcessedGroupID != "" {
+		// If we have more groups to process or hit the page limit, create/update cursor
+		var pi *PageInfo
+		if memberOfResp.NextCursor != nil && memberOfResp.NextCursor.Cursor != nil {
+			// Decode existing cursor
+			if decodedPageInfo, decodeErr := DecodePageInfo(memberOfResp.NextCursor.Cursor); decodeErr == nil {
+				pi = decodedPageInfo
+			}
+		}
+
+		if pi == nil {
+			pi = &PageInfo{}
+		}
+
+		pi.LastGroupProcessed = lastProcessedGroupID
+		pi.LastMemberProcessed = lastMemberOffset
+		pi.RangeAttribute = false
+		if isRangeAttribute {
+			pi.RangeAttribute = true
+		}
+
+		if lastProcessedGroupID != "" {
+			pi.NextPageCursor = nil
+			if pageInfo != nil {
+				pi.NextPageCursor = pageInfo.NextPageCursor
+			}
+		}
+
+		// Encode updated cursor
+		if b, marshalErr := json.Marshal(pi); marshalErr == nil {
+			encodedCursor := base64.StdEncoding.EncodeToString(b)
+			response.NextCursor = &pagination.CompositeCursor[string]{
+				Cursor: &encodedCursor,
+			}
+		}
+	}
+
+	return response, nil
+}
+
+func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, *framework.Error) {
+	entityConfig := request.EntityConfigMap[request.EntityExternalID]
+
+	if entityConfig.MemberOf != nil {
+		return d.getMemberOfPage(ctx, request, entityConfig)
+	}
+
+	return d.getPage(ctx, request, entityConfig.MemberOf)
+}
+
+type MemberExtractionAction string
+
+const (
+	MemberExtractionActionContinueRange   MemberExtractionAction = "ContinueRange"
+	MemberExtractionActionContinueRegular MemberExtractionAction = "ContinueRegular"
+	MemberExtractionActionDone            MemberExtractionAction = "Done"
+)
+
+// extractMemberDNSFromGroup extracts member DNs from a group's member attributes
+// Returns the DNs, whether range queries are needed, and any error.
+func extractMemberDNSFromGroup(memberObjs map[string]any, count int) ([]string, MemberExtractionAction) {
+	var memberDNS []string
+
+	// Check for range attributes first (indicates large groups)
+	for attrName, value := range memberObjs {
+		memberList, ok := value.([]any)
+		if !ok {
+			continue
+		}
+
+		if count > len(memberList) {
+			count = len(memberList)
+		}
+
+		for _, member := range memberList[:count] {
+			if memberDN, ok := member.(string); ok {
+				memberDNS = append(memberDNS, memberDN)
+			} else {
+				memberDNS = memberDNS[:0] // Clear the slice
+
+				break
+			}
+		}
+
+		if len(memberDNS) == 0 {
+			continue // Try next attribute
+		}
+
+		// Handle range attribute (e.g., member;range=0-1499)
+		// Regex pattern: attrname;range=start-end or attrname;range=start-*
+		// Example matches: member;range=0-1499, member;range=1500-*
+		// Ref: https://learn.microsoft.com/en-us/windows/win32/adschema/attributes/member
+		// Ref: https://learn.microsoft.com/en-us/windows/win32/adschema/attributes/memberof
+
+		if matches := rangeAttributePattern.FindStringSubmatch(attrName); matches != nil {
+			if matches[3] == "*" {
+				return memberDNS, MemberExtractionActionDone
+			}
+
+			return memberDNS, MemberExtractionActionContinueRange
+		}
+
+		if count == len(memberList) {
+			return memberDNS, MemberExtractionActionDone
+		}
+
+		return memberDNS, MemberExtractionActionContinueRegular
+	}
+
+	return []string{}, MemberExtractionActionDone
+}
+
+func ProcessLDAPSearchResult(result *ldap_v3.SearchResult, request *Request) (*Response, *framework.Error) {
+	objects, pageInfo, frameworkErr := ParseResponse(result, attrIDToConfig(request.Attributes))
+	if frameworkErr != nil {
+		return nil, frameworkErr
+	}
+
+	// Indicating a successful LDAP search operation.
+	// In case of no error (err == nil), ldap_v3.Search is considered successful,
+	// returning LDAP Result Code Success(0) equivalent to HTTP status code StatusOK.
+	response := &Response{
+		StatusCode: http.StatusOK,
+		Objects:    objects,
 	}
 
 	if pageInfo != nil && pageInfo.NextPageCursor != nil {
 		b, marshalErr := json.Marshal(pageInfo)
 		if marshalErr != nil {
-			return &framework.Error{
+			return nil, &framework.Error{
 				Message: fmt.Sprintf("Failed to create updated cursor: %v.", marshalErr),
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			}
@@ -569,61 +814,7 @@ func ProcessLDAPSearchResult(result *ldap_v3.SearchResult, response *Response, r
 		}
 	}
 
-	// [MemberEntities] Set `id`, `memberId` and `memberType`.
-	if memberOf != nil {
-		if request.Cursor == nil || request.Cursor.CollectionID == nil {
-			return &framework.Error{
-				Message: "Cursor or CollectionID is nil",
-				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
-			}
-		}
-
-		memberUniqueIDAttribute := *entityConfig.MemberUniqueIDAttribute
-		memberOfUniqueIDAttribute := *entityConfig.MemberOfUniqueIDAttribute
-
-		memberOfUniqueIDValue, err := getMemberOfUniqueIDValue(request.Cursor, memberOfUniqueIDAttribute)
-		if err != nil {
-			return err
-		}
-
-		for idx, member := range objects {
-			memberUniqueIDValue, ok := member[memberUniqueIDAttribute].(string)
-			if !ok {
-				return &framework.Error{
-					Message: fmt.Sprintf(
-						"Failed to parse %s field in Active Directory Member response as string.",
-						memberUniqueIDAttribute,
-					),
-					Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
-				}
-			}
-
-			// Set Member details
-			objects[idx][request.UniqueIDAttribute] = fmt.Sprintf("%s-%s", memberUniqueIDValue, memberOfUniqueIDValue)
-
-			// format: member_attributeName
-			objects[idx]["member_"+memberUniqueIDAttribute] = memberUniqueIDValue
-
-			// format: entity_attributeName
-			objects[idx][strings.ToLower(*memberOf)+"_"+memberOfUniqueIDAttribute] = memberOfUniqueIDValue
-		}
-
-		if response.NextCursor != nil && response.NextCursor.Cursor != nil {
-			request.Cursor.Cursor = response.NextCursor.Cursor
-		} else {
-			request.Cursor.Cursor = nil
-		}
-
-		// If we have a next cursor for either the base collection (Groups) or members (Group Members),
-		// encode the cursor for the next page. Otherwise, don't set a cursor as this sync is complete.
-		if request.Cursor.Cursor != nil || request.Cursor.CollectionCursor != nil {
-			response.NextCursor = request.Cursor
-		}
-	}
-
-	response.Objects = objects
-
-	return nil
+	return response, nil
 }
 
 func ParseResponse(searchResult *ldap_v3.SearchResult, attributes map[string]*framework.AttributeConfig) (
@@ -678,19 +869,54 @@ func OctetStringToBytes(octalString string) ([]byte, error) {
 	return octetStr, nil
 }
 
-func EntryToObject(e *ldap_v3.Entry, attrConfig map[string]*framework.AttributeConfig) (
-	map[string]interface{}, *framework.Error) {
+const (
+	rangeAttributePrefix = "member;range="
+	rangeAttrList        = true
+	rangeAttrType        = framework.AttributeTypeString
+)
+
+var (
+	// Regex pattern for matching LDAP range attributes: attrname;range=start-end or attrname;range=start-*.
+	rangeAttributePattern = regexp.MustCompile(`^(member);range=(\d+)-(\d+|\*)$`)
+)
+
+func EntryToObject(e *ldap_v3.Entry,
+	attrConfig map[string]*framework.AttributeConfig,
+) (map[string]interface{}, *framework.Error) {
 	result := make(map[string]interface{})
 	result["dn"] = e.DN
 
+	// Iterate over each attribute in the LDAP entry.
+	// If the attribute is not in the config, it is skipped.
+	// If the attribute is a range attribute, it is treated as a list of strings.
+	// - Range attributes are used for large multi-valued attributes that exceed the LDAP server's limit.
+	// If the attribute type conversion fails, an error is returned.
 	for _, attribute := range e.Attributes {
 		// Skip attributes that are not configured in the attribute config (could be due to user error)
 		currAttrConfig, ok := attrConfig[attribute.Name]
-		if !ok {
+		isRangeAttribute := strings.HasPrefix(attribute.Name, rangeAttributePrefix)
+		if !ok && !isRangeAttribute {
 			continue
 		}
 
-		value, err := StringAttrValuesToRequestedType(attribute, currAttrConfig.List, currAttrConfig.Type)
+		var (
+			isList   bool
+			attrType framework.AttributeType
+		)
+
+		if isRangeAttribute {
+			isList = rangeAttrList
+			attrType = rangeAttrType
+		}
+
+		// Use the attribute config if it exists
+		if ok {
+			isList = currAttrConfig.List
+			attrType = currAttrConfig.Type
+		}
+
+		// Convert string values to the requested type
+		value, err := StringAttrValuesToRequestedType(attribute, isList, attrType)
 		if err != nil {
 			return nil, err
 		}
@@ -883,34 +1109,6 @@ func ldapErrToHTTPStatusCode(ldapError *ldap_v3.Error) int {
 	logger.Printf("Unknown LDAP result code received: %v \t %v\n", ldapError.ResultCode, ldapError.Err.Error())
 
 	return http.StatusInternalServerError // default error code
-}
-
-func getMemberOfUniqueIDValue(
-	cursor *pagination.CompositeCursor[string],
-	memberOfUniqueIDAttribute string,
-) (any, *framework.Error) {
-	var memberOfUniqueIDValue any
-
-	if cursor.CollectionCursor != nil {
-		memberOfPageInfo, pageInfoErr := DecodePageInfo(cursor.CollectionCursor)
-
-		if pageInfoErr != nil {
-			return nil, pageInfoErr
-		}
-
-		if memberOfPageInfo == nil {
-			return nil, &framework.Error{
-				Message: "MemberOfPageInfo is empty",
-				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
-			}
-		}
-
-		memberOfUniqueIDValue = memberOfPageInfo.Collection[memberOfUniqueIDAttribute]
-	} else {
-		memberOfUniqueIDValue = *cursor.CollectionID
-	}
-
-	return memberOfUniqueIDValue, nil
 }
 
 func DecodePageInfo(cursor *string) (*PageInfo, *framework.Error) {
