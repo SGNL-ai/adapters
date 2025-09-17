@@ -211,6 +211,8 @@ github.com/sagikazarmark/locafero v0.7.0 h1:5MqpDsTGNDhY8sGp0Aowyf0qKsPrhewaLSsF
 github.com/sagikazarmark/locafero v0.7.0/go.mod h1:2za3Cg5rMaTMoG/2Ulr9AwtFaIppKXTRYnozin4aB5k=
 github.com/sgnl-ai/adapter-framework v0.19.0 h1:U5qSDuLZqB3uIJ2oOklpoRou52nj/1BtZUwpgC4nO+I=
 github.com/sgnl-ai/adapter-framework v0.19.0/go.mod h1:WSYDK4J09nqFWtbCfvrRZ5P0WnhAdmXUc8vBsz1Lw9c=
+github.com/sgnl-ai/adapter-framework v0.19.1 h1:FD14KcwcGNywn92kCvwZGE52jIjEYUKtX2ActaJ+cXU=
+github.com/sgnl-ai/adapter-framework v0.19.1/go.mod h1:WSYDK4J09nqFWtbCfvrRZ5P0WnhAdmXUc8vBsz1Lw9c=
 github.com/shirou/gopsutil/v4 v4.25.5 h1:rtd9piuSMGeU8g1RMXjZs9y9luK5BwtnG7dZaQUJAsc=
 github.com/shirou/gopsutil/v4 v4.25.5/go.mod h1:PfybzyydfZcN+JMMjkF6Zb8Mq1A/VcogFFg7hj50W9c=
 github.com/shopspring/decimal v1.3.1/go.mod h1:DKyhrW/HYNuLGql+MJL6WCR6knT2jwCFRcu2hWCYk4o=
