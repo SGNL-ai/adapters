@@ -132,7 +132,7 @@ func TestStreamingCSVToPage(t *testing.T) {
 	sampleHeaders := []string{"name", "age", "city", "aliases"}
 	attrConfigDefault := []*framework.AttributeConfig{
 		{ExternalId: "name", Type: framework.AttributeTypeString},
-		{ExternalId: "age", Type: framework.AttributeTypeInt64}, // Will be parsed as float64
+		{ExternalId: "age", Type: framework.AttributeTypeInt64},
 		{ExternalId: "city", Type: framework.AttributeTypeString},
 		// aliases will be handled by default JSON detection
 	}
@@ -178,8 +178,8 @@ Bob,35,SF,"[{""alias"":""Bobby""}]"`
 			attrConfig:              attrConfigDefault,
 			maxProcessingBytesTotal: MaxBytesToProcessPerPage,
 			expectedObjects: []map[string]any{
-				{"name": "John", "age": float64(25), "city": "NYC", "aliases": []any{map[string]any{"alias": "Johnny"}}},
-				{"name": "Jane", "age": float64(30), "city": "LA", "aliases": []any{map[string]any{"alias": "Janey"}}},
+				{"name": "John", "age": int64(25), "city": "NYC", "aliases": []any{map[string]any{"alias": "Johnny"}}},
+				{"name": "Jane", "age": int64(30), "city": "LA", "aliases": []any{map[string]any{"alias": "Janey"}}},
 			},
 			expectedHasNext: true,
 		},
@@ -190,7 +190,7 @@ Bob,35,SF,"[{""alias"":""Bobby""}]"`
 			attrConfig:              attrConfigDefault,
 			maxProcessingBytesTotal: MaxBytesToProcessPerPage,
 			expectedObjects: []map[string]any{
-				{"name": "Bob", "age": float64(35), "city": "SF", "aliases": []any{map[string]any{"alias": "Bobby"}}},
+				{"name": "Bob", "age": int64(35), "city": "SF", "aliases": []any{map[string]any{"alias": "Bobby"}}},
 			},
 			expectedHasNext: false,
 		},
@@ -201,7 +201,7 @@ Bob,35,SF,"[{""alias"":""Bobby""}]"`
 			attrConfig:              attrConfigDefault,
 			maxProcessingBytesTotal: MaxBytesToProcessPerPage,
 			expectedObjects: []map[string]any{
-				{"name": "Alice", "age": float64(40), "city": "BOS", "aliases": ""},
+				{"name": "Alice", "age": int64(40), "city": "BOS", "aliases": ""},
 			},
 			expectedHasNext: false,
 		},
@@ -212,7 +212,7 @@ Bob,35,SF,"[{""alias"":""Bobby""}]"`
 			attrConfig:              attrConfigDefault,
 			maxProcessingBytesTotal: MaxBytesToProcessPerPage,
 			expectedObjects: []map[string]any{
-				{"name": "Alice", "age": float64(40), "city": "BOS", "aliases": ""},
+				{"name": "Alice", "age": int64(40), "city": "BOS", "aliases": ""},
 			},
 			expectedHasNext: false,
 		},
@@ -240,7 +240,7 @@ Bob,35,SF,"[{""alias"":""Bobby""}]"`
 			},
 			maxProcessingBytesTotal: MaxBytesToProcessPerPage,
 			expectedObjects: []map[string]any{
-				{"name": "John", "score": 85.5, "rating": float64(4)},
+				{"name": "John", "score": 85.5, "rating": int64(4)},
 			},
 			expectedHasNext: false,
 		},
@@ -260,8 +260,8 @@ Bob,35,SF,"[{""alias"":""Bobby""}]"`
 			attrConfig:              attrConfigDefault,
 			maxProcessingBytesTotal: MaxBytesToProcessPerPage,
 			expectedObjects: []map[string]any{
-				{"name": "John", "age": float64(25), "city": "NYC", "aliases": ""},
-				{"name": "Jane", "age": float64(30), "city": "LA", "aliases": ""},
+				{"name": "John", "age": int64(25), "city": "NYC", "aliases": ""},
+				{"name": "Jane", "age": int64(30), "city": "LA", "aliases": ""},
 			},
 			expectedHasNext: false,
 		},
@@ -272,7 +272,7 @@ Bob,35,SF,"[{""alias"":""Bobby""}]"`
 			attrConfig:              attrConfigDefault,
 			maxProcessingBytesTotal: MaxBytesToProcessPerPage,
 			expectedError:           true,
-			errorContains:           `CSV contains invalid numeric value "not_a_number" in column "age"`,
+			errorContains:           `CSV contains invalid integer value "not_a_number" in column "age"`,
 		},
 		"error_invalid_json_in_data": {
 			csvData:                 `John,"[{invalid json}]"`,
