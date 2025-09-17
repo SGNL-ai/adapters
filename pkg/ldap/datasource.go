@@ -813,7 +813,6 @@ func StringAttrValuesToRequestedType(
 		}
 
 		return value, nil
-	// TODO: optimize case of DOUBLE & INT64 type
 	case getAttrType(api_adapter_v1.AttributeType_ATTRIBUTE_TYPE_DOUBLE):
 		value, err := strconv.ParseFloat(attr.Values[0], 64)
 		if err != nil {

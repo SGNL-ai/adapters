@@ -132,7 +132,7 @@ func TestStreamingCSVToPage(t *testing.T) {
 	sampleHeaders := []string{"name", "age", "city", "aliases"}
 	attrConfigDefault := []*framework.AttributeConfig{
 		{ExternalId: "name", Type: framework.AttributeTypeString},
-		{ExternalId: "age", Type: framework.AttributeTypeInt64}, // Will be parsed as int64
+		{ExternalId: "age", Type: framework.AttributeTypeInt64},
 		{ExternalId: "city", Type: framework.AttributeTypeString},
 		// aliases will be handled by default JSON detection
 	}
