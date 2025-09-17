@@ -44,6 +44,9 @@ type Request struct {
 	// RequestTimeoutSeconds is the timeout duration for requests made to datasources.
 	// This should be set to the number of seconds to wait before timing out.
 	RequestTimeoutSeconds int
+
+	// CustomURLPath is an optional custom URL path to use instead of the default /api/now path.
+	CustomURLPath string
 }
 
 // Response is a response returned by the datasource.
