@@ -59,6 +59,9 @@ type Request struct {
 	// Attributes contains the list of attributes to request along with the current request.
 	// This is used to limit the fields returned in the API response.
 	Attributes []*framework.AttributeConfig
+
+	// Entity is the configuration of the entity to get data from.
+	Entity *framework.EntityConfig `json:"entityConfig"`
 }
 
 // Response is a parsed response returned from Jira.

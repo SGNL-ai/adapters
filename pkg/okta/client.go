@@ -37,7 +37,7 @@ type Request struct {
 	// APIVersion the API version to use.
 	APIVersion string
 
-	// Filter is the Okta Filter syntax to apply to requests for Users and/or Groups
+	// Filter is the Okta Filter syntax to apply to requests for Users, Groups, and/or Applications
 	Filter string
 
 	// Search is the Okta Search syntax to apply to requests for Users and/or Groups

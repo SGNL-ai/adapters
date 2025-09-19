@@ -704,3 +704,129 @@ func TestAdapterGetGroupMemberPage(t *testing.T) {
 		})
 	}
 }
+
+func TestAdapterGetApplicationPage(t *testing.T) {
+	server := httptest.NewTLSServer(TestServerHandler)
+	adapter := okta_adapter.NewAdapter(&okta_adapter.Datasource{
+		Client: server.Client(),
+	})
+
+	tests := map[string]struct {
+		ctx                context.Context
+		request            *framework.Request[okta_adapter.Config]
+		inputRequestCursor *pagination.CompositeCursor[string]
+		wantResponse       framework.Response
+		wantCursor         *pagination.CompositeCursor[string]
+	}{
+		"valid_request": {
+			ctx: context.Background(),
+			request: &framework.Request[okta_adapter.Config]{
+				Address: server.URL,
+				Auth: &framework.DatasourceAuthCredentials{
+					HTTPAuthorization: "Bearer Testtoken",
+				},
+				Config: &okta_adapter.Config{
+					APIVersion: "v1",
+					CommonConfig: &config.CommonConfig{
+						RequestTimeoutSeconds: testutil.GenPtr(5),
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "Application",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "id",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+						{
+							ExternalId: "label",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+						{
+							ExternalId: "name",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+						{
+							ExternalId: "signOnMode",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+						{
+							ExternalId: "status",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+					},
+				},
+				Ordered:  false,
+				PageSize: 2,
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"id":         "0oav0szjt4RXG5wFN697",
+							"label":      "Okta Admin Console",
+							"name":       "saasure",
+							"signOnMode": "OPENID_CONNECT",
+							"status":     "ACTIVE",
+						},
+						{
+							"id":         "0oav0t9spdHM3sWaO697",
+							"label":      "Okta Dashboard",
+							"name":       "okta_enduser",
+							"signOnMode": "OPENID_CONNECT",
+							"status":     "ACTIVE",
+						},
+					},
+					NextCursor: "eyJjdXJzb3IiOiJodHRwczovL3Rlc3QtaW5zdGFuY2Uub2t0YXByZXZpZXcuY29tL2FwaS92MS9hcHBzP2FmdGVyPTBvYXYwdDlzcGRITTNzV2FPNjk3XHUwMDI2bGltaXQ9MiJ9",
+				},
+			},
+			wantCursor: &pagination.CompositeCursor[string]{
+				Cursor: testutil.GenPtr("https://test-instance.oktapreview.com/api/v1/apps?after=0oav0t9spdHM3sWaO697&limit=2"),
+			},
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			if tt.inputRequestCursor != nil {
+				encodedCursor, err := pagination.MarshalCursor(tt.inputRequestCursor)
+				if err != nil {
+					t.Error(err)
+				}
+
+				tt.request.Cursor = encodedCursor
+			}
+
+			gotResponse := adapter.GetPage(tt.ctx, tt.request)
+
+			if !reflect.DeepEqual(gotResponse, tt.wantResponse) {
+				t.Errorf("gotResponse: %v, wantResponse: %v", gotResponse, tt.wantResponse)
+			}
+
+			// We already check the b64 encoded cursor in the response, but it's not easy to
+			// decipher the cursor just by reading the test case.
+			// So in addition, decode the b64 cursor and compare structs.
+			if gotResponse.Success != nil && tt.wantCursor != nil {
+				var gotCursor pagination.CompositeCursor[string]
+
+				decodedCursor, err := base64.StdEncoding.DecodeString(gotResponse.Success.NextCursor)
+				if err != nil {
+					t.Errorf("error decoding cursor: %v", err)
+				}
+
+				if err := json.Unmarshal(decodedCursor, &gotCursor); err != nil {
+					t.Errorf("error unmarshalling cursor: %v", err)
+				}
+
+				if !reflect.DeepEqual(&gotCursor, tt.wantCursor) {
+					t.Errorf("gotCursor: %v, wantCursor: %v", gotCursor, tt.wantCursor)
+				}
+			}
+		})
+	}
+}
