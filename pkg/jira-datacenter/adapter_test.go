@@ -395,6 +395,120 @@ func TestAdapterGetPage(t *testing.T) {
 				},
 			},
 		},
+		"issues_with_child_entities": {
+			ctx: context.Background(),
+			request: &framework.Request[jiradatacenter_adapter.Config]{
+				Address: server.URL,
+				Config: &jiradatacenter_adapter.Config{
+					IssuesJQLFilter: testutil.GenPtr("project='CHILD_ENTITIES_PRESENT'"),
+				},
+				Auth: &framework.DatasourceAuthCredentials{
+					Basic: &framework.BasicAuthCredentials{
+						Username: mockUsername,
+						Password: mockPassword,
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: jiradatacenter_adapter.IssueExternalID,
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "id",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+						{
+							ExternalId: "key",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+						{
+							ExternalId: "$.fields.summary[0].description",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+					},
+					ChildEntities: []*framework.EntityConfig{
+						{
+							ExternalId: "$.fields.issuetype",
+							Attributes: []*framework.AttributeConfig{
+								{
+									ExternalId: "id",
+									Type:       framework.AttributeTypeString,
+									List:       false,
+								},
+								{
+									ExternalId: "name",
+									Type:       framework.AttributeTypeString,
+									List:       false,
+								},
+								{
+									ExternalId: "description",
+									Type:       framework.AttributeTypeString,
+									List:       false,
+								},
+							},
+						},
+						{
+							ExternalId: "$.fields.assignee",
+							Attributes: []*framework.AttributeConfig{
+								{
+									ExternalId: "accountId",
+									Type:       framework.AttributeTypeString,
+									List:       false,
+								},
+								{
+									ExternalId: "displayName",
+									Type:       framework.AttributeTypeString,
+									List:       false,
+								},
+								{
+									ExternalId: "emailAddress",
+									Type:       framework.AttributeTypeString,
+									List:       false,
+								},
+							},
+						},
+						{
+							ExternalId: "$.fields.non_existent",
+							Attributes: []*framework.AttributeConfig{
+								{
+									ExternalId: "accountId",
+									Type:       framework.AttributeTypeString,
+									List:       false,
+								},
+							},
+						},
+					},
+				},
+				PageSize: 10,
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"id":                              "ISSUE-100",
+							"key":                             "TEST-100",
+							"$.fields.summary[0].description": "Issue with child entities",
+							"$.fields.assignee": []framework.Object{
+								{
+									"accountId":    "user123",
+									"displayName":  "John Doe",
+									"emailAddress": "john.doe@example.com",
+								},
+							},
+							"$.fields.issuetype": []framework.Object{
+								{
+									"description": "A bug issue type",
+									"id":          "1",
+									"name":        "Bug",
+								},
+							},
+						},
+					},
+					NextCursor: "",
+				},
+			},
+		},
 	}
 
 	for name, tt := range tests {
