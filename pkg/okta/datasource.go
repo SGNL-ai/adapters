@@ -26,6 +26,7 @@ const (
 	Users        string = "User"
 	Groups       string = "Group"
 	GroupMembers string = "GroupMember"
+	Applications string = "Application"
 )
 
 var (
@@ -34,6 +35,7 @@ var (
 		Users:        {},
 		Groups:       {},
 		GroupMembers: {},
+		Applications: {},
 	}
 )
 

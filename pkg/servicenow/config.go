@@ -40,20 +40,24 @@ type Config struct {
 	// Optional advanced filters to apply to the request.
 	// See advanced_filters.go for more information.
 	AdvancedFilters *AdvancedFilters `json:"advancedFilters,omitempty"`
+
+	// CustomURLPath is an optional custom URL path to use instead of the default /api/now path.
+	// If not specified, the default "/api/now" path will be used.
+	CustomURLPath string `json:"customURLPath,omitempty"`
 }
 
 // ValidateConfig validates that a Config received in a GetPage call is valid.
 func (c *Config) Validate(_ context.Context) error {
-	switch {
-	case c == nil:
+	if c == nil {
 		return errors.New("request contains no config")
-	case c.APIVersion == "":
-		return errors.New("apiVersion is not set")
-	default:
+	}
+
+	// Only validate apiVersion if it's supplied
+	if c.APIVersion != "" {
 		if _, found := supportedAPIVersions[c.APIVersion]; !found {
 			return fmt.Errorf("apiVersion is not supported: %v", c.APIVersion)
 		}
-
-		return nil
 	}
+
+	return nil
 }

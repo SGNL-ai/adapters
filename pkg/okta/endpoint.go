@@ -22,7 +22,7 @@ func ConstructEndpoint(request *Request) (string, *framework.Error) {
 
 	var search string
 
-	// [Users / Groups] This is the cursor to the next page of objects.
+	// [Users / Groups / Applications] This is the cursor to the next page of objects.
 	// [GroupMembers] This is the cursor to the next page of Members.
 	if request.Cursor != nil && request.Cursor.Cursor != nil {
 		endpoint = *request.Cursor.Cursor
@@ -43,6 +43,9 @@ func ConstructEndpoint(request *Request) (string, *framework.Error) {
 		//                  + `type eq "OKTA_GROUP" or type eq "APP_GROUP"` + "&limit=" + pageSize
 		// [Search Groups]	baseURL + "/api/" + apiVersion + "/groups?search="
 		// 					+ `profile.firstName eq \"John\"` + "&limit=" + pageSize
+		// [Applications]	baseURL + "/api/" + apiVersion + "/apps?limit=" + pageSize
+		// [Filtered Apps]	baseURL + "/api/" + apiVersion + "/apps?filter="
+		//					+ `status eq \"ACTIVE\"` + "&limit=" + pageSize
 		// [GroupMembers] 	baseURL + "/api/" + apiVersion + "/groups/" + groupId + "/users?limit=" + pageSize
 		sb.Grow(len(request.BaseURL) + len(request.APIVersion) + len(formattedPageSize) + 12)
 
@@ -142,6 +145,18 @@ func ConstructEndpoint(request *Request) (string, *framework.Error) {
 			sb.WriteString("groups/")
 			sb.WriteString(*request.Cursor.CollectionID)
 			sb.WriteString("/users?")
+
+		case Applications:
+			// Construct the applications endpoint based on filter parameters
+			sb.WriteString("apps?")
+
+			// Applications only support filter, not search
+			if filter != "" {
+				sb.Grow(len(filter) + 13) // 13 = len("filter=") + len("&") + buffer
+				sb.WriteString("filter=")
+				sb.WriteString(filter)
+				sb.WriteString("&")
+			}
 		default:
 			return "", &framework.Error{
 				Message: "Provided entity external ID is invalid.",
