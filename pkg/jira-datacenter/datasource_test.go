@@ -56,6 +56,109 @@ var TestServerHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Req
 	case "/rest/api/latest/search?jql=project%3D%27SGNL%27&fields=id&startAt=0&maxResults=10":
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"issues": [{"id": "99"}]}`))
+	// With child entities present in response (detailed field paths)
+	case "/rest/api/latest/search?jql=project%3D%27CHILD_ENTITIES_PRESENT%27&fields=" +
+		"assignee.accountId%2Cassignee.displayName%2Cassignee.emailAddress%2Cid%2C" +
+		"issuetype.description%2Cissuetype.id%2Cissuetype.name%2Ckey%2Csummary&startAt=0&maxResults=10":
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{
+			"issues": [
+				{
+					"id": "ISSUE-100",
+					"key": "TEST-100",
+					"fields": {
+						"summary": [
+							{
+								"id": "100",
+								"description": "Issue with child entities"
+							}
+						],
+						"issuetype": [
+							{
+								"id": "1",
+								"name": "Bug",
+								"description": "A bug issue type"
+							}
+						],
+						"assignee": [
+							{
+								"accountId": "user123",
+								"displayName": "John Doe",
+								"emailAddress": "john.doe@example.com"
+							}
+						]
+					}
+				}
+			]
+		}`))
+	// With child entities present in response (simple field paths)
+	case "/rest/api/latest/search?jql=project%3D%27CHILD_ENTITIES_PRESENT%27&fields=" +
+		"assignee%2Cid%2Cissuetype%2Ckey%2Cnon_existent%2Csummary&startAt=0&maxResults=10":
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{
+			"startAt": 0,
+			"maxResults": 10,
+			"total": 1,
+			"issues": [
+				{
+					"id": "ISSUE-100",
+					"key": "TEST-100",
+					"fields": {
+						"summary": [
+							{
+								"id": "100",
+								"description": "Issue with child entities"
+							},
+							{
+								"id": "200",
+								"description": "Invalid description"
+							}
+						],
+						"issuetype": [
+							{
+								"id": "1",
+								"name": "Bug",
+								"description": "A bug issue type"
+							}
+						],
+						"assignee": [
+							{
+								"accountId": "user123",
+								"displayName": "John Doe",
+								"emailAddress": "john.doe@example.com"
+							}
+						]
+					}
+				}
+			]
+		}`))
+	// With child entities missing from response
+	case "/rest/api/latest/search?jql=project%3D%27CHILD_ENTITIES_MISSING%27&fields=" +
+		"assignee.accountId%2Cassignee.displayName%2Cid%2Cissuetype.id%2Cissuetype.name%2C" +
+		"key%2Csummary&startAt=0&maxResults=10":
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{
+			"issues": [
+				{
+					"id": "ISSUE-101",
+					"key": "TEST-101",
+					"fields": {
+						"summary": [
+							{
+								"id": "100",
+								"description": "Issue with child entities"
+							}
+						]
+					}
+				}
+			]
+		}`))
+	// With a JQL filter and child entity fields (legacy test)
+	case "/rest/api/latest/search?jql=project%3D%27SGNL%27&fields=" +
+		"id%2Cissuetype.%24.fields.assignee%2Cissuetype.%24.fields.customfield_10209%2C" +
+		"issuetype.id%2Cissuetype.name%2Ckey%2Csummary%2Cwatchers.%24.values&startAt=0&maxResults=10":
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"issues": [{"id": "99"}]}`))
 	// With an invalid JQL filter (e.g. a project that doesn't exist).
 	case "/rest/api/latest/search?jql=project%3D%27INVALID%27&fields=*navigable&startAt=0&maxResults=10":
 		w.WriteHeader(http.StatusBadRequest)
@@ -670,11 +773,13 @@ func TestConstructURL(t *testing.T) {
 				BaseURL:               "https://jira.com",
 				PageSize:              10,
 				EntityExternalID:      jiradatacenter_adapter.IssueExternalID,
-				Attributes: []*framework.AttributeConfig{
-					{ExternalId: "id"},
-					{ExternalId: "key"},
-					{ExternalId: "$.fields.summary"},
-					{ExternalId: "$.fields.status.id"},
+				Entity: &framework.EntityConfig{
+					Attributes: []*framework.AttributeConfig{
+						{ExternalId: "id"},
+						{ExternalId: "key"},
+						{ExternalId: "$.fields.summary"},
+						{ExternalId: "$.fields.status.id"},
+					},
 				},
 			},
 			entity: jiradatacenter.ValidEntityExternalIDs[jiradatacenter_adapter.IssueExternalID],
@@ -1265,6 +1370,147 @@ func (ts *TestSuite) TestGetPageIssues(t *testing.T) {
 				StatusCode: 400,
 			},
 		},
+		"with_entity_config": {
+			ctx: context.Background(),
+			request: &jiradatacenter_adapter.Request{
+				RequestTimeoutSeconds: 5,
+				BaseURL:               ts.server.URL,
+				AuthorizationHeader:   mockAuthorizationHeader,
+				PageSize:              int64(10),
+				EntityExternalID:      externalEntityID,
+				IssuesJQLFilter:       testutil.GenPtr("project='SGNL'"),
+				Entity: &framework.EntityConfig{
+					Attributes: []*framework.AttributeConfig{
+						{ExternalId: "id"},
+					},
+				},
+			},
+			wantResponse: &jiradatacenter_adapter.Response{
+				StatusCode: 200,
+				Objects: []map[string]any{
+					{"id": "99"},
+				},
+			},
+		},
+		"with_child_entities_present_in_response": {
+			ctx: context.Background(),
+			request: &jiradatacenter_adapter.Request{
+				RequestTimeoutSeconds: 5,
+				BaseURL:               ts.server.URL,
+				AuthorizationHeader:   mockAuthorizationHeader,
+				PageSize:              int64(10),
+				EntityExternalID:      externalEntityID,
+				IssuesJQLFilter:       testutil.GenPtr("project='CHILD_ENTITIES_PRESENT'"),
+				Entity: &framework.EntityConfig{
+					Attributes: []*framework.AttributeConfig{
+						{ExternalId: "$.id"},
+						{ExternalId: "$.key"},
+						{ExternalId: "$.fields.summary"},
+					},
+					ChildEntities: []*framework.EntityConfig{
+						{
+							ExternalId: "issuetype",
+							Attributes: []*framework.AttributeConfig{
+								{ExternalId: "id"},
+								{ExternalId: "name"},
+								{ExternalId: "description"},
+							},
+						},
+						{
+							ExternalId: "assignee",
+							Attributes: []*framework.AttributeConfig{
+								{ExternalId: "accountId"},
+								{ExternalId: "displayName"},
+								{ExternalId: "emailAddress"},
+							},
+						},
+					},
+				},
+			},
+			wantResponse: &jiradatacenter_adapter.Response{
+				StatusCode: 200,
+				Objects: []map[string]any{
+					{
+						"id":  "ISSUE-100",
+						"key": "TEST-100",
+						"fields": map[string]any{
+							"summary": []any{
+								map[string]any{
+									"id":          "100",
+									"description": "Issue with child entities",
+								},
+							},
+							"assignee": []any{
+								map[string]any{
+									"accountId":    "user123",
+									"displayName":  "John Doe",
+									"emailAddress": "john.doe@example.com",
+								},
+							},
+							"issuetype": []any{
+								map[string]any{
+									"description": "A bug issue type",
+									"id":          "1",
+									"name":        "Bug",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		"with_child_entities_missing_from_response": {
+			ctx: context.Background(),
+			request: &jiradatacenter_adapter.Request{
+				RequestTimeoutSeconds: 5,
+				BaseURL:               ts.server.URL,
+				AuthorizationHeader:   mockAuthorizationHeader,
+				PageSize:              int64(10),
+				EntityExternalID:      externalEntityID,
+				IssuesJQLFilter:       testutil.GenPtr("project='CHILD_ENTITIES_MISSING'"),
+				Entity: &framework.EntityConfig{
+					Attributes: []*framework.AttributeConfig{
+						{ExternalId: "$.id"},
+						{ExternalId: "$.key"},
+						{ExternalId: "$.fields.summary"},
+					},
+					ChildEntities: []*framework.EntityConfig{
+						{
+							ExternalId: "issuetype",
+							Attributes: []*framework.AttributeConfig{
+								{ExternalId: "id"},
+								{ExternalId: "name"},
+							},
+						},
+						{
+							ExternalId: "assignee",
+							Attributes: []*framework.AttributeConfig{
+								{ExternalId: "accountId"},
+								{ExternalId: "displayName"},
+							},
+						},
+					},
+				},
+			},
+			wantResponse: &jiradatacenter_adapter.Response{
+				StatusCode: 200,
+				Objects: []map[string]any{
+					{
+						"id":  "ISSUE-101",
+						"key": "TEST-101",
+						"fields": map[string]any{
+							"summary": []any{
+								map[string]any{
+									"id":          "100",
+									"description": "Issue with child entities",
+								},
+							},
+							// Note: issuetype and assignee fields are missing from response
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for name, tt := range tests {
@@ -1772,123 +2018,378 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 	}
 }
 
-func TestEncodedAttributes(t *testing.T) {
+func TestBuildJiraFieldsParam(t *testing.T) {
 	tests := []struct {
-		name       string
-		attributes []*framework.AttributeConfig
-		want       string
+		name   string
+		entity *framework.EntityConfig
+		want   string
 	}{
 		{
-			name:       "empty attributes list",
-			attributes: []*framework.AttributeConfig{},
-			want:       "*navigable",
+			name: "empty attributes list",
+			entity: &framework.EntityConfig{
+				Attributes: []*framework.AttributeConfig{},
+			},
+			want: "*navigable",
 		},
 		{
-			name:       "nil attributes list",
-			attributes: nil,
-			want:       "*navigable",
+			name: "nil attributes list",
+			entity: &framework.EntityConfig{
+				Attributes: nil,
+			},
+			want: "*navigable",
 		},
 		{
 			name: "single field extraction",
-			attributes: []*framework.AttributeConfig{
-				{ExternalId: "$.fields.summary"},
+			entity: &framework.EntityConfig{
+				Attributes: []*framework.AttributeConfig{
+					{ExternalId: "$.fields.summary"},
+				},
 			},
 			want: "summary",
 		},
 		{
 			name: "multiple different fields",
-			attributes: []*framework.AttributeConfig{
-				{ExternalId: "$.fields.summary"},
-				{ExternalId: "$.fields.description"},
+			entity: &framework.EntityConfig{
+				Attributes: []*framework.AttributeConfig{
+					{ExternalId: "$.fields.summary"},
+					{ExternalId: "$.fields.description"},
+				},
 			},
 			want: "description%2Csummary", // URL encoded "description,summary" (sorted)
 		},
 		{
 			name: "nested field extraction",
-			attributes: []*framework.AttributeConfig{
-				{ExternalId: "$.fields.issuetype.id"},
+			entity: &framework.EntityConfig{
+				Attributes: []*framework.AttributeConfig{
+					{ExternalId: "$.fields.issuetype.id"},
+				},
 			},
 			want: "issuetype",
 		},
 		{
 			name: "deduplication of same field",
-			attributes: []*framework.AttributeConfig{
-				{ExternalId: "$.fields.assignee.key"},
-				{ExternalId: "$.fields.assignee.name"},
+			entity: &framework.EntityConfig{
+				Attributes: []*framework.AttributeConfig{
+					{ExternalId: "$.fields.assignee.key"},
+					{ExternalId: "$.fields.assignee.name"},
+				},
 			},
 			want: "assignee",
 		},
 		{
 			name: "root level fields",
-			attributes: []*framework.AttributeConfig{
-				{ExternalId: "$.id"},
-				{ExternalId: "$.key"},
-				{ExternalId: "$.self"},
+			entity: &framework.EntityConfig{
+				Attributes: []*framework.AttributeConfig{
+					{ExternalId: "$.id"},
+					{ExternalId: "$.key"},
+					{ExternalId: "$.self"},
+				},
 			},
 			want: "id%2Ckey%2Cself", // URL encoded "id,key,self" (sorted)
 		},
 		{
 			name: "mix of different field types",
-			attributes: []*framework.AttributeConfig{
-				{ExternalId: "$.fields.summary"},
-				{ExternalId: "$.fields.issuetype.id"},
-				{ExternalId: "$.fields.assignee.key"},
-				{ExternalId: "$.fields.assignee.name"}, // duplicate assignee
-				{ExternalId: "$.id"},
-				{ExternalId: "$.key"},
+			entity: &framework.EntityConfig{
+				Attributes: []*framework.AttributeConfig{
+					{ExternalId: "$.fields.summary"},
+					{ExternalId: "$.fields.issuetype.id"},
+					{ExternalId: "$.fields.assignee.key"},
+					{ExternalId: "$.fields.assignee.name"}, // duplicate assignee
+					{ExternalId: "$.id"},
+					{ExternalId: "$.key"},
+				},
 			},
 			want: "assignee%2Cid%2Cissuetype%2Ckey%2Csummary", // URL encoded and sorted
 		},
 		{
 			name: "attributes with empty ExternalId",
-			attributes: []*framework.AttributeConfig{
-				{ExternalId: ""},
-				{ExternalId: "$.fields.summary"},
-				{ExternalId: ""},
+			entity: &framework.EntityConfig{
+				Attributes: []*framework.AttributeConfig{
+					{ExternalId: ""},
+					{ExternalId: "$.fields.summary"},
+					{ExternalId: ""},
+				},
 			},
 			want: "summary",
 		},
 		{
 			name: "all attributes have empty ExternalId",
-			attributes: []*framework.AttributeConfig{
-				{ExternalId: ""},
-				{ExternalId: ""},
+			entity: &framework.EntityConfig{
+				Attributes: []*framework.AttributeConfig{
+					{ExternalId: ""},
+					{ExternalId: ""},
+				},
 			},
 			want: "*navigable",
 		},
 		{
 			name: "custom fields",
-			attributes: []*framework.AttributeConfig{
-				{ExternalId: "$.fields.customfield_10000"},
-				{ExternalId: "$.fields.customfield_10001.value"},
+			entity: &framework.EntityConfig{
+				Attributes: []*framework.AttributeConfig{
+					{ExternalId: "$.fields.customfield_10000"},
+					{ExternalId: "$.fields.customfield_10001.value"},
+				},
 			},
 			want: "customfield_10000%2Ccustomfield_10001", // URL encoded and sorted
 		},
 		{
 			name: "field names with special characters needing URL encoding",
-			attributes: []*framework.AttributeConfig{
-				{ExternalId: "$.fields.summary"},
-				{ExternalId: "$.fields.status"},
-				{ExternalId: "$.fields.project"},
+			entity: &framework.EntityConfig{
+				Attributes: []*framework.AttributeConfig{
+					{ExternalId: "$.fields.summary"},
+					{ExternalId: "$.fields.status"},
+					{ExternalId: "$.fields.project"},
+				},
 			},
 			want: "project%2Cstatus%2Csummary", // URL encoded "project,status,summary" (sorted)
 		},
 		{
 			name: "non-JSON path field names",
-			attributes: []*framework.AttributeConfig{
-				{ExternalId: "id"},
-				{ExternalId: "key"},
-				{ExternalId: "summary"},
+			entity: &framework.EntityConfig{
+				Attributes: []*framework.AttributeConfig{
+					{ExternalId: "id"},
+					{ExternalId: "key"},
+					{ExternalId: "summary"},
+				},
 			},
 			want: "id%2Ckey%2Csummary", // URL encoded "id,key,summary" (sorted)
+		},
+		{
+			name: "array indices in field names",
+			entity: &framework.EntityConfig{
+				Attributes: []*framework.AttributeConfig{
+					{ExternalId: "$.fields.customfield_10209[0].value"},
+					{ExternalId: "$.fields.customfield_10210[0]"},
+					{ExternalId: "$.fields.assignee[0].key"},
+				},
+			},
+			want: "assignee%2Ccustomfield_10209%2Ccustomfield_10210", // URL encoded and sorted, array indices removed
+		},
+		{
+			name: "mixed array and non-array fields with deduplication",
+			entity: &framework.EntityConfig{
+				Attributes: []*framework.AttributeConfig{
+					{ExternalId: "$.fields.customfield_10209[0].value"},
+					{ExternalId: "$.fields.customfield_10209.id"}, // same field without array index
+					{ExternalId: "$.fields.assignee[0].key"},
+					{ExternalId: "$.fields.assignee.name"}, // same field without array index
+				},
+			},
+			want: "assignee%2Ccustomfield_10209", // URL encoded and sorted, deduplicated
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := jiradatacenter.EncodedAttributes(tt.attributes)
+			got := jiradatacenter.BuildJiraFieldsParam(tt.entity)
 			if got != tt.want {
-				t.Errorf("EncodedAttributes() = %q, want %q", got, tt.want)
+				t.Errorf("BuildJiraFieldsParam() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestExtractEntityFieldNames(t *testing.T) {
+	tests := []struct {
+		name   string
+		prefix string
+		entity *framework.EntityConfig
+		want   map[string]struct{}
+	}{
+		{
+			name:   "nil_entity_returns_empty_map",
+			prefix: "",
+			entity: nil,
+			want:   map[string]struct{}{},
+		},
+		{
+			name:   "entity_with_simple_attributes",
+			prefix: "",
+			entity: &framework.EntityConfig{
+				ExternalId: "Issue",
+				Attributes: []*framework.AttributeConfig{
+					{ExternalId: "id"},
+					{ExternalId: "key"},
+					{ExternalId: "$.fields.summary"},
+				},
+			},
+			want: map[string]struct{}{
+				"id":      {},
+				"key":     {},
+				"summary": {},
+			},
+		},
+		{
+			name:   "entity_with_json_path_attributes",
+			prefix: "",
+			entity: &framework.EntityConfig{
+				ExternalId: "Issue",
+				Attributes: []*framework.AttributeConfig{
+					{ExternalId: "$.id"},
+					{ExternalId: "$.fields.assignee.key"},
+					{ExternalId: "$.fields.issuetype.id"},
+					{ExternalId: "$.fields.customfield_10209[0].value"},
+				},
+			},
+			want: map[string]struct{}{
+				"id":                {},
+				"assignee":          {},
+				"issuetype":         {},
+				"customfield_10209": {},
+			},
+		},
+		{
+			name:   "entity_with_duplicate_field_names",
+			prefix: "",
+			entity: &framework.EntityConfig{
+				ExternalId: "Issue",
+				Attributes: []*framework.AttributeConfig{
+					{ExternalId: "$.fields.assignee.key"},
+					{ExternalId: "$.fields.assignee.name"},
+					{ExternalId: "$.fields.assignee[0].displayName"},
+					{ExternalId: "assignee"},
+				},
+			},
+			want: map[string]struct{}{
+				"assignee": {},
+			},
+		},
+		{
+			name:   "entity_with_child_entities",
+			prefix: "",
+			entity: &framework.EntityConfig{
+				ExternalId: "Issue",
+				Attributes: []*framework.AttributeConfig{
+					{ExternalId: "$.id"},
+					{ExternalId: "$.fields.summary"},
+				},
+				ChildEntities: []*framework.EntityConfig{
+					{
+						ExternalId: "$.fields.issuetype",
+						Attributes: []*framework.AttributeConfig{
+							{ExternalId: "id"},
+							{ExternalId: "name"},
+						},
+					},
+				},
+			},
+			want: map[string]struct{}{
+				"id":        {},
+				"summary":   {},
+				"issuetype": {},
+			},
+		},
+		{
+			name:   "entity_with_multiple_child_entities",
+			prefix: "",
+			entity: &framework.EntityConfig{
+				ExternalId: "Issue",
+				Attributes: []*framework.AttributeConfig{
+					{ExternalId: "$.id"},
+					{ExternalId: "$.fields.summary"},
+				},
+				ChildEntities: []*framework.EntityConfig{
+					{
+						ExternalId: "$.fields.issuetype",
+						Attributes: []*framework.AttributeConfig{
+							{ExternalId: "id"},
+							{ExternalId: "name"},
+						},
+					},
+					{
+						ExternalId: "$.fields.assignee",
+						Attributes: []*framework.AttributeConfig{
+							{ExternalId: "key"},
+							{ExternalId: "displayName"},
+						},
+					},
+				},
+			},
+			want: map[string]struct{}{
+				"id":        {},
+				"summary":   {},
+				"issuetype": {},
+				"assignee":  {},
+			},
+		},
+		{
+			name:   "entity_with_prefix",
+			prefix: "project",
+			entity: &framework.EntityConfig{
+				ExternalId: "Issue",
+				Attributes: []*framework.AttributeConfig{
+					{ExternalId: "id"},
+					{ExternalId: "$.fields.summary"},
+				},
+			},
+			want: map[string]struct{}{
+				"project.id":               {},
+				"project.$.fields.summary": {},
+			},
+		},
+		{
+			name:   "entity_with_array_indices_and_nested_paths",
+			prefix: "",
+			entity: &framework.EntityConfig{
+				ExternalId: "Issue",
+				Attributes: []*framework.AttributeConfig{
+					{ExternalId: "$.id"},
+					{ExternalId: "$.fields.customfield_10209[0].value"},
+					{ExternalId: "$.fields.assignee[0].key"},
+					{ExternalId: "$.fields.components[0].name"},
+					{ExternalId: "$.fields.fixVersions[0].id"},
+				},
+			},
+			want: map[string]struct{}{
+				"id":                {},
+				"customfield_10209": {},
+				"assignee":          {},
+				"components":        {},
+				"fixVersions":       {},
+			},
+		},
+		{
+			name:   "entity_with_empty_attribute_external_ids",
+			prefix: "",
+			entity: &framework.EntityConfig{
+				ExternalId: "Issue",
+				Attributes: []*framework.AttributeConfig{
+					{ExternalId: ""},
+					{ExternalId: "$.id"},
+					{ExternalId: "$.fields.summary"},
+				},
+			},
+			want: map[string]struct{}{
+				"id":      {},
+				"summary": {},
+			},
+		},
+		{
+			name:   "entity_with_no_attributes_only_child_entities",
+			prefix: "",
+			entity: &framework.EntityConfig{
+				ExternalId: "Issue",
+				Attributes: []*framework.AttributeConfig{},
+				ChildEntities: []*framework.EntityConfig{
+					{
+						ExternalId: "$.fields.issuetype",
+						Attributes: []*framework.AttributeConfig{
+							{ExternalId: "id"},
+						},
+					},
+				},
+			},
+			want: map[string]struct{}{
+				"issuetype": {},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := jiradatacenter.ExtractEntityFieldNames(tt.prefix, tt.entity)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ExtractEntityFieldNames() = %v, want %v", got, tt.want)
 			}
 		})
 	}

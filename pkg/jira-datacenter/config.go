@@ -74,6 +74,8 @@ func (c *Config) Validate(_ context.Context) error {
 			return errors.New("too many groups specified; maximum allowed is 255")
 		}
 
+		groupMap := make(map[string]bool, len(c.Groups))
+
 		for i, group := range c.Groups {
 			if group == "" {
 				return fmt.Errorf("group at index '%d' cannot be an empty string", i)
@@ -82,11 +84,8 @@ func (c *Config) Validate(_ context.Context) error {
 			if len(group) > 255 {
 				return fmt.Errorf("group name at index '%d' exceeds the 255 character limit", i)
 			}
-		}
 
-		// Check for duplicate group names
-		groupMap := make(map[string]bool)
-		for _, group := range c.Groups {
+			// Check for duplicate group names
 			if groupMap[group] {
 				return fmt.Errorf("duplicate group name '%s' found", group)
 			}
