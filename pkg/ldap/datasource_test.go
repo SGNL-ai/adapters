@@ -714,12 +714,12 @@ func TestStringAttrValuesToRequestedType_EmptyByteValuesHandling(t *testing.T) {
 
 func TestParseResponse(t *testing.T) {
 	tests := []struct {
-		name           string
-		searchResult   *ldap_v3.SearchResult
-		attributes     map[string]*framework.AttributeConfig
-		expectedObjs   int
+		name             string
+		searchResult     *ldap_v3.SearchResult
+		attributes       map[string]*framework.AttributeConfig
+		expectedObjs     int
 		expectedPageInfo bool
-		shouldError    bool
+		shouldError      bool
 	}{
 		{
 			name: "parse_simple_response",
@@ -831,11 +831,13 @@ func TestParseResponse(t *testing.T) {
 				if err == nil {
 					t.Errorf("Expected error, got nil")
 				}
+
 				return
 			}
 
 			if err != nil {
 				t.Errorf("Unexpected error: %v", err)
+
 				return
 			}
 
@@ -983,11 +985,13 @@ func TestEntryToObject(t *testing.T) {
 				if err == nil {
 					t.Errorf("Expected error, got nil")
 				}
+
 				return
 			}
 
 			if err != nil {
 				t.Errorf("Unexpected error: %v", err)
+
 				return
 			}
 

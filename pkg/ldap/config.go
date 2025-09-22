@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	defaultMemberAttribute = "member"
+	defaultMemberAttribute   = "member"
+	defaultDistinguishedName = "distinguishedName"
 )
 
 // Config is the configuration passed in each GetPage calls to the adapter.
@@ -100,17 +101,17 @@ func DefaultEntityConfig() map[string]*EntityConfig {
 				return &s
 			}(),
 			CollectionAttribute: func() *string {
-				s := "distinguishedName"
+				s := defaultDistinguishedName
 
 				return &s
 			}(),
 			MemberUniqueIDAttribute: func() *string {
-				s := "distinguishedName"
+				s := defaultDistinguishedName
 
 				return &s
 			}(),
 			MemberOfUniqueIDAttribute: func() *string {
-				s := "distinguishedName"
+				s := defaultDistinguishedName
 
 				return &s
 			}(),
@@ -143,7 +144,7 @@ func (e *EntityConfig) SetOptionalDefaults() {
 		}
 
 		if e.CollectionAttribute == nil {
-			s := "distinguishedName"
+			s := defaultDistinguishedName
 			e.CollectionAttribute = &s
 		}
 	}

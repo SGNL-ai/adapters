@@ -261,7 +261,6 @@ func (c *ldapClient) Request(_ context.Context, request *Request) (*Response, *f
 	if err != nil {
 		// Extract LDAP result code from the error
 		if ldapErr, ok := err.(*ldap_v3.Error); ok {
-
 			return &Response{
 				StatusCode: ldapErrToHTTPStatusCode(ldapErr),
 			}, nil
@@ -464,6 +463,7 @@ func (d *Datasource) getPage(ctx context.Context, request *Request, memberOf *st
 	if err != nil {
 		return nil, err
 	}
+
 	if resp != nil {
 		// An adapter error message is generated if the response status code from the
 		// collection API is not successful (i.e. if not statusCode >= 200 && statusCode < 300).
@@ -527,13 +527,19 @@ func (d *Datasource) getMemberOfPage(
 
 	// Process groups one by one, making individual range queries for each group
 	var allGroupMembers []map[string]any
+
 	targetPageSize := int(request.PageSize)
+
 	var lastProcessedGroupID string
+
 	var lastMemberOffset int64
+
 	isRangeAttribute := false
 
+	//nolint
 	if memberOfResp.Objects != nil {
 		skipToGroup := pageInfo != nil && pageInfo.LastGroupProcessed != ""
+
 		for _, groupObj := range memberOfResp.Objects {
 			// Get the group's unique ID value
 			groupUniqueIDValue, ok := groupObj[*entityConfig.MemberOfUniqueIDAttribute].(string)
@@ -546,6 +552,7 @@ func (d *Datasource) getMemberOfPage(
 				if groupUniqueIDValue != pageInfo.LastGroupProcessed {
 					continue // Skip this group, haven't reached the current one yet
 				}
+
 				skipToGroup = false // Found the group, stop skipping
 			}
 
@@ -564,6 +571,7 @@ func (d *Datasource) getMemberOfPage(
 				memberOffsetInGroup = pageInfo.LastMemberProcessed
 				isRangeAttribute = pageInfo.RangeAttribute
 			}
+
 			memberOffsetEnd := memberOffsetInGroup + int64(remainingNeeded)
 
 			var memberAttribute string
@@ -586,10 +594,12 @@ func (d *Datasource) getMemberOfPage(
 
 			//		fmt.Sprintf("(&(objectClass=group)(distinguishedName=%s))", groupUniqueIDValue)
 			modifiedEntityConfigMap := make(map[string]*EntityConfig)
+
 			for k, v := range request.EntityConfigMap {
 				entityConfigCopy := *v
 				modifiedEntityConfigMap[k] = &entityConfigCopy
 			}
+
 			modifiedEntityConfigMap[request.EntityExternalID].Query = modifiedGroupMemberQuery
 
 			memberRequest := &Request{
@@ -653,12 +663,14 @@ func (d *Datasource) getMemberOfPage(
 					// Handle pagination for more members
 					lastProcessedGroupID = groupUniqueIDValue
 					lastMemberOffset = memberOffsetEnd
+
 					if action == MemberExtractionActionContinueRange {
 						isRangeAttribute = true
 					}
 
 					break // We have enough members, don't process this group
 				}
+
 				lastProcessedGroupID = ""
 				lastMemberOffset = 0
 			}
@@ -676,6 +688,7 @@ func (d *Datasource) getMemberOfPage(
 	if memberOfResp.NextCursor != nil || lastProcessedGroupID != "" {
 		// If we have more groups to process or hit the page limit, create/update cursor
 		var pi *PageInfo
+
 		if memberOfResp.NextCursor != nil && memberOfResp.NextCursor.Cursor != nil {
 			// Decode existing cursor
 			if decodedPageInfo, decodeErr := DecodePageInfo(memberOfResp.NextCursor.Cursor); decodeErr == nil {
@@ -689,6 +702,7 @@ func (d *Datasource) getMemberOfPage(
 
 		pi.LastGroupProcessed = lastProcessedGroupID
 		pi.LastMemberProcessed = lastMemberOffset
+
 		pi.RangeAttribute = false
 		if isRangeAttribute {
 			pi.RangeAttribute = true
@@ -882,8 +896,8 @@ var (
 
 func EntryToObject(e *ldap_v3.Entry,
 	attrConfig map[string]*framework.AttributeConfig,
-) (map[string]interface{}, *framework.Error) {
-	result := make(map[string]interface{})
+) (map[string]any, *framework.Error) {
+	result := make(map[string]any)
 	result["dn"] = e.DN
 
 	// Iterate over each attribute in the LDAP entry.
@@ -894,6 +908,7 @@ func EntryToObject(e *ldap_v3.Entry,
 	for _, attribute := range e.Attributes {
 		// Skip attributes that are not configured in the attribute config (could be due to user error)
 		currAttrConfig, ok := attrConfig[attribute.Name]
+
 		isRangeAttribute := strings.HasPrefix(attribute.Name, rangeAttributePrefix)
 		if !ok && !isRangeAttribute {
 			continue

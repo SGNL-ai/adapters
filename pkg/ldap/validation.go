@@ -61,6 +61,14 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 			}
 		}
 
+		// if !strings.Contains(request.Config.EntityConfigMap[request.Entity.ExternalId].Query, "{{CollectionId}}") {
+		// 	return &framework.Error{
+		// 		Message: fmt.Sprintf("{{CollectionId}} is missing in entityConfig.%s.query for Entity configuration.",
+		// 			request.Entity.ExternalId),
+		// 		Code: api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
+		// 	}
+		// }
+
 		if request.Config.EntityConfigMap[request.Entity.ExternalId].MemberOfUniqueIDAttribute == nil {
 			return &framework.Error{
 				Message: fmt.Sprintf("Entity configuration entityConfig.%s.memberOfUniqueIdAttribute is missing.",
@@ -78,7 +86,6 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 		}
 
 		request.Config.EntityConfigMap[request.Entity.ExternalId].SetOptionalDefaults()
-
 	}
 
 	// Validate that at least the unique ID attribute for the requested entity

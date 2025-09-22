@@ -98,7 +98,11 @@ func TestDefaultMemberAttribute(t *testing.T) {
 			name: "EntityConfig_SetOptionalDefaults_for_GroupMember_sets_defaults",
 			testFunc: func(t *testing.T) {
 				entityConfig := &ldap.EntityConfig{
-					MemberOf: func() *string { s := "Group"; return &s }(),
+					MemberOf: func() *string {
+						s := "Group"
+
+						return &s
+					}(),
 				}
 				entityConfig.SetOptionalDefaults()
 
@@ -126,7 +130,11 @@ func TestDefaultMemberAttribute(t *testing.T) {
 				customMemberAttr := "uniqueMember"
 				entityConfig := &ldap.EntityConfig{
 					MemberAttribute: &customMemberAttr,
-					MemberOf:        func() *string { s := "Group"; return &s }(),
+					MemberOf: func() *string {
+						s := "Group"
+
+						return &s
+					}(),
 				}
 				entityConfig.SetOptionalDefaults()
 
