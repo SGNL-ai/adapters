@@ -478,8 +478,9 @@ func (d *Datasource) getPage(ctx context.Context, request *Request, memberOf *st
 func (d *Datasource) getMemberOfPage(
 	ctx context.Context, request *Request, entityConfig *EntityConfig,
 ) (*Response, *framework.Error) {
-	// TODO: this is the top-level cursor/pageinfo - only gets updated when the
-	// entityConfig.MemeberOfBatchSize is processed completely.
+	// This is the top-level cursor/pageinfo - only gets updated when the
+	// entityConfig.MemberOfBatchSize is processed completely or entities equal to
+	// page size are processed.
 	pageInfo, ferr := getPageInfo(request)
 	if ferr != nil {
 		return nil, ferr
@@ -495,7 +496,6 @@ func (d *Datasource) getMemberOfPage(
 		},
 	}
 
-	// TODO: Update comments
 	// For a member's entity.query, {{CollectionID}} is typically replaced by collectionAttribute
 	// to filter the member entity. The collectionAttribute and memberOfUniqueIdAttribute can be the identical.
 	// If they are not identical, add the collectionAttribute request attributes.
