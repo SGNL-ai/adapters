@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -75,10 +76,10 @@ var (
 
 	// Advanced query operators that require ConsistencyLevel: eventual
 	// These need to be matched as whole words/operators, not substrings.
-	advancedQueryOperators = []string{
-		"endsWith",
-		"contains",
-		"startsWith",
+	advancedQueryOperators = map[string]struct{}{
+		"endswith":   {},
+		"contains":   {},
+		"startswith": {},
 	}
 
 	// Regex patterns for advanced query operators that need word boundary matching.
@@ -368,17 +369,23 @@ func IsAdvancedQuery(request *Request, endpoint string) bool {
 
 	// Check if endpoint contains $filter with advanced operators.
 	if strings.Contains(endpoint, "$filter=") {
-		endpointLower := strings.ToLower(endpoint)
+		// URL decode the endpoint for proper pattern matching
+		decodedEndpoint := endpoint
+		if decoded, err := url.QueryUnescape(endpoint); err == nil {
+			decodedEndpoint = decoded
+		}
+
+		endpointLower := strings.ToLower(decodedEndpoint)
 
 		// Check for advanced function operators (can be substring matches).
-		for _, operator := range advancedQueryOperators {
-			if strings.Contains(endpointLower, strings.ToLower(operator)) {
+		for operator := range advancedQueryOperators {
+			if strings.Contains(endpointLower, operator) {
 				return true
 			}
 		}
 
-		// Check for 'ne' and 'not' operators using word boundary regex.
-		if neOperatorRegex.MatchString(endpoint) || notOperatorRegex.MatchString(endpoint) {
+		// Check for 'ne' and 'not' operators using word boundary regex on decoded endpoint.
+		if neOperatorRegex.MatchString(decodedEndpoint) || notOperatorRegex.MatchString(decodedEndpoint) {
 			return true
 		}
 	}
