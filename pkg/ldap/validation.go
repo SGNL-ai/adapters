@@ -26,6 +26,7 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 		}
 	}
 
+	// Check if scheme is present in address, if not
 	// set scheme based on certificateChain input
 	if !strings.HasPrefix(request.Address, "ldap://") && !strings.HasPrefix(request.Address, "ldaps://") {
 		if request.Config.CertificateChain != "" {
@@ -60,14 +61,6 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 				Code: api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
 			}
 		}
-
-		// if !strings.Contains(request.Config.EntityConfigMap[request.Entity.ExternalId].Query, "{{CollectionId}}") {
-		// 	return &framework.Error{
-		// 		Message: fmt.Sprintf("{{CollectionId}} is missing in entityConfig.%s.query for Entity configuration.",
-		// 			request.Entity.ExternalId),
-		// 		Code: api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
-		// 	}
-		// }
 
 		if request.Config.EntityConfigMap[request.Entity.ExternalId].MemberOfUniqueIDAttribute == nil {
 			return &framework.Error{

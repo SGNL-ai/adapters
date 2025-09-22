@@ -536,7 +536,7 @@ func (d *Datasource) getMemberOfPage(
 
 	isRangeAttribute := false
 
-	//nolint
+	//nolint:nestif
 	if memberOfResp.Objects != nil {
 		skipToGroup := pageInfo != nil && pageInfo.LastGroupProcessed != ""
 
@@ -583,8 +583,6 @@ func (d *Datasource) getMemberOfPage(
 				memberAttribute = "member"
 			}
 
-			//memberOffsetInGroup += int64(remainingNeeded)
-
 			// Create a Group request for this specific group
 			// Create a modified entity config that filters for this specific group
 			modifiedGroupMemberQuery := strings.ReplaceAll(
@@ -592,7 +590,6 @@ func (d *Datasource) getMemberOfPage(
 			)
 			modifiedGroupMemberQuery = strings.ReplaceAll(modifiedGroupMemberQuery, "{{CollectionId}}", groupUniqueIDValue)
 
-			//		fmt.Sprintf("(&(objectClass=group)(distinguishedName=%s))", groupUniqueIDValue)
 			modifiedEntityConfigMap := make(map[string]*EntityConfig)
 
 			for k, v := range request.EntityConfigMap {

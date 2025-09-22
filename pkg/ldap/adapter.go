@@ -64,7 +64,7 @@ func (a *Adapter) requestPageFromDatasource(
 	url, perr := url.Parse(request.Address)
 	if perr != nil {
 		return framework.NewGetPageResponseError(&framework.Error{
-			Message: fmt.Sprintf("Failed to parse the URL: %v.", err),
+			Message: fmt.Sprintf("Failed to parse the URL: %v.", perr),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_PAGE_REQUEST_CONFIG,
 		})
 	}
