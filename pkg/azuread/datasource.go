@@ -385,7 +385,8 @@ func IsAdvancedQuery(request *Request, endpoint string) bool {
 		}
 
 		// Check for 'ne' and 'not' operators using word boundary regex on decoded endpoint.
-		if neOperatorRegex.MatchString(decodedEndpoint) || notOperatorRegex.MatchString(decodedEndpoint) {
+		decodedEndpointLower := strings.ToLower(decodedEndpoint)
+		if neOperatorRegex.MatchString(decodedEndpointLower) || notOperatorRegex.MatchString(decodedEndpointLower) {
 			return true
 		}
 	}

@@ -1528,12 +1528,12 @@ func TestIsAdvancedQuery(t *testing.T) {
 		},
 		"filter_ne_in_string_value": {
 			request:  &azuread.Request{},
-			endpoint: "https://graph.microsoft.com/v1.0/users?$filter=displayName eq 'general'&$select=id",
+			endpoint: "https://graph.microsoft.com/v1.0/users?$filter=displayName+eq+'general'&$select=id",
 			want:     false,
 		},
 		"filter_not_in_string_value": {
 			request:  &azuread.Request{},
-			endpoint: "https://graph.microsoft.com/v1.0/users?$filter=displayName eq 'cannot'&$select=id",
+			endpoint: "https://graph.microsoft.com/v1.0/users?$filter=displayName+eq+'cannot'&$select=id",
 			want:     false,
 		},
 
