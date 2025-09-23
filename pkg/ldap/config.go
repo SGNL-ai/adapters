@@ -47,7 +47,7 @@ type EntityConfig struct {
 	MemberUniqueIDAttribute   *string `json:"memberUniqueIdAttribute,omitempty"`
 	MemberOfUniqueIDAttribute *string `json:"memberOfUniqueIdAttribute,omitempty"`
 	MemberOf                  *string `json:"memberOf,omitempty"`
-	MemberAttribute           *string `json:"member,omitempty"`
+	MemberAttribute           *string `json:"memberAttribute,omitempty"`
 	MemberOfGroupBatchSize    int64   `json:"memberOfGroupBatchSize,omitempty"`
 }
 

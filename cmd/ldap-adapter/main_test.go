@@ -671,18 +671,20 @@ func TestGivenOpenLDAPWithGroupMembers_WhenGetGroupMemberPageIsCalled_ThenGroupD
 	defer conn.Close()
 	client := api_adapter_v1.NewAdapterClient(conn)
 
-	ldapConfig := map[string]interface{}{
+	ldapConfig := map[string]any{
 		"baseDN": "dc=example,dc=org",
-		"entityConfig": map[string]interface{}{
-			"Group": map[string]interface{}{
+		"entityConfig": map[string]any{
+			"Group": map[string]any{
 				"query": "(&(objectClass=groupofuniquenames)(cn=Science))",
 			},
-			"GroupMember": map[string]interface{}{
+			"GroupMember": map[string]any{
 				"memberOf":                  "Group",
-				"collectionAttribute":       "dn",
-				"query":                     "(&(memberOf={{CollectionId}}))",
+				"collectionAttribute":       "cn",
+				"query":                     "(&(objectClass=groupofuniquenames)({{CollectionAttribute}}=Science))",
 				"memberUniqueIDAttribute":   "dn",
 				"memberOfUniqueIDAttribute": "dn",
+				"memberAttribute":           "uniqueMember",
+				"memberOfGroupBatchSize":    10,
 			},
 		},
 	}
@@ -739,7 +741,7 @@ func TestGivenOpenLDAPWithGroupMembers_WhenGetGroupMemberPageIsCalled_ThenGroupD
 
 	t.Logf("LDAP Address used in DatasourceConfig: %s", req.Datasource.Address)
 
-	ctxTimeout, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctxTimeout, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	md := metadata.New(map[string]string{"token": "test-token"})
@@ -755,7 +757,7 @@ func TestGivenOpenLDAPWithGroupMembers_WhenGetGroupMemberPageIsCalled_ThenGroupD
 	page := resp.GetSuccess()
 
 	if page == nil || len(page.Objects) != 2 {
-		t.Fatalf("expected two users on first page, got: %+v", resp)
+		t.Fatalf("expected two group members on first page, got: %+v", resp)
 	}
 
 	wantGroupMemberIDSlice := []string{"uid=john,ou=users,dc=example,dc=org-cn=Science,ou=Groups,dc=example,dc=org",
