@@ -74,7 +74,7 @@ var (
 		GroupAssignmentScheduleRequest: {},
 	}
 
-	// Advanced query operators that require ConsistencyLevel: eventual
+	// Advanced query operators that require the `ConsistencyLevel: eventual` header.
 	// These need to be matched as whole words/operators, not substrings.
 	advancedQueryOperators = map[string]struct{}{
 		"endswith":   {},
