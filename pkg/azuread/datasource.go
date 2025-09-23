@@ -8,7 +8,10 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"net/url"
+	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	framework "github.com/sgnl-ai/adapter-framework"
@@ -71,6 +74,18 @@ var (
 		RoleAssignmentScheduleRequest:  {},
 		GroupAssignmentScheduleRequest: {},
 	}
+
+	// Advanced query operators that require the `ConsistencyLevel: eventual` header.
+	// These need to be matched as whole words/operators, not substrings.
+	advancedQueryOperators = map[string]struct{}{
+		"endswith":   {},
+		"contains":   {},
+		"startswith": {},
+	}
+
+	// Regex patterns for advanced query operators that need word boundary matching.
+	neOperatorRegex  = regexp.MustCompile(`\bne\b`)  // 'ne' as whole word
+	notOperatorRegex = regexp.MustCompile(`\bnot\b`) // 'not' as whole word
 )
 
 // NewClient returns a Client to query the datasource.
@@ -201,7 +216,8 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 
 	req.Header.Add("Authorization", request.Token)
 
-	if request.UseAdvancedFilters {
+	// Enhanced advanced query detection - check if we need ConsistencyLevel: eventual
+	if IsAdvancedQuery(request, endpoint) {
 		req.Header.Add("ConsistencyLevel", "eventual")
 	}
 
@@ -341,4 +357,57 @@ func ParseResponse(body []byte) (objects []map[string]any, nextLink *string, err
 	}
 
 	return data.Values, data.NextLink, nil
+}
+
+// nolint: lll
+// IsAdvancedQuery determines if the request requires advanced query capabilities
+// based on Microsoft Graph advanced query documentation.
+// If any of the conditions are met, it returns true and a header "ConsistencyLevel: eventual"
+// should be added to the request.
+// See: https://learn.microsoft.com/en-us/graph/aad-advanced-queries?tabs=http#microsoft-entra-id-directory-objects-that-support-advanced-query-capabilities
+// for more information.
+// The function checks for the following conditions:
+// 1. If the request already has UseAdvancedFilters set to true, it returns true.
+// 2. If the endpoint contains $count, $search, or $orderby query parameters.
+// 3. If the endpoint contains $filter with advanced operators like endsWith, contains, startsWith.
+// 4. If the endpoint contains $filter with 'ne' or 'not' operators as whole words.
+func IsAdvancedQuery(request *Request, endpoint string) bool {
+	// If UseAdvancedFilters is already set, respect that.
+	if request.UseAdvancedFilters {
+		return true
+	}
+
+	// Check if endpoint contains $count, $search, or $orderby (all require advanced query).
+	// Also check for $count as URL segment (e.g., ~/groups/$count).
+	if strings.Contains(endpoint, "$count=true") ||
+		strings.Contains(endpoint, "$search=") ||
+		strings.Contains(endpoint, "$orderby=") ||
+		strings.Contains(endpoint, "/$count") {
+		return true
+	}
+
+	// Check if endpoint contains $filter with advanced operators.
+	if strings.Contains(endpoint, "$filter=") {
+		// URL decode the endpoint for proper pattern matching
+		decodedEndpoint := endpoint
+		if decoded, err := url.QueryUnescape(endpoint); err == nil {
+			decodedEndpoint = decoded
+		}
+
+		endpointLower := strings.ToLower(decodedEndpoint)
+
+		// Check for advanced function operators (can be substring matches).
+		for operator := range advancedQueryOperators {
+			if strings.Contains(endpointLower, operator) {
+				return true
+			}
+		}
+
+		// Check for 'ne' and 'not' operators using word boundary regex on decoded endpoint.
+		if neOperatorRegex.MatchString(decodedEndpoint) || notOperatorRegex.MatchString(decodedEndpoint) {
+			return true
+		}
+	}
+
+	return false
 }
