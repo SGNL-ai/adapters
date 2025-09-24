@@ -1490,6 +1490,11 @@ func TestIsAdvancedQuery(t *testing.T) {
 			endpoint: "https://graph.microsoft.com/v1.0/users?$select=id&$top=100&$filter=displayName+eq+%27neel%27",
 			want:     false,
 		},
+		"filter_odata_not": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/groups?$select=id&$top=1&$filter=NOT+groupTypes%2Fany%28c%3Ac+eq+%27DynamicMembership%27%29",
+			want:     true,
+		},
 
 		// Complex cases
 		"multiple_advanced_operators": {
@@ -1528,12 +1533,12 @@ func TestIsAdvancedQuery(t *testing.T) {
 		},
 		"filter_ne_in_string_value": {
 			request:  &azuread.Request{},
-			endpoint: "https://graph.microsoft.com/v1.0/users?$filter=displayName eq 'general'&$select=id",
+			endpoint: "https://graph.microsoft.com/v1.0/users?$filter=displayName+eq+'general'&$select=id",
 			want:     false,
 		},
 		"filter_not_in_string_value": {
 			request:  &azuread.Request{},
-			endpoint: "https://graph.microsoft.com/v1.0/users?$filter=displayName eq 'cannot'&$select=id",
+			endpoint: "https://graph.microsoft.com/v1.0/users?$filter=displayName+eq+'cannot'&$select=id",
 			want:     false,
 		},
 
