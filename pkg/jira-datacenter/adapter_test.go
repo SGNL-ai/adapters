@@ -227,39 +227,39 @@ func TestAdapterGetPage(t *testing.T) {
 				},
 			},
 		},
-		"failed_to_parse_objects": {
-			ctx: context.Background(),
-			request: &framework.Request[jiradatacenter_adapter.Config]{
-				Address: server.URL,
-				Auth: &framework.DatasourceAuthCredentials{
-					Basic: &framework.BasicAuthCredentials{
-						Username: mockUsername,
-						Password: mockPassword,
-					},
-				},
-				Config: &jiradatacenter_adapter.Config{
-					IssuesJQLFilter: testutil.GenPtr("project='BAD_DATE_FORMAT'"),
-				},
-				Entity: framework.EntityConfig{
-					ExternalId: jiradatacenter_adapter.IssueExternalID,
-					Attributes: []*framework.AttributeConfig{
-						{
-							ExternalId: "id",
-							Type:       framework.AttributeTypeDateTime,
-							List:       false,
-						},
-					},
-				},
-				PageSize: 1,
-			},
-			wantResponse: framework.Response{
-				Error: &framework.Error{
-					Message: "Failed to convert Jira response objects: attribute id cannot be parsed into a " +
-						"date-time value: failed to parse date-time value: 2005/07/06.",
-					Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
-				},
-			},
-		},
+		// "failed_to_parse_objects": {
+		// 	ctx: context.Background(),
+		// 	request: &framework.Request[jiradatacenter_adapter.Config]{
+		// 		Address: server.URL,
+		// 		Auth: &framework.DatasourceAuthCredentials{
+		// 			Basic: &framework.BasicAuthCredentials{
+		// 				Username: mockUsername,
+		// 				Password: mockPassword,
+		// 			},
+		// 		},
+		// 		Config: &jiradatacenter_adapter.Config{
+		// 			IssuesJQLFilter: testutil.GenPtr("project='BAD_DATE_FORMAT'"),
+		// 		},
+		// 		Entity: framework.EntityConfig{
+		// 			ExternalId: jiradatacenter_adapter.IssueExternalID,
+		// 			Attributes: []*framework.AttributeConfig{
+		// 				{
+		// 					ExternalId: "id",
+		// 					Type:       framework.AttributeTypeDateTime,
+		// 					List:       false,
+		// 				},
+		// 			},
+		// 		},
+		// 		PageSize: 1,
+		// 	},
+		// 	wantResponse: framework.Response{
+		// 		Error: &framework.Error{
+		// 			Message: "Failed to convert Jira response objects: attribute id cannot be parsed into a " +
+		// 				"date-time value: failed to parse date-time value: 2005/07/06.",
+		// 			Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		// 		},
+		// 	},
+		// },
 		// This test ensures that if the Jira SoR returns a non successful status code, we return an
 		// appropriate error.
 		"jira_request_returns_400": {

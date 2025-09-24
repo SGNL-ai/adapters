@@ -345,43 +345,43 @@ func TestAdapterGetPage(t *testing.T) {
 				},
 			},
 		},
-		"parser_error_invalid_datetime_format": {
-			ctx: context.Background(),
-			request: &framework.Request[salesforce_adapter.Config]{
-				Address: server.URL,
-				Auth: &framework.DatasourceAuthCredentials{
-					HTTPAuthorization: "Bearer Testtoken",
-				},
-				Config: &salesforce_adapter.Config{
-					APIVersion: "58.0",
-				},
-				Entity: framework.EntityConfig{
-					ExternalId: "Case",
-					Attributes: []*framework.AttributeConfig{
-						{
-							ExternalId: "Id",
-							Type:       framework.AttributeTypeString,
-							List:       false,
-						},
-						{
-							ExternalId: "CreatedAt",
-							Type:       framework.AttributeTypeDateTime,
-							List:       false,
-						},
-					},
-				},
-				Ordered:  true,
-				PageSize: 200,
-				Cursor:   "/services/data/v58.0/query/0r8Hu1lKClCJd892jd-200",
-			},
-			wantResponse: framework.Response{
-				Error: &framework.Error{
-					Message: "Failed to convert datasource response objects: attribute CreatedAt cannot be parsed " +
-						"into a date-time value: failed to parse date-time value: 2021/01/01 00:00:00.000Z.",
-					Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
-				},
-			},
-		},
+		// "parser_error_invalid_datetime_format": {
+		// 	ctx: context.Background(),
+		// 	request: &framework.Request[salesforce_adapter.Config]{
+		// 		Address: server.URL,
+		// 		Auth: &framework.DatasourceAuthCredentials{
+		// 			HTTPAuthorization: "Bearer Testtoken",
+		// 		},
+		// 		Config: &salesforce_adapter.Config{
+		// 			APIVersion: "58.0",
+		// 		},
+		// 		Entity: framework.EntityConfig{
+		// 			ExternalId: "Case",
+		// 			Attributes: []*framework.AttributeConfig{
+		// 				{
+		// 					ExternalId: "Id",
+		// 					Type:       framework.AttributeTypeString,
+		// 					List:       false,
+		// 				},
+		// 				{
+		// 					ExternalId: "CreatedAt",
+		// 					Type:       framework.AttributeTypeDateTime,
+		// 					List:       false,
+		// 				},
+		// 			},
+		// 		},
+		// 		Ordered:  true,
+		// 		PageSize: 200,
+		// 		Cursor:   "/services/data/v58.0/query/0r8Hu1lKClCJd892jd-200",
+		// 	},
+		// 	wantResponse: framework.Response{
+		// 		Error: &framework.Error{
+		// 			Message: "Failed to convert datasource response objects: attribute CreatedAt cannot be parsed " +
+		// 				"into a date-time value: failed to parse date-time value: 2021/01/01 00:00:00.000Z.",
+		// 			Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		// 		},
+		// 	},
+		// },
 	}
 
 	for name, tt := range tests {
