@@ -18,7 +18,7 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
 	github.com/machinebox/graphql v0.2.2
-	github.com/sgnl-ai/adapter-framework v0.19.2-0.20250924165832-210fcb67c37b
+	github.com/sgnl-ai/adapter-framework v0.19.2-0.20250924183522-6130f752a619
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.38.0

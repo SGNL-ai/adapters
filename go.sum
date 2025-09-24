@@ -209,8 +209,8 @@ github.com/rogpeppe/go-internal v1.13.1 h1:KvO1DLK/DRN07sQ1LQKScxyZJuNnedQ5/wKSR
 github.com/rogpeppe/go-internal v1.13.1/go.mod h1:uMEvuHeurkdAXX61udpOXGD/AzZDWNMNyH2VO9fmH0o=
 github.com/sagikazarmark/locafero v0.7.0 h1:5MqpDsTGNDhY8sGp0Aowyf0qKsPrhewaLSsFaodPcyo=
 github.com/sagikazarmark/locafero v0.7.0/go.mod h1:2za3Cg5rMaTMoG/2Ulr9AwtFaIppKXTRYnozin4aB5k=
-github.com/sgnl-ai/adapter-framework v0.19.2-0.20250924165832-210fcb67c37b h1:gEdVFmkxg1p+GxaaZOJ3rAw4O8m60x+1oUrYWtTFSAg=
-github.com/sgnl-ai/adapter-framework v0.19.2-0.20250924165832-210fcb67c37b/go.mod h1:b6VQR9JIHNuKmEIt5eU8NwxEkFoq+ppnH0YHYWOhjHo=
+github.com/sgnl-ai/adapter-framework v0.19.2-0.20250924183522-6130f752a619 h1:MG2QeNdrCb8qTFkgcG1bZ1SKs+iLZvXcxFlLNlmG47k=
+github.com/sgnl-ai/adapter-framework v0.19.2-0.20250924183522-6130f752a619/go.mod h1:b6VQR9JIHNuKmEIt5eU8NwxEkFoq+ppnH0YHYWOhjHo=
 github.com/shirou/gopsutil/v4 v4.25.5 h1:rtd9piuSMGeU8g1RMXjZs9y9luK5BwtnG7dZaQUJAsc=
 github.com/shirou/gopsutil/v4 v4.25.5/go.mod h1:PfybzyydfZcN+JMMjkF6Zb8Mq1A/VcogFFg7hj50W9c=
 github.com/shopspring/decimal v1.3.1/go.mod h1:DKyhrW/HYNuLGql+MJL6WCR6knT2jwCFRcu2hWCYk4o=
