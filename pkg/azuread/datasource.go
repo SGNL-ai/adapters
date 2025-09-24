@@ -347,14 +347,14 @@ func ParseResponse(body []byte) (objects []map[string]any, nextLink *string, err
 // should be added to the request.
 // See: https://learn.microsoft.com/en-us/graph/aad-advanced-queries?tabs=http#microsoft-entra-id-directory-objects-that-support-advanced-query-capabilities
 // for more information.
-// The ODATA logical operator NOT is also needs the ConsistencyLevel header.
+// The ODATA logical operator NOT also needs the ConsistencyLevel header.
 // See: https://learn.microsoft.com/en-us/graph/api/group-list?view=graph-rest-1.0&tabs=http
 // The function checks for the following conditions:
 // 1. If the request already has UseAdvancedFilters set to true, it returns true.
 // 2. If the endpoint contains $count, $search, or $orderby query parameters.
 // 3. If the endpoint contains $filter with advanced operators like endsWith, contains, startsWith.
 // 4. If the endpoint contains $filter with 'ne' or 'not' operators as whole words.
-// 5. If the endpoint contains $filter with 'NOT' operator as a whole words.
+// 5. If the endpoint contains $filter with 'NOT' operator as a whole word.
 func IsAdvancedQuery(request *Request, endpoint string) bool {
 	// If UseAdvancedFilters is already set, respect that.
 	if request.UseAdvancedFilters {
