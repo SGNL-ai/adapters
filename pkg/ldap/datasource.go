@@ -389,11 +389,12 @@ type PageInfo struct {
 	// NextPageCursor is the cursor to the next page of results.
 	NextPageCursor *string `json:"nextPageCursor"`
 
-	// LastGroupProcessed tracks the last group DN processed (for resuming)
-	LastGroupProcessed string `json:"lastGroupProcessed,omitempty"`
+	// NextGroupProcessed tracks the next group DN (for resuming)
+	NextGroupProcessed string `json:"nextGroupProcessed,omitempty"`
 
-	// LastMemberProcessed tracks the last member DN processed (for resuming)
-	LastMemberProcessed int64 `json:"lastMemberProcessed,omitempty"`
+	// NextMemberProcessed tracks the next member's offset within
+	// the list of members for a group (for resuming)
+	NextMemberProcessed int64 `json:"nextMemberProcessed,omitempty"`
 
 	// RangeAttribute is the attribute used for range queries.
 	RangeAttribute bool `json:"rangeAttribute,omitempty"`
@@ -496,9 +497,9 @@ func (d *Datasource) getMemberOfPage(
 		},
 	}
 
-	// For a member's entity.query, {{CollectionID}} is typically replaced by collectionAttribute
-	// to filter the member entity. The collectionAttribute and memberOfUniqueIdAttribute can be the identical.
-	// If they are not identical, add the collectionAttribute request attributes.
+	// For a member's entityConfig.Query, {{CollectionID}} is typically replaced by collectionAttribute
+	// to filter the member entity. The collectionAttribute and memberOfUniqueIdAttribute can be identical.
+	// If they are not identical, add the collectionAttribute request.
 	if collectionAttribute != nil && *collectionAttribute != *memberOfUniqueIDAttribute {
 		memberOfAttributes = append(memberOfAttributes, &framework.AttributeConfig{
 			ExternalId: *collectionAttribute,
@@ -526,20 +527,17 @@ func (d *Datasource) getMemberOfPage(
 	}
 
 	// Process groups one by one, making individual range queries for each group
-	var allGroupMembers []map[string]any
-
-	targetPageSize := int(request.PageSize)
-
-	var lastProcessedGroupID string
-
-	var lastMemberOffset int64
-
-	isRangeAttribute := false
+	var (
+		allGroupMembers      []map[string]any
+		targetPageSize       = int(request.PageSize)
+		nextGroupProcessedID string
+		nextMemberProcessed  int64
+		isRangeAttribute     = false
+		skipToGroup          = pageInfo != nil && pageInfo.NextGroupProcessed != ""
+	)
 
 	//nolint:nestif
-	if memberOfResp.Objects != nil {
-		skipToGroup := pageInfo != nil && pageInfo.LastGroupProcessed != ""
-
+	if len(memberOfResp.Objects) > 0 {
 		for _, groupObj := range memberOfResp.Objects {
 			// Get the group's unique ID value
 			groupUniqueIDValue, ok := groupObj[*entityConfig.MemberOfUniqueIDAttribute].(string)
@@ -549,7 +547,7 @@ func (d *Datasource) getMemberOfPage(
 
 			// Skip groups until we reach the last processed group
 			if skipToGroup {
-				if groupUniqueIDValue != pageInfo.LastGroupProcessed {
+				if groupUniqueIDValue != pageInfo.NextGroupProcessed {
 					continue // Skip this group, haven't reached the current one yet
 				}
 
@@ -559,16 +557,16 @@ func (d *Datasource) getMemberOfPage(
 			// Calculate how many members we still need
 			remainingNeeded := targetPageSize - len(allGroupMembers)
 			if remainingNeeded <= 0 {
-				lastProcessedGroupID = groupUniqueIDValue
+				nextGroupProcessedID = groupUniqueIDValue
 
 				break // We have enough members, don't process this group
 			}
 
 			// Calculate member offset within this specific group
 			memberOffsetInGroup := int64(0)
-			if pageInfo != nil && groupUniqueIDValue == pageInfo.LastGroupProcessed {
+			if pageInfo != nil && groupUniqueIDValue == pageInfo.NextGroupProcessed {
 				// We're resuming from this group, use the stored offset
-				memberOffsetInGroup = pageInfo.LastMemberProcessed
+				memberOffsetInGroup = pageInfo.NextMemberProcessed
 				isRangeAttribute = pageInfo.RangeAttribute
 			}
 
@@ -580,7 +578,7 @@ func (d *Datasource) getMemberOfPage(
 			} else if entityConfig.MemberAttribute != nil {
 				memberAttribute = fmt.Sprintf("%s", *entityConfig.MemberAttribute)
 			} else {
-				memberAttribute = "member"
+				memberAttribute = defaultMemberAttribute
 			}
 
 			// Create a Group request for this specific group
@@ -633,19 +631,18 @@ func (d *Datasource) getMemberOfPage(
 				memberObj := memberResp.Objects[0]
 
 				// Extract member DNs from this group
-				memberDNS, action := extractMemberDNSFromGroup(memberObj, int(memberOffsetEnd)-int(memberOffsetInGroup))
-				memberOffsetEnd = memberOffsetInGroup + int64(len(memberDNS))
+				membersDN, action := extractMembersDNFromGroup(memberObj, int(memberOffsetEnd)-int(memberOffsetInGroup))
+				memberOffsetEnd = memberOffsetInGroup + int64(len(membersDN))
 
 				// Convert member DNs to GroupMember objects
-				objects := make([]map[string]any, len(memberDNS))
-
+				objects := make([]map[string]any, len(membersDN))
 				// id
 				memberOfUniqueIDAttribute := fmt.Sprintf("group_%s", *entityConfig.MemberOfUniqueIDAttribute)
 
 				// member_<memberUniqueIDAttribute>
 				memberUniqueIDAttribute := fmt.Sprintf("member_%s", *entityConfig.MemberUniqueIDAttribute)
 
-				for idx, memberDN := range memberDNS {
+				for idx, memberDN := range membersDN {
 					objects[idx] = map[string]any{
 						request.UniqueIDAttribute: fmt.Sprintf("%s-%s", memberDN, groupUniqueIDValue),
 						memberUniqueIDAttribute:   memberDN,
@@ -658,8 +655,8 @@ func (d *Datasource) getMemberOfPage(
 				remainingNeeded := targetPageSize - len(allGroupMembers)
 				if remainingNeeded <= 0 && action != MemberExtractionActionDone {
 					// Handle pagination for more members
-					lastProcessedGroupID = groupUniqueIDValue
-					lastMemberOffset = memberOffsetEnd
+					nextGroupProcessedID = groupUniqueIDValue
+					nextMemberProcessed = memberOffsetEnd
 
 					if action == MemberExtractionActionContinueRange {
 						isRangeAttribute = true
@@ -668,8 +665,8 @@ func (d *Datasource) getMemberOfPage(
 					break // We have enough members, don't process this group
 				}
 
-				lastProcessedGroupID = ""
-				lastMemberOffset = 0
+				nextGroupProcessedID = ""
+				nextMemberProcessed = 0
 			}
 		}
 	}
@@ -681,42 +678,47 @@ func (d *Datasource) getMemberOfPage(
 	}
 
 	// Handle pagination cursor if needed
-
-	if memberOfResp.NextCursor != nil || lastProcessedGroupID != "" {
+	//nolint:nestif
+	if memberOfResp.NextCursor != nil || nextGroupProcessedID != "" {
 		// If we have more groups to process or hit the page limit, create/update cursor
-		var pi *PageInfo
+		var nextPageInfo *PageInfo
 
 		if memberOfResp.NextCursor != nil && memberOfResp.NextCursor.Cursor != nil {
 			// Decode existing cursor
 			if decodedPageInfo, decodeErr := DecodePageInfo(memberOfResp.NextCursor.Cursor); decodeErr == nil {
-				pi = decodedPageInfo
+				nextPageInfo = decodedPageInfo
 			}
 		}
 
-		if pi == nil {
-			pi = &PageInfo{}
+		if nextPageInfo == nil {
+			nextPageInfo = &PageInfo{}
 		}
 
-		pi.LastGroupProcessed = lastProcessedGroupID
-		pi.LastMemberProcessed = lastMemberOffset
+		nextPageInfo.NextGroupProcessed = nextGroupProcessedID
+		nextPageInfo.NextMemberProcessed = nextMemberProcessed
 
-		pi.RangeAttribute = false
+		nextPageInfo.RangeAttribute = isRangeAttribute
 		if isRangeAttribute {
-			pi.RangeAttribute = true
+			nextPageInfo.RangeAttribute = true
 		}
 
-		if lastProcessedGroupID != "" {
-			pi.NextPageCursor = nil
+		if nextGroupProcessedID != "" {
+			nextPageInfo.NextPageCursor = nil
 			if pageInfo != nil {
-				pi.NextPageCursor = pageInfo.NextPageCursor
+				nextPageInfo.NextPageCursor = pageInfo.NextPageCursor
 			}
 		}
 
 		// Encode updated cursor
-		if b, marshalErr := json.Marshal(pi); marshalErr == nil {
+		if b, marshalErr := json.Marshal(nextPageInfo); marshalErr == nil {
 			encodedCursor := base64.StdEncoding.EncodeToString(b)
 			response.NextCursor = &pagination.CompositeCursor[string]{
 				Cursor: &encodedCursor,
+			}
+		} else {
+			return nil, &framework.Error{
+				Message: fmt.Sprintf("Failed to create updated cursor: %v.", marshalErr),
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			}
 		}
 	}
@@ -742,10 +744,10 @@ const (
 	MemberExtractionActionDone            MemberExtractionAction = "Done"
 )
 
-// extractMemberDNSFromGroup extracts member DNs from a group's member attributes
+// extractMembersDNFromGroup extracts member DNs from a group's member attributes
 // Returns the DNs, whether range queries are needed, and any error.
-func extractMemberDNSFromGroup(memberObjs map[string]any, count int) ([]string, MemberExtractionAction) {
-	var memberDNS []string
+func extractMembersDNFromGroup(memberObjs map[string]any, count int) ([]string, MemberExtractionAction) {
+	var membersDN []string
 
 	// Check for range attributes first (indicates large groups)
 	for attrName, value := range memberObjs {
@@ -760,15 +762,15 @@ func extractMemberDNSFromGroup(memberObjs map[string]any, count int) ([]string, 
 
 		for _, member := range memberList[:count] {
 			if memberDN, ok := member.(string); ok {
-				memberDNS = append(memberDNS, memberDN)
+				membersDN = append(membersDN, memberDN)
 			} else {
-				memberDNS = memberDNS[:0] // Clear the slice
+				membersDN = membersDN[:0] // Clear the slice
 
 				break
 			}
 		}
 
-		if len(memberDNS) == 0 {
+		if len(membersDN) == 0 {
 			continue // Try next attribute
 		}
 
@@ -779,18 +781,18 @@ func extractMemberDNSFromGroup(memberObjs map[string]any, count int) ([]string, 
 		// Ref: https://learn.microsoft.com/en-us/windows/win32/adschema/attributes/memberof
 
 		if matches := rangeAttributePattern.FindStringSubmatch(attrName); matches != nil {
-			if matches[3] == "*" {
-				return memberDNS, MemberExtractionActionDone
+			if matches[3] == "*" && count == len(memberList) {
+				return membersDN, MemberExtractionActionDone
 			}
 
-			return memberDNS, MemberExtractionActionContinueRange
+			return membersDN, MemberExtractionActionContinueRange
 		}
 
 		if count == len(memberList) {
-			return memberDNS, MemberExtractionActionDone
+			return membersDN, MemberExtractionActionDone
 		}
 
-		return memberDNS, MemberExtractionActionContinueRegular
+		return membersDN, MemberExtractionActionContinueRegular
 	}
 
 	return []string{}, MemberExtractionActionDone

@@ -50,8 +50,11 @@ func (a *Adapter) GetPage(ctx context.Context, request *framework.Request[Config
 func (a *Adapter) requestPageFromDatasource(
 	ctx context.Context, request *framework.Request[Config],
 ) framework.Response {
-	// Request after validation.
-	commonConfig := request.Config.CommonConfig
+	var commonConfig *config.CommonConfig
+
+	if request.Config != nil {
+		commonConfig = request.Config.CommonConfig
+	}
 
 	commonConfig = config.SetMissingCommonConfigDefaults(commonConfig)
 
@@ -86,16 +89,6 @@ func (a *Adapter) requestPageFromDatasource(
 		Cursor:                cursor,
 		EntityConfigMap:       request.Config.EntityConfigMap,
 		RequestTimeoutSeconds: *commonConfig.RequestTimeoutSeconds,
-	}
-
-	entityConfig := adReq.EntityConfigMap[adReq.EntityExternalID]
-
-	// Update required attribute for [Member] Entity
-	if entityConfig.MemberOf != nil {
-		adReq.Attributes = append(adReq.Attributes, &framework.AttributeConfig{
-			ExternalId: *entityConfig.MemberOfUniqueIDAttribute,
-			Type:       framework.AttributeTypeString,
-		})
 	}
 
 	resp, err := a.ADClient.GetPage(ctx, adReq)

@@ -517,7 +517,7 @@ func (s *LDAPTestSuite) Test_AdapterGetGroupMemberPage() {
 							"member_dn": "cn=leonardo,ou=People,dc=example,dc=org",
 						},
 					},
-					NextCursor: "eyJjdXJzb3IiOiJleUpqYjJ4c1pXTjBhVzl1SWpwdWRXeHNMQ0p1WlhoMFVHRm5aVU4xY25OdmNpSTZiblZzYkN3aWJHRnpkRWR5YjNWd1VISnZZMlZ6YzJWa0lqb2lZMjQ5UkdWMlpXeHZjR1Z5Y3l4dmRUMUhjbTkxY0hNc1pHTTlaWGhoYlhCc1pTeGtZejF2Y21jaWZRPT0ifQ==",
+					NextCursor: "eyJjdXJzb3IiOiJleUpqYjJ4c1pXTjBhVzl1SWpwdWRXeHNMQ0p1WlhoMFVHRm5aVU4xY25OdmNpSTZiblZzYkN3aWJtVjRkRWR5YjNWd1VISnZZMlZ6YzJWa0lqb2lZMjQ5UkdWMlpXeHZjR1Z5Y3l4dmRUMUhjbTkxY0hNc1pHTTlaWGhoYlhCc1pTeGtZejF2Y21jaWZRPT0ifQ==",
 				},
 			},
 		},

@@ -19,10 +19,51 @@ const (
 
 // ValidateGetPageRequest validates the fields of the GetPage Request.
 func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework.Request[Config]) *framework.Error {
-	if err := request.Config.Validate(ctx); err != nil {
-		return &framework.Error{
-			Message: fmt.Sprintf("Active Directory config is invalid: %v.", err.Error()),
-			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
+	if request.Config != nil {
+		if err := request.Config.Validate(ctx); err != nil {
+			return &framework.Error{
+				Message: fmt.Sprintf("Active Directory config is invalid: %v.", err.Error()),
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
+			}
+		}
+
+		// Check if entityConfig is present for requested entity
+		// and validate memberOf entityConfig if present
+		entityConfig, found := request.Config.EntityConfigMap[request.Entity.ExternalId]
+		if !found {
+			return &framework.Error{
+				Message: fmt.Sprintf("entityConfig is missing in config for requested entity %v.", request.Entity.ExternalId),
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
+			}
+		}
+		// memberOf Present so we expect filter for memberOf entity
+		memberOf := entityConfig.MemberOf
+		if memberOf != nil {
+			if _, found := request.Config.EntityConfigMap[*memberOf]; !found {
+				return &framework.Error{
+					Message: fmt.Sprintf("Entity configuration entityConfig.%s is missing for "+
+						"entity specified in entityConfig.%s.memberOf.", *memberOf, request.Entity.ExternalId),
+					Code: api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
+				}
+			}
+
+			if request.Config.EntityConfigMap[request.Entity.ExternalId].MemberOfUniqueIDAttribute == nil {
+				return &framework.Error{
+					Message: fmt.Sprintf("Entity configuration entityConfig.%s.memberOfUniqueIdAttribute is missing.",
+						request.Entity.ExternalId),
+					Code: api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
+				}
+			}
+
+			if request.Config.EntityConfigMap[request.Entity.ExternalId].MemberUniqueIDAttribute == nil {
+				return &framework.Error{
+					Message: fmt.Sprintf("Entity configuration entityConfig.%s.memberUniqueIdAttribute is missing.",
+						request.Entity.ExternalId),
+					Code: api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
+				}
+			}
+
+			request.Config.EntityConfigMap[request.Entity.ExternalId].SetOptionalDefaults()
 		}
 	}
 
@@ -42,43 +83,6 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 			Message: "Provided datasource auth is missing required Active Directory authorization credentials.",
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
 		}
-	}
-
-	entityConfig, found := request.Config.EntityConfigMap[request.Entity.ExternalId]
-	if !found {
-		return &framework.Error{
-			Message: fmt.Sprintf("entityConfig is missing in config for requested entity %v.", request.Entity.ExternalId),
-			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
-		}
-	}
-	// memberOf Present so we expect filter for memberOf entity
-	memberOf := entityConfig.MemberOf
-	if memberOf != nil {
-		if _, found := request.Config.EntityConfigMap[*memberOf]; !found {
-			return &framework.Error{
-				Message: fmt.Sprintf("Entity configuration entityConfig.%s is missing for "+
-					"entity specified in entityConfig.%s.memberOf.", *memberOf, request.Entity.ExternalId),
-				Code: api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
-			}
-		}
-
-		if request.Config.EntityConfigMap[request.Entity.ExternalId].MemberOfUniqueIDAttribute == nil {
-			return &framework.Error{
-				Message: fmt.Sprintf("Entity configuration entityConfig.%s.memberOfUniqueIdAttribute is missing.",
-					request.Entity.ExternalId),
-				Code: api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
-			}
-		}
-
-		if request.Config.EntityConfigMap[request.Entity.ExternalId].MemberUniqueIDAttribute == nil {
-			return &framework.Error{
-				Message: fmt.Sprintf("Entity configuration entityConfig.%s.memberUniqueIdAttribute is missing.",
-					request.Entity.ExternalId),
-				Code: api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
-			}
-		}
-
-		request.Config.EntityConfigMap[request.Entity.ExternalId].SetOptionalDefaults()
 	}
 
 	// Validate that at least the unique ID attribute for the requested entity

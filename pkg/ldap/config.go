@@ -135,7 +135,7 @@ func (e *EntityConfig) SetOptionalDefaults() {
 		}
 
 		if e.MemberAttribute == nil {
-			s := "member"
+			s := defaultMemberAttribute
 			e.MemberAttribute = &s
 		}
 
@@ -146,6 +146,16 @@ func (e *EntityConfig) SetOptionalDefaults() {
 		if e.CollectionAttribute == nil {
 			s := defaultDistinguishedName
 			e.CollectionAttribute = &s
+		}
+
+		if e.MemberUniqueIDAttribute == nil {
+			s := defaultDistinguishedName
+			e.MemberUniqueIDAttribute = &s
+		}
+
+		if e.MemberOfUniqueIDAttribute == nil {
+			s := defaultDistinguishedName
+			e.MemberOfUniqueIDAttribute = &s
 		}
 	}
 }
