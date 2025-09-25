@@ -1359,3 +1359,263 @@ func TestGetRoleMembersPage(t *testing.T) {
 		})
 	}
 }
+
+func TestIsAdvancedQuery(t *testing.T) {
+	tests := map[string]struct {
+		request  *azuread.Request
+		endpoint string
+		want     bool
+	}{
+		// UseAdvancedFilters flag tests
+		"useAdvancedFilters_true": {
+			request: &azuread.Request{
+				UseAdvancedFilters: true,
+			},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$select=id",
+			want:     true,
+		},
+		"useAdvancedFilters_false": {
+			request: &azuread.Request{
+				UseAdvancedFilters: false,
+			},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$select=id",
+			want:     false,
+		},
+
+		// $count tests
+		"count_query_parameter": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$count=true&$select=id",
+			want:     true,
+		},
+		"count_url_segment": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users/$count",
+			want:     true,
+		},
+		"count_false": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$count=false&$select=id",
+			want:     false,
+		},
+
+		// $search tests
+		"search_query": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$search=\"displayName:John\"&$select=id",
+			want:     true,
+		},
+
+		// $orderby tests
+		"orderby_query": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$orderby=displayName&$select=id",
+			want:     true,
+		},
+		"orderby_with_filter": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$select=id&$top=100&$orderby=displayName&$filter=department+eq+%27IT%27",
+			want:     true,
+		},
+
+		// Advanced filter operators - function operators
+		"filter_contains": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$select=id&$top=100&$filter=contains%28displayName%2C%27admin%27%29",
+			want:     true,
+		},
+		"filter_startsWith": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$select=id&$top=100&$filter=startsWith%28displayName%2C%27John%27%29",
+			want:     true,
+		},
+		"filter_endsWith": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$select=id&$top=100&$filter=endsWith%28mail%2C%27contoso.com%27%29",
+			want:     true,
+		},
+
+		// Advanced filter operators - word boundary operators
+		"filter_ne": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$select=id&$top=100&$filter=displayName+ne+null",
+			want:     true,
+		},
+		"filter_not": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$select=id&$top=100&$filter=not+%28department+eq+%27IT%27%29",
+			want:     true,
+		},
+		"filter_eq_ne_substring_in_value": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$select=id&$top=100&$filter=displayName+eq+neo",
+			want:     false,
+		},
+		"filter_eq_not_substring_in_value": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$select=id&$top=100&$filter=displayName+eq+notebook",
+			want:     false,
+		},
+
+		// Non-advanced filter operators
+		"filter_eq": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$select=id&$top=100&$filter=department+eq+%27IT%27",
+			want:     false,
+		},
+		"filter_gt": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$select=id&$top=100&$filter=createdDateTime+gt+2023-01-01T00%3A00%3A00Z",
+			want:     false,
+		},
+		"filter_and": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$select=id&$top=100&$filter=department+eq+%27IT%27+and+jobTitle+eq+%27Manager%27",
+			want:     false,
+		},
+
+		// False positives - words containing 'ne' or 'not'
+		"filter_username_with_ne": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$select=id&$top=100&$filter=userPrincipalName+eq+%27john%40contoso.com%27",
+			want:     false,
+		},
+		"filter_word_with_not": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$select=id&$top=100&$filter=department+eq+%27another%27",
+			want:     false,
+		},
+		"filter_neel_username": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$select=id&$top=100&$filter=displayName+eq+%27neel%27",
+			want:     false,
+		},
+		"filter_odata_not": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/groups?$select=id&$top=1&$filter=NOT+groupTypes%2Fany%28c%3Ac+eq+%27DynamicMembership%27%29",
+			want:     true,
+		},
+
+		// Complex cases
+		"multiple_advanced_operators": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$select=id&$top=100&$orderby=displayName&$filter=contains%28displayName%2C%27admin%27%29+and+displayName+ne+null",
+			want:     true,
+		},
+		"url_encoded_contains": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$select=id&$top=100&$filter=contains%28displayName%2C%27admin%27%29",
+			want:     true,
+		},
+		"url_encoded_startswith": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$select=id&$top=100&$filter=startsWith%28displayName%2C%27John%27%29",
+			want:     true,
+		},
+
+		// No filter cases
+		"no_filter": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$select=id&$top=100",
+			want:     false,
+		},
+		"empty_endpoint": {
+			request:  &azuread.Request{},
+			endpoint: "",
+			want:     false,
+		},
+
+		// Edge cases
+		"filter_with_mixed_case": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$filter=CONTAINS(displayName,'ADMIN')&$select=id",
+			want:     true,
+		},
+		"filter_ne_in_string_value": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$filter=displayName+eq+'general'&$select=id",
+			want:     false,
+		},
+		"filter_not_in_string_value": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$filter=displayName+eq+'cannot'&$select=id",
+			want:     false,
+		},
+
+		// Note: Advanced queries don't currently support $expand.
+		// This test documents that $expand alone does NOT trigger advanced query requirements.
+		"expand_alone_not_advanced": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$select=id&$expand=manager&$top=100",
+			want:     false,
+		},
+		"expand_with_standard_filter": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$select=id&$expand=manager&$top=100&$filter=department+eq+%27IT%27",
+			want:     false,
+		},
+		// If advanced operators are present, we still detect it as advanced query
+		// NOTE: This combination would be INVALID and Microsoft Graph would return an error
+		// But our function's job is to detect advanced patterns, not validate compatibility.
+		"expand_with_advanced_filter_invalid_combo": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$select=id&$expand=manager&$top=100&$filter=displayName+ne+null",
+			want:     true, // Advanced operator detected, but this combo would fail at runtime
+		},
+
+		// Real-world examples from Microsoft documentation
+		"advanced_query_example_1": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$select=id&$top=100&$count=true&$filter=NOT%28assignedPlans%2Fany%28u%3Au%2FservicePlanId+eq+57ff2da0-773e-42df-b2af-ffb7a2317929%29%29",
+			want:     true,
+		},
+		"advanced_query_example_2": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$search=%22displayName%3Aroom%22&$orderby=displayName&$count=true&$filter=endsWith%28mail%2C%27contoso.com%27%29",
+			want:     true,
+		},
+		"standard_query_example": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/users?$select=id&$top=100&$orderby=givenName&$filter=startsWith%28givenName%2C%27J%27%29",
+			want:     true, // Contains startsWith function and orderby
+		},
+
+		// Member entity examples
+		"group_member_with_advanced_filter": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/groups/123/members?$select=id&$top=100&$count=true&$filter=contains%28displayName%2C%27admin%27%29",
+			want:     true,
+		},
+		"group_member_standard_filter": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/groups/123/members?$select=id&$top=100&$filter=userType+eq+%27Member%27",
+			want:     false,
+		},
+
+		// PIM entities - matching your example format
+		"role_assignment_schedule_request": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/roleManagement/directory/roleAssignmentScheduleRequests?$select=id,action&$top=100&$skip=0&$filter=status+ne+%27Revoked%27",
+			want:     true,
+		},
+		"role_assignment_schedule_request_standard": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/roleManagement/directory/roleAssignmentScheduleRequests?$select=id,action&$top=100&$skip=0&$filter=status+eq+%27PendingApproval%27",
+			want:     false,
+		},
+		"group_assignment_schedule_request": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/identityGovernance/privilegedAccess/group/assignmentScheduleRequests?$select=id,status&$top=100&$skip=0&$filter=contains%28targetGroupId%2C%27admin%27%29",
+			want:     true,
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			got := azuread.IsAdvancedQuery(tt.request, tt.endpoint)
+			if got != tt.want {
+				t.Errorf("IsAdvancedQuery() = %v, want %v\nEndpoint: %s", got, tt.want, tt.endpoint)
+			}
+		})
+	}
+}
