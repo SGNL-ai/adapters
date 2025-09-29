@@ -21,17 +21,38 @@ func ConstructEndpoint(request *Request) string {
 	// baseURL + "/api/now/" + apiVersion + "/table/" + tableName + "?sysparm_fields=sys_id"
 	// 		+ "&sysparm_exclude_reference_link=true&sysparm_limit=" + pageSize
 	// 		+ ["&sysparm_query=" + filter + "%5EORDERBYsys_id"] | ["&sysparm_query=ORDERBYsys_id"]
+	// OR with custom URL path:
+	// baseURL + customURLPath + "/" + apiVersion + "/table/" + tableName + "?sysparm_fields=sys_id" + ...
 
 	var sb strings.Builder
 
 	pageSizeStr := strconv.FormatInt(request.PageSize, 10)
 
-	sb.Grow(len(request.BaseURL) + len(request.APIVersion) + len(request.EntityExternalID) + len(pageSizeStr) + 89)
+	// Calculate initial capacity based on whether we have a custom URL path
+	initialCapacity := len(request.BaseURL) + len(request.APIVersion) +
+		len(request.EntityExternalID) + len(pageSizeStr) + 89
+	if request.CustomURLPath != "" {
+		initialCapacity += len(request.CustomURLPath)
+	}
+
+	sb.Grow(initialCapacity)
 
 	sb.WriteString(request.BaseURL)
-	sb.WriteString("/api/now/")
-	sb.WriteString(request.APIVersion)
-	sb.WriteString("/table/")
+
+	// Use custom URL path if provided, otherwise use default /api/now
+	if request.CustomURLPath != "" {
+		sb.WriteString(request.CustomURLPath)
+		sb.WriteString("/")
+	} else {
+		sb.WriteString("/api/now/")
+	}
+
+	if request.APIVersion != "" {
+		sb.WriteString(request.APIVersion)
+		sb.WriteString("/")
+	}
+
+	sb.WriteString("table/")
 	sb.WriteString(request.EntityExternalID)
 	sb.WriteString("?sysparm_fields=sys_id")
 

@@ -74,6 +74,7 @@ func (a *Adapter) RequestPageFromDatasource(
 		APIVersion:            request.Config.APIVersion,
 		Attributes:            request.Entity.Attributes,
 		RequestTimeoutSeconds: *commonConfig.RequestTimeoutSeconds,
+		CustomURLPath:         request.Config.CustomURLPath,
 	}
 
 	var (
