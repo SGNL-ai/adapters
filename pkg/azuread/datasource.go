@@ -94,13 +94,14 @@ func NewClient(client *http.Client) Client {
 	}
 }
 
-// deepCopyCursor creates a deep copy of a CompositeCursor
+// deepCopyCursor creates a deep copy of a CompositeCursor.
 func deepCopyCursor(cursor *pagination.CompositeCursor[string]) *pagination.CompositeCursor[string] {
 	if cursor == nil {
 		return nil
 	}
 
 	result := &pagination.CompositeCursor[string]{}
+
 	if cursor.Cursor != nil {
 		cursorVal := *cursor.Cursor
 		result.Cursor = &cursorVal
