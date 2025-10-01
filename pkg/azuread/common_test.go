@@ -3,7 +3,31 @@
 // nolint: lll, goconst
 package azuread_test
 
-import "net/http"
+import (
+	"net/http"
+	"strings"
+)
+
+// CreateTestServerHandler creates a handler that replaces https://graph.microsoft.com with the test server URL.
+func CreateTestServerHandler(serverURL string) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Call the original handler
+		TestServerHandler.ServeHTTP(&responseRewriter{ResponseWriter: w, serverURL: serverURL}, r)
+	})
+}
+
+// responseRewriter wraps http.ResponseWriter to replace URLs in responses.
+type responseRewriter struct {
+	http.ResponseWriter
+	serverURL string
+}
+
+func (rw *responseRewriter) Write(b []byte) (int, error) {
+	// Replace https://graph.microsoft.com with the test server URL
+	modified := strings.ReplaceAll(string(b), "https://graph.microsoft.com", rw.serverURL)
+
+	return rw.ResponseWriter.Write([]byte(modified))
+}
 
 // Define the endpoints and responses for the mock Azure AD server.
 // This handler is intended to be re-used throughout the test package.
@@ -613,10 +637,10 @@ var TestServerHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Req
 		}`))
 
 	// Group Members - 02bd9fd6-8f93-4758-87c3-1fb73740a315 (Filtered id eq '6e7b768e-07e2-4810-8459-485f84f8f204') - Members Page 1
-	case "/v1.0/groups/02bd9fd6-8f93-4758-87c3-1fb73740a315/members?$select=id&$top=2&$filter=id+eq+%276e7b768e-07e2-4810-8459-485f84f8f204%27":
+	case "/v1.0/groups/02bd9fd6-8f93-4758-87c3-1fb73740a315/members?$select=id&$top=1&$filter=id+eq+%276e7b768e-07e2-4810-8459-485f84f8f204%27":
 		w.Write([]byte(`{
 			"@odata.context": "https://graph.microsoft.com/v1.0/$metadata#users",
-			"@odata.nextLink": "https://graph.microsoft.com/v1.0/users?$select=id&$top=2&$skiptoken=RFNwdAIAAQAAACM6QWRlbGVWQE0zNjV4MjE0MzU1Lm9ubWljcm9zb2Z0LmNvbSlVc2VyXzg3ZDM0OWVkLTQ0ZDctNDNlMS05YTgzLTVmMjQwNmRlZTViZLkAAAAAAAAAAAAA",
+			"@odata.nextLink": "https://graph.microsoft.com/v1.0/users?$select=id&$top=1&$skiptoken=RFNwdAIAAQAAACM6QWRlbGVWQE0zNjV4MjE0MzU1Lm9ubWljcm9zb2Z0LmNvbSlVc2VyXzg3ZDM0OWVkLTQ0ZDctNDNlMS05YTgzLTVmMjQwNmRlZTViZLkAAAAAAAAAAAAA",
 			"value": [
 				{
 					"id": "6e7b768e-07e2-4810-8459-485f84f8f204"
