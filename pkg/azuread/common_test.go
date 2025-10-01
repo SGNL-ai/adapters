@@ -593,6 +593,21 @@ var TestServerHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Req
 			]
 		}`))
 
+	// Group Members - 02bd9fd6-8f93-4758-87c3-1fb73740a315 - Members Page 1 with 3 top value:
+	case "/v1.0/groups/02bd9fd6-8f93-4758-87c3-1fb73740a315/members?$select=id&$top=3":
+		w.Write([]byte(`{
+			"@odata.context": "https://graph.microsoft.com/v1.0/$metadata#users",
+			"@odata.nextLink": "https://graph.microsoft.com/v1.0/groups/02bd9fd6-8f93-4758-87c3-1fb73740a315/members?$select=id&$top=2&$skiptoken=RFNwdAIAAQAAACM6QWRlbGVWQE0zNjV4MjE0MzU1Lm9ubWljcm9zb2Z0LmNvbSlVc2VyXzg3ZDM0OWVkLTQ0ZDctNDNlMS05YTgzLTVmMjQwNmRlZTViZLkAAAAAAAAAAAAA",
+			"value": [
+				{
+					"id": "6e7b768e-07e2-4810-8459-485f84f8f204"
+				},
+				{
+					"id": "87d349ed-44d7-43e1-9a83-5f2406dee5bd"
+				}
+			]
+		}`))
+
 	// Group Members - 02bd9fd6-8f93-4758-87c3-1fb73740a315 - Members Page 2:
 	case "/v1.0/groups/02bd9fd6-8f93-4758-87c3-1fb73740a315/members?$select=id&$top=2&$skiptoken=RFNwdAIAAQAAACM6QWRlbGVWQE0zNjV4MjE0MzU1Lm9ubWljcm9zb2Z0LmNvbSlVc2VyXzg3ZDM0OWVkLTQ0ZDctNDNlMS05YTgzLTVmMjQwNmRlZTViZLkAAAAAAAAAAAAA":
 		w.Write([]byte(`{

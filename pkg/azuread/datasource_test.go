@@ -1027,6 +1027,40 @@ func TestGetGroupMembersPage(t *testing.T) {
 			},
 			wantErr: nil,
 		},
+		"group_members_pagesize_overflow_prevention": {
+			context: context.Background(),
+			request: &azuread.Request{
+				Token:                 "Bearer Testtoken",
+				BaseURL:               server.URL,
+				EntityExternalID:      "GroupMember",
+				PageSize:              3,
+				APIVersion:            "v1.0",
+				RequestTimeoutSeconds: 5,
+			},
+			wantRes: &azuread.Response{
+				StatusCode: http.StatusOK,
+				Objects: []map[string]any{
+					{
+						"id":       "6e7b768e-07e2-4810-8459-485f84f8f204-02bd9fd6-8f93-4758-87c3-1fb73740a315",
+						"memberId": "6e7b768e-07e2-4810-8459-485f84f8f204",
+						"groupId":  "02bd9fd6-8f93-4758-87c3-1fb73740a315",
+					},
+					{
+						"id":       "87d349ed-44d7-43e1-9a83-5f2406dee5bd-02bd9fd6-8f93-4758-87c3-1fb73740a315",
+						"memberId": "87d349ed-44d7-43e1-9a83-5f2406dee5bd",
+						"groupId":  "02bd9fd6-8f93-4758-87c3-1fb73740a315",
+					},
+				},
+				NextCursor: &pagination.CompositeCursor[string]{
+					// We're of syncing Members for a specific Groups, so this cursor is to the next page of Members.
+					Cursor:       testutil.GenPtr(server.URL + "/v1.0/groups/02bd9fd6-8f93-4758-87c3-1fb73740a315/members?$select=id&$top=2&$skiptoken=RFNwdAIAAQAAACM6QWRlbGVWQE0zNjV4MjE0MzU1Lm9ubWljcm9zb2Z0LmNvbSlVc2VyXzg3ZDM0OWVkLTQ0ZDctNDNlMS05YTgzLTVmMjQwNmRlZTViZLkAAAAAAAAAAAAA"),
+					CollectionID: testutil.GenPtr("02bd9fd6-8f93-4758-87c3-1fb73740a315"),
+					// GroupCursor to the next page of Groups.
+					CollectionCursor: testutil.GenPtr(server.URL + "/v1.0/groups?$select=id&$top=1&$skiptoken=RFNwdAIAAQAAACpHcm91cF8wNmY2MmY3MC05ODI3LTRlNmUtOTNlZi04ZTBmMmQ5YjdiMjMqR3JvdXBfMDZmNjJmNzAtOTgyNy00ZTZlLTkzZWYtOGUwZjJkOWI3YjIzAAAAAAAAAAAAAAA"),
+				},
+			},
+			wantErr: nil,
+		},
 	}
 
 	for name, tt := range tests {
