@@ -8,6 +8,11 @@ import (
 	"github.com/sgnl-ai/adapters/pkg/config"
 )
 
+const (
+	defaultMemberAttribute   = "member"
+	defaultDistinguishedName = "distinguishedName"
+)
+
 // Config is the configuration passed in each GetPage calls to the adapter.
 // Adapter configuration example:
 // nolint: godot
@@ -24,10 +29,12 @@ import (
         },
         "GroupMember": {
             "memberOf": "Group",
-            "query": "(&(memberOf={{CollectionId}}))",
+            "query": "(&(objectClass=group)({{CollectionAttribute}}={{CollectionId}}))", // Users who are members
             "collectionAttribute": "distinguishedName",
 			"memberUniqueIdAttribute": "memberDistinguishedName",
-			"memberOfUniqueIdAttribute": "groupDistinguishedName"
+			"memberOfUniqueIdAttribute": "groupDistinguishedName",
+			"memberAttribute": defaultMemberAttribute,
+			"memberOfGroupBatchSize": 10,
         }
     }
 }
@@ -36,11 +43,14 @@ import (
 // EntityConfig holds attributes which are used to create LDAP search filter.
 type EntityConfig struct {
 	Query                     string  `json:"query"`
-	CollectionAttribute       *string `json:"collectionAttribute"`
+	CollectionAttribute       *string `json:"collectionAttribute,omitempty"`
 	MemberUniqueIDAttribute   *string `json:"memberUniqueIdAttribute,omitempty"`
 	MemberOfUniqueIDAttribute *string `json:"memberOfUniqueIdAttribute,omitempty"`
 	MemberOf                  *string `json:"memberOf,omitempty"`
+	MemberAttribute           *string `json:"memberAttribute,omitempty"`
+	MemberOfGroupBatchSize    int64   `json:"memberOfGroupBatchSize,omitempty"`
 }
+
 type Config struct {
 	// Common configuration
 	*config.CommonConfig
@@ -84,24 +94,30 @@ func DefaultEntityConfig() map[string]*EntityConfig {
 			Query: "(&(objectCategory=computer)(name=*))",
 		},
 		"GroupMember": {
-			Query: "(&(memberOf={{CollectionId}})(objectCategory=user)(objectClass=user))",
+			Query: "(&(objectClass=group)({{CollectionAttribute}}={{CollectionId}}))",
 			MemberOf: func() *string {
 				s := "Group"
 
 				return &s
 			}(),
 			CollectionAttribute: func() *string {
-				s := "distinguishedName"
+				s := defaultDistinguishedName
 
 				return &s
 			}(),
 			MemberUniqueIDAttribute: func() *string {
-				s := "objectGUID"
+				s := defaultDistinguishedName
 
 				return &s
 			}(),
 			MemberOfUniqueIDAttribute: func() *string {
-				s := "objectGUID"
+				s := defaultDistinguishedName
+
+				return &s
+			}(),
+			MemberOfGroupBatchSize: 10,
+			MemberAttribute: func() *string {
+				s := defaultMemberAttribute
 
 				return &s
 			}(),
@@ -109,4 +125,37 @@ func DefaultEntityConfig() map[string]*EntityConfig {
 	}
 
 	return entityConfig
+}
+
+// SetOptionalDefaults sets the default values for optional fields in EntityConfig.
+func (e *EntityConfig) SetOptionalDefaults() {
+	if e.MemberOf != nil {
+		if e.MemberOfGroupBatchSize == 0 {
+			e.MemberOfGroupBatchSize = 10
+		}
+
+		if e.MemberAttribute == nil {
+			s := defaultMemberAttribute
+			e.MemberAttribute = &s
+		}
+
+		if e.Query == "" {
+			e.Query = "(&(objectClass=group)({{CollectionAttribute}}={{CollectionId}}))"
+		}
+
+		if e.CollectionAttribute == nil {
+			s := defaultDistinguishedName
+			e.CollectionAttribute = &s
+		}
+
+		if e.MemberUniqueIDAttribute == nil {
+			s := defaultDistinguishedName
+			e.MemberUniqueIDAttribute = &s
+		}
+
+		if e.MemberOfUniqueIDAttribute == nil {
+			s := defaultDistinguishedName
+			e.MemberOfUniqueIDAttribute = &s
+		}
+	}
 }

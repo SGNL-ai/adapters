@@ -43,14 +43,15 @@ func (a *Adapter) GetPage(ctx context.Context, request *framework.Request[Config
 		return framework.NewGetPageResponseError(err)
 	}
 
-	return a.RequestPageFromDatasource(ctx, request)
+	return a.requestPageFromDatasource(ctx, request)
 }
 
-// RequestPageFromDatasource requests a page of objects from a datasource.
-func (a *Adapter) RequestPageFromDatasource(
+// requestPageFromDatasource requests a page of objects from a datasource.
+func (a *Adapter) requestPageFromDatasource(
 	ctx context.Context, request *framework.Request[Config],
 ) framework.Response {
 	var commonConfig *config.CommonConfig
+
 	if request.Config != nil {
 		commonConfig = request.Config.CommonConfig
 	}
@@ -63,18 +64,13 @@ func (a *Adapter) RequestPageFromDatasource(
 		return framework.NewGetPageResponseError(err)
 	}
 
-	// At this level request.Address is already validated, skipping parsing error
-	url, _ := url.Parse(request.Address)
-
-	var isLDAPS bool
-	if strings.HasPrefix(request.Address, "ldaps://") {
-		isLDAPS = true
+	url, perr := url.Parse(request.Address)
+	if perr != nil {
+		return framework.NewGetPageResponseError(&framework.Error{
+			Message: fmt.Sprintf("Failed to parse the URL: %v.", perr),
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_PAGE_REQUEST_CONFIG,
+		})
 	}
-
-	// Extract hostname without port for TLS verification
-	hostname := url.Hostname()
-
-	uniqueIDAttribute := getUniqueIDAttribute(request.Entity.Attributes)
 
 	adReq := &Request{
 		BaseURL:          request.Address,
@@ -86,10 +82,10 @@ func (a *Adapter) RequestPageFromDatasource(
 			BindPassword:     request.Auth.Basic.Password,
 			BaseDN:           request.Config.BaseDN,
 			CertificateChain: request.Config.CertificateChain,
-			IsLDAPS:          isLDAPS,
-			Host:             hostname,
+			IsLDAPS:          strings.HasPrefix(request.Address, "ldaps://"),
+			Host:             url.Hostname(),
 		},
-		UniqueIDAttribute:     *uniqueIDAttribute,
+		UniqueIDAttribute:     *getUniqueIDAttribute(request.Entity.Attributes),
 		Cursor:                cursor,
 		EntityConfigMap:       request.Config.EntityConfigMap,
 		RequestTimeoutSeconds: *commonConfig.RequestTimeoutSeconds,
