@@ -95,28 +95,92 @@ func NewClient(client *http.Client) Client {
 	}
 }
 
-func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, *framework.Error) {
-	// [MemberEntities] For member entities, we need to set the `CollectionID` and `CollectionCursor`.
-	parentEntityExternalID := ValidEntityExternalIDs[request.EntityExternalID].memberOf
-
-	if request.UseAdvancedFilters {
-		switch request.EntityExternalID {
-		case User:
-			parentEntityExternalID = func() *string {
-				s := Group
-
-				return &s
-			}()
-		case Group:
-			if request.AdvancedFilterMemberExternalID != nil {
-				parentEntityExternalID = func() *string {
-					s := Group
-
-					return &s
-				}()
-			}
-		}
+// deepCopyCursor creates a deep copy of a CompositeCursor.
+func deepCopyCursor(cursor *pagination.CompositeCursor[string]) *pagination.CompositeCursor[string] {
+	if cursor == nil {
+		return nil
 	}
+
+	result := &pagination.CompositeCursor[string]{}
+
+	if cursor.Cursor != nil {
+		cursorVal := *cursor.Cursor
+		result.Cursor = &cursorVal
+	}
+
+	if cursor.CollectionID != nil {
+		collectionIDVal := *cursor.CollectionID
+		result.CollectionID = &collectionIDVal
+	}
+
+	if cursor.CollectionCursor != nil {
+		collectionCursorVal := *cursor.CollectionCursor
+		result.CollectionCursor = &collectionCursorVal
+	}
+
+	return result
+}
+
+// GetPage fetches a page of data, accumulating members from multiple parent groups if needed to satisfy page size.
+func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, *framework.Error) {
+	// Check if this is a member entity that needs accumulation
+	parentEntityExternalID := getParentEntityExternalID(request)
+
+	// For non-member entities, just use the base implementation
+	if parentEntityExternalID == nil {
+		return d.getPageBase(ctx, request)
+	}
+
+	// For member entities, accumulate members from multiple parent groups to satisfy page size
+	accumulatedObjects := make([]map[string]any, 0)
+	currentRequest := *request
+
+	var nextCursor *pagination.CompositeCursor[string]
+
+	for int64(len(accumulatedObjects)) < request.PageSize {
+		response, err := d.getPageBase(ctx, &currentRequest)
+		if err != nil {
+			return nil, err
+		}
+
+		if response.StatusCode != http.StatusOK {
+			return response, nil
+		}
+
+		if len(response.Objects) > 0 {
+			if int64(len(response.Objects)+len(accumulatedObjects)) > request.PageSize {
+				// Received more data than asked for.
+				break
+			}
+
+			accumulatedObjects = append(accumulatedObjects, response.Objects...)
+		}
+
+		// Check if we have more data to fetch
+		if response.NextCursor == nil {
+			nextCursor = nil
+
+			break // No more data available
+		}
+
+		// Save the cursor
+		nextCursor = deepCopyCursor(response.NextCursor)
+
+		// Update the cursor
+		currentRequest.Cursor = response.NextCursor
+	}
+
+	// Build final response with accumulated objects
+	return &Response{
+		StatusCode: http.StatusOK,
+		Objects:    accumulatedObjects,
+		NextCursor: nextCursor,
+	}, nil
+}
+
+func (d *Datasource) getPageBase(ctx context.Context, request *Request) (*Response, *framework.Error) {
+	// [MemberEntities] For member entities, we need to set the `CollectionID` and `CollectionCursor`.
+	parentEntityExternalID := getParentEntityExternalID(request)
 
 	if parentEntityExternalID != nil {
 		memberReq := &Request{
@@ -146,7 +210,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 			func(ctx context.Context, _ *Request) (
 				int, string, []map[string]any, *pagination.CompositeCursor[string], *framework.Error,
 			) {
-				resp, err := d.GetPage(ctx, memberReq)
+				resp, err := d.getPageBase(ctx, memberReq)
 				if err != nil {
 					return 0, "", nil, nil, err
 				}
@@ -344,6 +408,31 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	response.Objects = objects
 
 	return response, nil
+}
+
+func getParentEntityExternalID(request *Request) *string {
+	parentEntityExternalID := ValidEntityExternalIDs[request.EntityExternalID].memberOf
+
+	if request.UseAdvancedFilters {
+		switch request.EntityExternalID {
+		case User:
+			parentEntityExternalID = func() *string {
+				s := Group
+
+				return &s
+			}()
+		case Group:
+			if request.AdvancedFilterMemberExternalID != nil {
+				parentEntityExternalID = func() *string {
+					s := Group
+
+					return &s
+				}()
+			}
+		}
+	}
+
+	return parentEntityExternalID
 }
 
 func ParseResponse(body []byte) (objects []map[string]any, nextLink *string, err *framework.Error) {
