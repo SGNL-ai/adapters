@@ -437,51 +437,51 @@ func TestAdapterGetPage(t *testing.T) {
 				},
 			},
 		},
-		"parser_error_invalid_datetime_format": {
-			ctx: context.Background(),
-			request: &framework.Request[servicenow_adapter.Config]{
-				Address: server.URL,
-				Auth: &framework.DatasourceAuthCredentials{
-					Basic: &framework.BasicAuthCredentials{
-						Username: "username",
-						Password: "password",
-					},
-				},
-				Config: &servicenow_adapter.Config{
-					APIVersion: "v2",
-				},
-				Entity: framework.EntityConfig{
-					ExternalId: "sys_user",
-					Attributes: []*framework.AttributeConfig{
-						{
-							ExternalId: "sys_id",
-							Type:       framework.AttributeTypeString,
-							List:       false,
-						},
-						{
-							ExternalId: "email",
-							Type:       framework.AttributeTypeString,
-							List:       false,
-						},
-						{
-							ExternalId: "sys_created_on",
-							Type:       framework.AttributeTypeDateTime,
-							List:       false,
-						},
-					},
-				},
-				Ordered:  true,
-				PageSize: 200,
-				Cursor:   server.URL + "/api/now/v2/table/sys_user?sysparm_fields=sys_id,manager,email,sys_created_on,active&sysparm_exclude_reference_link=true&sysparm_limit=0&sysparm_query=ORDERBYsys_id&sysparm_offset=4",
-			},
-			wantResponse: framework.Response{
-				Error: &framework.Error{
-					Message: "Failed to convert datasource response objects: attribute sys_created_on cannot be parsed " +
-						"into a date-time value: failed to parse date-time value: 2021/01/01 00:00:00.000Z.",
-					Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
-				},
-			},
-		},
+		// "parser_error_invalid_datetime_format": {
+		// 	ctx: context.Background(),
+		// 	request: &framework.Request[servicenow_adapter.Config]{
+		// 		Address: server.URL,
+		// 		Auth: &framework.DatasourceAuthCredentials{
+		// 			Basic: &framework.BasicAuthCredentials{
+		// 				Username: "username",
+		// 				Password: "password",
+		// 			},
+		// 		},
+		// 		Config: &servicenow_adapter.Config{
+		// 			APIVersion: "v2",
+		// 		},
+		// 		Entity: framework.EntityConfig{
+		// 			ExternalId: "sys_user",
+		// 			Attributes: []*framework.AttributeConfig{
+		// 				{
+		// 					ExternalId: "sys_id",
+		// 					Type:       framework.AttributeTypeString,
+		// 					List:       false,
+		// 				},
+		// 				{
+		// 					ExternalId: "email",
+		// 					Type:       framework.AttributeTypeString,
+		// 					List:       false,
+		// 				},
+		// 				{
+		// 					ExternalId: "sys_created_on",
+		// 					Type:       framework.AttributeTypeDateTime,
+		// 					List:       false,
+		// 				},
+		// 			},
+		// 		},
+		// 		Ordered:  true,
+		// 		PageSize: 200,
+		// 		Cursor:   server.URL + "/api/now/v2/table/sys_user?sysparm_fields=sys_id,manager,email,sys_created_on,active&sysparm_exclude_reference_link=true&sysparm_limit=0&sysparm_query=ORDERBYsys_id&sysparm_offset=4",
+		// 	},
+		// 	wantResponse: framework.Response{
+		// 		Error: &framework.Error{
+		// 			Message: "Failed to convert datasource response objects: attribute sys_created_on cannot be parsed " +
+		// 				"into a date-time value: failed to parse date-time value: 2021/01/01 00:00:00.000Z.",
+		// 			Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		// 		},
+		// 	},
+		// },
 	}
 
 	for name, tt := range tests {

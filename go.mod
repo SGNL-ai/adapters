@@ -18,12 +18,12 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
 	github.com/machinebox/graphql v0.2.2
-	github.com/sgnl-ai/adapter-framework v0.19.1
+	github.com/sgnl-ai/adapter-framework v0.19.2-0.20250924183522-6130f752a619
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.11.1
-	github.com/testcontainers/testcontainers-go v0.39.0
-	google.golang.org/grpc v1.75.0
-	google.golang.org/protobuf v1.36.6
+	github.com/testcontainers/testcontainers-go v0.38.0
+	google.golang.org/grpc v1.75.1
+	google.golang.org/protobuf v1.36.9
 	gopkg.in/dnaeon/go-vcr.v3 v3.2.0
 	gopkg.in/dnaeon/go-vcr.v4 v4.0.4
 )
