@@ -173,7 +173,7 @@ interactions:
       headers:
         Authorization:
           - Bearer {{OMITTED}}
-      url: https://graph.microsoft.com/v1.0/groups/ffffffff-gggg-hhhh-iiii-jjjjjjjjjjjj/members?$select=id&$top=2
+      url: https://graph.microsoft.com/v1.0/groups/ffffffff-gggg-hhhh-iiii-jjjjjjjjjjjj/members?$select=id&$top=3
       method: GET
     response:
       proto: HTTP/1.1
