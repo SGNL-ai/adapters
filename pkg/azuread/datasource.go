@@ -148,8 +148,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 
 		if len(response.Objects) > 0 {
 			if int64(len(response.Objects)+len(accumulatedObjects)) > request.PageSize {
-				// Received more data than asked for. This can happen if Cursor.Cursor
-				// was used to fetch the data with a higher, older page size.
+				// Received more data than asked for.
 				break
 			}
 
@@ -168,7 +167,6 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 
 		// Update the cursor
 		currentRequest.Cursor = response.NextCursor
-		currentRequest.PageSize = request.PageSize - int64(len(accumulatedObjects))
 	}
 
 	// Build final response with accumulated objects

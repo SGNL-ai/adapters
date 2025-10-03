@@ -827,7 +827,7 @@ var TestServerHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Req
 	}`))
 
 	// Role Members - df102bb2-2365-235g-a2g6-edb774169548 - Members Page 1:
-	case "/v1.0/users/df102bb2-2365-235g-a2g6-edb774169548/transitiveMemberOf/microsoft.graph.directoryRole?$select=id&$top=2":
+	case "/v1.0/users/df102bb2-2365-235g-a2g6-edb774169548/transitiveMemberOf/microsoft.graph.directoryRole?$select=id&$top=3":
 		w.Write([]byte(`{
 		"@odata.context": "https://graph.microsoft.com/v1.0/$metadata#directoryRoles",
 		"@odata.nextLink": "https://graph.microsoft.com/v1.0/users/df102bb2-2365-235g-a2g6-edb774169548/transitiveMemberOf/microsoft.graph.directoryRole?$select=id&$top=2&$skiptoken=NEXTLINK_TOKEN_PLACEHOLDER_4",
