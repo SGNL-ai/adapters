@@ -478,10 +478,13 @@ func (d *Datasource) getPage(ctx context.Context, request *Request, memberOf *st
 
 // getMemberOfPage handles the special case of fetching members of groups.
 // This involves first fetching groups in configured batch size, then for each group, fetching its members.
-// The process continues until the requested page size is fulfilled or there are no more groups/members to process.
+// The process continues until the requested page size is fulfilled or there are no more groups/members to
+// process.
 // In case of a group with large number of members, range queries are used to fetch members in chunks.
-// The function also manages pagination state using a composite cursor that tracks both group and member processing state.
-// Next group to process, next member offset within the group, and whether range queries are being used are all tracked as part of the pagination state.
+// The function also manages pagination state using a composite cursor that tracks both group and member
+// processing state.
+// Next group to process, next member offset within the group, and whether range queries are being used
+// are all tracked as part of the pagination state.
 func (d *Datasource) getMemberOfPage(
 	ctx context.Context, request *Request, entityConfig *EntityConfig,
 ) (*Response, *framework.Error) {
