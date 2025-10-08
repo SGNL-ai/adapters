@@ -488,7 +488,7 @@ func ParseIssuesResponse(
 }
 
 func ParseEnhancedIssuesResponse(
-	body []byte, pageSize int64, cursor string,
+	body []byte, _ int64, _ string,
 ) (objects []map[string]any, nextCursor *string, err *framework.Error) {
 	// Issues response contains a single object map, with the top level field "issues": {"issues": []Issue, ...}.
 	// First unmarshal into single object, then extract the "issues" field.

@@ -298,7 +298,7 @@ func TestJiraAdapter_Issue(t *testing.T) {
 	close(stop)
 }
 
-// TODO: Remove this after fully deprecating the legacy Issue endpoint.TODO
+// TODO: Remove this after fully deprecating the legacy Issue endpoint.
 func TestJiraAdapter_EnhancedIssue_LastPage(t *testing.T) {
 	httpClient, recorder := common.StartRecorder(t, "fixtures/jira/enhancedIssueLastPage")
 	defer recorder.Stop()
