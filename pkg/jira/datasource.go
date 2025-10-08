@@ -21,8 +21,9 @@ import (
 )
 
 const (
-	User          string = "User"
-	Issue         string = "Issue"
+	User  string = "User"
+	Issue string = "Issue"
+	// TODO: Remove this after fully deprecating the legacy Issue endpoint.
 	EnhancedIssue string = "EnhancedIssue"
 	Group         string = "Group"
 	GroupMember   string = "GroupMember"
@@ -66,13 +67,15 @@ var (
 			endpoint:               "search",
 			parseResponse:          ParseIssuesResponse,
 		},
-		// [sc-61214]: EnhancedIssue is a temporary mapping type that is set implicitly based on the
+		// EnhancedIssue is a temporary mapping type that is set implicitly based on the
 		// EnhancedIssueSearch config setting. This will be removed with that setting eventually and we'll
 		// remove this mapping.
 		//
 		// While it should be possible to specify this EnhancedIssue external entity ID from the UI, this is not
 		// recommended (instead set the EnhancedIssueSearch config setting), as this will not be backwards compatible
 		// once this is removed.
+		//
+		// TODO: Remove this after fully deprecating the legacy Issue endpoint.
 		EnhancedIssue: {
 			uniqueIDAttrExternalID: "id",
 			endpoint:               "search/jql",
@@ -401,7 +404,14 @@ func ParseUsersResponse(
 
 	cursorInt, convErr := strconv.ParseInt(cursor, 10, 64)
 	if convErr != nil {
-		// TODO: Error
+		return nil, nil, &framework.Error{
+			Message: fmt.Sprintf(
+				"Failed to parse cursor as an int (%s): %s.",
+				cursor,
+				convErr.Error(),
+			),
+			Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}
 	}
 
 	nextCursorInt := pagination.GetNextCursorFromPageSize(len(objects), pageSize, cursorInt)
@@ -414,6 +424,8 @@ func ParseUsersResponse(
 	return objects, nextCursor, nil
 }
 
+// TODO: Until we fully deprecate the legacy issue search endpoint, any changes to this func should be copied to
+// ParseEnhancedIssuesResponse.
 func ParseIssuesResponse(
 	body []byte, pageSize int64, cursor string,
 ) (objects []map[string]any, nextCursor *string, err *framework.Error) {
@@ -455,7 +467,14 @@ func ParseIssuesResponse(
 
 	cursorInt, convErr := strconv.ParseInt(cursor, 10, 64)
 	if convErr != nil {
-		// TODO: Error
+		return nil, nil, &framework.Error{
+			Message: fmt.Sprintf(
+				"Failed to parse cursor as an int (%s): %s.",
+				cursor,
+				convErr.Error(),
+			),
+			Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}
 	}
 
 	nextCursorInt := pagination.GetNextCursorFromPageSize(len(objects), pageSize, cursorInt)
@@ -645,7 +664,14 @@ func parseResponse(
 
 	cursorInt, convErr := strconv.ParseInt(cursor, 10, 64)
 	if convErr != nil {
-		// TODO: Error
+		return nil, nil, &framework.Error{
+			Message: fmt.Sprintf(
+				"Failed to parse cursor as an int (%s): %s.",
+				cursor,
+				convErr.Error(),
+			),
+			Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}
 	}
 
 	nextCursorInt := pagination.GetNextCursorFromPageSize(len(objects), pageSize, cursorInt)
@@ -675,10 +701,11 @@ func parseObjects(entityExternalID string, objects []any) ([]map[string]any, *fr
 				Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			}
 		}
+
 		// Issue entity requires additional parsing of custom fields.
 		// TODO: Remove this after properly supporting parsing complex multi-valued attributes
 		// into lists based on JSON Paths given in the attribute external IDs.
-		if entityExternalID == Issue {
+		if entityExternalID == Issue || entityExternalID == EnhancedIssue {
 			parsedIssueObject, err := parseIssueCustomFields(parsedObject)
 			if err != nil {
 				return nil, err
@@ -862,10 +889,9 @@ func ConstructURL(request *Request, entity Entity, cursor *pagination.CompositeC
 
 		sb.WriteString("maxResults=")
 		sb.WriteString(pageSizeStr)
+
 		// This was the default with the deprecated API endpoint. The new default is just to return IDs, so we're
 		// manually specifying this to keep the same functionality.
-		//
-		// TODO: Manually verify if this should be query escaped or not.
 		sb.WriteString("&fields=*navigable")
 
 		return sb.String(), nil

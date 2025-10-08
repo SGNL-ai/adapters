@@ -890,6 +890,19 @@ func TestConstructURL(t *testing.T) {
 			},
 			wantURL: "https://jira.com/rest/api/3/search?startAt=10&maxResults=10",
 		},
+		"enhanced_issues": {
+			request: &jira_adapter.Request{
+				RequestTimeoutSeconds: 5,
+				BaseURL:               "https://jira.com",
+				PageSize:              10,
+				EntityExternalID:      jira_adapter.EnhancedIssue,
+			},
+			entity: jira.ValidEntityExternalIDs[jira_adapter.EnhancedIssue],
+			cursor: &pagination.CompositeCursor[string]{
+				Cursor: testutil.GenPtr("10"),
+			},
+			wantURL: "https://jira.com/rest/api/3/search/jql?nextPageToken=10&maxResults=10&fields=*navigable",
+		},
 		"issues_with_filter": {
 			request: &jira_adapter.Request{
 				RequestTimeoutSeconds: 5,

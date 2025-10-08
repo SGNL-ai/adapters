@@ -68,13 +68,12 @@ func (a *Adapter) RequestPageFromDatasource(
 	}
 
 	if request.Config != nil {
-		// [sc-261214]: TODO
+		// TODO: Remove this after fully deprecating the legacy Issue endpoint.
 		if request.Config.EnhancedIssueSearch && request.Entity.ExternalId == Issue {
 			request.Entity.ExternalId = EnhancedIssue
 		}
 
 		switch request.Entity.ExternalId {
-		// [sc-261214]: TODO
 		case Issue, EnhancedIssue:
 			jiraReq.IssuesJQLFilter = request.Config.IssuesJQLFilter
 		case Object:
