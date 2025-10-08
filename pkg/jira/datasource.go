@@ -556,7 +556,7 @@ func ParseEnhancedIssuesResponse(
 			return nil, nil, &framework.Error{
 				Message: fmt.Sprintf(
 					"Field %s exists in Jira %s response but field value is not a string: %T.",
-					foundNextCursor,
+					nextCursorFieldName,
 					Issue,
 					foundNextCursor,
 				),
