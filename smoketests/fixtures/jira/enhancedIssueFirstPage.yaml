@@ -1,0 +1,77 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: test-instance.atlassian.net
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            Authorization:
+                - Basic {{OMITTED}}
+        url: https://test-instance.atlassian.net/rest/api/3/search/jql?jql=project%3DTest1+OR+project%3D10000&maxResults=1&fields=*navigable
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        transfer_encoding: []
+        trailer: {}
+        content_length: -1
+        uncompressed: true
+        # TODO: This is pulled form the API documentation (with some modifications) and should be manually verified.
+        body: '{"isLast":false,"nextPageToken":"example-cursor","issues":[{"expand":"","fields":{"watcher":{"isWatching":false,"self":"https://your-domain.atlassian.net/rest/api/3/issue/EX-1/watchers","watchCount":1},"attachment":[{"author":{"accountId":"5b10a2844c20165700ede21g","accountType":"atlassian","active":false,"avatarUrls":{"16x16":"https://avatar-management--avatars.server-location.prod.public.atl-paas.net/initials/MK-5.png?size=16&s=16","24x24":"https://avatar-management--avatars.server-location.prod.public.atl-paas.net/initials/MK-5.png?size=24&s=24","32x32":"https://avatar-management--avatars.server-location.prod.public.atl-paas.net/initials/MK-5.png?size=32&s=32","48x48":"https://avatar-management--avatars.server-location.prod.public.atl-paas.net/initials/MK-5.png?size=48&s=48"},"displayName":"Mia Krystof","key":"","name":"","self":"https://your-domain.atlassian.net/rest/api/3/user?accountId=5b10a2844c20165700ede21g"},"content":"https://your-domain.atlassian.net/jira/rest/api/3/attachment/content/10001","created":"2023-06-24T19:24:50.000+0000","filename":"debuglog.txt","id":10001,"mimeType":"text/plain","self":"https://your-domain.atlassian.net/rest/api/2/attachments/10001","size":2460}],"sub-tasks":[{"id":"10000","outwardIssue":{"fields":{"status":{"iconUrl":"https://your-domain.atlassian.net/images/icons/statuses/open.png","name":"Open"}},"id":"10003","key":"ED-2","self":"https://your-domain.atlassian.net/rest/api/3/issue/ED-2"},"type":{"id":"10000","inward":"Parent","name":"","outward":"Sub-task"}}],"description":"Main order flow broken","project":{"avatarUrls":{"16x16":"https://your-domain.atlassian.net/secure/projectavatar?size=xsmall&pid=10000","24x24":"https://your-domain.atlassian.net/secure/projectavatar?size=small&pid=10000","32x32":"https://your-domain.atlassian.net/secure/projectavatar?size=medium&pid=10000","48x48":"https://your-domain.atlassian.net/secure/projectavatar?size=large&pid=10000"},"id":"10000","insight":{"lastIssueUpdateTime":"2021-04-22T05:37:05.000+0000","totalIssueCount":100},"key":"EX","name":"Example","projectCategory":{"description":"First Project Category","id":"10000","name":"FIRST","self":"https://your-domain.atlassian.net/rest/api/3/projectCategory/10000"},"self":"https://your-domain.atlassian.net/rest/api/3/project/EX","simplified":false,"style":"classic"},"comment":[{"author":{"accountId":"5b10a2844c20165700ede21g","active":false,"displayName":"Mia Krystof","self":"https://your-domain.atlassian.net/rest/api/3/user?accountId=5b10a2844c20165700ede21g"},"body":"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque eget venenatis elit. Duis eu justo eget augue iaculis fermentum. Sed semper quam laoreet nisi egestas at posuere augue semper.","created":"2021-01-17T12:34:00.000+0000","id":"10000","self":"https://your-domain.atlassian.net/rest/api/3/issue/10010/comment/10000","updateAuthor":{"accountId":"5b10a2844c20165700ede21g","active":false,"displayName":"Mia Krystof","self":"https://your-domain.atlassian.net/rest/api/3/user?accountId=5b10a2844c20165700ede21g"},"updated":"2021-01-18T23:45:00.000+0000","visibility":{"identifier":"Administrators","type":"role","value":"Administrators"}}],"issuelinks":[{"id":"10001","outwardIssue":{"fields":{"status":{"iconUrl":"https://your-domain.atlassian.net/images/icons/statuses/open.png","name":"Open"}},"id":"10004L","key":"PR-2","self":"https://your-domain.atlassian.net/rest/api/3/issue/PR-2"},"type":{"id":"10000","inward":"depends on","name":"Dependent","outward":"is depended by"}},{"id":"10002","inwardIssue":{"fields":{"status":{"iconUrl":"https://your-domain.atlassian.net/images/icons/statuses/open.png","name":"Open"}},"id":"10004","key":"PR-3","self":"https://your-domain.atlassian.net/rest/api/3/issue/PR-3"},"type":{"id":"10000","inward":"depends on","name":"Dependent","outward":"is depended by"}}],"worklog":[{"author":{"accountId":"5b10a2844c20165700ede21g","active":false,"displayName":"Mia Krystof","self":"https://your-domain.atlassian.net/rest/api/3/user?accountId=5b10a2844c20165700ede21g"},"comment":"I did some work here.","id":"100028","issueId":"10002","self":"https://your-domain.atlassian.net/rest/api/3/issue/10010/worklog/10000","started":"2021-01-17T12:34:00.000+0000","timeSpent":"3h 20m","timeSpentSeconds":12000,"updateAuthor":{"accountId":"5b10a2844c20165700ede21g","active":false,"displayName":"Mia Krystof","self":"https://your-domain.atlassian.net/rest/api/3/user?accountId=5b10a2844c20165700ede21g"},"updated":"2021-01-18T23:45:00.000+0000","visibility":{"identifier":"276f955c-63d7-42c8-9520-92d01dca0625","type":"group","value":"jira-developers"}}],"updated":1,"timetracking":{"originalEstimate":"10m","originalEstimateSeconds":600,"remainingEstimate":"3m","remainingEstimateSeconds":200,"timeSpent":"6m","timeSpentSeconds":400}},"id":"10002","key":"ED-1","self":"https://your-domain.atlassian.net/rest/api/3/issue/10002"}]}'
+        headers:
+            Atl-Request-Id:
+                - 678ab90b-ee08-4a0a-8e29-ef77bf3aa670
+            Atl-Traceid:
+                - 678ab90bee084a0a8e29ef77bf3aa670
+            Cache-Control:
+                - no-cache, no-store, no-transform
+            Content-Type:
+                - application/json;charset=UTF-8
+            Date:
+                - Wed, 08 Oct 2025 20:18:16 GMT
+            Nel:
+                - '{"failure_fraction": 0.001, "include_subdomains": true, "max_age": 600, "report_to": "endpoint-1"}'
+            Report-To:
+                - '{"endpoints": [{"url": "https://dz8aopenkvv6s.cloudfront.net"}], "group": "endpoint-1", "include_subdomains": true, "max_age": 600}'
+            Server:
+                - AtlassianEdge
+            Server-Timing:
+                - cdn-upstream-layer;desc="EDGE",cdn-upstream-dns;dur=0,cdn-upstream-connect;dur=23,cdn-upstream-fbl;dur=614,atl-edge;dur=518,atl-edge-internal;dur=16,atl-edge-upstream;dur=500,atl-edge-pop;desc="aws-us-east-1",cdn-cache-miss,cdn-pop;desc="ORD58-P8",cdn-rid;desc="yZNY-u_qKbz9DAUCff65WLKihMCiFf6l8eVoc-Kg8PdnbEsEhCzCKA==",cdn-downstream-fbl;dur=617
+            Set-Cookie:
+                - atlassian.xsrf.token=af17f2370482d6e342219045bcb9227a67ffc784_lout; Path=/; SameSite=None; Secure
+            Strict-Transport-Security:
+                - max-age=63072000; includeSubDomains; preload
+            Timing-Allow-Origin:
+                - '*'
+            Vary:
+                - Accept-Encoding
+            Via:
+                - 1.1 9861c27178edee713c8a98abe8af1298.cloudfront.net (CloudFront)
+            X-Amz-Cf-Id:
+                - yZNY-u_qKbz9DAUCff65WLKihMCiFf6l8eVoc-Kg8PdnbEsEhCzCKA==
+            X-Amz-Cf-Pop:
+                - ORD58-P8
+            X-Arequestid:
+                - c8d7cd86b4178159ab5462f0c7e63868
+            X-Cache:
+                - Miss from cloudfront
+            X-Content-Type-Options:
+                - nosniff
+            X-Seraph-Loginreason:
+                - AUTHENTICATED_FAILED
+            X-Xss-Protection:
+                - 1; mode=block
+        status: 200 OK
+        code: 200
+        duration: 893.7445ms

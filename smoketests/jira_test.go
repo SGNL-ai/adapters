@@ -4,6 +4,7 @@
 package smoketests
 
 import (
+	"encoding/base64"
 	"testing"
 	"time"
 
@@ -140,7 +141,7 @@ func TestJiraAdapter_User(t *testing.T) {
 						]
 					}
 				],
-				"nextCursor": "eyJjdXJzb3IiOjN9"
+				"nextCursor": "`+base64.StdEncoding.EncodeToString([]byte(`{"cursor":"3"}`))+`"
 			}
 		}
 	`), wantResp)
@@ -282,7 +283,214 @@ func TestJiraAdapter_Issue(t *testing.T) {
 						]
 					}
 				],
-				"nextCursor": "eyJjdXJzb3IiOjN9"
+				"nextCursor": "`+base64.StdEncoding.EncodeToString([]byte(`{"cursor":"3"}`))+`"
+			}
+		}
+	`), wantResp)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if diff := cmp.Diff(gotResp, wantResp, common.CmpOpts...); diff != "" {
+		t.Fatal(diff)
+	}
+
+	close(stop)
+}
+
+// [sc-61214]: TODO
+func TestJiraAdapter_EnhancedIssue_LastPage(t *testing.T) {
+	httpClient, recorder := common.StartRecorder(t, "fixtures/jira/enhancedIssueLastPage")
+	defer recorder.Stop()
+
+	port := common.AvailableTestPort(t)
+
+	stop := make(chan struct{})
+
+	// Start Adapter Server
+	go func() {
+		stop = common.StartAdapterServer(t, httpClient, port)
+	}()
+
+	time.Sleep(10 * time.Millisecond)
+
+	adapterClient, conn := common.GetNewAdapterClient(t, port)
+	defer conn.Close()
+
+	ctx, cancelCtx := common.GetAdapterCtx()
+	defer cancelCtx()
+
+	gotResp, err := adapterClient.GetPage(ctx, &adapter_api_v1.GetPageRequest{
+		Datasource: &adapter_api_v1.DatasourceConfig{
+			Auth: &adapter_api_v1.DatasourceAuthCredentials{
+				AuthMechanism: &adapter_api_v1.DatasourceAuthCredentials_Basic_{
+					Basic: &adapter_api_v1.DatasourceAuthCredentials_Basic{
+						Username: "nick@sgnl.ai",
+						Password: "{{OMITTED}}",
+					},
+				},
+			},
+			Address: "test-instance.atlassian.net",
+			Id:      "Jira",
+			Type:    "Jira-1.0.0",
+			Config:  []byte(`{"enhancedIssueSearch":true,"issuesJqlFilter":"project=Test1 OR project=10000"}`),
+		},
+		Entity: &adapter_api_v1.EntityConfig{
+			Id:         "JiraIssue",
+			ExternalId: "EnhancedIssue",
+			Ordered:    false,
+			Attributes: []*adapter_api_v1.AttributeConfig{
+				{
+					Id:         "id",
+					ExternalId: "id",
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+				},
+				{
+					Id:         "key",
+					ExternalId: "key",
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+				},
+			},
+			ChildEntities: nil,
+		},
+		PageSize: 3,
+		Cursor:   "",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	wantResp := new(adapter_api_v1.GetPageResponse)
+
+	err = protojson.Unmarshal([]byte(`
+		{
+			"success": {
+				"objects": [
+					{
+						"attributes": [
+							{
+							 	"id": "id",
+							 	"values": [
+									{
+							 			"string_value": "10002"
+							 		}
+								]
+							},
+							{
+								"id": "key",
+								"values": [
+								   {
+										"string_value": "ED-1"
+									}
+							   ]
+						   }
+						]
+					}
+				]
+			}
+		}
+	`), wantResp)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if diff := cmp.Diff(gotResp, wantResp, common.CmpOpts...); diff != "" {
+		t.Fatal(diff)
+	}
+
+	close(stop)
+}
+
+// [sc-61214]: TODO
+func TestJiraAdapter_EnhancedIssue_FirstPage(t *testing.T) {
+	httpClient, recorder := common.StartRecorder(t, "fixtures/jira/enhancedIssueFirstPage")
+	defer recorder.Stop()
+
+	port := common.AvailableTestPort(t)
+
+	stop := make(chan struct{})
+
+	// Start Adapter Server
+	go func() {
+		stop = common.StartAdapterServer(t, httpClient, port)
+	}()
+
+	time.Sleep(10 * time.Millisecond)
+
+	adapterClient, conn := common.GetNewAdapterClient(t, port)
+	defer conn.Close()
+
+	ctx, cancelCtx := common.GetAdapterCtx()
+	defer cancelCtx()
+
+	gotResp, err := adapterClient.GetPage(ctx, &adapter_api_v1.GetPageRequest{
+		Datasource: &adapter_api_v1.DatasourceConfig{
+			Auth: &adapter_api_v1.DatasourceAuthCredentials{
+				AuthMechanism: &adapter_api_v1.DatasourceAuthCredentials_Basic_{
+					Basic: &adapter_api_v1.DatasourceAuthCredentials_Basic{
+						Username: "nick@sgnl.ai",
+						Password: "{{OMITTED}}",
+					},
+				},
+			},
+			Address: "test-instance.atlassian.net",
+			Id:      "Jira",
+			Type:    "Jira-1.0.0",
+			Config:  []byte(`{"enhancedIssueSearch":true,"issuesJqlFilter":"project=Test1 OR project=10000"}`),
+		},
+		Entity: &adapter_api_v1.EntityConfig{
+			Id:         "JiraIssue",
+			ExternalId: "EnhancedIssue",
+			Ordered:    false,
+			Attributes: []*adapter_api_v1.AttributeConfig{
+				{
+					Id:         "id",
+					ExternalId: "id",
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+				},
+				{
+					Id:         "key",
+					ExternalId: "key",
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+				},
+			},
+			ChildEntities: nil,
+		},
+		PageSize: 1,
+		Cursor:   "",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	wantResp := new(adapter_api_v1.GetPageResponse)
+
+	err = protojson.Unmarshal([]byte(`
+		{
+			"success": {
+				"objects": [
+					{
+						"attributes": [
+							{
+							 	"id": "id",
+							 	"values": [
+									{
+							 			"string_value": "10002"
+							 		}
+								]
+							},
+							{
+								"id": "key",
+								"values": [
+								   {
+										"string_value": "ED-1"
+									}
+							   ]
+						   }
+						]
+					}
+				],
+				"nextCursor": "`+base64.StdEncoding.EncodeToString([]byte(`{"cursor":"example-cursor"}`))+`"
 			}
 		}
 	`), wantResp)
@@ -424,7 +632,7 @@ func TestJiraAdapter_Group(t *testing.T) {
 						]
 					}
 				],
-				"nextCursor": "eyJjdXJzb3IiOjN9"
+				"nextCursor": "`+base64.StdEncoding.EncodeToString([]byte(`{"cursor":"3"}`))+`"
 			}
 		}
 	`), wantResp)
@@ -526,7 +734,7 @@ func TestJiraAdapter_GroupMember(t *testing.T) {
 						]
 					}
 				],
-				"nextCursor": "eyJjb2xsZWN0aW9uSWQiOiIwZjFjMTU2Yi1hODhiLTQ5MTgtYmEyOS0zNWVlYzhmZWQ0MWMiLCJjb2xsZWN0aW9uQ3Vyc29yIjoxfQ=="
+				"nextCursor": "`+base64.StdEncoding.EncodeToString([]byte(`{"collectionId":"0f1c156b-a88b-4918-ba29-35eec8fed41c","collectionCursor":"1"}`))+`"
 			}
 		}
 	`), wantResp)
@@ -729,7 +937,7 @@ func TestJiraAdapter_Object(t *testing.T) {
 						]
 					}
 				],
-				"nextCursor": "eyJjdXJzb3IiOjMsImNvbGxlY3Rpb25JZCI6IjEwYzE5YmFmLTFjZTMtNDU1OC1hZDgwLTQ3YmM0NDk0ZGVkNyJ9"
+				"nextCursor": "`+base64.StdEncoding.EncodeToString([]byte(`{"cursor":"3","collectionId":"10c19baf-1ce3-4558-ad80-47bc4494ded7"}`))+`"
 			}
 		}
 	`), wantResp)

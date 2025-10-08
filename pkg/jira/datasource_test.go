@@ -180,16 +180,16 @@ var TestServerHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Req
 func TestParseUsersResponse(t *testing.T) {
 	tests := map[string]struct {
 		body           []byte
-		cursor         int64
+		cursor         string
 		pageSize       int64
 		wantObjects    []map[string]interface{}
-		wantNextCursor *int64
+		wantNextCursor *string
 		wantErr        *framework.Error
 	}{
 		"user_objects_last_page": {
 			// Two user objects in response with page size = 10, so this must be last page.
 			body:     []byte(`[{"name": "user1"}, {"name": "user2"}]`),
-			cursor:   0,
+			cursor:   "0",
 			pageSize: 10,
 			wantObjects: []map[string]interface{}{
 				{"name": "user1"},
@@ -201,19 +201,19 @@ func TestParseUsersResponse(t *testing.T) {
 		"user_objects_not_last_page": {
 			// Two user objects in response with page size = 2, so there is a possibility of next page.
 			body:     []byte(`[{"name": "user1"}, {"name": "user2"}]`),
-			cursor:   0,
+			cursor:   "0",
 			pageSize: 2,
 			wantObjects: []map[string]interface{}{
 				{"name": "user1"},
 				{"name": "user2"},
 			},
-			wantNextCursor: testutil.GenPtr(int64(2)), // This page contains index 0 and 1, so next page starts at index 2.
+			wantNextCursor: testutil.GenPtr("2"), // This page contains index 0 and 1, so next page starts at index 2.
 			wantErr:        nil,
 		},
 		"invalid_user_response": {
 			// Users response should return a list of user objects, not a single top level object.
 			body:           []byte(`{"users": [{"name": "user1"}, {"name": "user2"}]}`),
-			cursor:         0,
+			cursor:         "0",
 			pageSize:       2,
 			wantObjects:    nil,
 			wantNextCursor: nil,
@@ -247,15 +247,15 @@ func TestParseUsersResponse(t *testing.T) {
 func TestParseIssuesResponse(t *testing.T) {
 	tests := map[string]struct {
 		body           []byte
-		cursor         int64
+		cursor         string
 		pageSize       int64
 		wantObjects    []map[string]interface{}
-		wantNextCursor *int64
+		wantNextCursor *string
 		wantErr        *framework.Error
 	}{
 		"issue_objects_last_page": {
 			body:     []byte(`{"issues": [{"name": "issue1"}, {"name": "issue2"}]}`),
-			cursor:   0,
+			cursor:   "0",
 			pageSize: 10,
 			wantObjects: []map[string]interface{}{
 				{"name": "issue1"},
@@ -266,19 +266,19 @@ func TestParseIssuesResponse(t *testing.T) {
 		},
 		"issue_objects_not_last_page": {
 			body:     []byte(`{"issues": [{"name": "issue1"}, {"name": "issue2"}]}`),
-			cursor:   0,
+			cursor:   "0",
 			pageSize: 2,
 			wantObjects: []map[string]interface{}{
 				{"name": "issue1"},
 				{"name": "issue2"},
 			},
-			wantNextCursor: testutil.GenPtr(int64(2)),
+			wantNextCursor: testutil.GenPtr("2"),
 			wantErr:        nil,
 		},
 		"invalid_issue_response": {
 			// Issues response should return a single top level object, not a list.
 			body:           []byte(`[{"name": "issue1"}, {"name": "issue2"}]`),
-			cursor:         0,
+			cursor:         "0",
 			pageSize:       2,
 			wantObjects:    nil,
 			wantNextCursor: nil,
@@ -291,7 +291,7 @@ func TestParseIssuesResponse(t *testing.T) {
 		"invalid_issue_object": {
 			// The "issues" value should return []map[string]any, not []any.
 			body:           []byte(`{"issues": ["issue1", {"name": "issue2"}]}`),
-			cursor:         0,
+			cursor:         "0",
 			pageSize:       2,
 			wantObjects:    nil,
 			wantNextCursor: nil,
@@ -302,7 +302,7 @@ func TestParseIssuesResponse(t *testing.T) {
 		},
 		"issues_field_does_not_exist": {
 			body:           []byte(`{"WRONG_FIELD": [{"name": "issue1"}, {"name": "issue2"}]}`),
-			cursor:         0,
+			cursor:         "0",
 			pageSize:       10,
 			wantObjects:    nil,
 			wantNextCursor: nil,
@@ -314,7 +314,7 @@ func TestParseIssuesResponse(t *testing.T) {
 		"issues_field_exists_but_invalid_format": {
 			// The "issues" field value should be a list of issue objects, not a map.
 			body:           []byte(`{"issues": {"name": "issue1"}}`),
-			cursor:         0,
+			cursor:         "0",
 			pageSize:       10,
 			wantObjects:    nil,
 			wantNextCursor: nil,
@@ -327,7 +327,7 @@ func TestParseIssuesResponse(t *testing.T) {
 		"fields_field_malformed": {
 			// The "fields" field value should be an object.
 			body:           []byte(`{"issues": [{"fields": "NOT_AN_OBJECT"}]}`),
-			cursor:         0,
+			cursor:         "0",
 			pageSize:       10,
 			wantObjects:    nil,
 			wantNextCursor: nil,
@@ -358,7 +358,7 @@ func TestParseIssuesResponse(t *testing.T) {
 					}
 				]
 			}`),
-			cursor:   0,
+			cursor:   "0",
 			pageSize: 10,
 			wantObjects: []map[string]interface{}{
 				{
@@ -380,7 +380,7 @@ func TestParseIssuesResponse(t *testing.T) {
 					}
 				]
 			}`),
-			cursor:   0,
+			cursor:   "0",
 			pageSize: 10,
 			wantObjects: []map[string]interface{}{
 				{
@@ -412,7 +412,7 @@ func TestParseIssuesResponse(t *testing.T) {
 							}
 						]
 					}`),
-			cursor:         0,
+			cursor:         "0",
 			pageSize:       10,
 			wantObjects:    nil,
 			wantNextCursor: nil,
@@ -431,7 +431,7 @@ func TestParseIssuesResponse(t *testing.T) {
 							}
 						]
 					}`),
-			cursor:         0,
+			cursor:         "0",
 			pageSize:       10,
 			wantObjects:    nil,
 			wantNextCursor: nil,
@@ -456,7 +456,7 @@ func TestParseIssuesResponse(t *testing.T) {
 							}
 						]
 					}`),
-			cursor:         0,
+			cursor:         "0",
 			pageSize:       10,
 			wantObjects:    nil,
 			wantNextCursor: nil,
@@ -489,15 +489,15 @@ func TestParseIssuesResponse(t *testing.T) {
 func TestParseGroupsResponse(t *testing.T) {
 	tests := map[string]struct {
 		body           []byte
-		cursor         int64
+		cursor         string
 		pageSize       int64
 		wantObjects    []map[string]interface{}
-		wantNextCursor *int64
+		wantNextCursor *string
 		wantErr        *framework.Error
 	}{
 		"group_objects_last_page": {
 			body:     []byte(`{"values": [{"name": "group1"}, {"name": "group2"}]}`),
-			cursor:   0,
+			cursor:   "0",
 			pageSize: 10,
 			wantObjects: []map[string]interface{}{
 				{"name": "group1"},
@@ -508,19 +508,19 @@ func TestParseGroupsResponse(t *testing.T) {
 		},
 		"group_objects_not_last_page": {
 			body:     []byte(`{"values": [{"name": "group1"}, {"name": "group2"}]}`),
-			cursor:   0,
+			cursor:   "0",
 			pageSize: 2,
 			wantObjects: []map[string]interface{}{
 				{"name": "group1"},
 				{"name": "group2"},
 			},
-			wantNextCursor: testutil.GenPtr(int64(2)),
+			wantNextCursor: testutil.GenPtr("2"),
 			wantErr:        nil,
 		},
 		"invalid_group_response": {
 			// Groups response should return a single top level object, not a list.
 			body:           []byte(`[{"name": "group1"}, {"name": "group2"}]`),
-			cursor:         0,
+			cursor:         "0",
 			pageSize:       2,
 			wantObjects:    nil,
 			wantNextCursor: nil,
@@ -533,7 +533,7 @@ func TestParseGroupsResponse(t *testing.T) {
 		"invalid_group_object": {
 			// The "values" field should return []map[string]any, not []any.
 			body:           []byte(`{"values": ["group1", {"name": "group2"}]}`),
-			cursor:         0,
+			cursor:         "0",
 			pageSize:       2,
 			wantObjects:    nil,
 			wantNextCursor: nil,
@@ -544,7 +544,7 @@ func TestParseGroupsResponse(t *testing.T) {
 		},
 		"values_field_does_not_exist": {
 			body:           []byte(`{"WRONG_FIELD": [{"name": "group1"}, {"name": "group2"}]}`),
-			cursor:         0,
+			cursor:         "0",
 			pageSize:       10,
 			wantObjects:    nil,
 			wantNextCursor: nil,
@@ -556,7 +556,7 @@ func TestParseGroupsResponse(t *testing.T) {
 		"values_field_exists_but_invalid_format": {
 			// The "values" field value should be a list of group objects, not a map.
 			body:           []byte(`{"values": {"name": "group1"}}`),
-			cursor:         0,
+			cursor:         "0",
 			pageSize:       10,
 			wantObjects:    nil,
 			wantNextCursor: nil,
@@ -569,7 +569,7 @@ func TestParseGroupsResponse(t *testing.T) {
 		"response_contains_valid_is_last_field": {
 			// The next cursor does not need to be computed if `isLast` field is present.
 			body:     []byte(`{"values": [{"name": "group1"}, {"name": "group2"}], "isLast": true}`),
-			cursor:   0,
+			cursor:   "0",
 			pageSize: 10,
 			wantObjects: []map[string]interface{}{
 				{"name": "group1"},
@@ -581,7 +581,7 @@ func TestParseGroupsResponse(t *testing.T) {
 		"response_contains_invalid_is_last_field": {
 			// The next cursor is computed if `isLast` field is present, but not a bool.
 			body:           []byte(`{"values": [{"name": "group1"}, {"name": "group2"}], "isLast": "NOT A BOOL"}`),
-			cursor:         0,
+			cursor:         "0",
 			pageSize:       2,
 			wantObjects:    nil,
 			wantNextCursor: nil,
@@ -614,15 +614,15 @@ func TestParseGroupsResponse(t *testing.T) {
 func TestParseGroupMembersResponse(t *testing.T) {
 	tests := map[string]struct {
 		body           []byte
-		cursor         int64
+		cursor         string
 		pageSize       int64
 		wantObjects    []map[string]interface{}
-		wantNextCursor *int64
+		wantNextCursor *string
 		wantErr        *framework.Error
 	}{
 		"group_member_objects_last_page": {
 			body:     []byte(`{"values": [{"name": "groupMember1"}, {"name": "groupMember2"}]}`),
-			cursor:   0,
+			cursor:   "0",
 			pageSize: 10,
 			wantObjects: []map[string]interface{}{
 				{"name": "groupMember1"},
@@ -633,19 +633,19 @@ func TestParseGroupMembersResponse(t *testing.T) {
 		},
 		"group_objects_not_last_page": {
 			body:     []byte(`{"values": [{"name": "groupMember1"}, {"name": "groupMember2"}]}`),
-			cursor:   0,
+			cursor:   "0",
 			pageSize: 2,
 			wantObjects: []map[string]interface{}{
 				{"name": "groupMember1"},
 				{"name": "groupMember2"},
 			},
-			wantNextCursor: testutil.GenPtr(int64(2)),
+			wantNextCursor: testutil.GenPtr("2"),
 			wantErr:        nil,
 		},
 		"invalid_group_members_response": {
 			// Groups response should return a single top level object, not a list.
 			body:           []byte(`[{"name": "groupMember1"}, {"name": "groupMember2"}]`),
-			cursor:         0,
+			cursor:         "0",
 			pageSize:       2,
 			wantObjects:    nil,
 			wantNextCursor: nil,
@@ -658,7 +658,7 @@ func TestParseGroupMembersResponse(t *testing.T) {
 		"invalid_group_member_object": {
 			// The "values" field should return []map[string]any, not []any.
 			body:           []byte(`{"values": ["groupMember1", {"name": "groupMember2"}]}`),
-			cursor:         0,
+			cursor:         "0",
 			pageSize:       2,
 			wantObjects:    nil,
 			wantNextCursor: nil,
@@ -669,7 +669,7 @@ func TestParseGroupMembersResponse(t *testing.T) {
 		},
 		"values_field_does_not_exist": {
 			body:           []byte(`{"WRONG_FIELD": [{"name": "groupMember1"}, {"name": "groupMember2"}]}`),
-			cursor:         0,
+			cursor:         "0",
 			pageSize:       10,
 			wantObjects:    nil,
 			wantNextCursor: nil,
@@ -681,7 +681,7 @@ func TestParseGroupMembersResponse(t *testing.T) {
 		"values_field_exists_but_invalid_format": {
 			// The "values" field value should be a list of group objects, not a map.
 			body:           []byte(`{"values": {"name": "groupMember1"}}`),
-			cursor:         0,
+			cursor:         "0",
 			pageSize:       10,
 			wantObjects:    nil,
 			wantNextCursor: nil,
@@ -694,7 +694,7 @@ func TestParseGroupMembersResponse(t *testing.T) {
 		"response_contains_valid_is_last_field": {
 			// The next cursor does not need to be computed if `isLast` field is present.
 			body:     []byte(`{"values": [{"name": "groupMember1"}, {"name": "groupMember2"}], "isLast": true}`),
-			cursor:   0,
+			cursor:   "0",
 			pageSize: 10,
 			wantObjects: []map[string]interface{}{
 				{"name": "groupMember1"},
@@ -706,7 +706,7 @@ func TestParseGroupMembersResponse(t *testing.T) {
 		"response_contains_invalid_is_last_field": {
 			// An error is thrown if we cannot parse the `isLast` field as a bool.
 			body:           []byte(`{"values": [{"name": "group1"}, {"name": "group2"}], "isLast": "NOT A BOOL"}`),
-			cursor:         0,
+			cursor:         "0",
 			pageSize:       2,
 			wantObjects:    nil,
 			wantNextCursor: nil,
@@ -739,16 +739,16 @@ func TestParseGroupMembersResponse(t *testing.T) {
 func TestParseWorkspacesResponse(t *testing.T) {
 	tests := map[string]struct {
 		body           []byte
-		cursor         int64
+		cursor         string
 		pageSize       int64
 		wantObjects    []map[string]interface{}
-		wantNextCursor *int64
+		wantNextCursor *string
 		wantErr        *framework.Error
 	}{
 		// The logic to parse Workspaces is shared by Groups and GroupMembers, which have already been tested above.
 		"single_page": {
 			body:     []byte(`{"values": [{"workspaceId": "1"}, {"workspaceId": "2"}]}`),
-			cursor:   0,
+			cursor:   "0",
 			pageSize: 10,
 			wantObjects: []map[string]interface{}{
 				{"workspaceId": "1"},
@@ -760,13 +760,13 @@ func TestParseWorkspacesResponse(t *testing.T) {
 		"first_page": {
 			// The next cursor does not need to be computed if `isLastPage` field is present.
 			body:     []byte(`{"values": [{"workspaceId": "1"}, {"workspaceId": "2"}], "isLastPage": false}`),
-			cursor:   0,
+			cursor:   "0",
 			pageSize: 2,
 			wantObjects: []map[string]interface{}{
 				{"workspaceId": "1"},
 				{"workspaceId": "2"},
 			},
-			wantNextCursor: testutil.GenPtr[int64](2),
+			wantNextCursor: testutil.GenPtr("2"),
 			wantErr:        nil,
 		},
 	}
@@ -793,16 +793,16 @@ func TestParseWorkspacesResponse(t *testing.T) {
 func TestParseObjectsResponse(t *testing.T) {
 	tests := map[string]struct {
 		body           []byte
-		cursor         int64
+		cursor         string
 		pageSize       int64
 		wantObjects    []map[string]interface{}
-		wantNextCursor *int64
+		wantNextCursor *string
 		wantErr        *framework.Error
 	}{
 		// The logic to parse Objects is shared by Groups and GroupMembers, which have already been tested above.
 		"single_page": {
 			body:     []byte(`{"values": [{"globalId": "1"}, {"globalId": "2"}], "isLast": true}`),
-			cursor:   0,
+			cursor:   "0",
 			pageSize: 10,
 			wantObjects: []map[string]interface{}{
 				{"globalId": "1"},
@@ -813,13 +813,13 @@ func TestParseObjectsResponse(t *testing.T) {
 		},
 		"first_page": {
 			body:     []byte(`{"values": [{"globalId": "1"}, {"globalId": "2"}], "isLast": false}`),
-			cursor:   0,
+			cursor:   "0",
 			pageSize: 2,
 			wantObjects: []map[string]interface{}{
 				{"globalId": "1"},
 				{"globalId": "2"},
 			},
-			wantNextCursor: testutil.GenPtr[int64](2),
+			wantNextCursor: testutil.GenPtr("2"),
 			wantErr:        nil,
 		},
 	}
@@ -847,7 +847,7 @@ func TestConstructURL(t *testing.T) {
 	tests := map[string]struct {
 		request *jira_adapter.Request
 		entity  jira.Entity
-		cursor  *pagination.CompositeCursor[int64]
+		cursor  *pagination.CompositeCursor[string]
 		wantURL string
 		wantErr error
 	}{
@@ -859,8 +859,8 @@ func TestConstructURL(t *testing.T) {
 				EntityExternalID:      jira_adapter.User,
 			},
 			entity: jira.ValidEntityExternalIDs[jira_adapter.User],
-			cursor: &pagination.CompositeCursor[int64]{
-				Cursor: testutil.GenPtr[int64](10),
+			cursor: &pagination.CompositeCursor[string]{
+				Cursor: testutil.GenPtr("10"),
 			},
 			wantURL: "https://jira.com/rest/api/3/users/search?startAt=10&maxResults=10",
 		},
@@ -872,8 +872,8 @@ func TestConstructURL(t *testing.T) {
 				EntityExternalID:      jira_adapter.Group,
 			},
 			entity: jira.ValidEntityExternalIDs[jira_adapter.Group],
-			cursor: &pagination.CompositeCursor[int64]{
-				Cursor: testutil.GenPtr[int64](10),
+			cursor: &pagination.CompositeCursor[string]{
+				Cursor: testutil.GenPtr("10"),
 			},
 			wantURL: "https://jira.com/rest/api/3/group/bulk?startAt=10&maxResults=10",
 		},
@@ -885,8 +885,8 @@ func TestConstructURL(t *testing.T) {
 				EntityExternalID:      jira_adapter.Issue,
 			},
 			entity: jira.ValidEntityExternalIDs[jira_adapter.Issue],
-			cursor: &pagination.CompositeCursor[int64]{
-				Cursor: testutil.GenPtr[int64](10),
+			cursor: &pagination.CompositeCursor[string]{
+				Cursor: testutil.GenPtr("10"),
 			},
 			wantURL: "https://jira.com/rest/api/3/search?startAt=10&maxResults=10",
 		},
@@ -899,8 +899,8 @@ func TestConstructURL(t *testing.T) {
 				IssuesJQLFilter:       testutil.GenPtr("project=TEST"),
 			},
 			entity: jira.ValidEntityExternalIDs[jira_adapter.Issue],
-			cursor: &pagination.CompositeCursor[int64]{
-				Cursor: testutil.GenPtr[int64](10),
+			cursor: &pagination.CompositeCursor[string]{
+				Cursor: testutil.GenPtr("10"),
 			},
 			wantURL: "https://jira.com/rest/api/3/search?jql=project%3DTEST&startAt=10&maxResults=10",
 		},
@@ -912,10 +912,10 @@ func TestConstructURL(t *testing.T) {
 				EntityExternalID:      jira_adapter.GroupMember,
 			},
 			entity: jira.ValidEntityExternalIDs[jira_adapter.GroupMember],
-			cursor: &pagination.CompositeCursor[int64]{
-				Cursor:           testutil.GenPtr[int64](10),
+			cursor: &pagination.CompositeCursor[string]{
+				Cursor:           testutil.GenPtr("10"),
 				CollectionID:     testutil.GenPtr("1"),
-				CollectionCursor: testutil.GenPtr[int64](1),
+				CollectionCursor: testutil.GenPtr("1"),
 			},
 			wantURL: "https://jira.com/rest/api/3/group/member?groupId=1&startAt=10&maxResults=10",
 		},
@@ -927,9 +927,9 @@ func TestConstructURL(t *testing.T) {
 				EntityExternalID:      jira_adapter.GroupMember,
 			},
 			entity: jira.ValidEntityExternalIDs[jira_adapter.GroupMember],
-			cursor: &pagination.CompositeCursor[int64]{
-				Cursor:           testutil.GenPtr[int64](10),
-				CollectionCursor: testutil.GenPtr[int64](1),
+			cursor: &pagination.CompositeCursor[string]{
+				Cursor:           testutil.GenPtr("10"),
+				CollectionCursor: testutil.GenPtr("1"),
 			},
 			wantErr: errors.New("cursor.CollectionID must not be nil for GroupMember entity"),
 		},
@@ -941,8 +941,8 @@ func TestConstructURL(t *testing.T) {
 				EntityExternalID:      jira_adapter.Workspace,
 			},
 			entity: jira.ValidEntityExternalIDs[jira_adapter.Workspace],
-			cursor: &pagination.CompositeCursor[int64]{
-				Cursor: testutil.GenPtr[int64](10),
+			cursor: &pagination.CompositeCursor[string]{
+				Cursor: testutil.GenPtr("10"),
 			},
 			wantURL: "https://jira.com/rest/servicedeskapi/assets/workspace?startAt=10&maxResults=10",
 		},
@@ -955,10 +955,10 @@ func TestConstructURL(t *testing.T) {
 				AssetBaseURL:          testutil.GenPtr(jira.DefaultAssetBaseURL),
 			},
 			entity: jira.ValidEntityExternalIDs[jira_adapter.Object],
-			cursor: &pagination.CompositeCursor[int64]{
-				Cursor:           testutil.GenPtr[int64](10),
+			cursor: &pagination.CompositeCursor[string]{
+				Cursor:           testutil.GenPtr("10"),
 				CollectionID:     testutil.GenPtr("1"),
-				CollectionCursor: testutil.GenPtr[int64](1),
+				CollectionCursor: testutil.GenPtr("1"),
 			},
 			wantURL: `https://api.atlassian.com/jsm/assets/workspace/1/v1/object/aql?` +
 				`includeAttributes=true&startAt=10&maxResults=10`,
@@ -971,10 +971,10 @@ func TestConstructURL(t *testing.T) {
 				EntityExternalID:      jira_adapter.Object,
 			},
 			entity: jira.ValidEntityExternalIDs[jira_adapter.Object],
-			cursor: &pagination.CompositeCursor[int64]{
-				Cursor:           testutil.GenPtr[int64](10),
+			cursor: &pagination.CompositeCursor[string]{
+				Cursor:           testutil.GenPtr("10"),
 				CollectionID:     testutil.GenPtr("1"),
-				CollectionCursor: testutil.GenPtr[int64](1),
+				CollectionCursor: testutil.GenPtr("1"),
 			},
 			wantErr: errors.New("request.AssetBaseURL must not be nil for Object entity"),
 		},
@@ -986,9 +986,9 @@ func TestConstructURL(t *testing.T) {
 				EntityExternalID:      jira_adapter.Object,
 			},
 			entity: jira.ValidEntityExternalIDs[jira_adapter.Object],
-			cursor: &pagination.CompositeCursor[int64]{
-				Cursor:           testutil.GenPtr[int64](10),
-				CollectionCursor: testutil.GenPtr[int64](1),
+			cursor: &pagination.CompositeCursor[string]{
+				Cursor:           testutil.GenPtr("10"),
+				CollectionCursor: testutil.GenPtr("1"),
 			},
 			wantErr: errors.New("cursor.CollectionID must not be nil for Object entity"),
 		},
@@ -1121,8 +1121,8 @@ func (ts *TestSuite) TestGetPageUsers(t *testing.T) {
 				Objects: []map[string]any{
 					{"accountId": "1"},
 				},
-				NextCursor: &pagination.CompositeCursor[int64]{
-					Cursor: testutil.GenPtr(int64(1)),
+				NextCursor: &pagination.CompositeCursor[string]{
+					Cursor: testutil.GenPtr("1"),
 				},
 			},
 			wantErr: nil,
@@ -1135,7 +1135,7 @@ func (ts *TestSuite) TestGetPageUsers(t *testing.T) {
 				Username:              mockUsername,
 				Password:              mockPassword,
 				// The last user occurs on page 2.
-				Cursor:           &pagination.CompositeCursor[int64]{Cursor: testutil.GenPtr(int64(1))},
+				Cursor:           &pagination.CompositeCursor[string]{Cursor: testutil.GenPtr("1")},
 				PageSize:         int64(1),
 				EntityExternalID: externalEntityID,
 			},
@@ -1146,8 +1146,8 @@ func (ts *TestSuite) TestGetPageUsers(t *testing.T) {
 				},
 				// We've synced the last user but it's not possible for our code to know that.
 				// We still need to check if there are more results.
-				NextCursor: &pagination.CompositeCursor[int64]{
-					Cursor: testutil.GenPtr(int64(2)),
+				NextCursor: &pagination.CompositeCursor[string]{
+					Cursor: testutil.GenPtr("2"),
 				},
 			},
 			wantErr: nil,
@@ -1159,7 +1159,7 @@ func (ts *TestSuite) TestGetPageUsers(t *testing.T) {
 				BaseURL:               ts.server.URL,
 				Username:              mockUsername,
 				Password:              mockPassword,
-				Cursor:                &pagination.CompositeCursor[int64]{Cursor: testutil.GenPtr(int64(2))},
+				Cursor:                &pagination.CompositeCursor[string]{Cursor: testutil.GenPtr("2")},
 				PageSize:              int64(1),
 				EntityExternalID:      externalEntityID,
 			},
@@ -1180,10 +1180,10 @@ func (ts *TestSuite) TestGetPageUsers(t *testing.T) {
 				Password:              mockPassword,
 				// CollectionID and CollectionCursor fields should only ever be present if we're syncing GroupMembers.
 				// This test ensures we throw an error if we do see these fields present and we're syncing a non GroupMember entity.
-				Cursor: &pagination.CompositeCursor[int64]{
-					Cursor:           testutil.GenPtr(int64(2)),
+				Cursor: &pagination.CompositeCursor[string]{
+					Cursor:           testutil.GenPtr("2"),
 					CollectionID:     testutil.GenPtr("1"),
-					CollectionCursor: testutil.GenPtr(int64(1)),
+					CollectionCursor: testutil.GenPtr("1"),
 				},
 				PageSize:         int64(1),
 				EntityExternalID: externalEntityID,
@@ -1254,8 +1254,8 @@ func (ts *TestSuite) TestGetPageIssues(t *testing.T) {
 				Objects: []map[string]any{
 					{"id": "1"},
 				},
-				NextCursor: &pagination.CompositeCursor[int64]{
-					Cursor: testutil.GenPtr(int64(1)),
+				NextCursor: &pagination.CompositeCursor[string]{
+					Cursor: testutil.GenPtr("1"),
 				},
 			},
 			wantErr: nil,
@@ -1268,7 +1268,7 @@ func (ts *TestSuite) TestGetPageIssues(t *testing.T) {
 				Username:              mockUsername,
 				Password:              mockPassword,
 				// The last issue occurs on page 2.
-				Cursor:           &pagination.CompositeCursor[int64]{Cursor: testutil.GenPtr(int64(1))},
+				Cursor:           &pagination.CompositeCursor[string]{Cursor: testutil.GenPtr("1")},
 				PageSize:         int64(1),
 				EntityExternalID: externalEntityID,
 			},
@@ -1279,8 +1279,8 @@ func (ts *TestSuite) TestGetPageIssues(t *testing.T) {
 				},
 				// We've synced the last issue but it's not possible for our code to know that.
 				// We still need to check if there are more results.
-				NextCursor: &pagination.CompositeCursor[int64]{
-					Cursor: testutil.GenPtr(int64(2)),
+				NextCursor: &pagination.CompositeCursor[string]{
+					Cursor: testutil.GenPtr("2"),
 				},
 			},
 			wantErr: nil,
@@ -1292,7 +1292,7 @@ func (ts *TestSuite) TestGetPageIssues(t *testing.T) {
 				BaseURL:               ts.server.URL,
 				Username:              mockUsername,
 				Password:              mockPassword,
-				Cursor:                &pagination.CompositeCursor[int64]{Cursor: testutil.GenPtr(int64(2))},
+				Cursor:                &pagination.CompositeCursor[string]{Cursor: testutil.GenPtr("2")},
 				PageSize:              int64(1),
 				EntityExternalID:      externalEntityID,
 			},
@@ -1397,8 +1397,8 @@ func (ts *TestSuite) TestGetPageGroups(t *testing.T) {
 				Objects: []map[string]any{
 					{"groupId": "group1", "createdAt": "2023-09-29"},
 				},
-				NextCursor: &pagination.CompositeCursor[int64]{
-					Cursor: testutil.GenPtr(int64(1)),
+				NextCursor: &pagination.CompositeCursor[string]{
+					Cursor: testutil.GenPtr("1"),
 				},
 			},
 			wantErr: nil,
@@ -1410,7 +1410,7 @@ func (ts *TestSuite) TestGetPageGroups(t *testing.T) {
 				BaseURL:               ts.server.URL,
 				Username:              mockUsername,
 				Password:              mockPassword,
-				Cursor:                &pagination.CompositeCursor[int64]{Cursor: testutil.GenPtr(int64(1))},
+				Cursor:                &pagination.CompositeCursor[string]{Cursor: testutil.GenPtr("1")},
 				PageSize:              int64(1),
 				EntityExternalID:      externalEntityID,
 			},
@@ -1419,8 +1419,8 @@ func (ts *TestSuite) TestGetPageGroups(t *testing.T) {
 				Objects: []map[string]any{
 					{"groupId": "group2", "createdAt": "2023-09-29T11:17:42.000Z0700"},
 				},
-				NextCursor: &pagination.CompositeCursor[int64]{
-					Cursor: testutil.GenPtr(int64(2)),
+				NextCursor: &pagination.CompositeCursor[string]{
+					Cursor: testutil.GenPtr("2"),
 				},
 			},
 			wantErr: nil,
@@ -1433,7 +1433,7 @@ func (ts *TestSuite) TestGetPageGroups(t *testing.T) {
 				Username:              mockUsername,
 				Password:              mockPassword,
 				// The last group occurs on page 3.
-				Cursor:           &pagination.CompositeCursor[int64]{Cursor: testutil.GenPtr(int64(2))},
+				Cursor:           &pagination.CompositeCursor[string]{Cursor: testutil.GenPtr("2")},
 				PageSize:         int64(1),
 				EntityExternalID: externalEntityID,
 			},
@@ -1488,14 +1488,14 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 					{"id": "group1-member1", "accountId": "member1", "groupId": "group1"},
 					{"id": "group1-member2", "accountId": "member2", "groupId": "group1"},
 				},
-				NextCursor: &pagination.CompositeCursor[int64]{
+				NextCursor: &pagination.CompositeCursor[string]{
 					// Since the page size = 10, and group1 only has 2 members, we should not have a
 					// next cursor. We can sync all group members for group1 in one page.
 					Cursor: nil,
 					// CollectionID is the ID of the group that we're currently/just finished syncing.
 					CollectionID: testutil.GenPtr("group1"),
 					// CollectionCursor is the cursor of the NEXT group that we're going to sync.
-					CollectionCursor: testutil.GenPtr(int64(1)),
+					CollectionCursor: testutil.GenPtr("1"),
 				},
 			},
 			wantErr: nil,
@@ -1515,14 +1515,14 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 				Objects: []map[string]any{
 					{"id": "group1-member1", "accountId": "member1", "groupId": "group1"},
 				},
-				NextCursor: &pagination.CompositeCursor[int64]{
+				NextCursor: &pagination.CompositeCursor[string]{
 					// Since the page size = 1, and group1 has 2 members, we should have a
 					// next cursor.
-					Cursor: testutil.GenPtr(int64(1)),
+					Cursor: testutil.GenPtr("1"),
 					// CollectionID is the ID of the group that we're currently/just finished syncing.
 					CollectionID: testutil.GenPtr("group1"),
 					// CollectionCursor is the cursor of the NEXT group that we're going to sync.
-					CollectionCursor: testutil.GenPtr(int64(1)),
+					CollectionCursor: testutil.GenPtr("1"),
 				},
 			},
 			wantErr: nil,
@@ -1535,10 +1535,10 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 				Username:              mockUsername,
 				Password:              mockPassword,
 				PageSize:              int64(1),
-				Cursor: &pagination.CompositeCursor[int64]{
-					Cursor:           testutil.GenPtr(int64(1)),
+				Cursor: &pagination.CompositeCursor[string]{
+					Cursor:           testutil.GenPtr("1"),
 					CollectionID:     testutil.GenPtr("group1"),
-					CollectionCursor: testutil.GenPtr(int64(1)),
+					CollectionCursor: testutil.GenPtr("1"),
 				},
 				EntityExternalID: externalEntityID,
 			},
@@ -1547,13 +1547,13 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 				Objects: []map[string]any{
 					{"id": "group1-member2", "accountId": "member2", "groupId": "group1"},
 				},
-				NextCursor: &pagination.CompositeCursor[int64]{
+				NextCursor: &pagination.CompositeCursor[string]{
 					// This is the last group member of this group. There should not be a next cursor.
 					Cursor: nil,
 					// CollectionID is the ID of the group that we're currently/just finished syncing.
 					CollectionID: testutil.GenPtr("group1"),
 					// CollectionCursor is the cursor of the NEXT group that we're going to sync.
-					CollectionCursor: testutil.GenPtr(int64(1)),
+					CollectionCursor: testutil.GenPtr("1"),
 				},
 			},
 			wantErr: nil,
@@ -1566,22 +1566,22 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 				Username:              mockUsername,
 				Password:              mockPassword,
 				PageSize:              int64(1),
-				Cursor: &pagination.CompositeCursor[int64]{
+				Cursor: &pagination.CompositeCursor[string]{
 					CollectionID:     testutil.GenPtr("group1"),
-					CollectionCursor: testutil.GenPtr(int64(1)),
+					CollectionCursor: testutil.GenPtr("1"),
 				},
 				EntityExternalID: externalEntityID,
 			},
 			wantResponse: &jira_adapter.Response{
 				StatusCode: 200,
 				Objects:    []map[string]any{},
-				NextCursor: &pagination.CompositeCursor[int64]{
+				NextCursor: &pagination.CompositeCursor[string]{
 					// Group2 has no members. There should be no next cursor.
 					Cursor: nil,
 					// CollectionID is the ID of the group that we're currently/just finished syncing.
 					CollectionID: testutil.GenPtr("group2"),
 					// CollectionCursor is the cursor of the NEXT group that we're going to sync.
-					CollectionCursor: testutil.GenPtr(int64(2)),
+					CollectionCursor: testutil.GenPtr("2"),
 				},
 			},
 			wantErr: nil,
@@ -1594,9 +1594,9 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 				Username:              mockUsername,
 				Password:              mockPassword,
 				PageSize:              int64(1),
-				Cursor: &pagination.CompositeCursor[int64]{
+				Cursor: &pagination.CompositeCursor[string]{
 					CollectionID:     testutil.GenPtr("group2"),
-					CollectionCursor: testutil.GenPtr(int64(2)),
+					CollectionCursor: testutil.GenPtr("2"),
 				},
 				EntityExternalID: externalEntityID,
 			},
@@ -1605,9 +1605,9 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 				Objects: []map[string]any{
 					{"id": "group3-member3", "accountId": "member3", "groupId": "group3"},
 				},
-				NextCursor: &pagination.CompositeCursor[int64]{
+				NextCursor: &pagination.CompositeCursor[string]{
 					// Group3 has two members. We should have a next cursor.
-					Cursor: testutil.GenPtr(int64(1)),
+					Cursor: testutil.GenPtr("1"),
 					// CollectionID is the ID of the group that we're currently/just finished syncing.
 					CollectionID: testutil.GenPtr("group3"),
 					// Group3 is the last group. There should be no next group cursor.
@@ -1624,8 +1624,8 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 				Username:              mockUsername,
 				Password:              mockPassword,
 				PageSize:              int64(1),
-				Cursor: &pagination.CompositeCursor[int64]{
-					Cursor:           testutil.GenPtr(int64(1)),
+				Cursor: &pagination.CompositeCursor[string]{
+					Cursor:           testutil.GenPtr("1"),
 					CollectionID:     testutil.GenPtr("group3"),
 					CollectionCursor: nil,
 				},
@@ -1653,8 +1653,8 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 				Username:              mockUsername,
 				Password:              mockPassword,
 				PageSize:              int64(1),
-				Cursor: &pagination.CompositeCursor[int64]{
-					CollectionCursor: testutil.GenPtr(int64(99)),
+				Cursor: &pagination.CompositeCursor[string]{
+					CollectionCursor: testutil.GenPtr("99"),
 				},
 				EntityExternalID: externalEntityID,
 			},
@@ -1671,8 +1671,8 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 				Username:              mockUsername,
 				Password:              mockPassword,
 				PageSize:              int64(1),
-				Cursor: &pagination.CompositeCursor[int64]{
-					CollectionCursor: testutil.GenPtr(int64(100)),
+				Cursor: &pagination.CompositeCursor[string]{
+					CollectionCursor: testutil.GenPtr("100"),
 				},
 				EntityExternalID: externalEntityID,
 			},
@@ -1690,8 +1690,8 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 				Username:              mockUsername,
 				Password:              mockPassword,
 				PageSize:              int64(1),
-				Cursor: &pagination.CompositeCursor[int64]{
-					CollectionCursor: testutil.GenPtr(int64(101)),
+				Cursor: &pagination.CompositeCursor[string]{
+					CollectionCursor: testutil.GenPtr("101"),
 				},
 				EntityExternalID: externalEntityID,
 			},
@@ -1709,10 +1709,10 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 				Username:              mockUsername,
 				Password:              mockPassword,
 				PageSize:              int64(1),
-				Cursor: &pagination.CompositeCursor[int64]{
-					Cursor:           testutil.GenPtr(int64(99)),
+				Cursor: &pagination.CompositeCursor[string]{
+					Cursor:           testutil.GenPtr("99"),
 					CollectionID:     testutil.GenPtr("group1"),
-					CollectionCursor: testutil.GenPtr(int64(3)),
+					CollectionCursor: testutil.GenPtr("3"),
 				},
 				EntityExternalID: externalEntityID,
 			},
@@ -1731,11 +1731,11 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 				Username:              mockUsername,
 				Password:              mockPassword,
 				PageSize:              int64(1),
-				Cursor: &pagination.CompositeCursor[int64]{
+				Cursor: &pagination.CompositeCursor[string]{
 					// Need to set Cursor here otherwise the code will think we're syncing the first page,
 					// which doesn't require a group id.
-					Cursor:           testutil.GenPtr(int64(1)),
-					CollectionCursor: testutil.GenPtr(int64(1)),
+					Cursor:           testutil.GenPtr("1"),
+					CollectionCursor: testutil.GenPtr("1"),
 				},
 				EntityExternalID: externalEntityID,
 			},
@@ -1775,10 +1775,10 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 				Username:              mockUsername,
 				Password:              mockPassword,
 				PageSize:              int64(1),
-				Cursor: &pagination.CompositeCursor[int64]{
-					Cursor:           testutil.GenPtr(int64(100)),
+				Cursor: &pagination.CompositeCursor[string]{
+					Cursor:           testutil.GenPtr("100"),
 					CollectionID:     testutil.GenPtr("group1"),
-					CollectionCursor: testutil.GenPtr(int64(1)),
+					CollectionCursor: testutil.GenPtr("1"),
 				},
 				EntityExternalID: externalEntityID,
 			},
@@ -1851,8 +1851,8 @@ func (ts *TestSuite) TestGetPageWorkspaces(t *testing.T) {
 				Objects: []map[string]any{
 					{"workspaceId": "1"},
 				},
-				NextCursor: &pagination.CompositeCursor[int64]{
-					Cursor: testutil.GenPtr[int64](1),
+				NextCursor: &pagination.CompositeCursor[string]{
+					Cursor: testutil.GenPtr("1"),
 				},
 			},
 			wantErr: nil,
@@ -1865,7 +1865,7 @@ func (ts *TestSuite) TestGetPageWorkspaces(t *testing.T) {
 				Username:              mockUsername,
 				Password:              mockPassword,
 				// The last workspace occurs on page 2.
-				Cursor:           &pagination.CompositeCursor[int64]{Cursor: testutil.GenPtr[int64](1)},
+				Cursor:           &pagination.CompositeCursor[string]{Cursor: testutil.GenPtr("1")},
 				PageSize:         int64(1),
 				EntityExternalID: externalEntityID,
 			},
@@ -1924,12 +1924,12 @@ func (ts *TestSuite) TestGetPageObjects(t *testing.T) {
 					{"globalId": "2"},
 					{"globalId": "3"},
 				},
-				NextCursor: &pagination.CompositeCursor[int64]{
+				NextCursor: &pagination.CompositeCursor[string]{
 					// "1" is the collection (i.e. Workspace) ID that we just synced. Since the request
 					// did not specify the cursor, this was the first workspace ID. Now that we've completed
 					// the sync for all assets of this workspace, the next collection cursor should be 1 (up from 0).
 					CollectionID:     testutil.GenPtr("1"),
-					CollectionCursor: testutil.GenPtr[int64](1),
+					CollectionCursor: testutil.GenPtr("1"),
 				},
 			},
 			wantErr: nil,
@@ -1952,9 +1952,9 @@ func (ts *TestSuite) TestGetPageObjects(t *testing.T) {
 					{"globalId": "1"},
 					{"globalId": "2"},
 				},
-				NextCursor: &pagination.CompositeCursor[int64]{
+				NextCursor: &pagination.CompositeCursor[string]{
 					CollectionID:     testutil.GenPtr("1"),
-					CollectionCursor: testutil.GenPtr[int64](1),
+					CollectionCursor: testutil.GenPtr("1"),
 				},
 			},
 			wantErr: nil,
