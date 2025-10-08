@@ -68,8 +68,13 @@ func (a *Adapter) RequestPageFromDatasource(
 	}
 
 	if request.Config != nil {
+		// TODO: Remove this after fully deprecating the legacy Issue endpoint.
+		if request.Config.EnhancedIssueSearch && request.Entity.ExternalId == Issue {
+			request.Entity.ExternalId = EnhancedIssue
+		}
+
 		switch request.Entity.ExternalId {
-		case Issue:
+		case Issue, EnhancedIssue:
 			jiraReq.IssuesJQLFilter = request.Config.IssuesJQLFilter
 		case Object:
 			jiraReq.ObjectsQLQuery = request.Config.ObjectsQLQuery
@@ -83,7 +88,7 @@ func (a *Adapter) RequestPageFromDatasource(
 	}
 
 	// Unmarshal the current cursor.
-	cursor, err := pagination.UnmarshalCursor[int64](request.Cursor)
+	cursor, err := pagination.UnmarshalCursor[string](request.Cursor)
 	if err != nil {
 		return framework.NewGetPageResponseError(err)
 	}

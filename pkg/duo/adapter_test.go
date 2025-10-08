@@ -285,7 +285,7 @@ func TestAdapterGetPage(t *testing.T) {
 				PageSize: 3,
 			},
 			inputRequestCursor: &pagination.CompositeCursor[string]{
-				Cursor: testutil.GenPtr[string]("BROKEN"),
+				Cursor: testutil.GenPtr("BROKEN"),
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
