@@ -71,6 +71,7 @@ func (a *Adapter) RequestPageFromDatasource(
 		// TODO: Remove this after fully deprecating the legacy Issue endpoint.
 		if request.Config.EnhancedIssueSearch && request.Entity.ExternalId == Issue {
 			request.Entity.ExternalId = EnhancedIssue
+			jiraReq.EntityExternalID = EnhancedIssue
 		}
 
 		switch request.Entity.ExternalId {
