@@ -16,7 +16,7 @@ import (
 
 	framework "github.com/sgnl-ai/adapter-framework"
 	"github.com/sgnl-ai/adapter-framework/pkg/connector"
-	ldap_adapter "github.com/sgnl-ai/adapters/pkg/ldap"
+	ldap_adapter "github.com/sgnl-ai/adapters/pkg/ldap/v1.0.0"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 )
 

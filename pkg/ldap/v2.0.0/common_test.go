@@ -5,7 +5,7 @@ package ldap_test
 
 import (
 	framework "github.com/sgnl-ai/adapter-framework"
-	ldap_adapter "github.com/sgnl-ai/adapters/pkg/ldap"
+	ldap_adapter "github.com/sgnl-ai/adapters/pkg/ldap/v2.0.0"
 )
 
 var (
