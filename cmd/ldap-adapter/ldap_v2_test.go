@@ -20,62 +20,12 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-const (
-	attrUID = "uid"
-
-	// Seed test user using ldapadd.
-	ldifPath = "testdata/test.ldif"
-)
-
-func TestMainFunction_NoPanic(t *testing.T) {
-	t.Setenv("LDAP_ADAPTER_CONNECTOR_SERVICE_URL", "localhost:1234")
-
-	// Use t.TempDir for temporary directory
-	tmpDir := t.TempDir()
-	authTokensPath := tmpDir + "/fake-auth-tokens"
-
-	// Set required env vars using t.Setenv
-	t.Setenv("AUTH_TOKENS_PATH", authTokensPath)
-
-	// Create the dummy file so the watcher does not fail
-	f, err := os.Create(authTokensPath)
-	if err != nil {
-		t.Fatalf("failed to create dummy auth tokens file: %v", err)
-	}
-
-	f.Close()
-
-	// Run main in a goroutine and recover from panic
-	panicChan := make(chan interface{}, 1)
-
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				panicChan <- r
-			}
-
-			close(panicChan)
-		}()
-
-		main()
-	}()
-
-	// Wait briefly to see if panic occurs (service will block on Serve)
-	select {
-	case p := <-panicChan:
-		if p != nil {
-			t.Fatalf("main panicked: %v", p)
-		}
-	case <-time.After(100 * time.Millisecond): // 100ms, Success: no panic in short time
-	}
-}
-
-// TestLDAPAdapter_GetPage_WithRealLDAP tests the LDAP adapter end-to-end with a real OpenLDAP instance.
+// TestLDAPAdapter_GetPage_WithRealLDAP_v2 tests the LDAP-v2.0.0 adapter end-to-end with a real OpenLDAP instance.
 //
 // Given a running OpenLDAP server with a seeded user,
 // When the LDAP adapter GetPage is called for that user entity,
 // Then the adapter should return the user in the results.
-func TestGivenOpenLDAPWithUser_WhenGetPageIsCalled_ThenUserIsReturned(t *testing.T) {
+func TestGivenOpenLDAPWithUser_WhenGetPageIsCalled_ThenUserIsReturned_v2(t *testing.T) {
 	t.Setenv("LDAP_ADAPTER_CONNECTOR_SERVICE_URL", "localhost:1234")
 
 	// Arrange
@@ -199,7 +149,7 @@ func TestGivenOpenLDAPWithUser_WhenGetPageIsCalled_ThenUserIsReturned(t *testing
 	}
 
 	// Set up the adapter port
-	adapterPort := 54321
+	adapterPort := 54324
 	tmpDir := t.TempDir()
 	authTokensPath := tmpDir + "/fake-auth-tokens"
 
@@ -243,7 +193,7 @@ func TestGivenOpenLDAPWithUser_WhenGetPageIsCalled_ThenUserIsReturned(t *testing
 		Datasource: &api_adapter_v1.DatasourceConfig{
 			Id:      "test-ldap",
 			Address: fmt.Sprintf("%s:%s", ldapHost, ldapPort.Port()),
-			Type:    "LDAP-1.0.0",
+			Type:    "LDAP-2.0.0",
 			Config:  configBytes,
 			Auth: &api_adapter_v1.DatasourceAuthCredentials{
 				AuthMechanism: &api_adapter_v1.DatasourceAuthCredentials_Basic_{
@@ -312,12 +262,12 @@ func TestGivenOpenLDAPWithUser_WhenGetPageIsCalled_ThenUserIsReturned(t *testing
 	}
 }
 
-// TestGivenOpenLDAPWithMultipleUsers_WhenPagedGetPageIsCalled_ThenAllUsersAreReturnedAcrossPages
+// TestGivenOpenLDAPWithMultipleUsers_WhenPagedGetPageIsCalled_ThenAllUsersAreReturnedAcrossPages_v2
 //
 // Given a running OpenLDAP server with three users,
 // When the LDAP adapter GetPage is called with a page size of 2,
 // Then the adapter should return two users on the first page and the remaining user on the next page.
-func TestGivenOpenLDAPWithMultipleUsers_WhenPagedGetPageIsCalled_ThenAllUsersAreReturnedAcrossPages(t *testing.T) {
+func TestGivenOpenLDAPWithMultipleUsers_WhenPagedGetPageIsCalled_ThenAllUsersAreReturnedAcrossPages_v2(t *testing.T) {
 	t.Setenv("LDAP_ADAPTER_CONNECTOR_SERVICE_URL", "localhost:1234")
 
 	// Arrange
@@ -412,7 +362,7 @@ func TestGivenOpenLDAPWithMultipleUsers_WhenPagedGetPageIsCalled_ThenAllUsersAre
 	time.Sleep(500 * time.Millisecond)
 
 	// Set up the adapter port
-	adapterPort := 54322
+	adapterPort := 54325
 	tmpDir := t.TempDir()
 	authTokensPath := tmpDir + "/fake-auth-tokens"
 
@@ -454,7 +404,7 @@ func TestGivenOpenLDAPWithMultipleUsers_WhenPagedGetPageIsCalled_ThenAllUsersAre
 		Datasource: &api_adapter_v1.DatasourceConfig{
 			Id:      "test-ldap",
 			Address: fmt.Sprintf("%s:%s", ldapHost, ldapPort.Port()),
-			Type:    "LDAP-1.0.0",
+			Type:    "LDAP-2.0.0",
 			Config:  configBytes,
 			Auth: &api_adapter_v1.DatasourceAuthCredentials{
 				AuthMechanism: &api_adapter_v1.DatasourceAuthCredentials_Basic_{
@@ -554,7 +504,7 @@ func TestGivenOpenLDAPWithMultipleUsers_WhenPagedGetPageIsCalled_ThenAllUsersAre
 	}
 }
 
-func TestGivenOpenLDAPWithGroupMembers_WhenGetGroupMemberPageIsCalled_ThenGroupDNsAreReturned(t *testing.T) {
+func TestGivenOpenLDAPWithGroupMembers_WhenGetGroupMemberPageIsCalled_ThenGroupDNsAreReturned_v2(t *testing.T) {
 	t.Setenv("LDAP_ADAPTER_CONNECTOR_SERVICE_URL", "localhost:1234")
 
 	// Arrange
@@ -649,7 +599,7 @@ func TestGivenOpenLDAPWithGroupMembers_WhenGetGroupMemberPageIsCalled_ThenGroupD
 	time.Sleep(500 * time.Millisecond)
 
 	// Set up the adapter port
-	adapterPort := 54323
+	adapterPort := 54326
 	tmpDir := t.TempDir()
 	authTokensPath := tmpDir + "/fake-auth-tokens"
 
@@ -700,7 +650,7 @@ func TestGivenOpenLDAPWithGroupMembers_WhenGetGroupMemberPageIsCalled_ThenGroupD
 		Datasource: &api_adapter_v1.DatasourceConfig{
 			Id:      "test-ldap",
 			Address: fmt.Sprintf("%s:%s", ldapHost, ldapPort.Port()),
-			Type:    "LDAP-1.0.0",
+			Type:    "LDAP-2.0.0",
 			Config:  configBytes,
 			Auth: &api_adapter_v1.DatasourceAuthCredentials{
 				AuthMechanism: &api_adapter_v1.DatasourceAuthCredentials_Basic_{

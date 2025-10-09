@@ -20,7 +20,7 @@ import (
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	"github.com/sgnl-ai/adapter-framework/pkg/connector"
 	customerror "github.com/sgnl-ai/adapters/pkg/errors"
-	ldap "github.com/sgnl-ai/adapters/pkg/ldap"
+	ldap "github.com/sgnl-ai/adapters/pkg/ldap/v2.0.0"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

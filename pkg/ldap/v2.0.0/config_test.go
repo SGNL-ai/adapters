@@ -9,7 +9,7 @@ import (
 	"reflect"
 	"testing"
 
-	ldap "github.com/sgnl-ai/adapters/pkg/ldap"
+	ldap "github.com/sgnl-ai/adapters/pkg/ldap/v2.0.0"
 )
 
 func TestConfig_Validate(t *testing.T) {

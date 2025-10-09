@@ -9,7 +9,7 @@ import (
 
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
-	ldap_adapter "github.com/sgnl-ai/adapters/pkg/ldap"
+	ldap_adapter "github.com/sgnl-ai/adapters/pkg/ldap/v1.0.0"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 )
 
@@ -351,6 +351,48 @@ func TestValidateGetPageRequest(t *testing.T) {
 				Message: "Entity configuration entityConfig.Group is missing for " +
 					"entity specified in entityConfig.GroupMember.memberOf.",
 				Code: api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
+			},
+		},
+		"invalid_entityConfig_missing_collectioID_in_query": {
+			request: &framework.Request[ldap_adapter.Config]{
+				Address: mockLDAPAddr,
+				Auth:    validAuthCredentials,
+				Entity: framework.EntityConfig{
+					ExternalId: "GroupMember",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "dn",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+							UniqueId:   true,
+						},
+						{
+							ExternalId: "objectGUID",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+					},
+				},
+				Config: &ldap_adapter.Config{
+					BaseDN: "dc=corp,dc=example,dc=io",
+					EntityConfigMap: map[string]*ldap_adapter.EntityConfig{
+						"Group": {
+							Query: "(&(objectClass=group))",
+						},
+						"GroupMember": {
+							MemberOf:                  testutil.GenPtr("Group"),
+							Query:                     "(memberof=)",
+							MemberUniqueIDAttribute:   testutil.GenPtr("memberDistingushedName"),
+							MemberOfUniqueIDAttribute: testutil.GenPtr("memberOfDistingushedName"),
+						},
+					},
+				},
+				Ordered:  true,
+				PageSize: 250,
+			},
+			wantErr: &framework.Error{
+				Message: "{{CollectionId}} is missing in entityConfig.GroupMember.query for Entity configuration.",
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
 			},
 		},
 		"invalid_entityConfig_missing_memberUniqueIDAttribute": {
