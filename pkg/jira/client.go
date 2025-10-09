@@ -35,7 +35,7 @@ type Request struct {
 	// Cursor identifies the first object of the page to return, as returned by
 	// the last request for the entity.
 	// nil in the request for the first page.
-	Cursor *pagination.CompositeCursor[int64]
+	Cursor *pagination.CompositeCursor[string]
 
 	// IssuesJQLFilter is a JQL filter to apply to the request.
 	// This is only used when EntityExternalID = "Issue".
@@ -68,5 +68,5 @@ type Response struct {
 
 	// NextCursor is the cursor that identifies the first object of the next page.
 	// nil if this is the last page in this full sync.
-	NextCursor *pagination.CompositeCursor[int64]
+	NextCursor *pagination.CompositeCursor[string]
 }
