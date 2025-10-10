@@ -10,7 +10,7 @@ import (
 
 	ldap_v3 "github.com/go-ldap/ldap/v3"
 	framework "github.com/sgnl-ai/adapter-framework"
-	ldap_adapter "github.com/sgnl-ai/adapters/pkg/ldap"
+	ldap_adapter "github.com/sgnl-ai/adapters/pkg/ldap/v1.0.0"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 )

@@ -21,12 +21,17 @@ import (
 )
 
 const (
-	User        string = "User"
-	Issue       string = "Issue"
-	Group       string = "Group"
-	GroupMember string = "GroupMember"
-	Workspace   string = "Workspace"
-	Object      string = "Object"
+	User  string = "User"
+	Issue string = "Issue"
+	// TODO: Remove this after fully deprecating the legacy Issue endpoint.
+	EnhancedIssue string = "EnhancedIssue"
+	Group         string = "Group"
+	GroupMember   string = "GroupMember"
+	Workspace     string = "Workspace"
+	Object        string = "Object"
+
+	isLastFieldName     = "isLast"
+	nextCursorFieldName = "nextPageToken"
 )
 
 var EntityIDToParentCollectionID = map[string]string{
@@ -62,6 +67,20 @@ var (
 			endpoint:               "search",
 			parseResponse:          ParseIssuesResponse,
 		},
+		// EnhancedIssue is a temporary mapping type that is set implicitly based on the
+		// EnhancedIssueSearch config setting. This will be removed with that setting eventually and we'll
+		// remove this mapping.
+		//
+		// While it should be possible to specify this EnhancedIssue external entity ID from the UI, this is not
+		// recommended (instead set the EnhancedIssueSearch config setting), as this will not be backwards compatible
+		// once this is removed.
+		//
+		// TODO: Remove this after fully deprecating the legacy Issue endpoint.
+		EnhancedIssue: {
+			uniqueIDAttrExternalID: "id",
+			endpoint:               "search/jql",
+			parseResponse:          ParseEnhancedIssuesResponse,
+		},
 		Group: {
 			uniqueIDAttrExternalID: "groupId",
 			endpoint:               "group/bulk",
@@ -88,9 +107,9 @@ var (
 )
 
 type responseParser func(
-	body []byte, pageSize int64, cursor int64,
+	body []byte, pageSize int64, cursor string,
 ) (
-	objects []map[string]any, nextCursor *int64, err *framework.Error,
+	objects []map[string]any, nextCursor *string, err *framework.Error,
 )
 
 // Entity contains entity specific information, such as the entity's unique ID attribute and the
@@ -226,7 +245,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		return nil, frameworkErr
 	}
 
-	response.NextCursor = &pagination.CompositeCursor[int64]{
+	response.NextCursor = &pagination.CompositeCursor[string]{
 		Cursor: nextCursor,
 	}
 
@@ -287,16 +306,16 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 // this is the last page and it's empty.
 func (d *Datasource) constructCursor(
 	ctx context.Context, request *Request,
-) (*pagination.CompositeCursor[int64], bool, *framework.Error) {
+) (*pagination.CompositeCursor[string], bool, *framework.Error) {
 	cursor := request.Cursor
 
 	// nolint:nestif
 	if cursor == nil || cursor.Cursor == nil {
-		var zero int64
+		zero := "0"
 
 		if parentCollectionEntityID, hasParentCollection :=
 			EntityIDToParentCollectionID[request.EntityExternalID]; hasParentCollection {
-			var collectionCursor *int64
+			var collectionCursor *string
 			if cursor != nil {
 				collectionCursor = cursor.CollectionCursor
 			}
@@ -313,7 +332,7 @@ func (d *Datasource) constructCursor(
 				Username:              request.Username,
 				Password:              request.Password,
 				PageSize:              1,
-				Cursor:                &pagination.CompositeCursor[int64]{Cursor: collectionCursor},
+				Cursor:                &pagination.CompositeCursor[string]{Cursor: collectionCursor},
 				EntityExternalID:      parentCollectionEntityID,
 				RequestTimeoutSeconds: request.RequestTimeoutSeconds,
 			}
@@ -350,7 +369,7 @@ func (d *Datasource) constructCursor(
 				}
 			}
 
-			cursor = &pagination.CompositeCursor[int64]{
+			cursor = &pagination.CompositeCursor[string]{
 				CollectionID: &firstCollectionID,
 				Cursor:       &zero,
 			}
@@ -362,7 +381,7 @@ func (d *Datasource) constructCursor(
 			}
 		} else {
 			// The request is for the first page, initialize the cursor.
-			cursor = &pagination.CompositeCursor[int64]{
+			cursor = &pagination.CompositeCursor[string]{
 				Cursor: &zero,
 			}
 		}
@@ -372,8 +391,8 @@ func (d *Datasource) constructCursor(
 }
 
 func ParseUsersResponse(
-	body []byte, pageSize int64, cursor int64,
-) (objects []map[string]any, nextCursor *int64, err *framework.Error) {
+	body []byte, pageSize int64, cursor string,
+) (objects []map[string]any, nextCursor *string, err *framework.Error) {
 	// Users response contains a list of User objects: []User.
 	unmarshalErr := json.Unmarshal(body, &objects)
 	if unmarshalErr != nil {
@@ -383,14 +402,33 @@ func ParseUsersResponse(
 		}
 	}
 
-	nextCursor = pagination.GetNextCursorFromPageSize(len(objects), pageSize, cursor)
+	cursorInt, convErr := strconv.ParseInt(cursor, 10, 64)
+	if convErr != nil {
+		return nil, nil, &framework.Error{
+			Message: fmt.Sprintf(
+				"Failed to parse cursor as an int (%s): %s.",
+				cursor,
+				convErr.Error(),
+			),
+			Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}
+	}
+
+	nextCursorInt := pagination.GetNextCursorFromPageSize(len(objects), pageSize, cursorInt)
+
+	if nextCursorInt != nil {
+		tmp := strconv.FormatInt(*nextCursorInt, 10)
+		nextCursor = &tmp
+	}
 
 	return objects, nextCursor, nil
 }
 
+// TODO: Until we fully deprecate the legacy issue search endpoint, any changes to this func should be copied to
+// ParseEnhancedIssuesResponse.
 func ParseIssuesResponse(
-	body []byte, pageSize int64, cursor int64,
-) (objects []map[string]any, nextCursor *int64, err *framework.Error) {
+	body []byte, pageSize int64, cursor string,
+) (objects []map[string]any, nextCursor *string, err *framework.Error) {
 	// Issues response contains a single object map, with the top level field "issues": {"issues": []Issue, ...}.
 	// First unmarshal into single object, then extract the "issues" field.
 	var data map[string]any
@@ -427,32 +465,136 @@ func ParseIssuesResponse(
 		return nil, nil, parserErr
 	}
 
-	nextCursor = pagination.GetNextCursorFromPageSize(len(objects), pageSize, cursor)
+	cursorInt, convErr := strconv.ParseInt(cursor, 10, 64)
+	if convErr != nil {
+		return nil, nil, &framework.Error{
+			Message: fmt.Sprintf(
+				"Failed to parse cursor as an int (%s): %s.",
+				cursor,
+				convErr.Error(),
+			),
+			Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}
+	}
+
+	nextCursorInt := pagination.GetNextCursorFromPageSize(len(objects), pageSize, cursorInt)
+
+	if nextCursorInt != nil {
+		tmp := strconv.FormatInt(*nextCursorInt, 10)
+		nextCursor = &tmp
+	}
 
 	return objects, nextCursor, nil
 }
 
+func ParseEnhancedIssuesResponse(
+	body []byte, _ int64, _ string,
+) (objects []map[string]any, nextCursor *string, err *framework.Error) {
+	// Issues response contains a single object map, with the top level field "issues": {"issues": []Issue, ...}.
+	// First unmarshal into single object, then extract the "issues" field.
+	var data map[string]any
+
+	unmarshalErr := json.Unmarshal(body, &data)
+	if unmarshalErr != nil {
+		return nil, nil, &framework.Error{
+			Message: fmt.Sprintf("Failed to unmarshal Jira issues response: %v.", unmarshalErr),
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}
+	}
+
+	_, found := data["issues"]
+	if !found {
+		return nil, nil, &framework.Error{
+			Message: "Field missing in Jira issues response: issues.",
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}
+	}
+
+	issues, ok := data["issues"].([]any)
+	if !ok {
+		return nil, nil, &framework.Error{
+			Message: fmt.Sprintf(
+				"Entity field exists in Jira issues response but field value is not a list of objects: %T.",
+				data["issues"],
+			),
+			Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}
+	}
+
+	objects, parserErr := parseObjects(Issue, issues)
+	if parserErr != nil {
+		return nil, nil, parserErr
+	}
+
+	// Optimization:
+	// If the response contains the lastPageFieldName field, and it's a bool, and it's true,
+	// the current page is the last page and there is no need to compute the next cursor.
+	isLast, found := data[isLastFieldName]
+	if found {
+		isLastPage, ok := isLast.(bool)
+		if !ok {
+			return nil, nil, &framework.Error{
+				Message: fmt.Sprintf(
+					"Field %s exists in Jira %s response but field value is not a bool: %T.",
+					isLastFieldName,
+					Issue,
+					isLast,
+				),
+				Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+			}
+		}
+
+		if isLastPage {
+			return objects, nil, nil
+		}
+	}
+
+	foundNextCursor, found := data[nextCursorFieldName]
+	if found {
+		strNextCursor, ok := foundNextCursor.(string)
+		if !ok {
+			return nil, nil, &framework.Error{
+				Message: fmt.Sprintf(
+					"Field %s exists in Jira %s response but field value is not a string: %T.",
+					nextCursorFieldName,
+					Issue,
+					foundNextCursor,
+				),
+				Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+			}
+		}
+
+		nextCursor = &strNextCursor
+
+		return objects, nextCursor, nil
+	}
+
+	// If no cursor is found above, treat this as the last page. We don't expect this code path to execute since
+	// this would mean we had no nextCursor and lastPage was not set to true.
+	return objects, nil, nil
+}
+
 func ParseGroupsResponse(
-	body []byte, pageSize int64, cursor int64,
-) (objects []map[string]any, nextCursor *int64, err *framework.Error) {
+	body []byte, pageSize int64, cursor string,
+) (objects []map[string]any, nextCursor *string, err *framework.Error) {
 	return parseResponse(body, pageSize, cursor, Group, "isLast")
 }
 
 func ParseGroupMembersResponse(
-	body []byte, pageSize, cursor int64,
-) (objects []map[string]any, nextCursor *int64, err *framework.Error) {
+	body []byte, pageSize int64, cursor string,
+) (objects []map[string]any, nextCursor *string, err *framework.Error) {
 	return parseResponse(body, pageSize, cursor, GroupMember, "isLast")
 }
 
 func ParseWorkspacesResponse(
-	body []byte, pageSize int64, cursor int64,
-) (objects []map[string]any, nextCursor *int64, err *framework.Error) {
+	body []byte, pageSize int64, cursor string,
+) (objects []map[string]any, nextCursor *string, err *framework.Error) {
 	return parseResponse(body, pageSize, cursor, Workspace, "isLastPage")
 }
 
 func ParseObjectsResponse(
-	body []byte, pageSize int64, cursor int64,
-) (objects []map[string]any, nextCursor *int64, err *framework.Error) {
+	body []byte, pageSize int64, cursor string,
+) (objects []map[string]any, nextCursor *string, err *framework.Error) {
 	return parseResponse(body, pageSize, cursor, Object, "isLast")
 }
 
@@ -460,8 +602,8 @@ func ParseObjectsResponse(
 // If the lastPageFieldName field exists, it is used to determine if the current page is the last page.
 // If parsing fails, a framework.Error is returned.
 func parseResponse(
-	body []byte, pageSize int64, cursor int64, entityExternalID string, lastPageFieldName string,
-) (objects []map[string]any, nextCursor *int64, err *framework.Error) {
+	body []byte, pageSize int64, cursor string, entityExternalID string, lastPageFieldName string,
+) (objects []map[string]any, nextCursor *string, err *framework.Error) {
 	var data map[string]any
 
 	unmarshalErr := json.Unmarshal(body, &data)
@@ -520,7 +662,24 @@ func parseResponse(
 		}
 	}
 
-	nextCursor = pagination.GetNextCursorFromPageSize(len(objects), pageSize, cursor)
+	cursorInt, convErr := strconv.ParseInt(cursor, 10, 64)
+	if convErr != nil {
+		return nil, nil, &framework.Error{
+			Message: fmt.Sprintf(
+				"Failed to parse cursor as an int (%s): %s.",
+				cursor,
+				convErr.Error(),
+			),
+			Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}
+	}
+
+	nextCursorInt := pagination.GetNextCursorFromPageSize(len(objects), pageSize, cursorInt)
+
+	if nextCursorInt != nil {
+		tmp := strconv.FormatInt(*nextCursorInt, 10)
+		nextCursor = &tmp
+	}
 
 	return objects, nextCursor, nil
 }
@@ -542,10 +701,11 @@ func parseObjects(entityExternalID string, objects []any) ([]map[string]any, *fr
 				Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			}
 		}
+
 		// Issue entity requires additional parsing of custom fields.
 		// TODO: Remove this after properly supporting parsing complex multi-valued attributes
 		// into lists based on JSON Paths given in the attribute external IDs.
-		if entityExternalID == Issue {
+		if entityExternalID == Issue || entityExternalID == EnhancedIssue {
 			parsedIssueObject, err := parseIssueCustomFields(parsedObject)
 			if err != nil {
 				return nil, err
@@ -646,10 +806,15 @@ func parseIssueCustomFields(object map[string]any) (map[string]any, *framework.E
 // This URL is used to make a request to the Jira API.
 // For URLs which require a resource ID, the resource ID must be non nil (i.e. a non nil cursor.CollectionID)
 // otherwise an error is returned.
-func ConstructURL(request *Request, entity Entity, cursor *pagination.CompositeCursor[int64]) (string, error) {
+func ConstructURL(request *Request, entity Entity, cursor *pagination.CompositeCursor[string]) (string, error) {
 	var sb strings.Builder
 
-	cursorStr := strconv.FormatInt(*cursor.Cursor, 10)
+	var cursorStr string
+
+	if cursor.Cursor != nil {
+		cursorStr = *cursor.Cursor
+	}
+
 	pageSizeStr := strconv.FormatInt(request.PageSize, 10)
 
 	switch request.EntityExternalID {
@@ -699,7 +864,7 @@ func ConstructURL(request *Request, entity Entity, cursor *pagination.CompositeC
 			sb.WriteString("groupId=")
 			sb.WriteString(*cursor.CollectionID)
 			sb.WriteRune('&')
-		case Issue:
+		case Issue, EnhancedIssue:
 			if request.IssuesJQLFilter != nil {
 				escapedFilter := net_url.QueryEscape(*request.IssuesJQLFilter)
 				sb.Grow(len(escapedFilter) + 5)
@@ -708,6 +873,28 @@ func ConstructURL(request *Request, entity Entity, cursor *pagination.CompositeC
 				sb.WriteRune('&')
 			}
 		}
+	}
+
+	if request.EntityExternalID == EnhancedIssue {
+		// len("nextPageToken=") + len("&maxResults=") + len("&fields=*navigable") == 44.
+		sb.Grow(len(cursorStr) + len(pageSizeStr) + 44)
+
+		// Don't specify a next page token if the value is 0. This functionality differs from all other endpoints
+		// that set `startAt=0` for the first page.
+		if cursorStr != "0" {
+			sb.WriteString("nextPageToken=")
+			sb.WriteString(cursorStr)
+			sb.WriteRune('&')
+		}
+
+		sb.WriteString("maxResults=")
+		sb.WriteString(pageSizeStr)
+
+		// This was the default with the deprecated API endpoint. The new default is just to return IDs, so we're
+		// manually specifying this to keep the same functionality.
+		sb.WriteString("&fields=*navigable")
+
+		return sb.String(), nil
 	}
 
 	// All endpoints share these query parameters, so they are added last.

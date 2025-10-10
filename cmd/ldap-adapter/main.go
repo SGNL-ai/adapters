@@ -12,7 +12,8 @@ import (
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	grpc_proxy_v1 "github.com/sgnl-ai/adapter-framework/pkg/grpc_proxy/v1"
 	"github.com/sgnl-ai/adapter-framework/server"
-	"github.com/sgnl-ai/adapters/pkg/ldap"
+	adapter_v1 "github.com/sgnl-ai/adapters/pkg/ldap/v1.0.0"
+	adapter_v2 "github.com/sgnl-ai/adapters/pkg/ldap/v2.0.0"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -59,11 +60,21 @@ func main() {
 		logger.Fatalf("Failed to create a grpc client to the connector service: %v.", err)
 	}
 
-	// Register only the LDAP adapter
+	// Register LDAP-v1.0.0 adapter.
 	server.RegisterAdapter(
 		adapterServer,
 		"LDAP-1.0.0",
-		ldap.NewAdapter(
+		adapter_v1.NewAdapter(
+			grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
+			time.Duration(adapterTTL)*time.Minute,
+			time.Duration(adapterCleanupInterval)*time.Minute),
+	)
+
+	// Register LDAP-v2.0.0 adapter.
+	server.RegisterAdapter(
+		adapterServer,
+		"LDAP-2.0.0",
+		adapter_v2.NewAdapter(
 			grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
 			time.Duration(adapterTTL)*time.Minute,
 			time.Duration(adapterCleanupInterval)*time.Minute),

@@ -1,0 +1,74 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: test-instance.atlassian.net
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            Authorization:
+                - Basic {{OMITTED}}
+        url: https://test-instance.atlassian.net/rest/api/3/search?startAt=0&maxResults=3
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        transfer_encoding: []
+        trailer: {}
+        content_length: -1
+        uncompressed: false
+        body: '{"errorMessages":["The requested API has been removed. Please migrate to the /rest/api/3/search/jql API. A full migration guideline is available at https://developer.atlassian.com/changelog/#CHANGE-2046"],"errors":{}}'
+        headers:
+            Atl-Request-Id:
+                - 970d300c-0db2-496b-a4e5-3da13a2bf5cd
+            Atl-Traceid:
+                - 970d300c0db2496ba4e53da13a2bf5cd
+            Cache-Control:
+                - no-cache, no-store, no-transform
+            Content-Type:
+                - application/json;charset=UTF-8
+            Date:
+                - Wed, 08 Oct 2025 19:59:49 GMT
+            Nel:
+                - '{"failure_fraction": 0.001, "include_subdomains": true, "max_age": 600, "report_to": "endpoint-1"}'
+            Report-To:
+                - '{"endpoints": [{"url": "https://dz8aopenkvv6s.cloudfront.net"}], "group": "endpoint-1", "include_subdomains": true, "max_age": 600}'
+            Server:
+                - AtlassianEdge
+            Server-Timing:
+                - atl-edge;dur=199,atl-edge-internal;dur=30,atl-edge-upstream;dur=165,atl-edge-pop;desc="aws-us-east-1"
+            Set-Cookie:
+                - atlassian.xsrf.token=f1ad560fc9a9fc044ed4be44501e8eb9f49e9cf2_lout; Path=/; SameSite=None; Secure
+            Strict-Transport-Security:
+                - max-age=63072000; includeSubDomains; preload
+            Timing-Allow-Origin:
+                - '*'
+            Via:
+                - 1.1 a450e0b351a4029873d490939b4bf594.cloudfront.net (CloudFront)
+            X-Amz-Cf-Id:
+                - YMn-95NA9rLf_8Z0meeDzxvIy5Cx3BQtB_A25qLRsEvS6HVJBl_D5g==
+            X-Amz-Cf-Pop:
+                - ORD56-P2
+            X-Arequestid:
+                - 52a75c0d14d1c066ff19f33e66757254
+            X-Cache:
+                - Error from cloudfront
+            X-Content-Type-Options:
+                - nosniff
+            X-Seraph-Loginreason:
+                - AUTHENTICATED_FAILED
+            X-Xss-Protection:
+                - 1; mode=block
+        status: 410 Gone
+        code: 410
+        duration: 510.388375ms

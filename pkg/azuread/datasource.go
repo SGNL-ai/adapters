@@ -94,6 +94,32 @@ func NewClient(client *http.Client) Client {
 	}
 }
 
+// deepCopyCursor creates a deep copy of a CompositeCursor.
+func deepCopyCursor(cursor *pagination.CompositeCursor[string]) *pagination.CompositeCursor[string] {
+	if cursor == nil {
+		return nil
+	}
+
+	result := &pagination.CompositeCursor[string]{}
+
+	if cursor.Cursor != nil {
+		cursorVal := *cursor.Cursor
+		result.Cursor = &cursorVal
+	}
+
+	if cursor.CollectionID != nil {
+		collectionIDVal := *cursor.CollectionID
+		result.CollectionID = &collectionIDVal
+	}
+
+	if cursor.CollectionCursor != nil {
+		collectionCursorVal := *cursor.CollectionCursor
+		result.CollectionCursor = &collectionCursorVal
+	}
+
+	return result
+}
+
 // GetPage fetches a page of data, accumulating members from multiple parent groups if needed to satisfy page size.
 func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, *framework.Error) {
 	// Check if this is a member entity that needs accumulation
@@ -108,6 +134,8 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	accumulatedObjects := make([]map[string]any, 0)
 	currentRequest := *request
 
+	var nextCursor *pagination.CompositeCursor[string]
+
 	for int64(len(accumulatedObjects)) < request.PageSize {
 		response, err := d.getPageBase(ctx, &currentRequest)
 		if err != nil {
@@ -119,26 +147,33 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		}
 
 		if len(response.Objects) > 0 {
+			if int64(len(response.Objects)+len(accumulatedObjects)) > request.PageSize {
+				// Received more data than asked for.
+				break
+			}
+
 			accumulatedObjects = append(accumulatedObjects, response.Objects...)
 		}
 
 		// Check if we have more data to fetch
 		if response.NextCursor == nil {
-			currentRequest.Cursor = nil
+			nextCursor = nil
 
 			break // No more data available
 		}
 
-		// Update the cursor and pagesize for the next iteration
+		// Save the cursor
+		nextCursor = deepCopyCursor(response.NextCursor)
+
+		// Update the cursor
 		currentRequest.Cursor = response.NextCursor
-		currentRequest.PageSize = request.PageSize - int64(len(accumulatedObjects))
 	}
 
 	// Build final response with accumulated objects
 	return &Response{
 		StatusCode: http.StatusOK,
 		Objects:    accumulatedObjects,
-		NextCursor: currentRequest.Cursor,
+		NextCursor: nextCursor,
 	}, nil
 }
 
