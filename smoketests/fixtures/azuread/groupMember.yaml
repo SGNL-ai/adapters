@@ -105,3 +105,107 @@ interactions:
       status: 200 OK
       code: 200
       duration: 71.658703ms
+  - id: 2
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: graph.microsoft.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+      url: https://graph.microsoft.com/v1.0/groups?$select=id&$top=1&$skiptoken=NEXTLINK_TOKEN_PLACEHOLDER
+      method: GET
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding:
+        - chunked
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"@odata.context":"https://graph.microsoft.com/v1.0/$metadata#groups(id)","value":[{"id":"ffffffff-gggg-hhhh-iiii-jjjjjjjjjjjj"}]}'
+      headers:
+        Cache-Control:
+          - no-cache
+        Client-Request-Id:
+          - 1e7a3334-f3f1-4661-82d5-03ecdcadf1cd
+        Content-Type:
+          - application/json;odata.metadata=minimal;odata.streaming=true;IEEE754Compatible=false;charset=utf-8
+        Date:
+          - Fri, 27 Oct 2023 22:25:38 GMT
+        Odata-Version:
+          - "4.0"
+        Request-Id:
+          - 1e7a3334-f3f1-4661-82d5-03ecdcadf1cd
+        Strict-Transport-Security:
+          - max-age=31536000
+        Vary:
+          - Accept-Encoding
+        X-Ms-Ags-Diagnostic:
+          - '{"ServerInfo":{"DataCenter":"West US 2","Slice":"E","Ring":"1","ScaleUnit":"004","RoleInstance":"MW2PEPF0000E05F"}}'
+        X-Ms-Resource-Unit:
+          - "1"
+      status: 200 OK
+      code: 200
+      duration: 96.36142ms
+  - id: 3
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: graph.microsoft.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+      url: https://graph.microsoft.com/v1.0/groups/ffffffff-gggg-hhhh-iiii-jjjjjjjjjjjj/members?$select=id&$top=3
+      method: GET
+    response:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      transfer_encoding:
+        - chunked
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"@odata.context":"https://graph.microsoft.com/v1.0/$metadata#directoryObjects(id)","value":[{"@odata.type":"#microsoft.graph.user","id":"zzzzzzzz-yyyy-xxxx-wwww-vvvvvvvvvvvv"}]}'
+      headers:
+        Cache-Control:
+          - no-cache
+        Client-Request-Id:
+          - 0baa99e9-1825-4c10-af3f-671b169cf220
+        Content-Type:
+          - application/json;odata.metadata=minimal;odata.streaming=true;IEEE754Compatible=false;charset=utf-8
+        Date:
+          - Fri, 27 Oct 2023 22:25:39 GMT
+        Odata-Version:
+          - "4.0"
+        Request-Id:
+          - 0baa99e9-1825-4c10-af3f-671b169cf220
+        Strict-Transport-Security:
+          - max-age=31536000
+        Vary:
+          - Accept-Encoding
+        X-Ms-Ags-Diagnostic:
+          - '{"ServerInfo":{"DataCenter":"West US 2","Slice":"E","Ring":"1","ScaleUnit":"004","RoleInstance":"MW2PEPF0000E05F"}}'
+        X-Ms-Resource-Unit:
+          - "1"
+      status: 200 OK
+      code: 200
+      duration: 71.658703ms

@@ -20,7 +20,8 @@ import (
     "localTimeZoneOffset": 43200,
     "issuesJqlFilter": "project=SGNL OR project=MVP",
     "objectsQlQuery": "objectType = Customer",
-    "assetBaseUrl": "https://api.atlassian.com/jsm/assets"
+    "assetBaseUrl": "https://api.atlassian.com/jsm/assets",
+	"enhancedIssueSearch": true
 }
 */
 type Config struct {
@@ -48,15 +49,30 @@ type Config struct {
 	// If not, specified it defaults to "https://api.atlassian.com/jsm/assets".
 	// This field is only used for the Object entity.
 	AssetBaseURL *string `json:"assetBaseUrl,omitempty"`
+
+	// EnhancedIssueSearch determines whether we should use the legacy JQL search endpoint currently being deprecated:
+	// https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-search/#api-rest-api-3-search-post
+	// or if we should use the new "enhanced" JQL search endpoint:
+	// https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-search/#api-rest-api-3-search-jql-post.
+	//
+	// This will eventually be removed and all requests will default to the new enhanced endpoint. This is being added
+	// so we can apply this on a per instance basis during this rolling deprecation.
+	EnhancedIssueSearch bool `json:"enhancedIssueSearch,omitempty"`
 }
 
 // ValidateConfig validates that a Config received in a GetPage call is valid.
 func (c *Config) Validate(_ context.Context) error {
-	// The IssuesJQLFilter is optional so only validate if it's set.
+	// If EnhancedIssueSearch is specified, IssuesJQLFilter is required.
+	if c.EnhancedIssueSearch && c.IssuesJQLFilter == nil {
+		return errors.New("issuesJqlFilter is required for enhanced issue search")
+	}
+
+	// Otherwise, the IssuesJQLFilter is optional so only validate if it's set.
 	if c.IssuesJQLFilter != nil {
 		if *c.IssuesJQLFilter == "" {
 			return errors.New("issuesJqlFilter cannot be an empty string")
 		}
+
 		// Jira docs don't specify a max length; use a conservative estimate.
 		if len(*c.IssuesJQLFilter) > 1024 {
 			return errors.New("issuesJqlFilter exceeds the 1024 character limit")

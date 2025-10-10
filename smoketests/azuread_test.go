@@ -1163,9 +1163,36 @@ func TestAzureADAdapter_GroupMember(t *testing.T) {
 								]
 							}
 						]
+					},
+					{
+						"attributes": [
+							{
+								"id": "groupId",
+								"values": [
+									{
+										"string_value": "ffffffff-gggg-hhhh-iiii-jjjjjjjjjjjj"
+									}
+								]
+							},
+							{
+								"id": "id",
+								"values": [
+									{
+										"string_value": "zzzzzzzz-yyyy-xxxx-wwww-vvvvvvvvvvvv-ffffffff-gggg-hhhh-iiii-jjjjjjjjjjjj"
+									}
+								]
+							},
+							{
+								"id": "memberId",
+								"values": [
+									{
+										"string_value": "zzzzzzzz-yyyy-xxxx-wwww-vvvvvvvvvvvv"
+									}
+								]
+							}
+						]
 					}
-				],
-				"nextCursor": "eyJjb2xsZWN0aW9uSWQiOiJhYWFhYWFhYS1iYmJiLWNjY2MtZGRkZC1lZWVlZWVlZWVlZWUiLCJjb2xsZWN0aW9uQ3Vyc29yIjoiaHR0cHM6Ly9ncmFwaC5taWNyb3NvZnQuY29tL3YxLjAvZ3JvdXBzPyRzZWxlY3Q9aWRcdTAwMjYkdG9wPTFcdTAwMjYkc2tpcHRva2VuPU5FWFRMSU5LX1RPS0VOX1BMQUNFSE9MREVSIn0="
+				]
 			}
 		}
 	`), wantResp)
@@ -1247,7 +1274,7 @@ func TestAzureADAdapter_RoleMember(t *testing.T) {
 			{
 				"success": {
 					"objects": [],
-					"next_cursor": "eyJjb2xsZWN0aW9uSWQiOiJwcHBwcHBwcC1xcXFxLXJycnItc3Nzcy10dHR0dHR0dHR0dHQiLCJjb2xsZWN0aW9uQ3Vyc29yIjoiaHR0cHM6Ly9ncmFwaC5taWNyb3NvZnQuY29tL3YxLjAvdXNlcnM/JHNlbGVjdD1pZFx1MDAyNiR0b3A9MVx1MDAyNiRza2lwdG9rZW49TkVYVExJTktfVE9LRU5fUExBQ0VIT0xERVJfMSJ9"
+					"next_cursor": ""
 				}
 			}
 			`),
@@ -1474,7 +1501,7 @@ func TestAzureADAdapter_RoleMember(t *testing.T) {
 							"child_objects": []
 						}
 					],
-					"next_cursor": "eyJjb2xsZWN0aW9uSWQiOiJ1dXV1dXV1dS12dnZ2LXd3d3cteHh4eC15eXl5eXl5eXl5eXkiLCJjb2xsZWN0aW9uQ3Vyc29yIjoiaHR0cHM6Ly9ncmFwaC5taWNyb3NvZnQuY29tL3YxLjAvdXNlcnM/JHNlbGVjdD1pZFx1MDAyNiR0b3A9MVx1MDAyNiRza2lwdG9rZW49TkVYVExJTktfVE9LRU5fUExBQ0VIT0xERVJfMyJ9"
+					"next_cursor": ""
 				}
 			}
 			`),

@@ -18,7 +18,7 @@ const (
 )
 
 func setupLDAPContainer(ctx context.Context, isLDAPS bool) (testcontainers.Container, error) {
-	absPath, err := filepath.Abs(filepath.Join("..", "..", "dev", "active_directory", "directory.ldif"))
+	absPath, err := filepath.Abs(filepath.Join("..", "..", "..", "dev", "active_directory", "directory.ldif"))
 	if err != nil {
 		return nil, err
 	}

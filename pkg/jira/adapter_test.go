@@ -28,7 +28,7 @@ func TestAdapterGetPage(t *testing.T) {
 		ctx          context.Context
 		request      *framework.Request[jira_adapter.Config]
 		wantResponse framework.Response
-		wantCursor   *pagination.CompositeCursor[int64]
+		wantCursor   *pagination.CompositeCursor[string]
 	}{
 		// More validation tests are done in validation_test.go.
 		// The following two tests simply check if the adapter validates the incoming request.
@@ -67,11 +67,11 @@ func TestAdapterGetPage(t *testing.T) {
 							"createdAt": time.Date(2023, 9, 29, 0, 0, 0, 0, time.UTC),
 						},
 					},
-					NextCursor: "eyJjdXJzb3IiOjF9",
+					NextCursor: base64.StdEncoding.EncodeToString([]byte(`{"cursor":"1"}`)),
 				},
 			},
-			wantCursor: &pagination.CompositeCursor[int64]{
-				Cursor: testutil.GenPtr(int64(1)),
+			wantCursor: &pagination.CompositeCursor[string]{
+				Cursor: testutil.GenPtr("1"),
 			},
 		},
 		"invalid_request_missing_auth": {
@@ -164,11 +164,11 @@ func TestAdapterGetPage(t *testing.T) {
 							"groupId": "group1",
 						},
 					},
-					NextCursor: "eyJjdXJzb3IiOjF9",
+					NextCursor: base64.StdEncoding.EncodeToString([]byte(`{"cursor":"1"}`)),
 				},
 			},
-			wantCursor: &pagination.CompositeCursor[int64]{
-				Cursor: testutil.GenPtr(int64(1)),
+			wantCursor: &pagination.CompositeCursor[string]{
+				Cursor: testutil.GenPtr("1"),
 			},
 		},
 		// If the query filter is applied correctly, we should only see 2 objects returned, since we
@@ -212,12 +212,12 @@ func TestAdapterGetPage(t *testing.T) {
 							"globalId": "2",
 						},
 					},
-					NextCursor: "eyJjb2xsZWN0aW9uSWQiOiIxIiwiY29sbGVjdGlvbkN1cnNvciI6MX0=",
+					NextCursor: base64.StdEncoding.EncodeToString([]byte(`{"collectionId":"1","collectionCursor":"1"}`)),
 				},
 			},
-			wantCursor: &pagination.CompositeCursor[int64]{
+			wantCursor: &pagination.CompositeCursor[string]{
 				CollectionID:     testutil.GenPtr("1"),
-				CollectionCursor: testutil.GenPtr[int64](1),
+				CollectionCursor: testutil.GenPtr("1"),
 			},
 		},
 		// When the base URL is not specified, it should default to "https://api.atlassian.com/jsm/assets".
@@ -308,13 +308,12 @@ func TestAdapterGetPage(t *testing.T) {
 					},
 				},
 				PageSize: 1,
-				// {"cursor":[]}
-				Cursor: "eyJjdXJzb3IiOiBbXX0=",
+				Cursor:   base64.StdEncoding.EncodeToString([]byte(`{"cursor": []}`)),
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
 					Message: "Failed to unmarshal JSON cursor: json: cannot unmarshal array into Go struct field " +
-						"CompositeCursor[int64].cursor of type int64.",
+						"CompositeCursor[string].cursor of type string.",
 					Code: api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_PAGE_REQUEST_CONFIG,
 				},
 			},
@@ -340,8 +339,7 @@ func TestAdapterGetPage(t *testing.T) {
 					},
 				},
 				PageSize: 1,
-				// {"cursor":102}
-				Cursor: "eyJjdXJzb3IiOjEwMn0=",
+				Cursor:   base64.StdEncoding.EncodeToString([]byte(`{"cursor":"102"}`)),
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
@@ -374,8 +372,7 @@ func TestAdapterGetPage(t *testing.T) {
 					},
 				},
 				PageSize: 1,
-				// {"cursor":103}
-				Cursor: "eyJjdXJzb3IiOjEwM30=",
+				Cursor:   base64.StdEncoding.EncodeToString([]byte(`{"cursor":"103"}`)),
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
@@ -409,8 +406,7 @@ func TestAdapterGetPage(t *testing.T) {
 					},
 				},
 				PageSize: 1,
-				// {"cursor":1,"collectionCursor":1}
-				Cursor: "eyJjdXJzb3IiOjEsImNvbGxlY3Rpb25DdXJzb3IiOjF9",
+				Cursor:   base64.StdEncoding.EncodeToString([]byte(`{"cursor":"1","collectionCursor":"1"}`)),
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
@@ -499,7 +495,7 @@ func TestAdapterGetPage(t *testing.T) {
 			// decipher the cursor just by reading the test case.
 			// So in addition, decode the b64 cursor and compare structs.
 			if gotResponse.Success != nil && tt.wantCursor != nil {
-				var gotCursor pagination.CompositeCursor[int64]
+				var gotCursor pagination.CompositeCursor[string]
 
 				decodedCursor, err := base64.StdEncoding.DecodeString(gotResponse.Success.NextCursor)
 				if err != nil {

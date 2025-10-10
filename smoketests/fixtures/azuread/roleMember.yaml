@@ -27,7 +27,7 @@ interactions:
       trailer: {}
       content_length: -1
       uncompressed: true
-      body: '{"@odata.context":"https://graph.microsoft.com/v1.0/$metadata#users(id)","@odata.nextLink":"https://graph.microsoft.com/v1.0/users?$select=id&$top=1&$skiptoken=NEXTLINK_TOKEN_PLACEHOLDER_1","value":[{"id":"pppppppp-qqqq-rrrr-ssss-tttttttttttt"}]}'
+      body: '{"@odata.context":"https://graph.microsoft.com/v1.0/$metadata#users(id)","value":[{"id":"pppppppp-qqqq-rrrr-ssss-tttttttttttt"}]}'
       headers:
         Cache-Control:
           - no-cache
@@ -129,7 +129,7 @@ interactions:
       trailer: {}
       content_length: -1
       uncompressed: true
-      body: '{"@odata.context":"https://graph.microsoft.com/v1.0/$metadata#users(id)","@odata.nextLink":"https://graph.microsoft.com/v1.0/users?$select=id&$top=1&$skiptoken=NEXTLINK_TOKEN_PLACEHOLDER_3","value":[{"id":"uuuuuuuu-vvvv-wwww-xxxx-yyyyyyyyyyyy"}]}'
+      body: '{"@odata.context":"https://graph.microsoft.com/v1.0/$metadata#users(id)","value":[{"id":"uuuuuuuu-vvvv-wwww-xxxx-yyyyyyyyyyyy"}]}'
       headers:
         Cache-Control:
           - no-cache

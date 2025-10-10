@@ -58,7 +58,7 @@ func UnmarshalCursor[T int64 | string](cursor string) (*CompositeCursor[T], *fra
 	}
 
 	unmarshalErr := json.Unmarshal(cursorBytes, unmarshaledCursor)
-	if unmarshalErr != nil || unmarshaledCursor == nil {
+	if unmarshalErr != nil {
 		return nil, &framework.Error{
 			Message: fmt.Sprintf("Failed to unmarshal JSON cursor: %v.", unmarshalErr),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_PAGE_REQUEST_CONFIG,
