@@ -1481,6 +1481,11 @@ func TestIsAdvancedQuery(t *testing.T) {
 			endpoint: "https://graph.microsoft.com/v1.0/users?$filter=displayName+eq+'cannot'&$select=id",
 			want:     false,
 		},
+		"filter_odata_not": {
+			request:  &azuread.Request{},
+			endpoint: "https://graph.microsoft.com/v1.0/groups?$select=id&$top=1&$filter=NOT+groupTypes%2Fany%28c%3Ac+eq+%27DynamicMembership%27%29",
+			want:     true,
+		},
 
 		// Note: Advanced queries don't currently support $expand.
 		// This test documents that $expand alone does NOT trigger advanced query requirements.
