@@ -22,6 +22,7 @@ require (
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.39.0
+	go.uber.org/zap v1.27.0
 	google.golang.org/grpc v1.75.0
 	google.golang.org/protobuf v1.36.6
 	gopkg.in/dnaeon/go-vcr.v3 v3.2.0
@@ -47,8 +48,7 @@ require (
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
-	go.uber.org/atomic v1.9.0 // indirect
-	go.uber.org/multierr v1.9.0 // indirect
+	go.uber.org/multierr v1.10.0 // indirect
 )
 
 require (
