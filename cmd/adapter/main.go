@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"os"
 	"time"
 
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
@@ -24,6 +23,7 @@ import (
 	"github.com/sgnl-ai/adapters/pkg/identitynow"
 	"github.com/sgnl-ai/adapters/pkg/jira"
 	jiradatacenter "github.com/sgnl-ai/adapters/pkg/jira-datacenter"
+	"github.com/sgnl-ai/adapters/pkg/logger"
 	mysql_0_0_1_alpha "github.com/sgnl-ai/adapters/pkg/my-sql/0.0.1-alpha"
 	mysql_0_0_2_alpha "github.com/sgnl-ai/adapters/pkg/my-sql/0.0.2-alpha"
 	"github.com/sgnl-ai/adapters/pkg/okta"
@@ -33,6 +33,7 @@ import (
 	"github.com/sgnl-ai/adapters/pkg/scim"
 	"github.com/sgnl-ai/adapters/pkg/servicenow"
 	"github.com/sgnl-ai/adapters/pkg/workday"
+	"go.uber.org/zap"
 
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
@@ -70,25 +71,26 @@ func main() {
 		log.Fatal("ADAPTER_CONNECTOR_SERVICE_URL environment variable is required")
 	}
 
-	logger := log.New(os.Stdout, "adapter", log.Lmicroseconds|log.LUTC|log.Lshortfile)
+	logger := logger.New(logger.LoadConfig())
+	defer logger.Sync()
 
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
-		logger.Fatalf("Failed to open server port: %v.", err)
+		logger.Fatal("Failed to open server port: %v.", zap.Error(err))
 	}
 
 	timeoutDuration := time.Duration(timeout) * time.Second
 
 	s := grpc.NewServer()
 	stop := make(chan struct{})
-	adapterServer := server.New(stop)
+	adapterServer := server.New(stop, server.WithLogger(logger))
 
 	connectorServiceClient, err := grpc.NewClient(
 		connectorServiceURL,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		logger.Printf("Failed to create a grpc client to the connector service: %v", err)
+		logger.Fatal("Failed to create a grpc client to the connector service: %v", zap.Error(err))
 	}
 
 	// Initialize the client to fetch data from AWS S3.
@@ -101,7 +103,7 @@ func main() {
 		maxBytesToProcessPerPage,
 	)
 	if err != nil {
-		logger.Fatalf("Failed to create a datasource to query AWS S3: %v.", err)
+		logger.Fatal("Failed to create a datasource to query AWS S3: %v.", zap.Error(err))
 	}
 
 	// Initialize the client to fetch data from AWS.
@@ -111,7 +113,7 @@ func main() {
 		), nil, maxConcurrency,
 	)
 	if err != nil {
-		logger.Fatalf("Failed to create a datasource to query AWS: %v.", err)
+		logger.Fatal("Failed to create a datasource to query AWS: %v.", zap.Error(err))
 	}
 
 	// Register adapters here alphabetically.
@@ -279,11 +281,11 @@ func main() {
 
 	api_adapter_v1.RegisterAdapterServer(s, adapterServer)
 
-	logger.Printf("Started adapter gRPC server on port %d.", port)
+	logger.Info("Started adapter gRPC server", zap.Int("port", port))
 
 	if err := s.Serve(listener); err != nil {
 		close(stop)
 
-		logger.Fatalf("Failed to listen on server port: %v.", err)
+		logger.Fatal("Failed to listen on server port: %v.", zap.Error(err))
 	}
 }
