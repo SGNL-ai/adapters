@@ -21,7 +21,7 @@ type Config struct {
 	FileMaxDays int `yaml:"file_max_days" json:"file_max_days" mapstructure:"file_max_days"`
 }
 
-func LoadConfig() Config {
+func LoadConfig() (*Config, error) {
 	v := viper.New()
 	v.SetEnvPrefix("SGNL_LOG")
 	v.AutomaticEnv()
@@ -35,7 +35,9 @@ func LoadConfig() Config {
 
 	var cfg Config
 
-	v.UnmarshalExact(&cfg)
+	if err := v.UnmarshalExact(&cfg); err != nil {
+		return nil, err
+	}
 
-	return cfg
+	return &cfg, nil
 }

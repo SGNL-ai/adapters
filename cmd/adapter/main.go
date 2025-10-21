@@ -71,7 +71,12 @@ func main() {
 		log.Fatal("ADAPTER_CONNECTOR_SERVICE_URL environment variable is required")
 	}
 
-	logger := logs.New(logs.LoadConfig())
+	loggerCfg, err := logs.LoadConfig()
+	if err != nil {
+		log.Fatalf("Failed to load logger configuration: %v", err)
+	}
+
+	logger := logs.New(*loggerCfg)
 	defer logger.Sync()
 
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
