@@ -80,6 +80,11 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 				return nil, err
 			}
 
+			// If we fail to get teams, then we can't get members. Terminate and return the error.
+			if teamsRes.StatusCode != http.StatusOK {
+				return teamsRes, nil
+			}
+
 			// There are no more teams. Return an empty last page.
 			if len(teamsRes.Objects) == 0 {
 				return &Response{
@@ -226,6 +231,11 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	}
 
 	if res.StatusCode != http.StatusOK {
+		logger.Info("Datasource request failed",
+			zap.Int("responseStatusCode", response.StatusCode),
+			zap.String("responseRetryAfterHeader", response.RetryAfterHeader),
+		)
+
 		return response, nil
 	}
 
