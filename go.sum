@@ -211,6 +211,10 @@ github.com/sagikazarmark/locafero v0.7.0 h1:5MqpDsTGNDhY8sGp0Aowyf0qKsPrhewaLSsF
 github.com/sagikazarmark/locafero v0.7.0/go.mod h1:2za3Cg5rMaTMoG/2Ulr9AwtFaIppKXTRYnozin4aB5k=
 github.com/sgnl-ai/adapter-framework v0.19.2-0.20251020202216-b1e102ebba98 h1:aR4pWsRwMm+tYsELuTH/9uBELlokfoM35IWkCybGzjQ=
 github.com/sgnl-ai/adapter-framework v0.19.2-0.20251020202216-b1e102ebba98/go.mod h1:X+EnEBh4YgNP/zo60BAYISKyRmX/4e11lCp0rPv6DGc=
+github.com/sgnl-ai/adapter-framework v0.19.2-0.20251020221421-60d1470c7965 h1:M/P4zq5+ePqGEim0zw+q5FtzyyvSblMo2AQipMW4ZoY=
+github.com/sgnl-ai/adapter-framework v0.19.2-0.20251020221421-60d1470c7965/go.mod h1:X+EnEBh4YgNP/zo60BAYISKyRmX/4e11lCp0rPv6DGc=
+github.com/sgnl-ai/adapter-framework v0.19.2-0.20251021165534-ccba8e026388 h1:OUtY1rMb8lC1ZGWWmugkdX0bCbra6QC360X30Q82GJY=
+github.com/sgnl-ai/adapter-framework v0.19.2-0.20251021165534-ccba8e026388/go.mod h1:X+EnEBh4YgNP/zo60BAYISKyRmX/4e11lCp0rPv6DGc=
 github.com/shirou/gopsutil/v4 v4.25.6 h1:kLysI2JsKorfaFPcYmcJqbzROzsBWEOAtw6A7dIfqXs=
 github.com/shirou/gopsutil/v4 v4.25.6/go.mod h1:PfybzyydfZcN+JMMjkF6Zb8Mq1A/VcogFFg7hj50W9c=
 github.com/shopspring/decimal v1.3.1/go.mod h1:DKyhrW/HYNuLGql+MJL6WCR6knT2jwCFRcu2hWCYk4o=
