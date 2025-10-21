@@ -23,7 +23,7 @@ import (
 	"github.com/sgnl-ai/adapters/pkg/identitynow"
 	"github.com/sgnl-ai/adapters/pkg/jira"
 	jiradatacenter "github.com/sgnl-ai/adapters/pkg/jira-datacenter"
-	"github.com/sgnl-ai/adapters/pkg/logger"
+	"github.com/sgnl-ai/adapters/pkg/logs"
 	mysql_0_0_1_alpha "github.com/sgnl-ai/adapters/pkg/my-sql/0.0.1-alpha"
 	mysql_0_0_2_alpha "github.com/sgnl-ai/adapters/pkg/my-sql/0.0.2-alpha"
 	"github.com/sgnl-ai/adapters/pkg/okta"
@@ -71,7 +71,7 @@ func main() {
 		log.Fatal("ADAPTER_CONNECTOR_SERVICE_URL environment variable is required")
 	}
 
-	logger := logger.New(logger.LoadConfig())
+	logger := logs.New(logs.LoadConfig())
 	defer logger.Sync()
 
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))

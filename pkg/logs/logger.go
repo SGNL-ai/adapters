@@ -1,8 +1,10 @@
-package logger
+package logs
 
 import (
+	"context"
 	"log"
 
+	framework_logs "github.com/sgnl-ai/adapter-framework/pkg/logs"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -37,6 +39,8 @@ func New(cfg Config, zapOpts ...zap.Option) *zap.Logger {
 		log.Fatalf("Failed to initialize zap logger: %v", err)
 	}
 
+	zap.ReplaceGlobals(logger)
+
 	// Redirect standard library logs to the zap logger for consistency.
 	_, err = zap.RedirectStdLogAt(logger, logLevel)
 	if err != nil {
@@ -46,4 +50,16 @@ func New(cfg Config, zapOpts ...zap.Option) *zap.Logger {
 	logger.Info("Zap logger initialized")
 
 	return logger
+}
+
+// FromContext returns a logger from the context if available.
+// It's a thin wrapper around framework_logs.LoggerFromContext.
+// If no logger is found in context, returns the global logger as fallback.
+func FromContext(ctx context.Context) *zap.Logger {
+	if logger := framework_logs.LoggerFromContext(ctx); logger != nil {
+		return logger
+	}
+
+	// Return the global logger as a fallback.
+	return zap.L()
 }

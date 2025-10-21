@@ -13,7 +13,7 @@ import (
 	"github.com/sgnl-ai/adapter-framework/server"
 	adapter_v1 "github.com/sgnl-ai/adapters/pkg/ldap/v1.0.0"
 	adapter_v2 "github.com/sgnl-ai/adapters/pkg/ldap/v2.0.0"
-	"github.com/sgnl-ai/adapters/pkg/logger"
+	"github.com/sgnl-ai/adapters/pkg/logs"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -40,7 +40,7 @@ func main() {
 		log.Fatal("LDAP_ADAPTER_CONNECTOR_SERVICE_URL environment variable is required")
 	}
 
-	logger := logger.New(logger.LoadConfig())
+	logger := logs.New(logs.LoadConfig())
 	defer logger.Sync()
 
 	list, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
