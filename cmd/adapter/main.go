@@ -76,7 +76,7 @@ func main() {
 		log.Fatalf("Failed to load logger configuration: %v", err)
 	}
 
-	logger := logs.New(*loggerCfg)
+	logger := logs.New(*loggerCfg, zap.WithCaller(true))
 	defer logger.Sync()
 
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))

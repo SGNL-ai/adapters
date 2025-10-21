@@ -27,6 +27,7 @@ require (
 	google.golang.org/protobuf v1.36.10
 	gopkg.in/dnaeon/go-vcr.v3 v3.2.0
 	gopkg.in/dnaeon/go-vcr.v4 v4.0.4
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
 
 require github.com/docker/docker v28.3.3+incompatible // indirect

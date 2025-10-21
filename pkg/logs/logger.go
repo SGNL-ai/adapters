@@ -3,11 +3,21 @@ package logs
 import (
 	"context"
 	"log"
+	"os"
+	"slices"
 
 	framework_logs "github.com/sgnl-ai/adapter-framework/pkg/logs"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
+
+const (
+	LOG_MODE_CONSOLE = "console"
+	LOG_MODE_FILE    = "file"
+)
+
+// TODO-RG: Add log observer tests in PagerDuty.
 
 // New creates a new zap.Logger based on the provided configuration.
 // It uses sensible production defaults with JSON formatting and nanosecond
@@ -19,26 +29,41 @@ func New(cfg Config, zapOpts ...zap.Option) *zap.Logger {
 		log.Fatal("Failed to parse log level")
 	}
 
-	zapCfg := zap.NewProductionConfig()
-
-	// Disable sampling to ensure all logs are captured.
-	zapCfg.Sampling = nil
-
 	// Add nanosecond precision to the timestamp.
 	encoderCfg := zap.NewProductionEncoderConfig()
 	encoderCfg.EncodeTime = zapcore.RFC3339NanoTimeEncoder
 
-	zapCfg.EncoderConfig = encoderCfg
+	jsonEncoder := zapcore.NewJSONEncoder(encoderCfg)
 
-	// Replace the log level.
-	zapCfg.Level = zap.NewAtomicLevelAt(logLevel)
+	zapCores := make([]zapcore.Core, 0, len(cfg.Mode))
 
-	// Build the logger with the above configuration.
-	logger, err := zapCfg.Build(zapOpts...)
-	if err != nil {
-		log.Fatalf("Failed to initialize zap logger: %v", err)
+	if slices.Contains(cfg.Mode, LOG_MODE_FILE) {
+		zapCores = append(zapCores, zapcore.NewCore(
+			jsonEncoder,
+			zapcore.AddSync(&lumberjack.Logger{
+				Filename:   cfg.FilePath,
+				MaxSize:    cfg.FileMaxSize, // megabytes
+				MaxBackups: cfg.FileMaxBackups,
+				MaxAge:     cfg.FileMaxDays, // days
+				Compress:   true,
+			}),
+			logLevel,
+		))
 	}
 
+	if slices.Contains(cfg.Mode, LOG_MODE_CONSOLE) {
+		zapCores = append(zapCores, zapcore.NewCore(
+			jsonEncoder,
+			zapcore.AddSync(os.Stdout),
+			logLevel,
+		))
+	}
+
+	core := zapcore.NewTee(zapCores...)
+
+	logger := zap.New(core, zapOpts...)
+
+	// Replace the global logger zap.L() with the newly created one.
 	zap.ReplaceGlobals(logger)
 
 	// Redirect standard library logs to the zap logger for consistency.
