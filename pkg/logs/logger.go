@@ -55,6 +55,8 @@ func New(cfg Config, zapOpts ...zap.Option) *zap.Logger {
 // FromContext returns a logger from the context if available.
 // It's a thin wrapper around framework_logs.LoggerFromContext.
 // If no logger is found in context, returns the global logger as fallback.
+//
+// The logger from the framework context already has useful request fields attached. See the framework.
 func FromContext(ctx context.Context) *zap.Logger {
 	if logger := framework_logs.LoggerFromContext(ctx); logger != nil {
 		return logger
