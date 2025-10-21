@@ -231,7 +231,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	}
 
 	if res.StatusCode != http.StatusOK {
-		logger.Info("Datasource request failed",
+		logger.Error("Datasource request failed",
 			zap.Int("responseStatusCode", response.StatusCode),
 			zap.String("responseRetryAfterHeader", response.RetryAfterHeader),
 		)

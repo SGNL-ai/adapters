@@ -18,6 +18,7 @@ const (
 )
 
 // TODO-RG: Add log observer tests in PagerDuty.
+// TODO-RG: Add test after returning a 403 response from teams when retrieving team members.
 
 // New creates a new zap.Logger based on the provided configuration.
 // It uses sensible production defaults with JSON formatting and nanosecond

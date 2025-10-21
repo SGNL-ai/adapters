@@ -46,7 +46,11 @@ func main() {
 	}
 
 	logger := logs.New(*loggerCfg, zap.WithCaller(true))
-	defer logger.Sync()
+	defer func() {
+		if err := logger.Sync(); err != nil {
+			logger.Error("Failed to sync logger", zap.Error(err))
+		}
+	}()
 
 	list, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
