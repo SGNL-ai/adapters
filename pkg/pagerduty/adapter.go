@@ -10,9 +10,7 @@ import (
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	"github.com/sgnl-ai/adapter-framework/web"
 	"github.com/sgnl-ai/adapters/pkg/config"
-	"github.com/sgnl-ai/adapters/pkg/logs"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
-	"go.uber.org/zap"
 
 	framework "github.com/sgnl-ai/adapter-framework"
 )
@@ -48,10 +46,6 @@ func (a *Adapter) RequestPageFromDatasource(
 	ctx context.Context,
 	request *framework.Request[Config],
 ) framework.Response {
-	logger := logs.FromContext(ctx)
-
-	logger.Info("Requesting page from datasource")
-
 	var commonConfig *config.CommonConfig
 	if request.Config != nil {
 		commonConfig = request.Config.CommonConfig
@@ -87,11 +81,6 @@ func (a *Adapter) RequestPageFromDatasource(
 	if err != nil {
 		return framework.NewGetPageResponseError(err)
 	}
-
-	logger.Info("Received datasource response",
-		zap.Int("statusCode", res.StatusCode),
-		zap.Int("objectCount", len(res.Objects)),
-	)
 
 	// An adapter error message is generated if the response status code is not
 	// successful (i.e. if not statusCode >= 200 && statusCode < 300).
@@ -140,8 +129,6 @@ func (a *Adapter) RequestPageFromDatasource(
 	if err != nil {
 		return framework.NewGetPageResponseError(err)
 	}
-
-	logger.Info("Page request completed successfully", zap.Int("objectCount", len(parsedObjects)))
 
 	return framework.NewGetPageResponseSuccess(&framework.Page{
 		Objects:    parsedObjects,

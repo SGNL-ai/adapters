@@ -15,7 +15,9 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	customerror "github.com/sgnl-ai/adapters/pkg/errors"
+	"github.com/sgnl-ai/adapters/pkg/logs"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
+	"go.uber.org/zap"
 )
 
 const (
@@ -38,6 +40,13 @@ func NewClient(client *http.Client) Client {
 }
 
 func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, *framework.Error) {
+	logger := logs.FromContext(ctx).With(
+		zap.String("requestEntityExternalId", request.EntityExternalID),
+		zap.Int64("requestPageSize", request.PageSize),
+	)
+
+	logger.Info("Starting datasource request")
+
 	cursor := request.Cursor
 
 	if cursor == nil || cursor.Cursor == nil {
@@ -170,7 +179,9 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		}
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, sb.String(), nil)
+	requestURL := sb.String()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
 	if err != nil {
 		return nil, &framework.Error{
 			Message: fmt.Sprintf("Adapter generated an invalid URL: %v.", err),
@@ -186,8 +197,12 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 
 	req.Header.Add("Authorization", request.Token)
 
+	logger.Info("Sending HTTP request to datasource", zap.String("url", requestURL))
+
 	res, err := d.Client.Do(req)
 	if err != nil {
+		logger.Error("HTTP request to datasource failed", zap.String("url", requestURL), zap.Error(err))
+
 		return nil, customerror.UpdateError(&framework.Error{
 			Message: fmt.Sprintf("Failed to execute PagerDuty request: %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
@@ -359,6 +374,12 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	if nextCursor == nil && cursor.CollectionCursor == nil {
 		response.NextCursor = nil
 	}
+
+	logger.Info("Datasource request completed successfully",
+		zap.Int("responseStatusCode", response.StatusCode),
+		zap.Int("responseObjectCount", len(response.Objects)),
+		zap.Any("responseNextCursor", response.NextCursor),
+	)
 
 	return response, nil
 }
