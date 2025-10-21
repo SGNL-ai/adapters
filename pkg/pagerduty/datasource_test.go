@@ -13,9 +13,13 @@ import (
 
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
+	framework_logs "github.com/sgnl-ai/adapter-framework/pkg/logs"
 	"github.com/sgnl-ai/adapters/pkg/pagerduty"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"go.uber.org/zap/zaptest/observer"
 )
 
 // Define the endpoints and responses for the mock PagerDuty server.
@@ -237,10 +241,11 @@ func TestGetPage(t *testing.T) {
 	server := httptest.NewServer(TestServerHandler)
 
 	tests := map[string]struct {
-		context context.Context
-		request *pagerduty.Request
-		wantRes *pagerduty.Response
-		wantErr *framework.Error
+		context      context.Context
+		request      *pagerduty.Request
+		wantRes      *pagerduty.Response
+		wantErr      *framework.Error
+		expectedLogs []map[string]any
 	}{
 		"first_page": {
 			context: context.Background(),
@@ -261,6 +266,32 @@ func TestGetPage(t *testing.T) {
 				},
 			},
 			wantErr: nil,
+			expectedLogs: []map[string]any{
+				{
+					"level":                   "info",
+					"msg":                     "Starting datasource request",
+					"requestEntityExternalId": pagerduty.Users,
+					"requestPageSize":         int64(1),
+				},
+				{
+					"level":                   "info",
+					"msg":                     "Sending HTTP request to datasource",
+					"requestEntityExternalId": pagerduty.Users,
+					"requestPageSize":         int64(1),
+					"url":                     server.URL + "/users?offset=0&limit=1",
+				},
+				{
+					"level":                   "info",
+					"msg":                     "Datasource request completed successfully",
+					"requestEntityExternalId": pagerduty.Users,
+					"requestPageSize":         int64(1),
+					"responseStatusCode":      int64(200),
+					"responseObjectCount":     int64(1),
+					"responseNextCursor": map[string]any{
+						"cursor": int64(1),
+					},
+				},
+			},
 		},
 		"middle_page": {
 			context: context.Background(),
@@ -300,6 +331,44 @@ func TestGetPage(t *testing.T) {
 				},
 			},
 			wantErr: nil,
+		},
+		"http_not_found_error": {
+			context: context.Background(),
+			request: &pagerduty.Request{
+				BaseURL:               server.URL,
+				RequestTimeoutSeconds: 5,
+				Token:                 "Token token=1234",
+				EntityExternalID:      "invalid_entity",
+				PageSize:              1,
+			},
+			wantRes: &pagerduty.Response{
+				StatusCode:       http.StatusNotFound,
+				RetryAfterHeader: "",
+			},
+			wantErr: nil,
+			expectedLogs: []map[string]any{
+				{
+					"level":                   "info",
+					"msg":                     "Starting datasource request",
+					"requestEntityExternalId": "invalid_entity",
+					"requestPageSize":         int64(1),
+				},
+				{
+					"level":                   "info",
+					"msg":                     "Sending HTTP request to datasource",
+					"requestEntityExternalId": "invalid_entity",
+					"requestPageSize":         int64(1),
+					"url":                     server.URL + "/invalid_entity?offset=0&limit=1",
+				},
+				{
+					"level":                    "error",
+					"msg":                      "Datasource request failed",
+					"requestEntityExternalId":  "invalid_entity",
+					"requestPageSize":          int64(1),
+					"responseStatusCode":       int64(404),
+					"responseRetryAfterHeader": "",
+				},
+			},
 		},
 		"first_member_page_first_group": {
 			context: context.Background(),
@@ -593,7 +662,14 @@ func TestGetPage(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			gotRes, gotErr := pagerdutyClient.GetPage(tt.context, tt.request)
+			// Create an observable logger to capture log output.
+			observedCore, observedLogs := observer.New(zapcore.InfoLevel)
+			observableLogger := zap.New(observedCore)
+
+			// Enrich context with logger
+			ctx := framework_logs.ContextWithLogger(tt.context, observableLogger)
+
+			gotRes, gotErr := pagerdutyClient.GetPage(ctx, tt.request)
 
 			if !reflect.DeepEqual(gotRes, tt.wantRes) {
 				t.Errorf("gotRes: %v, wantRes: %v", gotRes, tt.wantRes)
@@ -601,6 +677,28 @@ func TestGetPage(t *testing.T) {
 
 			if !reflect.DeepEqual(gotErr, tt.wantErr) {
 				t.Errorf("gotErr: %v, wantErr: %v", gotErr, tt.wantErr)
+			}
+
+			if len(tt.expectedLogs) > 0 {
+				gotLogs := observedLogs.All()
+
+				if len(gotLogs) != len(tt.expectedLogs) {
+					t.Errorf("expected %d logs, got %d", len(tt.expectedLogs), len(gotLogs))
+				}
+
+				for i, expectedLog := range tt.expectedLogs {
+					gotLog := gotLogs[i].ContextMap()           // Get all the log fields as a map.
+					gotLog["msg"] = gotLogs[i].Message          // Add the "msg" field since that's not included in ContextMap().
+					gotLog["level"] = gotLogs[i].Level.String() // Add the "level" field.
+
+					if cursorMap := pagination.ParseCursorFromLog(gotLog, "responseNextCursor"); cursorMap != nil {
+						gotLog["responseNextCursor"] = cursorMap
+					}
+
+					if !reflect.DeepEqual(gotLog, expectedLog) {
+						t.Errorf("log %d mismatch:\ngot:  %#v\nwant: %#v", i, gotLog, expectedLog)
+					}
+				}
 			}
 		})
 	}
