@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -27,8 +28,7 @@ func TestNew(t *testing.T) {
 	tests := map[string]struct {
 		config            logs.Config
 		writeLogs         func(logger *zap.Logger)
-		expectedLogs      int
-		validateFile      bool
+		expectedLogs      []map[string]any
 		expectedFileLines []map[string]any
 	}{
 		"console_mode_only": {
@@ -42,7 +42,28 @@ func TestNew(t *testing.T) {
 				logger.Warn("warn message")
 				logger.Error("error message")
 			},
-			expectedLogs: 4, // init + info + warn + error (debug is filtered out)
+			expectedLogs: []map[string]any{
+				{
+					"level": "info",
+					"ts":    MockClockTimestamp,
+					"msg":   "Zap logger initialized",
+				},
+				{
+					"level": "info",
+					"ts":    MockClockTimestamp,
+					"msg":   "info message",
+				},
+				{
+					"level": "warn",
+					"ts":    MockClockTimestamp,
+					"msg":   "warn message",
+				},
+				{
+					"level": "error",
+					"ts":    MockClockTimestamp,
+					"msg":   "error message",
+				},
+			},
 		},
 		"both_console_and_file_mode": {
 			config: logs.Config{
@@ -59,8 +80,34 @@ func TestNew(t *testing.T) {
 				logger.Warn("warn message")
 				logger.Error("error message", zap.Int("code", 500))
 			},
-			expectedLogs: 5, // init + debug + info + warn + error
-			validateFile: true,
+			expectedLogs: []map[string]any{
+				{
+					"level": "info",
+					"ts":    MockClockTimestamp,
+					"msg":   "Zap logger initialized",
+				},
+				{
+					"level": "debug",
+					"ts":    MockClockTimestamp,
+					"msg":   "debug message",
+				},
+				{
+					"level": "info",
+					"ts":    MockClockTimestamp,
+					"msg":   "info message",
+				},
+				{
+					"level": "warn",
+					"ts":    MockClockTimestamp,
+					"msg":   "warn message",
+				},
+				{
+					"level": "error",
+					"ts":    MockClockTimestamp,
+					"msg":   "error message",
+					"code":  int64(500),
+				},
+			},
 			expectedFileLines: []map[string]any{
 				{
 					"level": "info",
@@ -99,7 +146,23 @@ func TestNew(t *testing.T) {
 				logger.Debug("debug message")
 				logger.Info("info message")
 			},
-			expectedLogs: 3, // init + debug + info
+			expectedLogs: []map[string]any{
+				{
+					"level": "info",
+					"ts":    MockClockTimestamp,
+					"msg":   "Zap logger initialized",
+				},
+				{
+					"level": "debug",
+					"ts":    MockClockTimestamp,
+					"msg":   "debug message",
+				},
+				{
+					"level": "info",
+					"ts":    MockClockTimestamp,
+					"msg":   "info message",
+				},
+			},
 		},
 	}
 
@@ -131,13 +194,28 @@ func TestNew(t *testing.T) {
 				test.writeLogs(logger)
 			}
 
-			// Validate the expected number of logs.
-			if observedLogs.Len() != test.expectedLogs {
-				t.Errorf("expected %d logs, got %d", test.expectedLogs, observedLogs.Len())
+			// Validate expected logs.
+			if len(test.expectedLogs) > 0 {
+				gotLogs := observedLogs.All()
+
+				if len(gotLogs) != len(test.expectedLogs) {
+					t.Errorf("expected %d logs, got %d", len(test.expectedLogs), len(gotLogs))
+				}
+
+				for i, expectedLog := range test.expectedLogs {
+					gotLog := gotLogs[i].ContextMap()           // Get all the log fields as a map.
+					gotLog["msg"] = gotLogs[i].Message          // Add the "msg" field since that's not included in ContextMap().
+					gotLog["level"] = gotLogs[i].Level.String() // Add the "level" field.
+					gotLog["ts"] = MockClockTimestamp           // Add the "ts" field to match expected logs.
+
+					if !reflect.DeepEqual(gotLog, expectedLog) {
+						t.Errorf("log %d mismatch:\ngot:  %#v\nwant: %#v", i, gotLog, expectedLog)
+					}
+				}
 			}
 
 			// Validate file contents if requested.
-			if test.validateFile {
+			if len(test.expectedFileLines) > 0 {
 				content, err := os.ReadFile(test.config.FilePath)
 				if err != nil {
 					t.Fatalf("failed to read log file: %v", err)
