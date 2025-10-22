@@ -16,6 +16,7 @@ import (
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	customerror "github.com/sgnl-ai/adapters/pkg/errors"
 	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 	"go.uber.org/zap"
 )
@@ -41,8 +42,8 @@ func NewClient(client *http.Client) Client {
 
 func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, *framework.Error) {
 	logger := zaplogger.FromContext(ctx).With(
-		zap.String("requestEntityExternalId", request.EntityExternalID),
-		zap.Int64("requestPageSize", request.PageSize),
+		fields.RequestEntityExternalID(request.EntityExternalID),
+		fields.RequestPageSize(request.PageSize),
 	)
 
 	logger.Info("Starting datasource request")
@@ -202,11 +203,11 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 
 	req.Header.Add("Authorization", request.Token)
 
-	logger.Info("Sending HTTP request to datasource", zap.String("url", requestURL))
+	logger.Info("Sending HTTP request to datasource", fields.URL(requestURL))
 
 	res, err := d.Client.Do(req)
 	if err != nil {
-		logger.Error("HTTP request to datasource failed", zap.String("url", requestURL), zap.Error(err))
+		logger.Error("HTTP request to datasource failed", fields.URL(requestURL), zap.Error(err))
 
 		return nil, customerror.UpdateError(&framework.Error{
 			Message: fmt.Sprintf("Failed to execute PagerDuty request: %v.", err),
@@ -232,8 +233,8 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 
 	if res.StatusCode != http.StatusOK {
 		logger.Error("Datasource request failed",
-			zap.Int("responseStatusCode", response.StatusCode),
-			zap.String("responseRetryAfterHeader", response.RetryAfterHeader),
+			fields.ResponseStatusCode(response.StatusCode),
+			fields.ResponseRetryAfterHeader(response.RetryAfterHeader),
 		)
 
 		return response, nil
@@ -386,9 +387,9 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	}
 
 	logger.Info("Datasource request completed successfully",
-		zap.Int("responseStatusCode", response.StatusCode),
-		zap.Int("responseObjectCount", len(response.Objects)),
-		zap.Any("responseNextCursor", response.NextCursor),
+		fields.ResponseStatusCode(response.StatusCode),
+		fields.ResponseObjectCount(len(response.Objects)),
+		fields.ResponseNextCursor(response.NextCursor),
 	)
 
 	return response, nil

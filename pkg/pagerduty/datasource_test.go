@@ -15,6 +15,7 @@ import (
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	framework_logs "github.com/sgnl-ai/adapter-framework/pkg/logs"
 	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagerduty"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
@@ -269,26 +270,26 @@ func TestGetPage(t *testing.T) {
 			wantErr: nil,
 			expectedLogs: []map[string]any{
 				{
-					"level":                   "info",
-					"msg":                     "Starting datasource request",
-					"requestEntityExternalId": pagerduty.Users,
-					"requestPageSize":         int64(1),
+					"level":                             "info",
+					"msg":                               "Starting datasource request",
+					fields.FieldRequestEntityExternalID: pagerduty.Users,
+					fields.FieldRequestPageSize:         int64(1),
 				},
 				{
-					"level":                   "info",
-					"msg":                     "Sending HTTP request to datasource",
-					"requestEntityExternalId": pagerduty.Users,
-					"requestPageSize":         int64(1),
-					"url":                     server.URL + "/users?offset=0&limit=1",
+					"level":                             "info",
+					"msg":                               "Sending HTTP request to datasource",
+					fields.FieldRequestEntityExternalID: pagerduty.Users,
+					fields.FieldRequestPageSize:         int64(1),
+					fields.FieldURL:                     server.URL + "/users?offset=0&limit=1",
 				},
 				{
-					"level":                   "info",
-					"msg":                     "Datasource request completed successfully",
-					"requestEntityExternalId": pagerduty.Users,
-					"requestPageSize":         int64(1),
-					"responseStatusCode":      int64(200),
-					"responseObjectCount":     int64(1),
-					"responseNextCursor": map[string]any{
+					"level":                             "info",
+					"msg":                               "Datasource request completed successfully",
+					fields.FieldRequestEntityExternalID: pagerduty.Users,
+					fields.FieldRequestPageSize:         int64(1),
+					fields.FieldResponseStatusCode:      int64(200),
+					fields.FieldResponseObjectCount:     int64(1),
+					fields.FieldResponseNextCursor: map[string]any{
 						"cursor": int64(1),
 					},
 				},
@@ -349,25 +350,25 @@ func TestGetPage(t *testing.T) {
 			wantErr: nil,
 			expectedLogs: []map[string]any{
 				{
-					"level":                   "info",
-					"msg":                     "Starting datasource request",
-					"requestEntityExternalId": "invalid_entity",
-					"requestPageSize":         int64(1),
+					"level":                             "info",
+					"msg":                               "Starting datasource request",
+					fields.FieldRequestEntityExternalID: "invalid_entity",
+					fields.FieldRequestPageSize:         int64(1),
 				},
 				{
-					"level":                   "info",
-					"msg":                     "Sending HTTP request to datasource",
-					"requestEntityExternalId": "invalid_entity",
-					"requestPageSize":         int64(1),
-					"url":                     server.URL + "/invalid_entity?offset=0&limit=1",
+					"level":                             "info",
+					"msg":                               "Sending HTTP request to datasource",
+					fields.FieldRequestEntityExternalID: "invalid_entity",
+					fields.FieldRequestPageSize:         int64(1),
+					fields.FieldURL:                     server.URL + "/invalid_entity?offset=0&limit=1",
 				},
 				{
-					"level":                    "error",
-					"msg":                      "Datasource request failed",
-					"requestEntityExternalId":  "invalid_entity",
-					"requestPageSize":          int64(1),
-					"responseStatusCode":       int64(404),
-					"responseRetryAfterHeader": "",
+					"level":                              "error",
+					"msg":                                "Datasource request failed",
+					fields.FieldRequestEntityExternalID:  "invalid_entity",
+					fields.FieldRequestPageSize:          int64(1),
+					fields.FieldResponseStatusCode:       int64(404),
+					fields.FieldResponseRetryAfterHeader: "",
 				},
 			},
 		},
