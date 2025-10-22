@@ -215,6 +215,8 @@ github.com/sgnl-ai/adapter-framework v0.19.2-0.20251022162848-0aa983211e85 h1:cS
 github.com/sgnl-ai/adapter-framework v0.19.2-0.20251022162848-0aa983211e85/go.mod h1:X+EnEBh4YgNP/zo60BAYISKyRmX/4e11lCp0rPv6DGc=
 github.com/sgnl-ai/adapter-framework v0.19.2-0.20251022175458-f364a505dcf8 h1:fD9iXjKcAhSchz7+yD7bXo4ddo8UG5hXgntRsRDCVVs=
 github.com/sgnl-ai/adapter-framework v0.19.2-0.20251022175458-f364a505dcf8/go.mod h1:OvsY/GX0guHwP8jgNvjzmEh/MqUJD4kZ/hIu9immQ5A=
+github.com/sgnl-ai/adapter-framework v0.19.2-0.20251022200158-44cb6262ebcc h1:Y3Vl+NW4qlEfpFRm0tf3W8IepRctdTBarZIEOtc0zxo=
+github.com/sgnl-ai/adapter-framework v0.19.2-0.20251022200158-44cb6262ebcc/go.mod h1:OvsY/GX0guHwP8jgNvjzmEh/MqUJD4kZ/hIu9immQ5A=
 github.com/shirou/gopsutil/v4 v4.25.6 h1:kLysI2JsKorfaFPcYmcJqbzROzsBWEOAtw6A7dIfqXs=
 github.com/shirou/gopsutil/v4 v4.25.6/go.mod h1:PfybzyydfZcN+JMMjkF6Zb8Mq1A/VcogFFg7hj50W9c=
 github.com/shopspring/decimal v1.3.1/go.mod h1:DKyhrW/HYNuLGql+MJL6WCR6knT2jwCFRcu2hWCYk4o=

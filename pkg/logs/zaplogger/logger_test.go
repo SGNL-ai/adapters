@@ -190,7 +190,6 @@ func TestNew(t *testing.T) {
 				t.Fatal("expected logger to be created")
 			}
 
-			// Write logs using the test-specific function.
 			if test.writeLogs != nil {
 				test.writeLogs(logger)
 			}
@@ -208,6 +207,9 @@ func TestNew(t *testing.T) {
 					gotLog["msg"] = gotLogs[i].Message          // Add the "msg" field since that's not included in ContextMap().
 					gotLog["level"] = gotLogs[i].Level.String() // Add the "level" field.
 					gotLog["ts"] = MockClockTimestamp           // Add the "ts" field to match expected logs.
+
+					// Remove the "config" field as we're testing basic logging functionality here.
+					delete(gotLog, "config")
 
 					if !reflect.DeepEqual(gotLog, expectedLog) {
 						t.Errorf("log %d mismatch:\ngot:  %#v\nwant: %#v", i, gotLog, expectedLog)
@@ -249,7 +251,7 @@ func TestNew(t *testing.T) {
 							continue
 						}
 
-						if gotValue != expectedValue {
+						if !reflect.DeepEqual(gotValue, expectedValue) {
 							t.Errorf("line %d: field %q = %v, want %v", i+1, field, gotValue, expectedValue)
 						}
 					}
@@ -319,4 +321,173 @@ func (m *mockClock) Now() time.Time {
 
 func (m *mockClock) NewTicker(duration time.Duration) *time.Ticker {
 	return time.NewTicker(duration)
+}
+
+func TestNewFrameworkLogger(t *testing.T) {
+	frameworkLogger := zaplogger.NewFrameworkLogger(zap.NewNop())
+
+	if frameworkLogger == nil {
+		t.Fatal("expected non-nil framework logger")
+	}
+
+	// Verify it implements the framework_logs.Logger interface.
+	var _ framework_logs.Logger = frameworkLogger
+}
+
+func TestLogger_LogMethods(t *testing.T) {
+	tests := map[string]struct {
+		logLevel zapcore.Level
+		logFunc  func(logger framework_logs.Logger)
+		wantLogs []map[string]any
+	}{
+		"info_logs_at_info_level": {
+			logLevel: zapcore.InfoLevel,
+			logFunc: func(logger framework_logs.Logger) {
+				logger.Info("test info message", framework_logs.Field{Key: "key", Value: "value"})
+			},
+			wantLogs: []map[string]any{
+				{
+					"level": "info",
+					"msg":   "test info message",
+					"key":   "value",
+				},
+			},
+		},
+		"error_logs_at_error_level": {
+			logLevel: zapcore.ErrorLevel,
+			logFunc: func(logger framework_logs.Logger) {
+				logger.Error("test error message")
+			},
+			wantLogs: []map[string]any{
+				{
+					"level": "error",
+					"msg":   "test error message",
+				},
+			},
+		},
+		"debug_logs_at_debug_level": {
+			logLevel: zapcore.DebugLevel,
+			logFunc: func(logger framework_logs.Logger) {
+				logger.Debug("test debug message")
+			},
+			wantLogs: []map[string]any{
+				{
+					"level": "debug",
+					"msg":   "test debug message",
+				},
+			},
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			// Create an observable core to capture log output.
+			observedCore, observedLogs := observer.New(tc.logLevel)
+			zapLogger := zap.New(observedCore)
+
+			frameworkLogger := zaplogger.NewFrameworkLogger(zapLogger)
+
+			// Log the message.
+			tc.logFunc(frameworkLogger)
+
+			// Verify the log was captured.
+			gotLogs := observedLogs.All()
+			if len(gotLogs) != 1 {
+				t.Fatalf("expected 1 log, got %d", len(gotLogs))
+			}
+
+			for i, wantLog := range tc.wantLogs {
+				gotLog := gotLogs[i].ContextMap()
+				gotLog["msg"] = gotLogs[i].Message          // Add the "msg" field since that's not included in ContextMap().
+				gotLog["level"] = gotLogs[i].Level.String() // Add the "level" field.
+
+				if !reflect.DeepEqual(gotLog, wantLog) {
+					t.Errorf("log %d mismatch: got: %v, want: %v", i, gotLog, wantLog)
+				}
+			}
+		})
+	}
+}
+
+func TestLogger_With(t *testing.T) {
+	// Create an observable core to capture log output.
+	observedCore, observedLogs := observer.New(zapcore.InfoLevel)
+	zapLogger := zap.New(observedCore)
+
+	frameworkLogger := zaplogger.NewFrameworkLogger(zapLogger)
+
+	// Create a child logger with pre-attached fields.
+	childLogger := frameworkLogger.With(
+		framework_logs.Field{Key: "requestId", Value: "req-123"},
+		framework_logs.Field{Key: "userId", Value: "user-456"},
+	)
+
+	// Log a message with the child logger.
+	childLogger.Info("test message")
+
+	// Verify the log includes the pre-attached fields.
+	logs := observedLogs.All()
+	if len(logs) != 1 {
+		t.Fatalf("expected 1 log, got %d", len(logs))
+	}
+
+	contextMap := logs[0].ContextMap()
+
+	if contextMap["requestId"] != "req-123" {
+		t.Errorf("expected requestId='req-123', got %v", contextMap["requestId"])
+	}
+
+	if contextMap["userId"] != "user-456" {
+		t.Errorf("expected userId='user-456', got %v", contextMap["userId"])
+	}
+}
+
+func TestUnwrapLogger(t *testing.T) {
+	tests := map[string]struct {
+		setupLogger func() framework_logs.Logger
+		wantLogger  *zap.Logger
+		wantOK      bool
+	}{
+		"unwraps_zaplogger_adapter": {
+			setupLogger: func() framework_logs.Logger {
+				observedCore, _ := observer.New(zapcore.InfoLevel)
+				zapLogger := zap.New(observedCore)
+				return zaplogger.NewFrameworkLogger(zapLogger)
+			},
+			wantLogger: nil, // Will be set dynamically in test.
+			wantOK:     true,
+		},
+		"returns_false_for_non_zaplogger": {
+			setupLogger: func() framework_logs.Logger {
+				// Return a mock logger that's not a zaplogger.Logger.
+				return &framework_logs.MockLogger{}
+			},
+			wantLogger: nil,
+			wantOK:     false,
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			logger := tc.setupLogger()
+
+			gotLogger, gotOK := zaplogger.UnwrapLogger(logger)
+
+			if gotOK != tc.wantOK {
+				t.Errorf("got ok=%v, want ok=%v", gotOK, tc.wantOK)
+			}
+
+			if tc.wantOK {
+				// Verify we got a valid zap logger.
+				if gotLogger == nil {
+					t.Error("expected non-nil zap logger when ok=true")
+				}
+			} else {
+				// Verify we got nil when unwrap fails.
+				if gotLogger != nil {
+					t.Error("expected nil zap logger when ok=false")
+				}
+			}
+		})
+	}
 }

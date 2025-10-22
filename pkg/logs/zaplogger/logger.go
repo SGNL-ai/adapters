@@ -66,7 +66,7 @@ func New(cfg Config, zapOpts ...zap.Option) *zap.Logger {
 		log.Fatalf("Can't redirect std to zap logger: %v", err)
 	}
 
-	logger.Info("Zap logger initialized")
+	logger.Info("Zap logger initialized", zap.Any("config", cfg))
 
 	return logger
 }
@@ -79,7 +79,6 @@ func New(cfg Config, zapOpts ...zap.Option) *zap.Logger {
 func FromContext(ctx context.Context) *zap.Logger {
 	if logger := framework_logs.FromContext(ctx); logger != nil {
 		zapLogger, ok := UnwrapLogger(logger)
-
 		if ok {
 			return zapLogger
 		}
