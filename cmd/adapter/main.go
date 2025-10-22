@@ -86,7 +86,7 @@ func main() {
 
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
-		logger.Fatal("Failed to open server port: %v.", zap.Error(err))
+		logger.Fatal(fmt.Sprintf("Failed to open server port: %d", port), zap.Error(err))
 	}
 
 	timeoutDuration := time.Duration(timeout) * time.Second
@@ -100,7 +100,7 @@ func main() {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		logger.Fatal("Failed to create a grpc client to the connector service: %v", zap.Error(err))
+		logger.Fatal("Failed to create a grpc client to the connector service", zap.Error(err))
 	}
 
 	// Initialize the client to fetch data from AWS S3.
@@ -113,7 +113,7 @@ func main() {
 		maxBytesToProcessPerPage,
 	)
 	if err != nil {
-		logger.Fatal("Failed to create a datasource to query AWS S3: %v.", zap.Error(err))
+		logger.Fatal("Failed to create a datasource to query AWS S3", zap.Error(err))
 	}
 
 	// Initialize the client to fetch data from AWS.
@@ -123,7 +123,7 @@ func main() {
 		), nil, maxConcurrency,
 	)
 	if err != nil {
-		logger.Fatal("Failed to create a datasource to query AWS: %v.", zap.Error(err))
+		logger.Fatal("Failed to create a datasource to query AWS", zap.Error(err))
 	}
 
 	// Register adapters here alphabetically.
@@ -291,11 +291,11 @@ func main() {
 
 	api_adapter_v1.RegisterAdapterServer(s, adapterServer)
 
-	logger.Info("Started adapter gRPC server", zap.Int("port", port))
+	logger.Info(fmt.Sprintf("Started adapter gRPC server on port %d", port))
 
 	if err := s.Serve(listener); err != nil {
 		close(stop)
 
-		logger.Fatal("Failed to listen on server port: %v.", zap.Error(err))
+		logger.Fatal(fmt.Sprintf("Failed to listen on server port: %d", port), zap.Error(err))
 	}
 }

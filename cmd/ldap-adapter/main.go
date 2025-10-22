@@ -55,7 +55,7 @@ func main() {
 
 	list, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
-		logger.Fatal("Failed to open server port", zap.Error(err))
+		logger.Fatal(fmt.Sprintf("Failed to open server port: %d", port), zap.Error(err))
 	}
 
 	s := grpc.NewServer()
@@ -92,11 +92,12 @@ func main() {
 
 	api_adapter_v1.RegisterAdapterServer(s, adapterServer)
 
-	logger.Info("Started LDAP adapter gRPC server", zap.Int("port", port))
+	logger.Info(fmt.Sprintf("Started LDAP adapter gRPC server on port %d", port))
 
 	if err := s.Serve(list); err != nil {
 		close(stop)
-		logger.Fatal("Failed to serve", zap.Error(err))
+
+		logger.Fatal(fmt.Sprintf("Failed to listen on server port: %d", port), zap.Error(err))
 	}
 
 	logger.Info("Cleanup complete, exiting")

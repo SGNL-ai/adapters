@@ -139,7 +139,7 @@ func (a *Logger) Unwrap() *zap.Logger {
 }
 
 // UnwrapLogger attempts to extract a *zap.Logger from a framework_logs.Logger.
-// Returns the underlying *zap.Logger and true if the logger is a zaplog.Adapter,
+// Returns the underlying *zap.Logger and true if the logger is a zaplogger.Logger,
 // otherwise returns nil and false.
 func UnwrapLogger(logger framework_logs.Logger) (*zap.Logger, bool) {
 	if adapter, ok := logger.(*Logger); ok {
