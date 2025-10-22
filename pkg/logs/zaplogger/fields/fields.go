@@ -1,11 +1,16 @@
 // Copyright 2025 SGNL.ai, Inc.
 package fields
 
-import "go.uber.org/zap"
+import (
+	"encoding/json"
+
+	"go.uber.org/zap"
+)
 
 const (
 	FieldRequestEntityExternalID  = "requestEntityExternalId"
 	FieldRequestPageSize          = "requestPageSize"
+	FieldResponseBody             = "responseBody"
 	FieldResponseNextCursor       = "responseNextCursor"
 	FieldResponseObjectCount      = "responseObjectCount"
 	FieldResponseRetryAfterHeader = "responseRetryAfterHeader"
@@ -19,6 +24,14 @@ func RequestEntityExternalID(entityExternalID string) zap.Field {
 
 func RequestPageSize(pageSize int64) zap.Field {
 	return zap.Int64(FieldRequestPageSize, pageSize)
+}
+
+func ResponseBody(body []byte) zap.Field {
+	if json.Valid(body) {
+		return zap.Any(FieldResponseBody, json.RawMessage(body))
+	}
+
+	return zap.ByteString(FieldResponseBody, body)
 }
 
 func ResponseNextCursor(cursor any) zap.Field {

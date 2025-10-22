@@ -235,6 +235,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		logger.Error("Datasource request failed",
 			fields.ResponseStatusCode(response.StatusCode),
 			fields.ResponseRetryAfterHeader(response.RetryAfterHeader),
+			fields.ResponseBody(body),
 		)
 
 		return response, nil

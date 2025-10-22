@@ -5,6 +5,7 @@ package pagerduty_test
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -97,9 +98,14 @@ var TestServerHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Req
 		w.Write([]byte(`{"oncalls": [{"user": {"id": "user2"}, "escalation_policy": {"id": "policy2"},` +
 			`"start": "2015-03-06T15:28:51-05:00", "end": 1234}], "more": false}`))
 
+	// HTML error response for testing non-JSON error bodies
+	case "/html_error?offset=0&limit=1":
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`<html><body><h1>500 Internal Server Error</h1></body></html>`))
+
 	default:
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte(``))
+		w.Write([]byte(`{"error":{"message":"Not Found","code":404}}`))
 	}
 })
 
@@ -369,6 +375,51 @@ func TestGetPage(t *testing.T) {
 					fields.FieldRequestPageSize:          int64(1),
 					fields.FieldResponseStatusCode:       int64(404),
 					fields.FieldResponseRetryAfterHeader: "",
+					fields.FieldResponseBody: map[string]any{
+						"error": map[string]any{
+							"message": "Not Found",
+							"code":    float64(404),
+						},
+					},
+				},
+			},
+		},
+		"http_internal_server_error_with_html_body": {
+			context: context.Background(),
+			request: &pagerduty.Request{
+				BaseURL:               server.URL,
+				RequestTimeoutSeconds: 5,
+				Token:                 "Token token=1234",
+				EntityExternalID:      "html_error",
+				PageSize:              1,
+			},
+			wantRes: &pagerduty.Response{
+				StatusCode:       http.StatusInternalServerError,
+				RetryAfterHeader: "",
+			},
+			wantErr: nil,
+			expectedLogs: []map[string]any{
+				{
+					"level":                             "info",
+					"msg":                               "Starting datasource request",
+					fields.FieldRequestEntityExternalID: "html_error",
+					fields.FieldRequestPageSize:         int64(1),
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Sending HTTP request to datasource",
+					fields.FieldRequestEntityExternalID: "html_error",
+					fields.FieldRequestPageSize:         int64(1),
+					fields.FieldURL:                     server.URL + "/html_error?offset=0&limit=1",
+				},
+				{
+					"level":                              "error",
+					"msg":                                "Datasource request failed",
+					fields.FieldRequestEntityExternalID:  "html_error",
+					fields.FieldRequestPageSize:          int64(1),
+					fields.FieldResponseStatusCode:       int64(500),
+					fields.FieldResponseRetryAfterHeader: "",
+					fields.FieldResponseBody:             "<html><body><h1>500 Internal Server Error</h1></body></html>",
 				},
 			},
 		},
@@ -695,6 +746,17 @@ func TestGetPage(t *testing.T) {
 
 					if cursorMap := pagination.ParseCursorFromLog(gotLog, "responseNextCursor"); cursorMap != nil {
 						gotLog["responseNextCursor"] = cursorMap
+					}
+
+					// Parse responseBody if it's a json.RawMessage.
+					if responseBody, ok := gotLog[fields.FieldResponseBody]; ok {
+						if rawJSON, ok := responseBody.(json.RawMessage); ok {
+							var parsed map[string]any
+
+							if err := json.Unmarshal(rawJSON, &parsed); err == nil {
+								gotLog[fields.FieldResponseBody] = parsed
+							}
+						}
 					}
 
 					if !reflect.DeepEqual(gotLog, expectedLog) {
