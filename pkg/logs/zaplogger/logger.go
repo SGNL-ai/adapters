@@ -1,5 +1,5 @@
 // Copyright 2025 SGNL.ai, Inc.
-package logs
+package zaplogger
 
 import (
 	"context"
@@ -72,15 +72,80 @@ func New(cfg Config, zapOpts ...zap.Option) *zap.Logger {
 }
 
 // FromContext returns a logger from the context if available.
-// It's a thin wrapper around framework_logs.LoggerFromContext.
+// It's a thin wrapper around framework_logs.FromContext.
 // If no logger is found in context, returns the global logger as fallback.
 //
 // The logger from the framework context already has useful request fields attached. See the framework.
 func FromContext(ctx context.Context) *zap.Logger {
-	if logger := framework_logs.LoggerFromContext(ctx); logger != nil {
-		return logger
+	if logger := framework_logs.FromContext(ctx); logger != nil {
+		zapLogger, ok := UnwrapLogger(logger)
+
+		if ok {
+			return zapLogger
+		}
 	}
 
 	// Return the global logger as a fallback.
 	return zap.L()
+}
+
+// Logger wraps a *zap.Logger to implement the framework_logs.Logger interface.
+type Logger struct {
+	logger *zap.Logger
+}
+
+var _ framework_logs.Logger = (*Logger)(nil)
+
+// NewFrameworkLogger creates a new framework_logs.Logger from a *zap.Logger.
+func NewFrameworkLogger(logger *zap.Logger) framework_logs.Logger {
+	return &Logger{logger: logger}
+}
+
+// Info logs an informational message.
+func (a *Logger) Info(msg string, fields ...framework_logs.Field) {
+	a.logger.Info(msg, toZapFields(fields)...)
+}
+
+// Error logs an error message.
+func (a *Logger) Error(msg string, fields ...framework_logs.Field) {
+	a.logger.Error(msg, toZapFields(fields)...)
+}
+
+// Debug logs a debug message.
+func (a *Logger) Debug(msg string, fields ...framework_logs.Field) {
+	a.logger.Debug(msg, toZapFields(fields)...)
+}
+
+// With creates a child logger with pre-attached fields.
+func (a *Logger) With(fields ...framework_logs.Field) framework_logs.Logger {
+	return &Logger{
+		logger: a.logger.With(toZapFields(fields)...),
+	}
+}
+
+// toZapFields converts framework_logs.Field to zap.Field.
+func toZapFields(fields []framework_logs.Field) []zap.Field {
+	zapFields := make([]zap.Field, len(fields))
+	for i, f := range fields {
+		zapFields[i] = zap.Any(f.Key, f.Value)
+	}
+
+	return zapFields
+}
+
+// Unwrap returns the underlying *zap.Logger.
+// This allows consumers to access zap-specific features when needed.
+func (a *Logger) Unwrap() *zap.Logger {
+	return a.logger
+}
+
+// UnwrapLogger attempts to extract a *zap.Logger from a framework_logs.Logger.
+// Returns the underlying *zap.Logger and true if the logger is a zaplog.Adapter,
+// otherwise returns nil and false.
+func UnwrapLogger(logger framework_logs.Logger) (*zap.Logger, bool) {
+	if adapter, ok := logger.(*Logger); ok {
+		return adapter.Unwrap(), true
+	}
+
+	return nil, false
 }

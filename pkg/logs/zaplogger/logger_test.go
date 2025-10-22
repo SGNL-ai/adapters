@@ -1,5 +1,5 @@
 // Copyright 2025 SGNL.ai, Inc.
-package logs_test
+package zaplogger_test
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"time"
 
 	framework_logs "github.com/sgnl-ai/adapter-framework/pkg/logs"
-	"github.com/sgnl-ai/adapters/pkg/logs"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest/observer"
@@ -27,13 +27,13 @@ func TestNew(t *testing.T) {
 	mockClock := newMockClock()
 
 	tests := map[string]struct {
-		config            logs.Config
+		config            zaplogger.Config
 		writeLogs         func(logger *zap.Logger)
 		expectedLogs      []map[string]any
 		expectedFileLines []map[string]any
 	}{
 		"console_mode_only": {
-			config: logs.Config{
+			config: zaplogger.Config{
 				Mode:  []string{"console"},
 				Level: "INFO",
 			},
@@ -67,7 +67,7 @@ func TestNew(t *testing.T) {
 			},
 		},
 		"both_console_and_file_mode": {
-			config: logs.Config{
+			config: zaplogger.Config{
 				Mode:           []string{"console", "file"},
 				Level:          "DEBUG",
 				FilePath:       filepath.Join(t.TempDir(), "test.log"),
@@ -139,7 +139,7 @@ func TestNew(t *testing.T) {
 			},
 		},
 		"debug_level": {
-			config: logs.Config{
+			config: zaplogger.Config{
 				Mode:  []string{"console"},
 				Level: "DEBUG",
 			},
@@ -178,7 +178,7 @@ func TestNew(t *testing.T) {
 			observedCore, observedLogs := observer.New(level)
 
 			// Create the logger with the observable core and mock clock.
-			logger := logs.New(test.config,
+			logger := zaplogger.New(test.config,
 				zap.WrapCore(func(c zapcore.Core) zapcore.Core {
 					return zapcore.NewTee(c, observedCore)
 				}),
@@ -261,11 +261,11 @@ func TestNew(t *testing.T) {
 
 func TestFromContext(t *testing.T) {
 	// Create a global logger first so we have something to compare against.
-	config := logs.Config{
+	config := zaplogger.Config{
 		Mode:  []string{"console"},
 		Level: "INFO",
 	}
-	globalLogger := logs.New(config)
+	globalLogger := zaplogger.New(config)
 
 	// Create a separate logger to store in context.
 	contextLogger := zap.NewNop()
@@ -284,7 +284,7 @@ func TestFromContext(t *testing.T) {
 			setupCtx: func() context.Context {
 				ctx := context.Background()
 
-				return framework_logs.ContextWithLogger(ctx, contextLogger)
+				return framework_logs.NewContextWithLogger(ctx, zaplogger.NewFrameworkLogger(contextLogger))
 			},
 			wantLogger: contextLogger,
 		},
@@ -293,7 +293,7 @@ func TestFromContext(t *testing.T) {
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
 			ctx := tc.setupCtx()
-			retrievedLogger := logs.FromContext(ctx)
+			retrievedLogger := zaplogger.FromContext(ctx)
 
 			if tc.wantLogger != retrievedLogger {
 				t.Error("FromContext returned different logger than expected")

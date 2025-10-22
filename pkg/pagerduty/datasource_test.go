@@ -14,6 +14,7 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	framework_logs "github.com/sgnl-ai/adapter-framework/pkg/logs"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
 	"github.com/sgnl-ai/adapters/pkg/pagerduty"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
@@ -667,7 +668,7 @@ func TestGetPage(t *testing.T) {
 			observableLogger := zap.New(observedCore)
 
 			// Enrich context with logger
-			ctx := framework_logs.ContextWithLogger(tt.context, observableLogger)
+			ctx := framework_logs.NewContextWithLogger(tt.context, zaplogger.NewFrameworkLogger(observableLogger))
 
 			gotRes, gotErr := pagerdutyClient.GetPage(ctx, tt.request)
 

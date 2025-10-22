@@ -15,7 +15,7 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	customerror "github.com/sgnl-ai/adapters/pkg/errors"
-	"github.com/sgnl-ai/adapters/pkg/logs"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 	"go.uber.org/zap"
 )
@@ -40,7 +40,7 @@ func NewClient(client *http.Client) Client {
 }
 
 func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, *framework.Error) {
-	logger := logs.FromContext(ctx).With(
+	logger := zaplogger.FromContext(ctx).With(
 		zap.String("requestEntityExternalId", request.EntityExternalID),
 		zap.Int64("requestPageSize", request.PageSize),
 	)

@@ -23,7 +23,7 @@ import (
 	"github.com/sgnl-ai/adapters/pkg/identitynow"
 	"github.com/sgnl-ai/adapters/pkg/jira"
 	jiradatacenter "github.com/sgnl-ai/adapters/pkg/jira-datacenter"
-	"github.com/sgnl-ai/adapters/pkg/logs"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
 	mysql_0_0_1_alpha "github.com/sgnl-ai/adapters/pkg/my-sql/0.0.1-alpha"
 	mysql_0_0_2_alpha "github.com/sgnl-ai/adapters/pkg/my-sql/0.0.2-alpha"
 	"github.com/sgnl-ai/adapters/pkg/okta"
@@ -71,12 +71,12 @@ func main() {
 		log.Fatal("ADAPTER_CONNECTOR_SERVICE_URL environment variable is required")
 	}
 
-	loggerCfg, err := logs.LoadConfig()
+	loggerCfg, err := zaplogger.LoadConfig()
 	if err != nil {
 		log.Fatalf("Failed to load logger configuration: %v", err)
 	}
 
-	logger := logs.New(*loggerCfg, zap.WithCaller(true))
+	logger := zaplogger.New(*loggerCfg, zap.WithCaller(true))
 
 	defer func() {
 		if err := logger.Sync(); err != nil {
@@ -93,7 +93,7 @@ func main() {
 
 	s := grpc.NewServer()
 	stop := make(chan struct{})
-	adapterServer := server.New(stop, server.WithLogger(logger))
+	adapterServer := server.New(stop, server.WithLogger(zaplogger.NewFrameworkLogger(logger)))
 
 	connectorServiceClient, err := grpc.NewClient(
 		connectorServiceURL,

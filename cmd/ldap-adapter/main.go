@@ -13,7 +13,7 @@ import (
 	"github.com/sgnl-ai/adapter-framework/server"
 	adapter_v1 "github.com/sgnl-ai/adapters/pkg/ldap/v1.0.0"
 	adapter_v2 "github.com/sgnl-ai/adapters/pkg/ldap/v2.0.0"
-	"github.com/sgnl-ai/adapters/pkg/logs"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -40,12 +40,12 @@ func main() {
 		log.Fatal("LDAP_ADAPTER_CONNECTOR_SERVICE_URL environment variable is required")
 	}
 
-	loggerCfg, err := logs.LoadConfig()
+	loggerCfg, err := zaplogger.LoadConfig()
 	if err != nil {
 		log.Fatalf("Failed to load logger configuration: %v", err)
 	}
 
-	logger := logs.New(*loggerCfg, zap.WithCaller(true))
+	logger := zaplogger.New(*loggerCfg, zap.WithCaller(true))
 
 	defer func() {
 		if err := logger.Sync(); err != nil {
@@ -60,7 +60,7 @@ func main() {
 
 	s := grpc.NewServer()
 	stop := make(chan struct{})
-	adapterServer := server.New(stop, server.WithLogger(logger))
+	adapterServer := server.New(stop, server.WithLogger(zaplogger.NewFrameworkLogger(logger)))
 
 	connectorServiceClient, err := grpc.Dial(
 		connectorServiceURL,

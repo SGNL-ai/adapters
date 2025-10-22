@@ -1,25 +1,25 @@
 // Copyright 2025 SGNL.ai, Inc.
 
 // nolint:lll
-package logs_test
+package zaplogger_test
 
 import (
 	"errors"
 	"reflect"
 	"testing"
 
-	"github.com/sgnl-ai/adapters/pkg/logs"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
 )
 
 func TestLoadConfiguration(t *testing.T) {
 	tests := map[string]struct {
 		inputEnvVariables map[string]string
-		wantConfiguration *logs.Config
+		wantConfiguration *zaplogger.Config
 		wantError         error
 	}{
 		"empty_config": {
 			inputEnvVariables: map[string]string{},
-			wantConfiguration: &logs.Config{
+			wantConfiguration: &zaplogger.Config{
 				// Defaults.
 				Mode:           []string{"console"},
 				Level:          "INFO",
@@ -39,7 +39,7 @@ func TestLoadConfiguration(t *testing.T) {
 				"SGNL_LOG_FILE_MAX_BACKUPS": "20",
 				"SGNL_LOG_FILE_MAX_DAYS":    "14",
 			},
-			wantConfiguration: &logs.Config{
+			wantConfiguration: &zaplogger.Config{
 				Mode:           []string{"file", "console"},
 				Level:          "DEBUG",
 				FilePath:       "/var/log/sgnl/adapter-sgnl.log",
@@ -64,7 +64,7 @@ func TestLoadConfiguration(t *testing.T) {
 				t.Setenv(key, value)
 			}
 
-			gotConfiguration, gotError := logs.LoadConfig()
+			gotConfiguration, gotError := zaplogger.LoadConfig()
 
 			if test.wantError != nil {
 				if gotError == nil {

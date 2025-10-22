@@ -1,5 +1,5 @@
 // Copyright 2025 SGNL.ai, Inc.
-package logs
+package zaplogger
 
 import (
 	"github.com/spf13/viper"
