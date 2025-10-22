@@ -328,12 +328,15 @@ func ParseCursorFromLog(log map[string]any, cursorField string) map[string]any {
 		if cursor, ok := cursorPtr.(*CompositeCursor[int64]); ok && cursor != nil {
 			// Convert cursor to map for comparison
 			cursorMap := make(map[string]any)
+
 			if cursor.Cursor != nil {
 				cursorMap["cursor"] = *cursor.Cursor
 			}
+
 			if cursor.CollectionID != nil {
 				cursorMap["collectionId"] = *cursor.CollectionID
 			}
+
 			if cursor.CollectionCursor != nil {
 				cursorMap["collectionCursor"] = *cursor.CollectionCursor
 			}

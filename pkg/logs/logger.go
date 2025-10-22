@@ -1,3 +1,4 @@
+// Copyright 2025 SGNL.ai, Inc.
 package logs
 
 import (
@@ -11,14 +12,6 @@ import (
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
-
-const (
-	LOG_MODE_CONSOLE = "console"
-	LOG_MODE_FILE    = "file"
-)
-
-// TODO-RG: Add log observer tests in PagerDuty.
-// TODO-RG: Add test after returning a 403 response from teams when retrieving team members.
 
 // New creates a new zap.Logger based on the provided configuration.
 // It uses sensible production defaults with JSON formatting and nanosecond
@@ -38,7 +31,7 @@ func New(cfg Config, zapOpts ...zap.Option) *zap.Logger {
 
 	zapCores := make([]zapcore.Core, 0, len(cfg.Mode))
 
-	if slices.Contains(cfg.Mode, LOG_MODE_FILE) {
+	if slices.Contains(cfg.Mode, LogModeFile) {
 		zapCores = append(zapCores, zapcore.NewCore(
 			jsonEncoder,
 			zapcore.AddSync(&lumberjack.Logger{
@@ -52,7 +45,7 @@ func New(cfg Config, zapOpts ...zap.Option) *zap.Logger {
 		))
 	}
 
-	if slices.Contains(cfg.Mode, LOG_MODE_CONSOLE) {
+	if slices.Contains(cfg.Mode, LogModeConsole) {
 		zapCores = append(zapCores, zapcore.NewCore(
 			jsonEncoder,
 			zapcore.AddSync(os.Stdout),

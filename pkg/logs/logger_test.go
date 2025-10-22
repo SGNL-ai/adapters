@@ -1,3 +1,4 @@
+// Copyright 2025 SGNL.ai, Inc.
 package logs_test
 
 import (
@@ -282,6 +283,7 @@ func TestFromContext(t *testing.T) {
 		"returns_logger_from_context_when_present": {
 			setupCtx: func() context.Context {
 				ctx := context.Background()
+
 				return framework_logs.ContextWithLogger(ctx, contextLogger)
 			},
 			wantLogger: contextLogger,

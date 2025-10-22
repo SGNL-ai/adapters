@@ -1,3 +1,5 @@
+// Copyright 2025 SGNL.ai, Inc.
+// nolint:lll
 package logs_test
 
 import (

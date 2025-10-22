@@ -46,6 +46,7 @@ func main() {
 	}
 
 	logger := logs.New(*loggerCfg, zap.WithCaller(true))
+
 	defer func() {
 		if err := logger.Sync(); err != nil {
 			logger.Error("Failed to sync logger", zap.Error(err))

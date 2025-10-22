@@ -1,7 +1,13 @@
+// Copyright 2025 SGNL.ai, Inc.
 package logs
 
 import (
 	"github.com/spf13/viper"
+)
+
+const (
+	LogModeConsole = "console"
+	LogModeFile    = "file"
 )
 
 type Config struct {
