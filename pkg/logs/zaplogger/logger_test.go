@@ -452,6 +452,7 @@ func TestUnwrapLogger(t *testing.T) {
 			setupLogger: func() framework_logs.Logger {
 				observedCore, _ := observer.New(zapcore.InfoLevel)
 				zapLogger := zap.New(observedCore)
+
 				return zaplogger.NewFrameworkLogger(zapLogger)
 			},
 			wantLogger: nil, // Will be set dynamically in test.
