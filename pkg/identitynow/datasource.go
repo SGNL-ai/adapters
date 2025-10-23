@@ -13,10 +13,13 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	customerror "github.com/sgnl-ai/adapters/pkg/errors"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/mitchellh/mapstructure"
+	"go.uber.org/zap"
 )
 
 const (
@@ -447,6 +450,13 @@ func (d *Datasource) ConstructEndpointAndGetResponse(
 	ctx context.Context,
 	request *Request,
 ) (*Response, []map[string]any, *framework.Error) {
+	logger := zaplogger.FromContext(ctx).With(
+		fields.RequestEntityExternalID(request.EntityExternalID),
+		fields.RequestPageSize(request.PageSize),
+	)
+
+	logger.Info("Starting datasource request")
+
 	endpoint, errFramework := ConstructEndpoint(request)
 	if errFramework != nil {
 		return nil, nil, errFramework
@@ -469,8 +479,16 @@ func (d *Datasource) ConstructEndpointAndGetResponse(
 	req.Header.Add("Authorization", request.Token)
 	req.Header.Add("Content-Type", "application/json")
 
+	logger.Info("Sending HTTP request to datasource", fields.RequestURL(endpoint))
+
 	res, err := d.Client.Do(req)
 	if err != nil {
+		logger.Error("HTTP request to datasource failed",
+			fields.RequestURL(endpoint),
+			fields.SGNLEventTypeError(),
+			zap.Error(err),
+		)
+
 		return nil, nil, customerror.UpdateError(&framework.Error{
 			Message: fmt.Sprintf("Failed to execute IdentityNow request: %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
@@ -482,6 +500,14 @@ func (d *Datasource) ConstructEndpointAndGetResponse(
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
+		logger.Error("Datasource request failed",
+			fields.RequestURL(endpoint),
+			fields.ResponseStatusCode(res.StatusCode),
+			fields.ResponseRetryAfterHeader(res.Header.Get("Retry-After")),
+			fields.ResponseBody(res.Body),
+			fields.SGNLEventTypeError(),
+		)
+
 		return &Response{
 			StatusCode:       res.StatusCode,
 			RetryAfterHeader: res.Header.Get("Retry-After"),
@@ -505,6 +531,12 @@ func (d *Datasource) ConstructEndpointAndGetResponse(
 		StatusCode:       res.StatusCode,
 		RetryAfterHeader: res.Header.Get("Retry-After"),
 	}
+
+	logger.Info("Datasource request completed successfully",
+		fields.ResponseStatusCode(response.StatusCode),
+		fields.ResponseObjectCount(len(objects)),
+		fields.ResponseNextCursor(nil),
+	)
 
 	return response, objects, nil
 }
