@@ -140,8 +140,9 @@ func TestNew(t *testing.T) {
 		},
 		"debug_level": {
 			config: zaplogger.Config{
-				Mode:  []string{"console"},
-				Level: "DEBUG",
+				Mode:        []string{"console"},
+				Level:       "DEBUG",
+				ServiceName: "my-service",
 			},
 			writeLogs: func(logger *zap.Logger) {
 				logger.Debug("debug message")
@@ -149,19 +150,22 @@ func TestNew(t *testing.T) {
 			},
 			expectedLogs: []map[string]any{
 				{
-					"level": "info",
-					"ts":    MockClockTimestamp,
-					"msg":   "Zap logger initialized",
+					"level":       "info",
+					"ts":          MockClockTimestamp,
+					"msg":         "Zap logger initialized",
+					"serviceName": "my-service",
 				},
 				{
-					"level": "debug",
-					"ts":    MockClockTimestamp,
-					"msg":   "debug message",
+					"level":       "debug",
+					"ts":          MockClockTimestamp,
+					"msg":         "debug message",
+					"serviceName": "my-service",
 				},
 				{
-					"level": "info",
-					"ts":    MockClockTimestamp,
-					"msg":   "info message",
+					"level":       "info",
+					"ts":          MockClockTimestamp,
+					"msg":         "info message",
+					"serviceName": "my-service",
 				},
 			},
 		},

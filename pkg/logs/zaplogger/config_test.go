@@ -23,10 +23,11 @@ func TestLoadConfiguration(t *testing.T) {
 				// Defaults.
 				Mode:           []string{"console"},
 				Level:          "INFO",
-				FilePath:       "/var/log/sgnl/unconfigured.log",
+				FilePath:       "/var/log/sgnl/adapter-sgnl.log",
 				FileMaxSize:    100,
 				FileMaxBackups: 10,
 				FileMaxDays:    7,
+				ServiceName:    "",
 			},
 			wantError: nil,
 		},
@@ -38,6 +39,7 @@ func TestLoadConfiguration(t *testing.T) {
 				"SGNL_LOG_FILE_MAX_SIZE":    "200",
 				"SGNL_LOG_FILE_MAX_BACKUPS": "20",
 				"SGNL_LOG_FILE_MAX_DAYS":    "14",
+				"SGNL_LOG_SERVICE_NAME":     "my-service",
 			},
 			wantConfiguration: &zaplogger.Config{
 				Mode:           []string{"file", "console"},
@@ -46,6 +48,7 @@ func TestLoadConfiguration(t *testing.T) {
 				FileMaxSize:    200,
 				FileMaxBackups: 20,
 				FileMaxDays:    14,
+				ServiceName:    "my-service",
 			},
 			wantError: nil,
 		},

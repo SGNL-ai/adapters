@@ -7,6 +7,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// Log fields which are commonly used throughout the adapter codebase.
 const (
 	FieldRequestEntityExternalID  = "requestEntityExternalId"
 	FieldRequestPageSize          = "requestPageSize"
