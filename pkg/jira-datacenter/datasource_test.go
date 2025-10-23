@@ -15,7 +15,7 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	jiradatacenter "github.com/sgnl-ai/adapters/pkg/jira-datacenter"
-	jiradatacenter_adapter "github.com/sgnl-ai/adapters/pkg/jira-datacenter"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 )
@@ -27,7 +27,7 @@ const (
 )
 
 type TestSuite struct {
-	client jiradatacenter_adapter.Client
+	client jiradatacenter.Client
 	server *httptest.Server
 }
 
@@ -305,14 +305,14 @@ func TestParseUsersResponse(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			request := &jiradatacenter_adapter.Request{
+			request := &jiradatacenter.Request{
 				PageSize: tt.pageSize,
 				Cursor: &pagination.CompositeCursor[int64]{
 					Cursor: testutil.GenPtr(tt.cursor),
 				},
 			}
 
-			userEntity := jiradatacenter.ValidEntityExternalIDs[jiradatacenter_adapter.UserExternalID]
+			userEntity := jiradatacenter.ValidEntityExternalIDs[jiradatacenter.UserExternalID]
 
 			gotObjects, gotNextCursor, gotErr := userEntity.Parse(tt.body, *request)
 
@@ -415,14 +415,14 @@ func TestParseIssuesResponse(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			request := &jiradatacenter_adapter.Request{
+			request := &jiradatacenter.Request{
 				PageSize: tt.pageSize,
 				Cursor: &pagination.CompositeCursor[int64]{
 					Cursor: testutil.GenPtr(tt.cursor),
 				},
 			}
 
-			issueEntity := jiradatacenter.ValidEntityExternalIDs[jiradatacenter_adapter.IssueExternalID]
+			issueEntity := jiradatacenter.ValidEntityExternalIDs[jiradatacenter.IssueExternalID]
 
 			gotObjects, gotNextCursor, gotErr := issueEntity.Parse(tt.body, *request)
 
@@ -525,14 +525,14 @@ func TestParseGroupsResponse(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			request := &jiradatacenter_adapter.Request{
+			request := &jiradatacenter.Request{
 				PageSize: tt.pageSize,
 				Cursor: &pagination.CompositeCursor[int64]{
 					Cursor: testutil.GenPtr(tt.cursor),
 				},
 			}
 
-			groupEntity := jiradatacenter.ValidEntityExternalIDs[jiradatacenter_adapter.GroupExternalID]
+			groupEntity := jiradatacenter.ValidEntityExternalIDs[jiradatacenter.GroupExternalID]
 
 			gotObjects, gotNextCursor, gotErr := groupEntity.Parse(tt.body, *request)
 
@@ -647,14 +647,14 @@ func TestParseGroupMembersResponse(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			request := &jiradatacenter_adapter.Request{
+			request := &jiradatacenter.Request{
 				PageSize: tt.pageSize,
 				Cursor: &pagination.CompositeCursor[int64]{
 					Cursor: testutil.GenPtr(tt.cursor),
 				},
 			}
 
-			groupMemberEntity := jiradatacenter.ValidEntityExternalIDs[jiradatacenter_adapter.GroupMemberExternalID]
+			groupMemberEntity := jiradatacenter.ValidEntityExternalIDs[jiradatacenter.GroupMemberExternalID]
 
 			gotObjects, gotNextCursor, gotErr := groupMemberEntity.Parse(tt.body, *request)
 
@@ -675,20 +675,20 @@ func TestParseGroupMembersResponse(t *testing.T) {
 
 func TestConstructURL(t *testing.T) {
 	tests := map[string]struct {
-		request *jiradatacenter_adapter.Request
+		request *jiradatacenter.Request
 		entity  jiradatacenter.Entity
 		cursor  *pagination.CompositeCursor[int64]
 		wantURL string
 		wantErr error
 	}{
 		"users": {
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               "https://jira.com",
 				PageSize:              10,
-				EntityExternalID:      jiradatacenter_adapter.UserExternalID,
+				EntityExternalID:      jiradatacenter.UserExternalID,
 			},
-			entity: jiradatacenter.ValidEntityExternalIDs[jiradatacenter_adapter.UserExternalID],
+			entity: jiradatacenter.ValidEntityExternalIDs[jiradatacenter.UserExternalID],
 			cursor: &pagination.CompositeCursor[int64]{
 				Cursor:           testutil.GenPtr[int64](10),
 				CollectionID:     testutil.GenPtr("group1"),
@@ -697,14 +697,14 @@ func TestConstructURL(t *testing.T) {
 			wantURL: "https://jira.com/rest/api/latest/group/member?groupname=group1&startAt=10&maxResults=10",
 		},
 		"users_with_inactive_users": {
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               "https://jira.com",
 				PageSize:              10,
-				EntityExternalID:      jiradatacenter_adapter.UserExternalID,
+				EntityExternalID:      jiradatacenter.UserExternalID,
 				IncludeInactiveUsers:  testutil.GenPtr(true),
 			},
-			entity: jiradatacenter.ValidEntityExternalIDs[jiradatacenter_adapter.UserExternalID],
+			entity: jiradatacenter.ValidEntityExternalIDs[jiradatacenter.UserExternalID],
 			cursor: &pagination.CompositeCursor[int64]{
 				Cursor:           testutil.GenPtr[int64](10),
 				CollectionID:     testutil.GenPtr("group1"),
@@ -714,65 +714,65 @@ func TestConstructURL(t *testing.T) {
 				"&includeInactiveUsers=true&startAt=10&maxResults=10",
 		},
 		"groups": {
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               "https://jira.com",
 				PageSize:              10,
-				EntityExternalID:      jiradatacenter_adapter.GroupExternalID,
+				EntityExternalID:      jiradatacenter.GroupExternalID,
 			},
-			entity: jiradatacenter.ValidEntityExternalIDs[jiradatacenter_adapter.GroupExternalID],
+			entity: jiradatacenter.ValidEntityExternalIDs[jiradatacenter.GroupExternalID],
 			cursor: &pagination.CompositeCursor[int64]{
 				Cursor: testutil.GenPtr[int64](10),
 			},
 			wantURL: "https://jira.com/rest/api/latest/groups/picker",
 		},
 		"groups_with_inactive_users_set_true": {
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               "https://jira.com",
 				PageSize:              10,
-				EntityExternalID:      jiradatacenter_adapter.GroupExternalID,
+				EntityExternalID:      jiradatacenter.GroupExternalID,
 				IncludeInactiveUsers:  testutil.GenPtr(true),
 			},
-			entity: jiradatacenter.ValidEntityExternalIDs[jiradatacenter_adapter.GroupExternalID],
+			entity: jiradatacenter.ValidEntityExternalIDs[jiradatacenter.GroupExternalID],
 			cursor: &pagination.CompositeCursor[int64]{
 				Cursor: testutil.GenPtr[int64](10),
 			},
 			wantURL: "https://jira.com/rest/api/latest/groups/picker",
 		},
 		"issues": {
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               "https://jira.com",
 				PageSize:              10,
-				EntityExternalID:      jiradatacenter_adapter.IssueExternalID,
+				EntityExternalID:      jiradatacenter.IssueExternalID,
 			},
-			entity: jiradatacenter.ValidEntityExternalIDs[jiradatacenter_adapter.IssueExternalID],
+			entity: jiradatacenter.ValidEntityExternalIDs[jiradatacenter.IssueExternalID],
 			cursor: &pagination.CompositeCursor[int64]{
 				Cursor: testutil.GenPtr[int64](10),
 			},
 			wantURL: "https://jira.com/rest/api/latest/search?fields=*navigable&startAt=10&maxResults=10",
 		},
 		"issues_with_filter": {
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               "https://jira.com",
 				PageSize:              10,
-				EntityExternalID:      jiradatacenter_adapter.IssueExternalID,
+				EntityExternalID:      jiradatacenter.IssueExternalID,
 				IssuesJQLFilter:       testutil.GenPtr("project=TEST"),
 			},
-			entity: jiradatacenter.ValidEntityExternalIDs[jiradatacenter_adapter.IssueExternalID],
+			entity: jiradatacenter.ValidEntityExternalIDs[jiradatacenter.IssueExternalID],
 			cursor: &pagination.CompositeCursor[int64]{
 				Cursor: testutil.GenPtr[int64](10),
 			},
 			wantURL: "https://jira.com/rest/api/latest/search?jql=project%3DTEST&fields=*navigable&startAt=10&maxResults=10",
 		},
 		"issues_with_attributes": {
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               "https://jira.com",
 				PageSize:              10,
-				EntityExternalID:      jiradatacenter_adapter.IssueExternalID,
+				EntityExternalID:      jiradatacenter.IssueExternalID,
 				Entity: &framework.EntityConfig{
 					Attributes: []*framework.AttributeConfig{
 						{ExternalId: "id"},
@@ -782,20 +782,20 @@ func TestConstructURL(t *testing.T) {
 					},
 				},
 			},
-			entity: jiradatacenter.ValidEntityExternalIDs[jiradatacenter_adapter.IssueExternalID],
+			entity: jiradatacenter.ValidEntityExternalIDs[jiradatacenter.IssueExternalID],
 			cursor: &pagination.CompositeCursor[int64]{
 				Cursor: testutil.GenPtr[int64](10),
 			},
 			wantURL: "https://jira.com/rest/api/latest/search?fields=id%2Ckey%2Cstatus%2Csummary&startAt=10&maxResults=10",
 		},
 		"group_members": {
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               "https://jira.com",
 				PageSize:              10,
-				EntityExternalID:      jiradatacenter_adapter.GroupMemberExternalID,
+				EntityExternalID:      jiradatacenter.GroupMemberExternalID,
 			},
-			entity: jiradatacenter.ValidEntityExternalIDs[jiradatacenter_adapter.GroupMemberExternalID],
+			entity: jiradatacenter.ValidEntityExternalIDs[jiradatacenter.GroupMemberExternalID],
 			cursor: &pagination.CompositeCursor[int64]{
 				Cursor:           testutil.GenPtr[int64](10),
 				CollectionID:     testutil.GenPtr("1"),
@@ -804,14 +804,14 @@ func TestConstructURL(t *testing.T) {
 			wantURL: "https://jira.com/rest/api/latest/group/member?groupname=1&startAt=10&maxResults=10",
 		},
 		"group_members_with_inactive_users": {
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               "https://jira.com",
 				PageSize:              10,
-				EntityExternalID:      jiradatacenter_adapter.GroupMemberExternalID,
+				EntityExternalID:      jiradatacenter.GroupMemberExternalID,
 				IncludeInactiveUsers:  testutil.GenPtr(true),
 			},
-			entity: jiradatacenter.ValidEntityExternalIDs[jiradatacenter_adapter.GroupMemberExternalID],
+			entity: jiradatacenter.ValidEntityExternalIDs[jiradatacenter.GroupMemberExternalID],
 			cursor: &pagination.CompositeCursor[int64]{
 				Cursor:           testutil.GenPtr[int64](10),
 				CollectionID:     testutil.GenPtr("1"),
@@ -821,13 +821,13 @@ func TestConstructURL(t *testing.T) {
 				"&includeInactiveUsers=true&startAt=10&maxResults=10",
 		},
 		"group_members_missing_group_id": {
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               "https://jira.com",
 				PageSize:              10,
-				EntityExternalID:      jiradatacenter_adapter.GroupMemberExternalID,
+				EntityExternalID:      jiradatacenter.GroupMemberExternalID,
 			},
-			entity: jiradatacenter.ValidEntityExternalIDs[jiradatacenter_adapter.GroupMemberExternalID],
+			entity: jiradatacenter.ValidEntityExternalIDs[jiradatacenter.GroupMemberExternalID],
 			cursor: &pagination.CompositeCursor[int64]{
 				Cursor:           testutil.GenPtr[int64](10),
 				CollectionCursor: testutil.GenPtr[int64](1),
@@ -859,7 +859,7 @@ func TestGetPage(t *testing.T) {
 	}
 
 	ts := &TestSuite{
-		client: jiradatacenter_adapter.NewClient(client),
+		client: jiradatacenter.NewClient(client),
 		server: httptest.NewServer(TestServerHandler),
 	}
 	defer ts.server.Close()
@@ -873,13 +873,13 @@ func TestGetPage(t *testing.T) {
 func (ts *TestSuite) TestGetPageErrors(t *testing.T) {
 	tests := map[string]struct {
 		ctx          context.Context
-		request      *jiradatacenter_adapter.Request
-		wantResponse *jiradatacenter_adapter.Response
+		request      *jiradatacenter.Request
+		wantResponse *jiradatacenter.Response
 		wantErr      *framework.Error
 	}{
 		"invalid_url": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               "https://{hello}",
 			},
@@ -892,7 +892,7 @@ func (ts *TestSuite) TestGetPageErrors(t *testing.T) {
 		},
 		"invalid_request": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               "BAD_PROTOCOL",
 			},
@@ -921,24 +921,25 @@ func (ts *TestSuite) TestGetPageErrors(t *testing.T) {
 }
 
 func (ts *TestSuite) TestGetPageUsers(t *testing.T) {
-	externalEntityID := jiradatacenter_adapter.UserExternalID
+	externalEntityID := jiradatacenter.UserExternalID
 
 	tests := map[string]struct {
 		ctx          context.Context
-		request      *jiradatacenter_adapter.Request
-		wantResponse *jiradatacenter_adapter.Response
+		request      *jiradatacenter.Request
+		wantResponse *jiradatacenter.Response
 		wantErr      *framework.Error
+		expectedLogs []map[string]any
 	}{
 		"first_page_first_group": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
 				PageSize:              int64(10),
 				EntityExternalID:      externalEntityID,
 			},
-			wantResponse: &jiradatacenter_adapter.Response{
+			wantResponse: &jiradatacenter.Response{
 				StatusCode: 200,
 				Objects: []map[string]any{
 					{"key": "member1"},
@@ -955,17 +956,69 @@ func (ts *TestSuite) TestGetPageUsers(t *testing.T) {
 				},
 			},
 			wantErr: nil,
+			expectedLogs: []map[string]any{
+				{
+					"level":                             "info",
+					"msg":                               "Starting datasource request",
+					fields.FieldRequestEntityExternalID: "User",
+					fields.FieldRequestPageSize:         int64(10),
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Starting datasource request",
+					fields.FieldRequestEntityExternalID: "Group",
+					fields.FieldRequestPageSize:         int64(1),
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Sending HTTP request to datasource",
+					fields.FieldRequestEntityExternalID: "Group",
+					fields.FieldRequestPageSize:         int64(1),
+					fields.FieldRequestURL:              ts.server.URL + "/rest/api/latest/groups/picker",
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Datasource request completed successfully",
+					fields.FieldRequestEntityExternalID: "Group",
+					fields.FieldRequestPageSize:         int64(1),
+					fields.FieldResponseStatusCode:      int64(200),
+					fields.FieldResponseObjectCount:     int64(1),
+					fields.FieldResponseNextCursor: map[string]any{
+						"cursor": int64(1),
+					},
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Sending HTTP request to datasource",
+					fields.FieldRequestEntityExternalID: "User",
+					fields.FieldRequestPageSize:         int64(10),
+					// nolint: lll
+					fields.FieldRequestURL: ts.server.URL + "/rest/api/latest/group/member?groupname=group1&startAt=0&maxResults=10",
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Datasource request completed successfully",
+					fields.FieldRequestEntityExternalID: "User",
+					fields.FieldRequestPageSize:         int64(10),
+					fields.FieldResponseStatusCode:      int64(200),
+					fields.FieldResponseObjectCount:     int64(2),
+					fields.FieldResponseNextCursor: map[string]any{
+						"collectionId":     "group1",
+						"collectionCursor": int64(1),
+					},
+				},
+			},
 		},
 		"first_page_first_group_page_size_1": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
 				PageSize:              int64(1),
 				EntityExternalID:      externalEntityID,
 			},
-			wantResponse: &jiradatacenter_adapter.Response{
+			wantResponse: &jiradatacenter.Response{
 				StatusCode: 200,
 				Objects: []map[string]any{
 					{"key": "member1"},
@@ -984,7 +1037,7 @@ func (ts *TestSuite) TestGetPageUsers(t *testing.T) {
 		},
 		"second_page_first_group_page_size_1": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -996,7 +1049,7 @@ func (ts *TestSuite) TestGetPageUsers(t *testing.T) {
 				},
 				EntityExternalID: externalEntityID,
 			},
-			wantResponse: &jiradatacenter_adapter.Response{
+			wantResponse: &jiradatacenter.Response{
 				StatusCode: 200,
 				Objects: []map[string]any{
 					{"key": "member2"},
@@ -1014,7 +1067,7 @@ func (ts *TestSuite) TestGetPageUsers(t *testing.T) {
 		},
 		"empty_page_second_group_page_size_1": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1025,7 +1078,7 @@ func (ts *TestSuite) TestGetPageUsers(t *testing.T) {
 				},
 				EntityExternalID: externalEntityID,
 			},
-			wantResponse: &jiradatacenter_adapter.Response{
+			wantResponse: &jiradatacenter.Response{
 				StatusCode: 200,
 				Objects:    []map[string]any{},
 				NextCursor: &pagination.CompositeCursor[int64]{
@@ -1041,7 +1094,7 @@ func (ts *TestSuite) TestGetPageUsers(t *testing.T) {
 		},
 		"first_page_third_group_page_size_1": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1052,7 +1105,7 @@ func (ts *TestSuite) TestGetPageUsers(t *testing.T) {
 				},
 				EntityExternalID: externalEntityID,
 			},
-			wantResponse: &jiradatacenter_adapter.Response{
+			wantResponse: &jiradatacenter.Response{
 				StatusCode: 200,
 				Objects: []map[string]any{
 					{"key": "member3"},
@@ -1070,7 +1123,7 @@ func (ts *TestSuite) TestGetPageUsers(t *testing.T) {
 		},
 		"second_page_third_group_page_size_1": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1082,7 +1135,7 @@ func (ts *TestSuite) TestGetPageUsers(t *testing.T) {
 				},
 				EntityExternalID: externalEntityID,
 			},
-			wantResponse: &jiradatacenter_adapter.Response{
+			wantResponse: &jiradatacenter.Response{
 				StatusCode: 200,
 				Objects: []map[string]any{
 					{"key": "member4"},
@@ -1097,7 +1150,7 @@ func (ts *TestSuite) TestGetPageUsers(t *testing.T) {
 		},
 		"first_page_first_group_with_config_groups": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1105,7 +1158,7 @@ func (ts *TestSuite) TestGetPageUsers(t *testing.T) {
 				EntityExternalID:      externalEntityID,
 				Groups:                []string{"group3"},
 			},
-			wantResponse: &jiradatacenter_adapter.Response{
+			wantResponse: &jiradatacenter.Response{
 				StatusCode: 200,
 				Objects: []map[string]any{
 					{"key": "member3"},
@@ -1121,7 +1174,7 @@ func (ts *TestSuite) TestGetPageUsers(t *testing.T) {
 		// If there are no groups to begin with, there is no need to sync any group members.
 		"no_groups": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1131,14 +1184,14 @@ func (ts *TestSuite) TestGetPageUsers(t *testing.T) {
 				},
 				EntityExternalID: externalEntityID,
 			},
-			wantResponse: &jiradatacenter_adapter.Response{
+			wantResponse: &jiradatacenter.Response{
 				StatusCode: 200,
 			},
 			wantErr: nil,
 		},
 		"group_unique_id_missing": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1155,7 +1208,7 @@ func (ts *TestSuite) TestGetPageUsers(t *testing.T) {
 		},
 		"group_unique_id_not_string": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1173,7 +1226,7 @@ func (ts *TestSuite) TestGetPageUsers(t *testing.T) {
 		// If we're syncing group members, we must have a group id to sync.
 		"composite_cursor_missing_group_id": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1196,7 +1249,7 @@ func (ts *TestSuite) TestGetPageUsers(t *testing.T) {
 		// we should see an error.
 		"group_get_page_fails_when_nil_cursor": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               "http://localhost:1234",
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1215,7 +1268,7 @@ func (ts *TestSuite) TestGetPageUsers(t *testing.T) {
 		// (e.g. missing a field), we should see an error.
 		"group_member_response_structure_is_invalid": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1237,7 +1290,9 @@ func (ts *TestSuite) TestGetPageUsers(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			gotResponse, gotErr := ts.client.GetPage(tt.ctx, tt.request)
+			ctxWithLogger, observedLogs := testutil.NewContextWithObservableLogger(tt.ctx)
+
+			gotResponse, gotErr := ts.client.GetPage(ctxWithLogger, tt.request)
 
 			if !reflect.DeepEqual(gotResponse, tt.wantResponse) {
 				t.Errorf("gotResponse: %v, wantResponse: %v", gotResponse, tt.wantResponse)
@@ -1246,29 +1301,31 @@ func (ts *TestSuite) TestGetPageUsers(t *testing.T) {
 			if !reflect.DeepEqual(gotErr, tt.wantErr) {
 				t.Errorf("gotErr: %v, wantErr: %v", gotErr, tt.wantErr)
 			}
+
+			testutil.ValidateLogOutput(t, observedLogs, tt.expectedLogs)
 		})
 	}
 }
 
 func (ts *TestSuite) TestGetPageIssues(t *testing.T) {
-	externalEntityID := jiradatacenter_adapter.IssueExternalID
+	externalEntityID := jiradatacenter.IssueExternalID
 
 	tests := map[string]struct {
 		ctx          context.Context
-		request      *jiradatacenter_adapter.Request
-		wantResponse *jiradatacenter_adapter.Response
+		request      *jiradatacenter.Request
+		wantResponse *jiradatacenter.Response
 		wantErr      *framework.Error
 	}{
 		"first_page_no_next_cursor": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
 				PageSize:              int64(10),
 				EntityExternalID:      externalEntityID,
 			},
-			wantResponse: &jiradatacenter_adapter.Response{
+			wantResponse: &jiradatacenter.Response{
 				StatusCode: 200,
 				Objects: []map[string]any{
 					{"id": "1"},
@@ -1279,14 +1336,14 @@ func (ts *TestSuite) TestGetPageIssues(t *testing.T) {
 		},
 		"first_page_with_next_cursor": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
 				PageSize:              int64(1),
 				EntityExternalID:      externalEntityID,
 			},
-			wantResponse: &jiradatacenter_adapter.Response{
+			wantResponse: &jiradatacenter.Response{
 				StatusCode: 200,
 				Objects: []map[string]any{
 					{"id": "1"},
@@ -1299,7 +1356,7 @@ func (ts *TestSuite) TestGetPageIssues(t *testing.T) {
 		},
 		"second_last_page_last_issue": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1308,7 +1365,7 @@ func (ts *TestSuite) TestGetPageIssues(t *testing.T) {
 				PageSize:         int64(1),
 				EntityExternalID: externalEntityID,
 			},
-			wantResponse: &jiradatacenter_adapter.Response{
+			wantResponse: &jiradatacenter.Response{
 				StatusCode: 200,
 				Objects: []map[string]any{
 					{"id": "2"},
@@ -1323,7 +1380,7 @@ func (ts *TestSuite) TestGetPageIssues(t *testing.T) {
 		},
 		"last_page_empty": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1331,7 +1388,7 @@ func (ts *TestSuite) TestGetPageIssues(t *testing.T) {
 				PageSize:              int64(1),
 				EntityExternalID:      externalEntityID,
 			},
-			wantResponse: &jiradatacenter_adapter.Response{
+			wantResponse: &jiradatacenter.Response{
 				StatusCode: 200,
 				Objects:    []map[string]any{},
 				// An empty response means we've completed the sync.
@@ -1341,7 +1398,7 @@ func (ts *TestSuite) TestGetPageIssues(t *testing.T) {
 		},
 		"with_jql_filter": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1349,7 +1406,7 @@ func (ts *TestSuite) TestGetPageIssues(t *testing.T) {
 				EntityExternalID:      externalEntityID,
 				IssuesJQLFilter:       testutil.GenPtr("project='SGNL'"),
 			},
-			wantResponse: &jiradatacenter_adapter.Response{
+			wantResponse: &jiradatacenter.Response{
 				StatusCode: 200,
 				Objects: []map[string]any{
 					{"id": "99"},
@@ -1358,7 +1415,7 @@ func (ts *TestSuite) TestGetPageIssues(t *testing.T) {
 		},
 		"with_invalid_jql_filter": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1366,13 +1423,13 @@ func (ts *TestSuite) TestGetPageIssues(t *testing.T) {
 				EntityExternalID:      externalEntityID,
 				IssuesJQLFilter:       testutil.GenPtr("project='INVALID'"),
 			},
-			wantResponse: &jiradatacenter_adapter.Response{
+			wantResponse: &jiradatacenter.Response{
 				StatusCode: 400,
 			},
 		},
 		"with_entity_config": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1385,7 +1442,7 @@ func (ts *TestSuite) TestGetPageIssues(t *testing.T) {
 					},
 				},
 			},
-			wantResponse: &jiradatacenter_adapter.Response{
+			wantResponse: &jiradatacenter.Response{
 				StatusCode: 200,
 				Objects: []map[string]any{
 					{"id": "99"},
@@ -1394,7 +1451,7 @@ func (ts *TestSuite) TestGetPageIssues(t *testing.T) {
 		},
 		"with_child_entities_present_in_response": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1427,7 +1484,7 @@ func (ts *TestSuite) TestGetPageIssues(t *testing.T) {
 					},
 				},
 			},
-			wantResponse: &jiradatacenter_adapter.Response{
+			wantResponse: &jiradatacenter.Response{
 				StatusCode: 200,
 				Objects: []map[string]any{
 					{
@@ -1461,7 +1518,7 @@ func (ts *TestSuite) TestGetPageIssues(t *testing.T) {
 		},
 		"with_child_entities_missing_from_response": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1492,7 +1549,7 @@ func (ts *TestSuite) TestGetPageIssues(t *testing.T) {
 					},
 				},
 			},
-			wantResponse: &jiradatacenter_adapter.Response{
+			wantResponse: &jiradatacenter.Response{
 				StatusCode: 200,
 				Objects: []map[string]any{
 					{
@@ -1529,24 +1586,24 @@ func (ts *TestSuite) TestGetPageIssues(t *testing.T) {
 }
 
 func (ts *TestSuite) TestGetPageGroups(t *testing.T) {
-	externalEntityID := jiradatacenter_adapter.GroupExternalID
+	externalEntityID := jiradatacenter.GroupExternalID
 
 	tests := map[string]struct {
 		ctx          context.Context
-		request      *jiradatacenter_adapter.Request
-		wantResponse *jiradatacenter_adapter.Response
+		request      *jiradatacenter.Request
+		wantResponse *jiradatacenter.Response
 		wantErr      *framework.Error
 	}{
 		"first_page_no_next_cursor": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
 				PageSize:              int64(10),
 				EntityExternalID:      externalEntityID,
 			},
-			wantResponse: &jiradatacenter_adapter.Response{
+			wantResponse: &jiradatacenter.Response{
 				StatusCode: 200,
 				Objects: []map[string]any{
 					{"name": "group1"},
@@ -1558,14 +1615,14 @@ func (ts *TestSuite) TestGetPageGroups(t *testing.T) {
 		},
 		"first_page_with_next_cursor": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
 				PageSize:              int64(1),
 				EntityExternalID:      externalEntityID,
 			},
-			wantResponse: &jiradatacenter_adapter.Response{
+			wantResponse: &jiradatacenter.Response{
 				StatusCode: 200,
 				Objects: []map[string]any{
 					{"name": "group1"},
@@ -1578,7 +1635,7 @@ func (ts *TestSuite) TestGetPageGroups(t *testing.T) {
 		},
 		"middle_page_with_next_cursor": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1586,7 +1643,7 @@ func (ts *TestSuite) TestGetPageGroups(t *testing.T) {
 				PageSize:              int64(1),
 				EntityExternalID:      externalEntityID,
 			},
-			wantResponse: &jiradatacenter_adapter.Response{
+			wantResponse: &jiradatacenter.Response{
 				StatusCode: 200,
 				Objects: []map[string]any{
 					{"name": "group2"},
@@ -1599,7 +1656,7 @@ func (ts *TestSuite) TestGetPageGroups(t *testing.T) {
 		},
 		"last_page": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1608,7 +1665,7 @@ func (ts *TestSuite) TestGetPageGroups(t *testing.T) {
 				PageSize:         int64(1),
 				EntityExternalID: externalEntityID,
 			},
-			wantResponse: &jiradatacenter_adapter.Response{
+			wantResponse: &jiradatacenter.Response{
 				StatusCode: 200,
 				Objects: []map[string]any{
 					{"name": "group3"},
@@ -1619,7 +1676,7 @@ func (ts *TestSuite) TestGetPageGroups(t *testing.T) {
 		},
 		"no_group_found_from_the_specified_config_group_list": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1627,7 +1684,7 @@ func (ts *TestSuite) TestGetPageGroups(t *testing.T) {
 				EntityExternalID:      externalEntityID,
 				Groups:                []string{"group5", "group6"},
 			},
-			wantResponse: &jiradatacenter_adapter.Response{
+			wantResponse: &jiradatacenter.Response{
 				StatusCode: 200,
 				Objects:    []map[string]any{},
 			},
@@ -1635,7 +1692,7 @@ func (ts *TestSuite) TestGetPageGroups(t *testing.T) {
 		},
 		"only_one_group_found_from_the_specified_config_group_list": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1643,7 +1700,7 @@ func (ts *TestSuite) TestGetPageGroups(t *testing.T) {
 				EntityExternalID:      externalEntityID,
 				Groups:                []string{"group3", "group6"},
 			},
-			wantResponse: &jiradatacenter_adapter.Response{
+			wantResponse: &jiradatacenter.Response{
 				StatusCode: 200,
 				Objects: []map[string]any{
 					{"name": "group3"},
@@ -1669,24 +1726,24 @@ func (ts *TestSuite) TestGetPageGroups(t *testing.T) {
 }
 
 func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
-	externalEntityID := jiradatacenter_adapter.GroupMemberExternalID
+	externalEntityID := jiradatacenter.GroupMemberExternalID
 
 	tests := map[string]struct {
 		ctx          context.Context
-		request      *jiradatacenter_adapter.Request
-		wantResponse *jiradatacenter_adapter.Response
+		request      *jiradatacenter.Request
+		wantResponse *jiradatacenter.Response
 		wantErr      *framework.Error
 	}{
 		"first_page_first_group": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
 				PageSize:              int64(10),
 				EntityExternalID:      externalEntityID,
 			},
-			wantResponse: &jiradatacenter_adapter.Response{
+			wantResponse: &jiradatacenter.Response{
 				StatusCode: 200,
 				Objects: []map[string]any{
 					{"id": "group1-member1", "key": "member1", "groupId": "group1"},
@@ -1706,14 +1763,14 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 		},
 		"first_page_first_group_page_size_1": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
 				PageSize:              int64(1),
 				EntityExternalID:      externalEntityID,
 			},
-			wantResponse: &jiradatacenter_adapter.Response{
+			wantResponse: &jiradatacenter.Response{
 				StatusCode: 200,
 				Objects: []map[string]any{
 					{"id": "group1-member1", "key": "member1", "groupId": "group1"},
@@ -1732,7 +1789,7 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 		},
 		"second_page_first_group_page_size_1": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1744,7 +1801,7 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 				},
 				EntityExternalID: externalEntityID,
 			},
-			wantResponse: &jiradatacenter_adapter.Response{
+			wantResponse: &jiradatacenter.Response{
 				StatusCode: 200,
 				Objects: []map[string]any{
 					{"id": "group1-member2", "key": "member2", "groupId": "group1"},
@@ -1762,7 +1819,7 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 		},
 		"empty_page_second_group_page_size_1": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1773,7 +1830,7 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 				},
 				EntityExternalID: externalEntityID,
 			},
-			wantResponse: &jiradatacenter_adapter.Response{
+			wantResponse: &jiradatacenter.Response{
 				StatusCode: 200,
 				Objects:    []map[string]any{},
 				NextCursor: &pagination.CompositeCursor[int64]{
@@ -1789,7 +1846,7 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 		},
 		"first_page_third_group_page_size_1": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1800,7 +1857,7 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 				},
 				EntityExternalID: externalEntityID,
 			},
-			wantResponse: &jiradatacenter_adapter.Response{
+			wantResponse: &jiradatacenter.Response{
 				StatusCode: 200,
 				Objects: []map[string]any{
 					{"id": "group3-member3", "key": "member3", "groupId": "group3"},
@@ -1818,7 +1875,7 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 		},
 		"second_page_third_group_page_size_1": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1830,7 +1887,7 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 				},
 				EntityExternalID: externalEntityID,
 			},
-			wantResponse: &jiradatacenter_adapter.Response{
+			wantResponse: &jiradatacenter.Response{
 				StatusCode: 200,
 				Objects: []map[string]any{
 					{"id": "group3-member4", "key": "member4", "groupId": "group3"},
@@ -1845,7 +1902,7 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 		},
 		"first_page_first_group_with_config_groups": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1853,7 +1910,7 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 				EntityExternalID:      externalEntityID,
 				Groups:                []string{"group3"},
 			},
-			wantResponse: &jiradatacenter_adapter.Response{
+			wantResponse: &jiradatacenter.Response{
 				StatusCode: 200,
 				Objects: []map[string]any{
 					{"id": "group3-member3", "key": "member3", "groupId": "group3"},
@@ -1869,7 +1926,7 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 		// If there are no groups to begin with, there is no need to sync any group members.
 		"no_groups": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1879,14 +1936,14 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 				},
 				EntityExternalID: externalEntityID,
 			},
-			wantResponse: &jiradatacenter_adapter.Response{
+			wantResponse: &jiradatacenter.Response{
 				StatusCode: 200,
 			},
 			wantErr: nil,
 		},
 		"group_unique_id_missing": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1903,7 +1960,7 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 		},
 		"group_unique_id_not_string": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1920,7 +1977,7 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 		},
 		"group_member_unique_id_not_string": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1941,7 +1998,7 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 		// If we're syncing group members, we must have a group id to sync.
 		"composite_cursor_missing_group_id": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1964,7 +2021,7 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 		// we should see an error.
 		"group_get_page_fails_when_nil_cursor": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               "http://localhost:1234",
 				AuthorizationHeader:   mockAuthorizationHeader,
@@ -1983,7 +2040,7 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 		// (e.g. missing a field), we should see an error.
 		"group_member_response_structure_is_invalid": {
 			ctx: context.Background(),
-			request: &jiradatacenter_adapter.Request{
+			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
 				BaseURL:               ts.server.URL,
 				AuthorizationHeader:   mockAuthorizationHeader,
