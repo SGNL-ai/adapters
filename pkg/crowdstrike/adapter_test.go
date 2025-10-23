@@ -16,6 +16,7 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	crowdstrike_adapter "github.com/sgnl-ai/adapters/pkg/crowdstrike"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 )
@@ -31,6 +32,7 @@ func TestAdapterUserGetPage(t *testing.T) {
 		inputRequestCursor *pagination.CompositeCursor[string]
 		wantResponse       framework.Response
 		wantCursor         *pagination.CompositeCursor[string]
+		expectedLogs       []map[string]any
 	}{
 		"first_page": {
 			request: &framework.Request[crowdstrike_adapter.Config]{
@@ -81,6 +83,32 @@ func TestAdapterUserGetPage(t *testing.T) {
 			},
 			wantCursor: &pagination.CompositeCursor[string]{
 				Cursor: testutil.GenPtr("eyJyaXNrU2NvcmUiOjAuNjQ1NDg3MTMzOTk5OTk5OSwiX2lkIjoiNDVkYzQwZTItN2I3Yi00ZjM4LTlhYzctOThmNGEzNWIyNGUxIn0="),
+			},
+			expectedLogs: []map[string]any{
+				{
+					"level":                             "info",
+					"msg":                               "Starting datasource request",
+					fields.FieldRequestEntityExternalID: "user",
+					fields.FieldRequestPageSize:         int64(2),
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Sending HTTP request to datasource",
+					fields.FieldRequestEntityExternalID: "user",
+					fields.FieldRequestPageSize:         int64(2),
+					fields.FieldURL:                     server.URL + "/identity-protection/combined/graphql/v1",
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Datasource request completed successfully",
+					fields.FieldRequestEntityExternalID: "user",
+					fields.FieldRequestPageSize:         int64(2),
+					fields.FieldResponseStatusCode:      int64(200),
+					fields.FieldResponseObjectCount:     int64(2),
+					fields.FieldResponseNextCursor: map[string]any{
+						"cursor": "eyJyaXNrU2NvcmUiOjAuNjQ1NDg3MTMzOTk5OTk5OSwiX2lkIjoiNDVkYzQwZTItN2I3Yi00ZjM4LTlhYzctOThmNGEzNWIyNGUxIn0=",
+					},
+				},
 			},
 		},
 		"middle_page": {
@@ -188,7 +216,9 @@ func TestAdapterUserGetPage(t *testing.T) {
 				tt.request.Cursor = encodedCursor
 			}
 
-			gotResponse := adapter.GetPage(context.Background(), tt.request)
+			ctxWithLogger, observedLogs := testutil.NewContextWithObservableLogger(t.Context())
+
+			gotResponse := adapter.GetPage(ctxWithLogger, tt.request)
 			if tt.wantResponse.Success != nil && gotResponse.Success != nil {
 				if diff := cmp.Diff(tt.wantResponse.Success.Objects, gotResponse.Success.Objects); diff != "" {
 					t.Errorf("Response mismatch (-want +got):\n%s", diff)
@@ -224,6 +254,8 @@ func TestAdapterUserGetPage(t *testing.T) {
 					t.Errorf("gotCursor: %v, wantCursor: %v", gotCursor, tt.wantCursor)
 				}
 			}
+
+			testutil.ValidateLogOutput(t, observedLogs, tt.expectedLogs)
 		})
 	}
 }

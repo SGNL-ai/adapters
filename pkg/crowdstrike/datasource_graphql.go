@@ -12,6 +12,8 @@ import (
 	graphql "github.com/machinebox/graphql"
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 )
 
@@ -33,7 +35,16 @@ type ResponseItems struct {
 }
 
 func (d *Datasource) getGraphQLPage(ctx context.Context, request *Request) (*Response, *framework.Error) {
+	logger := zaplogger.FromContext(ctx).With(
+		fields.RequestEntityExternalID(request.EntityExternalID),
+		fields.RequestPageSize(request.PageSize),
+	)
+
+	logger.Info("Starting datasource request")
+
 	url := fmt.Sprintf("%s/identity-protection/combined/graphql/%s", request.BaseURL, request.Config.APIVersion)
+
+	logger.Info("Sending HTTP request to datasource", fields.URL(url))
 
 	client := graphql.NewClient(url, graphql.WithHTTPClient(d.Client))
 
@@ -73,6 +84,12 @@ func (d *Datasource) getGraphQLPage(ctx context.Context, request *Request) (*Res
 	if nextCursor != "" {
 		response.NextGraphQLCursor = &pagination.CompositeCursor[string]{Cursor: &nextCursor}
 	}
+
+	logger.Info("Datasource request completed successfully",
+		fields.ResponseStatusCode(response.StatusCode),
+		fields.ResponseObjectCount(len(response.Objects)),
+		fields.ResponseNextCursor(response.NextGraphQLCursor),
+	)
 
 	return response, nil
 }
