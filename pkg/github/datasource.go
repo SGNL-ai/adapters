@@ -407,7 +407,8 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	if err != nil {
 		logger.Error("HTTP request to datasource failed",
 			fields.URL(reqInfo.Endpoint),
-			fields.SGNLEventTypeError(), zap.Error(err),
+			fields.SGNLEventTypeError(),
+			zap.Error(err),
 		)
 
 		return nil, customerror.UpdateError(&framework.Error{
