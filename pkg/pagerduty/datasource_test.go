@@ -365,6 +365,7 @@ func TestGetPage(t *testing.T) {
 				{
 					"level":                              "error",
 					"msg":                                "Datasource request failed",
+					fields.FieldRequestURL:               server.URL + "/invalid_entity?offset=0&limit=1",
 					fields.FieldRequestEntityExternalID:  "invalid_entity",
 					fields.FieldRequestPageSize:          int64(1),
 					fields.FieldResponseStatusCode:       int64(404),
@@ -410,6 +411,7 @@ func TestGetPage(t *testing.T) {
 				{
 					"level":                              "error",
 					"msg":                                "Datasource request failed",
+					fields.FieldRequestURL:               server.URL + "/html_error?offset=0&limit=1",
 					fields.FieldRequestEntityExternalID:  "html_error",
 					fields.FieldRequestPageSize:          int64(1),
 					fields.FieldResponseStatusCode:       int64(500),
