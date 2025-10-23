@@ -19,6 +19,7 @@ import (
 	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
 	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
+	"go.uber.org/zap"
 )
 
 // Datasource directly implements a Client interface to allow querying an external datasource.
@@ -404,6 +405,8 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 
 	res, err := d.Client.Do(req)
 	if err != nil {
+		logger.Error("HTTP request to datasource failed", fields.URL(reqInfo.Endpoint), fields.SGNLEventTypeError(), zap.Error(err))
+
 		return nil, customerror.UpdateError(&framework.Error{
 			Message: fmt.Sprintf("Failed to execute GitHub request: %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
@@ -420,11 +423,13 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	}
 
 	if res.StatusCode != http.StatusOK {
-		logger.Info("Datasource request failed",
+		logger.Error("Datasource request failed",
 			fields.ResponseStatusCode(res.StatusCode),
 			fields.ResponseRetryAfterHeader(response.RetryAfterHeader),
 			fields.ResponseBody(res.Body),
+			fields.SGNLEventTypeError(),
 		)
+
 		return response, nil
 	}
 

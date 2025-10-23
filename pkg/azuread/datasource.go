@@ -297,6 +297,8 @@ func (d *Datasource) getPageBase(ctx context.Context, request *Request) (*Respon
 
 	res, err := d.Client.Do(req)
 	if err != nil {
+		logger.Error("HTTP request to datasource failed", fields.URL(endpoint), fields.SGNLEventTypeError())
+
 		return nil, customerror.UpdateError(&framework.Error{
 			Message: fmt.Sprintf("Failed to execute Azure AD request: %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
@@ -317,6 +319,7 @@ func (d *Datasource) getPageBase(ctx context.Context, request *Request) (*Respon
 			fields.ResponseStatusCode(response.StatusCode),
 			fields.ResponseRetryAfterHeader(response.RetryAfterHeader),
 			fields.ResponseBody(res.Body),
+			fields.SGNLEventTypeError(),
 		)
 
 		return response, nil

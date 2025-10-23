@@ -120,7 +120,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 
 	res, err := d.Client.Do(req)
 	if err != nil {
-		logger.Error("HTTP request to datasource failed", fields.URL(endpointInfo.URL))
+		logger.Error("HTTP request to datasource failed", fields.URL(endpointInfo.URL), fields.SGNLEventTypeError())
 
 		return nil, customerror.UpdateError(&framework.Error{
 			Message: fmt.Sprintf("Failed to execute BambooHR request: %v.", err),
@@ -142,6 +142,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 			fields.ResponseStatusCode(response.StatusCode),
 			fields.ResponseRetryAfterHeader(response.RetryAfterHeader),
 			fields.ResponseBody(res.Body),
+			fields.SGNLEventTypeError(),
 		)
 
 		return response, nil

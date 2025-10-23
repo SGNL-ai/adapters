@@ -19,6 +19,7 @@ import (
 	"time"
 
 	framework "github.com/sgnl-ai/adapter-framework"
+	"go.uber.org/zap"
 
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	customerror "github.com/sgnl-ai/adapters/pkg/errors"
@@ -188,6 +189,8 @@ func (d *Datasource) getRESTPage(ctx context.Context, request *Request) (*Respon
 
 	res, err := d.Client.Do(req)
 	if err != nil {
+		logger.Error("HTTP request to datasource failed", fields.URL(*url), fields.SGNLEventTypeError(), zap.Error(err))
+
 		return nil, customerror.UpdateError(&framework.Error{
 			Message: fmt.Sprintf("Failed to execute CrowdStrike request: %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
@@ -212,10 +215,11 @@ func (d *Datasource) getRESTPage(ctx context.Context, request *Request) (*Respon
 	}
 
 	if res.StatusCode != http.StatusOK {
-		logger.Info("Datasource request failed",
+		logger.Error("Datasource request failed",
 			fields.ResponseStatusCode(res.StatusCode),
 			fields.ResponseRetryAfterHeader(response.RetryAfterHeader),
 			fields.ResponseBody(body),
+			fields.SGNLEventTypeError(),
 		)
 
 		return response, nil
