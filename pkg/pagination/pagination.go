@@ -248,7 +248,7 @@ func (c *CompositeCursor[T]) ParseOffsetValue() (int64, *framework.Error) {
 		offsetInt, err := strconv.ParseInt(offsetStr, 10, 64)
 		if err != nil {
 			return 0, &framework.Error{
-				Message: fmt.Sprintf("unable to parse cursor: want valid number, got {%v}", *c.Cursor),
+				Message: fmt.Sprintf("Unable to parse cursor: want valid number, got {%v}.", *c.Cursor),
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_PAGE_REQUEST_CONFIG,
 			}
 		}
@@ -312,11 +312,38 @@ func PaginateObjects[T int64 | string](
 
 		if !ok {
 			return nil, nil, &framework.Error{
-				Message: "unable to convert next index to cursor type",
+				Message: "Unable to convert next index to cursor type.",
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_PAGE_REQUEST_CONFIG,
 			}
 		}
 	}
 
 	return objects[startIndex:endIndex], nextCursor, nil
+}
+
+// ParseCursorFromLog takes a log map and dereferences any CompositeCursor pointer
+// in the cursorField (typically "responseNextCursor"), converting it to a map.
+func ParseCursorFromLog(log map[string]any, cursorField string) map[string]any {
+	if cursorPtr, exists := log[cursorField]; exists {
+		if cursor, ok := cursorPtr.(*CompositeCursor[int64]); ok && cursor != nil {
+			// Convert cursor to map for comparison
+			cursorMap := make(map[string]any)
+
+			if cursor.Cursor != nil {
+				cursorMap["cursor"] = *cursor.Cursor
+			}
+
+			if cursor.CollectionID != nil {
+				cursorMap["collectionId"] = *cursor.CollectionID
+			}
+
+			if cursor.CollectionCursor != nil {
+				cursorMap["collectionCursor"] = *cursor.CollectionCursor
+			}
+
+			return cursorMap
+		}
+	}
+
+	return nil
 }

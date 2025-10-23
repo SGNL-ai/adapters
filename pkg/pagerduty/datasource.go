@@ -15,7 +15,10 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	customerror "github.com/sgnl-ai/adapters/pkg/errors"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
+	"go.uber.org/zap"
 )
 
 const (
@@ -38,6 +41,13 @@ func NewClient(client *http.Client) Client {
 }
 
 func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, *framework.Error) {
+	logger := zaplogger.FromContext(ctx).With(
+		fields.RequestEntityExternalID(request.EntityExternalID),
+		fields.RequestPageSize(request.PageSize),
+	)
+
+	logger.Info("Starting datasource request")
+
 	cursor := request.Cursor
 
 	if cursor == nil || cursor.Cursor == nil {
@@ -69,6 +79,11 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 			teamsRes, err := d.GetPage(ctx, pagerDutyTeamsReq)
 			if err != nil {
 				return nil, err
+			}
+
+			// If we fail to get teams, then we can't get members. Terminate and return the error.
+			if teamsRes.StatusCode != http.StatusOK {
+				return teamsRes, nil
 			}
 
 			// There are no more teams. Return an empty last page.
@@ -170,7 +185,9 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		}
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, sb.String(), nil)
+	requestURL := sb.String()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
 	if err != nil {
 		return nil, &framework.Error{
 			Message: fmt.Sprintf("Adapter generated an invalid URL: %v.", err),
@@ -186,8 +203,12 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 
 	req.Header.Add("Authorization", request.Token)
 
+	logger.Info("Sending HTTP request to datasource", fields.URL(requestURL))
+
 	res, err := d.Client.Do(req)
 	if err != nil {
+		logger.Error("HTTP request to datasource failed", fields.URL(requestURL), zap.Error(err))
+
 		return nil, customerror.UpdateError(&framework.Error{
 			Message: fmt.Sprintf("Failed to execute PagerDuty request: %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
@@ -211,6 +232,12 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	}
 
 	if res.StatusCode != http.StatusOK {
+		logger.Error("Datasource request failed",
+			fields.ResponseStatusCode(response.StatusCode),
+			fields.ResponseRetryAfterHeader(response.RetryAfterHeader),
+			fields.ResponseBody(body),
+		)
+
 		return response, nil
 	}
 
@@ -359,6 +386,12 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	if nextCursor == nil && cursor.CollectionCursor == nil {
 		response.NextCursor = nil
 	}
+
+	logger.Info("Datasource request completed successfully",
+		fields.ResponseStatusCode(response.StatusCode),
+		fields.ResponseObjectCount(len(response.Objects)),
+		fields.ResponseNextCursor(response.NextCursor),
+	)
 
 	return response, nil
 }
