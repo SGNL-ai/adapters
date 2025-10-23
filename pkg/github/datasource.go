@@ -405,7 +405,10 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 
 	res, err := d.Client.Do(req)
 	if err != nil {
-		logger.Error("HTTP request to datasource failed", fields.URL(reqInfo.Endpoint), fields.SGNLEventTypeError(), zap.Error(err))
+		logger.Error("HTTP request to datasource failed",
+			fields.URL(reqInfo.Endpoint),
+			fields.SGNLEventTypeError(), zap.Error(err),
+		)
 
 		return nil, customerror.UpdateError(&framework.Error{
 			Message: fmt.Sprintf("Failed to execute GitHub request: %v.", err),
