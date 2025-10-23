@@ -17,6 +17,7 @@ import (
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	"github.com/sgnl-ai/adapters/pkg/jira"
 	jira_adapter "github.com/sgnl-ai/adapters/pkg/jira"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 )
@@ -1375,6 +1376,7 @@ func (ts *TestSuite) TestGetPageGroups(t *testing.T) {
 		request      *jira_adapter.Request
 		wantResponse *jira_adapter.Response
 		wantErr      *framework.Error
+		expectedLogs []map[string]any
 	}{
 		"first_page_no_next_cursor": {
 			ctx: context.Background(),
@@ -1394,6 +1396,30 @@ func (ts *TestSuite) TestGetPageGroups(t *testing.T) {
 				},
 			},
 			wantErr: nil,
+			expectedLogs: []map[string]any{
+				{
+					"level":                             "info",
+					"msg":                               "Starting datasource request",
+					fields.FieldRequestEntityExternalID: "Group",
+					fields.FieldRequestPageSize:         int64(10),
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Sending HTTP request to datasource",
+					fields.FieldRequestEntityExternalID: "Group",
+					fields.FieldRequestPageSize:         int64(10),
+					fields.FieldRequestURL:              ts.server.URL + "/rest/api/3/group/bulk?startAt=0&maxResults=10",
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Datasource request completed successfully",
+					fields.FieldRequestEntityExternalID: "Group",
+					fields.FieldRequestPageSize:         int64(10),
+					fields.FieldResponseStatusCode:      int64(200),
+					fields.FieldResponseObjectCount:     int64(2),
+					fields.FieldResponseNextCursor:      (*pagination.CompositeCursor[string])(nil),
+				},
+			},
 		},
 		"first_page_with_next_cursor": {
 			ctx: context.Background(),
@@ -1463,7 +1489,9 @@ func (ts *TestSuite) TestGetPageGroups(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			gotResponse, gotErr := ts.client.GetPage(tt.ctx, tt.request)
+			ctxWithLogger, observedLogs := testutil.NewContextWithObservableLogger(tt.ctx)
+
+			gotResponse, gotErr := ts.client.GetPage(ctxWithLogger, tt.request)
 
 			if !reflect.DeepEqual(gotResponse, tt.wantResponse) {
 				t.Errorf("gotResponse: %v, wantResponse: %v", gotResponse, tt.wantResponse)
@@ -1472,6 +1500,8 @@ func (ts *TestSuite) TestGetPageGroups(t *testing.T) {
 			if !reflect.DeepEqual(gotErr, tt.wantErr) {
 				t.Errorf("gotErr: %v, wantErr: %v", gotErr, tt.wantErr)
 			}
+
+			testutil.ValidateLogOutput(t, observedLogs, tt.expectedLogs)
 		})
 	}
 }
