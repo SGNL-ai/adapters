@@ -77,12 +77,11 @@ func parseCursorFromLog(log map[string]any, cursorField string) map[string]any {
 		return nil
 	}
 
-	// Try int64 cursor
+	// Try parsing as either int64 or string cursor.
 	if cursor, ok := cursorPtr.(*pagination.CompositeCursor[int64]); ok && cursor != nil {
 		return compositeCursorToMap(cursor)
 	}
 
-	// Try string cursor
 	if cursor, ok := cursorPtr.(*pagination.CompositeCursor[string]); ok && cursor != nil {
 		return compositeCursorToMap(cursor)
 	}

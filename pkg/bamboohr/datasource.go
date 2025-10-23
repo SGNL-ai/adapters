@@ -137,22 +137,22 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		RetryAfterHeader: res.Header.Get("Retry-After"),
 	}
 
+	if res.StatusCode != http.StatusOK {
+		logger.Error("Datasource request failed",
+			fields.ResponseStatusCode(response.StatusCode),
+			fields.ResponseRetryAfterHeader(response.RetryAfterHeader),
+			fields.ResponseBody(res.Body),
+		)
+
+		return response, nil
+	}
+
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, &framework.Error{
 			Message: fmt.Sprintf("Failed to read BambooHR response body: %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		}
-	}
-
-	if res.StatusCode != http.StatusOK {
-		logger.Error("Datasource request failed",
-			fields.ResponseStatusCode(response.StatusCode),
-			fields.ResponseRetryAfterHeader(response.RetryAfterHeader),
-			fields.ResponseBody(body),
-		)
-
-		return response, nil
 	}
 
 	objects, nextCursor, frameworkErr := ParseResponse(body, request)
