@@ -189,7 +189,11 @@ func (d *Datasource) getRESTPage(ctx context.Context, request *Request) (*Respon
 
 	res, err := d.Client.Do(req)
 	if err != nil {
-		logger.Error("HTTP request to datasource failed", fields.RequestURL(*url), fields.SGNLEventTypeError(), zap.Error(err))
+		logger.Error("HTTP request to datasource failed",
+			fields.RequestURL(*url),
+			fields.SGNLEventTypeError(),
+			zap.Error(err),
+		)
 
 		return nil, customerror.UpdateError(&framework.Error{
 			Message: fmt.Sprintf("Failed to execute CrowdStrike request: %v.", err),
