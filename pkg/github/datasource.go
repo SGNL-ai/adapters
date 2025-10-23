@@ -16,6 +16,8 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	customerror "github.com/sgnl-ai/adapters/pkg/errors"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 )
 
@@ -297,6 +299,13 @@ func NewClient(client *http.Client) Client {
 }
 
 func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, *framework.Error) {
+	logger := zaplogger.FromContext(ctx).With(
+		fields.RequestEntityExternalID(request.EntityExternalID),
+		fields.RequestPageSize(request.PageSize),
+	)
+
+	logger.Info("Starting datasource request")
+
 	MemberOf := ValidEntityExternalIDs[request.EntityExternalID].MemberOf
 	if MemberOf != nil && request.EnterpriseSlug != nil {
 		collectionReq := &Request{
@@ -391,6 +400,8 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	req.Header.Add("Authorization", request.Token)
 	req.Header.Set("Content-Type", "application/json")
 
+	logger.Info("Sending HTTP request to datasource", fields.URL(reqInfo.Endpoint))
+
 	res, err := d.Client.Do(req)
 	if err != nil {
 		return nil, customerror.UpdateError(&framework.Error{
@@ -409,6 +420,11 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	}
 
 	if res.StatusCode != http.StatusOK {
+		logger.Info("Datasource request failed",
+			fields.ResponseStatusCode(res.StatusCode),
+			fields.ResponseRetryAfterHeader(response.RetryAfterHeader),
+			fields.ResponseBody(res.Body),
+		)
 		return response, nil
 	}
 
@@ -423,7 +439,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	var frameworkErr *framework.Error
 
 	if ValidEntityExternalIDs[request.EntityExternalID].isRestAPI {
-		response.Objects, response.NextCursor, frameworkErr = ParseRESTReponse(
+		response.Objects, response.NextCursor, frameworkErr = ParseRESTResponse(
 			body,
 			res.Header.Values("Link"),
 			reqInfo.OrganizationOffset,
@@ -441,10 +457,16 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		return nil, frameworkErr
 	}
 
+	logger.Info("Datasource request completed successfully",
+		fields.ResponseStatusCode(response.StatusCode),
+		fields.ResponseObjectCount(len(response.Objects)),
+		fields.ResponseNextCursor(response.NextCursor),
+	)
+
 	return response, nil
 }
 
-func ParseRESTReponse(
+func ParseRESTResponse(
 	body []byte,
 	links []string,
 	currentOrganizationOffset int,
