@@ -2488,7 +2488,7 @@ func TestGetEmployeePage(t *testing.T) {
 					"msg":                               "Sending HTTP request to datasource",
 					fields.FieldRequestEntityExternalID: "Employee",
 					fields.FieldRequestPageSize:         int64(10),
-					fields.FieldURL:                     server.URL + "/sgnltestdev/v1/reports/custom?format=JSON&onlyCurrent=true",
+					fields.FieldRequestURL:              server.URL + "/sgnltestdev/v1/reports/custom?format=JSON&onlyCurrent=true",
 				},
 				{
 					"level":                             "info",
