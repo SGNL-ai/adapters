@@ -19,6 +19,7 @@ import (
 	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
 	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
+	"go.uber.org/zap"
 )
 
 // Datasource directly implements a Client interface to allow querying an external datasource.
@@ -297,7 +298,11 @@ func (d *Datasource) getPageBase(ctx context.Context, request *Request) (*Respon
 
 	res, err := d.Client.Do(req)
 	if err != nil {
-		logger.Error("HTTP request to datasource failed", fields.RequestURL(endpoint), fields.SGNLEventTypeError())
+		logger.Error("HTTP request to datasource failed",
+			fields.RequestURL(endpoint),
+			fields.SGNLEventTypeError(),
+			zap.Error(err),
+		)
 
 		return nil, customerror.UpdateError(&framework.Error{
 			Message: fmt.Sprintf("Failed to execute Azure AD request: %v.", err),
