@@ -293,11 +293,11 @@ func (d *Datasource) getPageBase(ctx context.Context, request *Request) (*Respon
 		req.Header.Add("ConsistencyLevel", "eventual")
 	}
 
-	logger.Info("Sending HTTP request to datasource", fields.URL(endpoint))
+	logger.Info("Sending HTTP request to datasource", fields.RequestURL(endpoint))
 
 	res, err := d.Client.Do(req)
 	if err != nil {
-		logger.Error("HTTP request to datasource failed", fields.URL(endpoint), fields.SGNLEventTypeError())
+		logger.Error("HTTP request to datasource failed", fields.RequestURL(endpoint), fields.SGNLEventTypeError())
 
 		return nil, customerror.UpdateError(&framework.Error{
 			Message: fmt.Sprintf("Failed to execute Azure AD request: %v.", err),
@@ -316,6 +316,7 @@ func (d *Datasource) getPageBase(ctx context.Context, request *Request) (*Respon
 
 	if res.StatusCode != http.StatusOK {
 		logger.Error("Datasource request failed",
+			fields.RequestURL(endpoint),
 			fields.ResponseStatusCode(response.StatusCode),
 			fields.ResponseRetryAfterHeader(response.RetryAfterHeader),
 			fields.ResponseBody(res.Body),

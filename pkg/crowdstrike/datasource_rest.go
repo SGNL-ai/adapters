@@ -185,11 +185,11 @@ func (d *Datasource) getRESTPage(ctx context.Context, request *Request) (*Respon
 	req.Header.Add("Authorization", request.Token)
 	req.Header.Set("Content-Type", "application/json")
 
-	logger.Info("Sending HTTP request to datasource", fields.URL(*url))
+	logger.Info("Sending HTTP request to datasource", fields.RequestURL(*url))
 
 	res, err := d.Client.Do(req)
 	if err != nil {
-		logger.Error("HTTP request to datasource failed", fields.URL(*url), fields.SGNLEventTypeError(), zap.Error(err))
+		logger.Error("HTTP request to datasource failed", fields.RequestURL(*url), fields.SGNLEventTypeError(), zap.Error(err))
 
 		return nil, customerror.UpdateError(&framework.Error{
 			Message: fmt.Sprintf("Failed to execute CrowdStrike request: %v.", err),
@@ -216,6 +216,7 @@ func (d *Datasource) getRESTPage(ctx context.Context, request *Request) (*Respon
 
 	if res.StatusCode != http.StatusOK {
 		logger.Error("Datasource request failed",
+			fields.RequestURL(*url),
 			fields.ResponseStatusCode(res.StatusCode),
 			fields.ResponseRetryAfterHeader(response.RetryAfterHeader),
 			fields.ResponseBody(body),

@@ -44,7 +44,7 @@ func (d *Datasource) getGraphQLPage(ctx context.Context, request *Request) (*Res
 
 	url := fmt.Sprintf("%s/identity-protection/combined/graphql/%s", request.BaseURL, request.Config.APIVersion)
 
-	logger.Info("Sending HTTP request to datasource", fields.URL(url))
+	logger.Info("Sending HTTP request to datasource", fields.RequestURL(url))
 
 	client := graphql.NewClient(url, graphql.WithHTTPClient(d.Client))
 

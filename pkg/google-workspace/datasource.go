@@ -207,11 +207,11 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 
 	req.Header.Add("Authorization", request.Token)
 
-	logger.Info("Sending HTTP request to datasource", fields.URL(endpoint))
+	logger.Info("Sending HTTP request to datasource", fields.RequestURL(endpoint))
 
 	res, err := d.Client.Do(req)
 	if err != nil {
-		logger.Error("HTTP request to datasource failed", fields.URL(endpoint), fields.SGNLEventTypeError(), zap.Error(err))
+		logger.Error("HTTP request to datasource failed", fields.RequestURL(endpoint), fields.SGNLEventTypeError(), zap.Error(err))
 
 		return nil, customerror.UpdateError(&framework.Error{
 			Message: fmt.Sprintf("Failed to execute Google Workspace request: %v.", err),
@@ -230,6 +230,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 
 	if res.StatusCode != http.StatusOK {
 		logger.Error("Datasource request failed",
+			fields.RequestURL(endpoint),
 			fields.ResponseStatusCode(res.StatusCode),
 			fields.ResponseRetryAfterHeader(res.Header.Get("Retry-After")),
 			fields.ResponseBody(res.Body),

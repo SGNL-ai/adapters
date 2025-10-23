@@ -12,14 +12,14 @@ import (
 const (
 	FieldRequestEntityExternalID  = "requestEntityExternalId"
 	FieldRequestPageSize          = "requestPageSize"
+	FieldRequestURL               = "requestUrl"
 	FieldResponseBody             = "responseBody"
 	FieldResponseNextCursor       = "responseNextCursor"
 	FieldResponseObjectCount      = "responseObjectCount"
 	FieldResponseRetryAfterHeader = "responseRetryAfterHeader"
 	FieldResponseStatusCode       = "responseStatusCode"
-	FieldURL                      = "url"
 
-	// fieldSGNLEventType is a special field used by SGNL to identify the type of event being logged.
+	// FieldSGNLEventType is a special field used by SGNL to identify the type of event being logged.
 	FieldSGNLEventType      = "eventType"
 	SgnlEventTypeErrorValue = "sgnl.adapterSvc.error"
 )
@@ -30,6 +30,10 @@ func RequestEntityExternalID(entityExternalID string) zap.Field {
 
 func RequestPageSize(pageSize int64) zap.Field {
 	return zap.Int64(FieldRequestPageSize, pageSize)
+}
+
+func RequestURL(url string) zap.Field {
+	return zap.String(FieldRequestURL, url)
 }
 
 // ResponseBody either reads from an io.ReadCloser or takes a byte slice
@@ -68,10 +72,6 @@ func ResponseRetryAfterHeader(retryAfter string) zap.Field {
 
 func ResponseStatusCode(statusCode int) zap.Field {
 	return zap.Int(FieldResponseStatusCode, statusCode)
-}
-
-func URL(url string) zap.Field {
-	return zap.String(FieldURL, url)
 }
 
 func SGNLEventTypeError() zap.Field {

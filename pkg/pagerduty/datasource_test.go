@@ -280,7 +280,7 @@ func TestGetPage(t *testing.T) {
 					"msg":                               "Sending HTTP request to datasource",
 					fields.FieldRequestEntityExternalID: pagerduty.Users,
 					fields.FieldRequestPageSize:         int64(1),
-					fields.FieldURL:                     server.URL + "/users?offset=0&limit=1",
+					fields.FieldRequestURL:              server.URL + "/users?offset=0&limit=1",
 				},
 				{
 					"level":                             "info",
@@ -360,7 +360,7 @@ func TestGetPage(t *testing.T) {
 					"msg":                               "Sending HTTP request to datasource",
 					fields.FieldRequestEntityExternalID: "invalid_entity",
 					fields.FieldRequestPageSize:         int64(1),
-					fields.FieldURL:                     server.URL + "/invalid_entity?offset=0&limit=1",
+					fields.FieldRequestURL:              server.URL + "/invalid_entity?offset=0&limit=1",
 				},
 				{
 					"level":                              "error",
@@ -405,7 +405,7 @@ func TestGetPage(t *testing.T) {
 					"msg":                               "Sending HTTP request to datasource",
 					fields.FieldRequestEntityExternalID: "html_error",
 					fields.FieldRequestPageSize:         int64(1),
-					fields.FieldURL:                     server.URL + "/html_error?offset=0&limit=1",
+					fields.FieldRequestURL:              server.URL + "/html_error?offset=0&limit=1",
 				},
 				{
 					"level":                              "error",
