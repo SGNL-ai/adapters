@@ -13,6 +13,7 @@ import (
 
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/okta"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
@@ -632,10 +633,11 @@ func TestGetUsersPage(t *testing.T) {
 	server := httptest.NewServer(TestServerHandler)
 
 	tests := map[string]struct {
-		context context.Context
-		request *okta.Request
-		wantRes *okta.Response
-		wantErr *framework.Error
+		context      context.Context
+		request      *okta.Request
+		wantRes      *okta.Response
+		wantErr      *framework.Error
+		expectedLogs []map[string]any
 	}{
 		"first_page": {
 			context: context.Background(),
@@ -720,6 +722,32 @@ func TestGetUsersPage(t *testing.T) {
 				},
 			},
 			wantErr: nil,
+			expectedLogs: []map[string]any{
+				{
+					"level":                             "info",
+					"msg":                               "Starting datasource request",
+					fields.FieldRequestEntityExternalID: "User",
+					fields.FieldRequestPageSize:         int64(2),
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Sending HTTP request to datasource",
+					fields.FieldRequestEntityExternalID: "User",
+					fields.FieldRequestPageSize:         int64(2),
+					fields.FieldRequestURL:              server.URL + "/api/v1/users?limit=2",
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Datasource request completed successfully",
+					fields.FieldRequestEntityExternalID: "User",
+					fields.FieldRequestPageSize:         int64(2),
+					fields.FieldResponseStatusCode:      int64(200),
+					fields.FieldResponseObjectCount:     int64(2),
+					fields.FieldResponseNextCursor: map[string]any{
+						"cursor": "https://test-instance.oktapreview.com/api/v1/users?after=100u65xtp32NovHoPx1d7&limit=2",
+					},
+				},
+			},
 		},
 		"last_page": {
 			context: context.Background(),
@@ -777,7 +805,9 @@ func TestGetUsersPage(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			gotRes, gotErr := oktaClient.GetPage(tt.context, tt.request)
+			ctxWithLogger, observedLogs := testutil.NewContextWithObservableLogger(tt.context)
+
+			gotRes, gotErr := oktaClient.GetPage(ctxWithLogger, tt.request)
 
 			if !reflect.DeepEqual(gotRes, tt.wantRes) {
 				t.Errorf("gotRes: %v, wantRes: %v", gotRes, tt.wantRes)
@@ -786,6 +816,8 @@ func TestGetUsersPage(t *testing.T) {
 			if !reflect.DeepEqual(gotErr, tt.wantErr) {
 				t.Errorf("gotErr: %v, wantErr: %v", gotErr, tt.wantErr)
 			}
+
+			testutil.ValidateLogOutput(t, observedLogs, tt.expectedLogs)
 		})
 	}
 }
