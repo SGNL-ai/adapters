@@ -48,7 +48,7 @@ func ValidateLogOutput(t *testing.T, observedLogs *observer.ObservedLogs, expect
 		gotLog["msg"] = gotLogs[i].Message
 		gotLog["level"] = gotLogs[i].Level.String()
 
-		if cursorMap := pagination.ParseCursorFromLog(gotLog, "responseNextCursor"); cursorMap != nil {
+		if cursorMap := parseCursorFromLog(gotLog, "responseNextCursor"); cursorMap != nil {
 			gotLog["responseNextCursor"] = cursorMap
 		}
 
@@ -67,4 +67,44 @@ func ValidateLogOutput(t *testing.T, observedLogs *observer.ObservedLogs, expect
 			t.Errorf("log %d mismatch: got: %v, want: %v", i, gotLog, expectedLog)
 		}
 	}
+}
+
+// parseCursorFromLog takes a log map and dereferences any CompositeCursor pointer
+// in the cursorField (typically "responseNextCursor"), converting it to a map.
+func parseCursorFromLog(log map[string]any, cursorField string) map[string]any {
+	cursorPtr, exists := log[cursorField]
+	if !exists {
+		return nil
+	}
+
+	// Try int64 cursor
+	if cursor, ok := cursorPtr.(*pagination.CompositeCursor[int64]); ok && cursor != nil {
+		return compositeCursorToMap(cursor)
+	}
+
+	// Try string cursor
+	if cursor, ok := cursorPtr.(*pagination.CompositeCursor[string]); ok && cursor != nil {
+		return compositeCursorToMap(cursor)
+	}
+
+	return nil
+}
+
+// compositeCursorToMap converts any CompositeCursor to a map.
+func compositeCursorToMap[T int64 | string](cursor *pagination.CompositeCursor[T]) map[string]any {
+	cursorMap := make(map[string]any)
+
+	if cursor.Cursor != nil {
+		cursorMap["cursor"] = *cursor.Cursor
+	}
+
+	if cursor.CollectionID != nil {
+		cursorMap["collectionId"] = *cursor.CollectionID
+	}
+
+	if cursor.CollectionCursor != nil {
+		cursorMap["collectionCursor"] = *cursor.CollectionCursor
+	}
+
+	return cursorMap
 }
