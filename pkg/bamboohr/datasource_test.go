@@ -15,6 +15,7 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	adapter_api_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	"github.com/sgnl-ai/adapters/pkg/bamboohr"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 )
@@ -2455,10 +2456,11 @@ func TestGetEmployeePage(t *testing.T) {
 	server := httptest.NewServer(TestServerHandler)
 
 	tests := map[string]struct {
-		context context.Context
-		request *bamboohr.Request
-		wantRes *bamboohr.Response
-		wantErr *framework.Error
+		context      context.Context
+		request      *bamboohr.Request
+		wantRes      *bamboohr.Response
+		wantErr      *framework.Error
+		expectedLogs []map[string]any
 	}{
 		"first_page": {
 			context: context.Background(),
@@ -2473,6 +2475,32 @@ func TestGetEmployeePage(t *testing.T) {
 				RequestTimeoutSeconds: 5,
 				EntityConfig:          PopulateDefaultEmployeeEntityConfig(),
 				AttributeMappings:     &bamboohr.AttributeMappings{},
+			},
+			expectedLogs: []map[string]any{
+				{
+					"level":                             "info",
+					"msg":                               "Starting datasource request",
+					fields.FieldRequestEntityExternalID: "Employee",
+					fields.FieldRequestPageSize:         int64(10),
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Sending HTTP request to datasource",
+					fields.FieldRequestEntityExternalID: "Employee",
+					fields.FieldRequestPageSize:         int64(10),
+					fields.FieldURL:                     server.URL + "/sgnltestdev/v1/reports/custom?format=JSON&onlyCurrent=true",
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Datasource request completed successfully",
+					fields.FieldRequestEntityExternalID: "Employee",
+					fields.FieldRequestPageSize:         int64(10),
+					fields.FieldResponseStatusCode:      int64(200),
+					fields.FieldResponseObjectCount:     int64(10),
+					fields.FieldResponseNextCursor: map[string]any{
+						"cursor": int64(10),
+					},
+				},
 			},
 			wantRes: &bamboohr.Response{
 				StatusCode: http.StatusOK,
@@ -2951,7 +2979,9 @@ func TestGetEmployeePage(t *testing.T) {
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			gotRes, gotErr := bamboohrClient.GetPage(tt.context, tt.request)
+			ctxWithLogger, observedLogs := testutil.NewContextWithObservableLogger(t.Context())
+
+			gotRes, gotErr := bamboohrClient.GetPage(ctxWithLogger, tt.request)
 
 			if diff := cmp.Diff(gotRes.Objects, tt.wantRes.Objects); diff != "" {
 				t.Errorf("Differences found: (-got +want)\n%s", diff)
@@ -2968,6 +2998,8 @@ func TestGetEmployeePage(t *testing.T) {
 			if !reflect.DeepEqual(gotErr, tt.wantErr) {
 				t.Errorf("gotErr: %v, wantErr: %v", gotErr, tt.wantErr)
 			}
+
+			testutil.ValidateLogOutput(t, observedLogs, tt.expectedLogs)
 		})
 	}
 }

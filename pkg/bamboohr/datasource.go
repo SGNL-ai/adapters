@@ -15,6 +15,8 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	customerror "github.com/sgnl-ai/adapters/pkg/errors"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 )
 
@@ -70,6 +72,13 @@ func NewClient(client *http.Client) Client {
 }
 
 func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, *framework.Error) {
+	logger := zaplogger.FromContext(ctx).With(
+		fields.RequestEntityExternalID(request.EntityConfig.ExternalId),
+		fields.RequestPageSize(request.PageSize),
+	)
+
+	logger.Info("Starting datasource request")
+
 	if request.AttributeMappings == nil {
 		return nil, &framework.Error{
 			Message: "AttributeMappings is nil.",
@@ -107,8 +116,12 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
 
+	logger.Info("Sending HTTP request to datasource", fields.URL(endpointInfo.URL))
+
 	res, err := d.Client.Do(req)
 	if err != nil {
+		logger.Error("HTTP request to datasource failed", fields.URL(endpointInfo.URL))
+
 		return nil, customerror.UpdateError(&framework.Error{
 			Message: fmt.Sprintf("Failed to execute BambooHR request: %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
@@ -124,16 +137,22 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		RetryAfterHeader: res.Header.Get("Retry-After"),
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return response, nil
-	}
-
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, &framework.Error{
 			Message: fmt.Sprintf("Failed to read BambooHR response body: %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		}
+	}
+
+	if res.StatusCode != http.StatusOK {
+		logger.Error("Datasource request failed",
+			fields.ResponseStatusCode(response.StatusCode),
+			fields.ResponseRetryAfterHeader(response.RetryAfterHeader),
+			fields.ResponseBody(body),
+		)
+
+		return response, nil
 	}
 
 	objects, nextCursor, frameworkErr := ParseResponse(body, request)
@@ -143,6 +162,12 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 
 	response.NextCursor = nextCursor
 	response.Objects = objects
+
+	logger.Info("Datasource request completed successfully",
+		fields.ResponseStatusCode(response.StatusCode),
+		fields.ResponseObjectCount(len(response.Objects)),
+		fields.ResponseNextCursor(response.NextCursor),
+	)
 
 	return response, nil
 }
