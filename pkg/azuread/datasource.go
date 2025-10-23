@@ -16,6 +16,8 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	customerror "github.com/sgnl-ai/adapters/pkg/errors"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 )
 
@@ -178,6 +180,13 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 }
 
 func (d *Datasource) getPageBase(ctx context.Context, request *Request) (*Response, *framework.Error) {
+	logger := zaplogger.FromContext(ctx).With(
+		fields.RequestEntityExternalID(request.EntityExternalID),
+		fields.RequestPageSize(request.PageSize),
+	)
+
+	logger.Info("Starting datasource request")
+
 	// [MemberEntities] For member entities, we need to set the `CollectionID` and `CollectionCursor`.
 	parentEntityExternalID := getParentEntityExternalID(request)
 
@@ -284,6 +293,8 @@ func (d *Datasource) getPageBase(ctx context.Context, request *Request) (*Respon
 		req.Header.Add("ConsistencyLevel", "eventual")
 	}
 
+	logger.Info("Sending HTTP request to datasource", fields.URL(endpoint))
+
 	res, err := d.Client.Do(req)
 	if err != nil {
 		return nil, customerror.UpdateError(&framework.Error{
@@ -301,16 +312,22 @@ func (d *Datasource) getPageBase(ctx context.Context, request *Request) (*Respon
 		RetryAfterHeader: res.Header.Get("Retry-After"),
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return response, nil
-	}
-
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, &framework.Error{
 			Message: fmt.Sprintf("Failed to read Azure AD response: %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		}
+	}
+
+	if res.StatusCode != http.StatusOK {
+		logger.Error("Datasource request failed",
+			fields.ResponseStatusCode(response.StatusCode),
+			fields.ResponseRetryAfterHeader(response.RetryAfterHeader),
+			fields.ResponseBody(body),
+		)
+
+		return response, nil
 	}
 
 	objects, nextLink, frameworkErr := ParseResponse(body)
@@ -387,6 +404,12 @@ func (d *Datasource) getPageBase(ctx context.Context, request *Request) (*Respon
 	}
 
 	response.Objects = objects
+
+	logger.Info("Datasource request completed successfully",
+		fields.ResponseStatusCode(response.StatusCode),
+		fields.ResponseObjectCount(len(response.Objects)),
+		fields.ResponseNextCursor(response.NextCursor),
+	)
 
 	return response, nil
 }

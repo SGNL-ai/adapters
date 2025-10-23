@@ -15,6 +15,7 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	"github.com/sgnl-ai/adapters/pkg/azuread"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 )
@@ -81,10 +82,11 @@ func TestGetUsersPage(t *testing.T) {
 	}))
 
 	tests := map[string]struct {
-		context context.Context
-		request *azuread.Request
-		wantRes *azuread.Response
-		wantErr *framework.Error
+		context      context.Context
+		request      *azuread.Request
+		wantRes      *azuread.Response
+		wantErr      *framework.Error
+		expectedLogs []map[string]any
 	}{
 		"first_page": {
 			context: context.Background(),
@@ -130,6 +132,32 @@ func TestGetUsersPage(t *testing.T) {
 				},
 				NextCursor: &pagination.CompositeCursor[string]{
 					Cursor: testutil.GenPtr(server.URL + "/v1.0/users?$select=id&$top=2&$skiptoken=RFNwdAIAAQAAACM6QWRlbGVWQE0zNjV4MjE0MzU1Lm9ubWljcm9zb2Z0LmNvbSlVc2VyXzg3ZDM0OWVkLTQ0ZDctNDNlMS05YTgzLTVmMjQwNmRlZTViZLkAAAAAAAAAAAAA"),
+				},
+			},
+			expectedLogs: []map[string]any{
+				{
+					"level":                             "info",
+					"msg":                               "Starting datasource request",
+					fields.FieldRequestEntityExternalID: "User",
+					fields.FieldRequestPageSize:         int64(2),
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Sending HTTP request to datasource",
+					fields.FieldRequestEntityExternalID: "User",
+					fields.FieldRequestPageSize:         int64(2),
+					fields.FieldURL:                     server.URL + "/v1.0/users?$select=id&$top=2",
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Datasource request completed successfully",
+					fields.FieldRequestEntityExternalID: "User",
+					fields.FieldRequestPageSize:         int64(2),
+					fields.FieldResponseStatusCode:      int64(200),
+					fields.FieldResponseObjectCount:     int64(2),
+					fields.FieldResponseNextCursor: map[string]any{
+						"cursor": server.URL + "/v1.0/users?$select=id&$top=2&$skiptoken=RFNwdAIAAQAAACM6QWRlbGVWQE0zNjV4MjE0MzU1Lm9ubWljcm9zb2Z0LmNvbSlVc2VyXzg3ZDM0OWVkLTQ0ZDctNDNlMS05YTgzLTVmMjQwNmRlZTViZLkAAAAAAAAAAAAA",
+					},
 				},
 			},
 			wantErr: nil,
@@ -188,7 +216,11 @@ func TestGetUsersPage(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			gotRes, gotErr := azureadClient.GetPage(tt.context, tt.request)
+			ctx, observedLogs := testutil.NewContextWithObservableLogger(tt.context)
+
+			gotRes, gotErr := azureadClient.GetPage(ctx, tt.request)
+
+			testutil.ValidateLogOutput(t, observedLogs, tt.expectedLogs)
 
 			if !reflect.DeepEqual(gotRes, tt.wantRes) {
 				t.Errorf("gotRes: %v, wantRes: %v", gotRes, tt.wantRes)
@@ -793,10 +825,11 @@ func TestGetGroupMembersPage(t *testing.T) {
 	}))
 
 	tests := map[string]struct {
-		context context.Context
-		request *azuread.Request
-		wantRes *azuread.Response
-		wantErr *framework.Error
+		context      context.Context
+		request      *azuread.Request
+		wantRes      *azuread.Response
+		wantErr      *framework.Error
+		expectedLogs []map[string]any
 	}{
 		"group_page_1_of_2_member_page_1_of_2": {
 			context: context.Background(),
@@ -828,6 +861,58 @@ func TestGetGroupMembersPage(t *testing.T) {
 					CollectionID: testutil.GenPtr("02bd9fd6-8f93-4758-87c3-1fb73740a315"),
 					// GroupCursor to the next page of Groups.
 					CollectionCursor: testutil.GenPtr(server.URL + "/v1.0/groups?$select=id&$top=1&$skiptoken=RFNwdAIAAQAAACpHcm91cF8wNmY2MmY3MC05ODI3LTRlNmUtOTNlZi04ZTBmMmQ5YjdiMjMqR3JvdXBfMDZmNjJmNzAtOTgyNy00ZTZlLTkzZWYtOGUwZjJkOWI3YjIzAAAAAAAAAAAAAAA"),
+				},
+			},
+			expectedLogs: []map[string]any{
+				{
+					"level":                             "info",
+					"msg":                               "Starting datasource request",
+					fields.FieldRequestEntityExternalID: "GroupMember",
+					fields.FieldRequestPageSize:         int64(2),
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Starting datasource request",
+					fields.FieldRequestEntityExternalID: "Group",
+					fields.FieldRequestPageSize:         int64(1),
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Sending HTTP request to datasource",
+					fields.FieldRequestEntityExternalID: "Group",
+					fields.FieldRequestPageSize:         int64(1),
+					fields.FieldURL:                     server.URL + "/v1.0/groups?$select=id&$top=1",
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Datasource request completed successfully",
+					fields.FieldRequestEntityExternalID: "Group",
+					fields.FieldRequestPageSize:         int64(1),
+					fields.FieldResponseStatusCode:      int64(200),
+					fields.FieldResponseObjectCount:     int64(1),
+					fields.FieldResponseNextCursor: map[string]any{
+						"cursor": server.URL + "/v1.0/groups?$select=id&$top=1&$skiptoken=RFNwdAIAAQAAACpHcm91cF8wNmY2MmY3MC05ODI3LTRlNmUtOTNlZi04ZTBmMmQ5YjdiMjMqR3JvdXBfMDZmNjJmNzAtOTgyNy00ZTZlLTkzZWYtOGUwZjJkOWI3YjIzAAAAAAAAAAAAAAA",
+					},
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Sending HTTP request to datasource",
+					fields.FieldRequestEntityExternalID: "GroupMember",
+					fields.FieldRequestPageSize:         int64(2),
+					fields.FieldURL:                     server.URL + "/v1.0/groups/02bd9fd6-8f93-4758-87c3-1fb73740a315/members?$select=id&$top=2",
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Datasource request completed successfully",
+					fields.FieldRequestEntityExternalID: "GroupMember",
+					fields.FieldRequestPageSize:         int64(2),
+					fields.FieldResponseStatusCode:      int64(200),
+					fields.FieldResponseObjectCount:     int64(2),
+					fields.FieldResponseNextCursor: map[string]any{
+						"cursor":           server.URL + "/v1.0/groups/02bd9fd6-8f93-4758-87c3-1fb73740a315/members?$select=id&$top=2&$skiptoken=RFNwdAIAAQAAACM6QWRlbGVWQE0zNjV4MjE0MzU1Lm9ubWljcm9zb2Z0LmNvbSlVc2VyXzg3ZDM0OWVkLTQ0ZDctNDNlMS05YTgzLTVmMjQwNmRlZTViZLkAAAAAAAAAAAAA",
+						"collectionId":     "02bd9fd6-8f93-4758-87c3-1fb73740a315",
+						"collectionCursor": server.URL + "/v1.0/groups?$select=id&$top=1&$skiptoken=RFNwdAIAAQAAACpHcm91cF8wNmY2MmY3MC05ODI3LTRlNmUtOTNlZi04ZTBmMmQ5YjdiMjMqR3JvdXBfMDZmNjJmNzAtOTgyNy00ZTZlLTkzZWYtOGUwZjJkOWI3YjIzAAAAAAAAAAAAAAA",
+					},
 				},
 			},
 			wantErr: nil,
@@ -1065,7 +1150,11 @@ func TestGetGroupMembersPage(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			gotRes, gotErr := azureadClient.GetPage(tt.context, tt.request)
+			ctx, observedLogs := testutil.NewContextWithObservableLogger(tt.context)
+
+			gotRes, gotErr := azureadClient.GetPage(ctx, tt.request)
+
+			testutil.ValidateLogOutput(t, observedLogs, tt.expectedLogs)
 
 			if !reflect.DeepEqual(gotRes, tt.wantRes) {
 				t.Errorf("gotRes: %v, wantRes: %v", gotRes, tt.wantRes)
