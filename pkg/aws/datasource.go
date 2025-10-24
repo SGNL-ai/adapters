@@ -24,6 +24,8 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	customerror "github.com/sgnl-ai/adapters/pkg/errors"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 )
 
@@ -208,6 +210,13 @@ func NewClient(
 }
 
 func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, *framework.Error) {
+	logger := zaplogger.FromContext(ctx).With(
+		fields.RequestEntityExternalID(request.EntityExternalID),
+		fields.RequestPageSize(int64(request.MaxItems)),
+	)
+
+	logger.Info("Starting datasource request")
+
 	entityName := request.EntityExternalID
 	entityConfig := ValidEntityExternalIDs[request.EntityExternalID]
 
@@ -319,6 +328,8 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	}
 
 	if fetchErr != nil {
+		logger.Error("Datasource responded with an error", fields.ResponseStatusCode(statusCode))
+
 		return nil, customerror.UpdateError(&framework.Error{
 			Message: fmt.Sprintf("Unable to fetch AWS entity: %s, error: %v.", entityName, fetchErr),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
@@ -328,6 +339,8 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	}
 
 	if statusCode == unhandledStatusCode {
+		logger.Error("Datasource responded with an error", fields.ResponseStatusCode(statusCode))
+
 		return nil, &framework.Error{
 			Message: fmt.Sprintf("Failed to fetch AWS entity: %s - Unhandled status code -1", entityName),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
@@ -410,11 +423,17 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	// Return the response if -
 	// 1) There are no accounts to query
 	// 2) All accounts have been queried
-	// 3) The request is a `memberOf`` entity and the `collectioncursor` has the next marker and account offset.
+	// 3) The request is a `memberOf` entity and the `collectionCursor` has the next marker and account offset.
 	if accountCursor == nil ||
 		len(request.ResourceAccountRoles) == 0 ||
 		(nextMarker == nil && accountCursor.Offset == len(request.ResourceAccountRoles)-1) ||
 		memberOf != nil {
+		logger.Info("Datasource request completed successfully",
+			fields.ResponseStatusCode(response.StatusCode),
+			fields.ResponseObjectCount(len(response.Objects)),
+			fields.ResponseNextCursor(response.NextCursor),
+		)
+
 		return response, nil
 	}
 
@@ -433,6 +452,12 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 			Cursor: &encodedCursor,
 		}
 	}
+
+	logger.Info("Datasource request completed successfully",
+		fields.ResponseStatusCode(response.StatusCode),
+		fields.ResponseObjectCount(len(response.Objects)),
+		fields.ResponseNextCursor(response.NextCursor),
+	)
 
 	return response, nil
 }
