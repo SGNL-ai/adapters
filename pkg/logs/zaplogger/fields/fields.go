@@ -8,8 +8,13 @@ import (
 	"go.uber.org/zap"
 )
 
-// Log fields which are commonly used throughout the adapter codebase.
+// Log fields which are commonly used throughout adapters.
 const (
+	FieldBaseURL                  = "baseUrl"
+	FieldConnectorID              = "connectorId"
+	FieldConnectorSourceID        = "connectorSourceId"
+	FieldConnectorSourceType      = "connectorSourceType"
+	FieldDatabase                 = "database"
 	FieldRequestEntityExternalID  = "requestEntityExternalId"
 	FieldRequestPageSize          = "requestPageSize"
 	FieldRequestURL               = "requestUrl"
@@ -23,6 +28,26 @@ const (
 	FieldSGNLEventType      = "eventType"
 	SGNLEventTypeErrorValue = "sgnl.adapterSvc.error"
 )
+
+func BaseURL(url string) zap.Field {
+	return zap.String(FieldBaseURL, url)
+}
+
+func ConnectorID(connectorID string) zap.Field {
+	return zap.String(FieldConnectorID, connectorID)
+}
+
+func ConnectorSourceID(sourceID string) zap.Field {
+	return zap.String(FieldConnectorSourceID, sourceID)
+}
+
+func ConnectorSourceType(sourceType int) zap.Field {
+	return zap.Int(FieldConnectorSourceType, sourceType)
+}
+
+func Database(database string) zap.Field {
+	return zap.String(FieldDatabase, database)
+}
 
 func RequestEntityExternalID(entityExternalID string) zap.Field {
 	return zap.String(FieldRequestEntityExternalID, entityExternalID)

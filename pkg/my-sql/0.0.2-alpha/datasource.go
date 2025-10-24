@@ -15,6 +15,9 @@ import (
 	"github.com/sgnl-ai/adapter-framework/pkg/connector"
 	grpc_proxy_v1 "github.com/sgnl-ai/adapter-framework/pkg/grpc_proxy/v1"
 	customerror "github.com/sgnl-ai/adapters/pkg/errors"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/status"
 
 	_ "github.com/go-sql-driver/mysql" // Go MySQL Driver is an implementation of Go's database/sql/driver interface.
@@ -34,6 +37,18 @@ func NewClient(client SQLClient) Client {
 // ProxyRequest sends serialized SQL query request to the on-premises connector.
 func (d *Datasource) ProxyRequest(ctx context.Context, request *Request, ci *connector.ConnectorInfo,
 ) (*Response, *framework.Error) {
+	logger := zaplogger.FromContext(ctx).With(
+		fields.RequestEntityExternalID(request.EntityConfig.ExternalId),
+		fields.RequestPageSize(request.PageSize),
+		fields.ConnectorID(ci.ID),
+		fields.ConnectorSourceID(ci.SourceID),
+		fields.ConnectorSourceType(int(ci.SourceType)),
+		fields.BaseURL(request.BaseURL),
+		fields.Database(request.Database),
+	)
+
+	logger.Info("Starting datasource request")
+
 	data, err := json.Marshal(request)
 	if err != nil {
 		return nil, &framework.Error{
@@ -55,10 +70,17 @@ func (d *Datasource) ProxyRequest(ctx context.Context, request *Request, ci *con
 		},
 	}
 
+	logger.Info("Sending request to datasource via proxy")
+
 	response := &Response{}
 
 	proxyResp, err := d.Client.Proxy(ctx, proxyRequest)
 	if err != nil {
+		logger.Error("Datasource responded with an error",
+			fields.SGNLEventTypeError(),
+			zap.Error(err),
+		)
+
 		if st, ok := status.FromError(err); ok {
 			code := customerror.GRPCErrStatusToHTTPStatusCode(st, err)
 			response.StatusCode = code
@@ -87,17 +109,37 @@ func (d *Datasource) ProxyRequest(ctx context.Context, request *Request, ci *con
 		}
 	}
 
+	logger.Info("Datasource request completed successfully",
+		fields.ResponseStatusCode(response.StatusCode),
+		fields.ResponseObjectCount(len(response.Objects)),
+		fields.ResponseNextCursor(response.NextCursor),
+	)
+
 	return response, nil
 }
 
 // Request function to directly connect to the SQL datasource and execute a query
 // to fetch data.
-func (d *Datasource) Request(_ context.Context, request *Request) (*Response, *framework.Error) {
+func (d *Datasource) Request(ctx context.Context, request *Request) (*Response, *framework.Error) {
+	logger := zaplogger.FromContext(ctx).With(
+		fields.RequestEntityExternalID(request.EntityConfig.ExternalId),
+		fields.RequestPageSize(request.PageSize),
+		fields.BaseURL(request.BaseURL),
+		fields.Database(request.Database),
+	)
+
+	logger.Info("Starting datasource request")
+
 	if err := request.SimpleSQLValidation(); err != nil {
 		return nil, err
 	}
 
 	if err := d.Client.Connect(request.DatasourceName()); err != nil {
+		logger.Error("Failed to connect to datasource",
+			fields.SGNLEventTypeError(),
+			zap.Error(err),
+		)
+
 		return nil, &framework.Error{
 			Message: fmt.Sprintf("Failed to connect to datasource: %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
@@ -112,8 +154,15 @@ func (d *Datasource) Request(_ context.Context, request *Request) (*Response, *f
 		}
 	}
 
+	logger.Info("Sending request to datasource")
+
 	rows, err := d.Client.Query(query, args...)
 	if err != nil {
+		logger.Error("Request to datasource failed",
+			fields.SGNLEventTypeError(),
+			zap.Error(err),
+		)
+
 		return nil, &framework.Error{
 			Message: fmt.Sprintf("Failed to query datasource: %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
@@ -162,6 +211,12 @@ func (d *Datasource) Request(_ context.Context, request *Request) (*Response, *f
 
 		response.NextCursor = &lastIDStr
 	}
+
+	logger.Info("Datasource request completed successfully",
+		fields.ResponseStatusCode(response.StatusCode),
+		fields.ResponseObjectCount(len(response.Objects)),
+		fields.ResponseNextCursor(response.NextCursor),
+	)
 
 	return response, nil
 }

@@ -17,6 +17,7 @@ import (
 	"github.com/sgnl-ai/adapter-framework/pkg/connector"
 	grpc_proxy_v1 "github.com/sgnl-ai/adapter-framework/pkg/grpc_proxy/v1"
 	customerror "github.com/sgnl-ai/adapters/pkg/errors"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -112,14 +113,62 @@ func TestGivenRequestWithoutConnectorCtxWhenGetPageRequestedThenSQLResponseStatu
 		},
 	}
 
-	// Act
-	resp, err := ds.GetPage(context.Background(), &Request{
+	request := &Request{
 		EntityConfig: framework.EntityConfig{
 			ExternalId: "users",
+			Attributes: []*framework.AttributeConfig{
+				{
+					ExternalId: "id",
+					Type:       framework.AttributeTypeString,
+				},
+				{
+					ExternalId: "name",
+					Type:       framework.AttributeTypeString,
+				},
+			},
 		},
 		UniqueAttributeExternalID: "id",
 		PageSize:                  100,
-	})
+		Username:                  "testuser",
+		Password:                  "testpass",
+		BaseURL:                   "localhost:3306",
+		Database:                  "testdb",
+	}
+
+	expectedLogs := []map[string]any{
+		{
+			"level":                             "info",
+			"msg":                               "Starting datasource request",
+			fields.FieldRequestEntityExternalID: "users",
+			fields.FieldRequestPageSize:         int64(100),
+			fields.FieldBaseURL:                 "localhost:3306",
+			fields.FieldDatabase:                "testdb",
+		},
+		{
+			"level":                             "info",
+			"msg":                               "Sending request to datasource",
+			fields.FieldRequestEntityExternalID: "users",
+			fields.FieldRequestPageSize:         int64(100),
+			fields.FieldBaseURL:                 "localhost:3306",
+			fields.FieldDatabase:                "testdb",
+		},
+		{
+			"level":                             "info",
+			"msg":                               "Datasource request completed successfully",
+			fields.FieldRequestEntityExternalID: "users",
+			fields.FieldRequestPageSize:         int64(100),
+			fields.FieldResponseStatusCode:      int64(200),
+			fields.FieldResponseObjectCount:     int64(2),
+			fields.FieldResponseNextCursor:      nil,
+			fields.FieldBaseURL:                 "localhost:3306",
+			fields.FieldDatabase:                "testdb",
+		},
+	}
+
+	// Act
+	ctxWithLogger, observedLogs := testutil.NewContextWithObservableLogger(t.Context())
+
+	resp, err := ds.GetPage(ctxWithLogger, request)
 
 	// Assert
 	if err != nil {
@@ -129,6 +178,8 @@ func TestGivenRequestWithoutConnectorCtxWhenGetPageRequestedThenSQLResponseStatu
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("Expected %v, got %v http status code", http.StatusOK, resp.StatusCode)
 	}
+
+	testutil.ValidateLogOutput(t, observedLogs, expectedLogs)
 }
 
 func TestGivenRequestWithConnectorCtxAndWithoutProxyWhenGetPageRequestedThenSQLResponseStatusIsOk(t *testing.T) {

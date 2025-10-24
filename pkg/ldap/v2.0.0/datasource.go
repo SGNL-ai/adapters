@@ -29,7 +29,10 @@ import (
 	grpc_proxy_v1 "github.com/sgnl-ai/adapter-framework/pkg/grpc_proxy/v1"
 	"github.com/sgnl-ai/adapter-framework/web"
 	customerror "github.com/sgnl-ai/adapters/pkg/errors"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/status"
 )
 
@@ -89,6 +92,17 @@ func (c *ldapClient) IsProxied() bool {
 func (c *ldapClient) ProxyRequest(
 	ctx context.Context, ci *connector.ConnectorInfo, request *Request,
 ) (*Response, *framework.Error) {
+	logger := zaplogger.FromContext(ctx).With(
+		fields.RequestEntityExternalID(request.EntityExternalID),
+		fields.RequestPageSize(request.PageSize),
+		fields.BaseURL(request.BaseURL),
+		fields.ConnectorID(ci.ID),
+		fields.ConnectorSourceID(ci.SourceID),
+		fields.ConnectorSourceType(int(ci.SourceType)),
+	)
+
+	logger.Info("Sending request to datasource")
+
 	data, err := json.Marshal(request)
 	if err != nil {
 		return nil, &framework.Error{
@@ -114,6 +128,11 @@ func (c *ldapClient) ProxyRequest(
 
 	proxyResp, err := c.proxyClient.ProxyRequest(ctx, r)
 	if err != nil {
+		logger.Error("Request to datasource failed",
+			fields.SGNLEventTypeError(),
+			zap.Error(err),
+		)
+
 		if st, ok := status.FromError(err); ok {
 			response.StatusCode = customerror.GRPCErrStatusToHTTPStatusCode(st, err)
 
@@ -169,12 +188,26 @@ func (c *ldapClient) ProxyRequest(
 		}
 	}
 
+	logger.Info("Datasource request completed successfully",
+		fields.ResponseStatusCode(response.StatusCode),
+		fields.ResponseObjectCount(len(response.Objects)),
+		fields.ResponseNextCursor(response.NextCursor),
+	)
+
 	return response, nil
 }
 
 // Request sends a paginated search query directly to an LDAP server and returns the
 // processed response.
-func (c *ldapClient) Request(_ context.Context, request *Request) (*Response, *framework.Error) {
+func (c *ldapClient) Request(ctx context.Context, request *Request) (*Response, *framework.Error) {
+	logger := zaplogger.FromContext(ctx).With(
+		fields.RequestEntityExternalID(request.EntityExternalID),
+		fields.RequestPageSize(request.PageSize),
+		fields.BaseURL(request.BaseURL),
+	)
+
+	logger.Info("Sending request to datasource")
+
 	tlsConfig, configErr := GetTLSConfig(request)
 	if configErr != nil {
 		return nil, configErr
@@ -259,6 +292,11 @@ func (c *ldapClient) Request(_ context.Context, request *Request) (*Response, *f
 	// Perform search
 	searchResult, err := conn.Search(searchRequest)
 	if err != nil {
+		logger.Error("Request to datasource failed",
+			fields.SGNLEventTypeError(),
+			zap.Error(err),
+		)
+
 		// Extract LDAP result code from the error
 		if ldapErr, ok := err.(*ldap_v3.Error); ok {
 			return &Response{
@@ -318,6 +356,12 @@ func (c *ldapClient) Request(_ context.Context, request *Request) (*Response, *f
 		// Paging done, cleanup
 		c.sessionPool.Delete(key)
 	}
+
+	logger.Info("Datasource request completed successfully",
+		fields.ResponseStatusCode(response.StatusCode),
+		fields.ResponseObjectCount(len(response.Objects)),
+		fields.ResponseNextCursor(response.NextCursor),
+	)
 
 	return response, nil
 }
