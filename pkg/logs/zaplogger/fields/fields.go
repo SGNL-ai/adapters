@@ -3,6 +3,7 @@ package fields
 
 import (
 	"encoding/json"
+	"io"
 
 	"go.uber.org/zap"
 )
@@ -11,12 +12,16 @@ import (
 const (
 	FieldRequestEntityExternalID  = "requestEntityExternalId"
 	FieldRequestPageSize          = "requestPageSize"
+	FieldRequestURL               = "requestUrl"
 	FieldResponseBody             = "responseBody"
 	FieldResponseNextCursor       = "responseNextCursor"
 	FieldResponseObjectCount      = "responseObjectCount"
 	FieldResponseRetryAfterHeader = "responseRetryAfterHeader"
 	FieldResponseStatusCode       = "responseStatusCode"
-	FieldURL                      = "url"
+
+	// FieldSGNLEventType is a special field used by SGNL to identify the type of event being logged.
+	FieldSGNLEventType      = "eventType"
+	SGNLEventTypeErrorValue = "sgnl.adapterSvc.error"
 )
 
 func RequestEntityExternalID(entityExternalID string) zap.Field {
@@ -27,12 +32,30 @@ func RequestPageSize(pageSize int64) zap.Field {
 	return zap.Int64(FieldRequestPageSize, pageSize)
 }
 
-func ResponseBody(body []byte) zap.Field {
-	if json.Valid(body) {
-		return zap.Any(FieldResponseBody, json.RawMessage(body))
+func RequestURL(url string) zap.Field {
+	return zap.String(FieldRequestURL, url)
+}
+
+// ResponseBody either reads from an io.ReadCloser or takes a byte slice
+// and returns a zap field containing the response body for logging purposes.
+func ResponseBody(body any) zap.Field {
+	var bodyBytes []byte
+
+	switch body := body.(type) {
+	case io.ReadCloser:
+		// Best effort read of response body for logging purposes.
+		// WARNING: This will consume the body, so it should only be used
+		// in contexts where the body is not needed afterwards.
+		bodyBytes, _ = io.ReadAll(body)
+	case []byte:
+		bodyBytes = body
 	}
 
-	return zap.ByteString(FieldResponseBody, body)
+	if json.Valid(bodyBytes) {
+		return zap.Any(FieldResponseBody, json.RawMessage(bodyBytes))
+	}
+
+	return zap.ByteString(FieldResponseBody, bodyBytes)
 }
 
 func ResponseNextCursor(cursor any) zap.Field {
@@ -51,6 +74,6 @@ func ResponseStatusCode(statusCode int) zap.Field {
 	return zap.Int(FieldResponseStatusCode, statusCode)
 }
 
-func URL(url string) zap.Field {
-	return zap.String(FieldURL, url)
+func SGNLEventTypeError() zap.Field {
+	return zap.String(FieldSGNLEventType, SGNLEventTypeErrorValue)
 }
