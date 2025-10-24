@@ -328,7 +328,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	}
 
 	if fetchErr != nil {
-		logger.Error("Datasource responded with an error", fields.ResponseStatusCode(statusCode))
+		logger.Error("Datasource responded with an error", fields.ResponseStatusCode(statusCode), fields.SGNLEventTypeError())
 
 		return nil, customerror.UpdateError(&framework.Error{
 			Message: fmt.Sprintf("Unable to fetch AWS entity: %s, error: %v.", entityName, fetchErr),
@@ -339,7 +339,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	}
 
 	if statusCode == unhandledStatusCode {
-		logger.Error("Datasource responded with an error", fields.ResponseStatusCode(statusCode))
+		logger.Error("Datasource responded with an error", fields.ResponseStatusCode(statusCode), fields.SGNLEventTypeError())
 
 		return nil, &framework.Error{
 			Message: fmt.Sprintf("Failed to fetch AWS entity: %s - Unhandled status code -1", entityName),
