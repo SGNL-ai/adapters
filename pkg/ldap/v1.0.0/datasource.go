@@ -201,6 +201,7 @@ func (c *ldapClient) Request(ctx context.Context, request *Request) (*Response, 
 	logger := zaplogger.FromContext(ctx).With(
 		fields.RequestEntityExternalID(request.EntityExternalID),
 		fields.RequestPageSize(request.PageSize),
+		fields.BaseURL(request.BaseURL),
 	)
 
 	logger.Info("Sending request to datasource")
