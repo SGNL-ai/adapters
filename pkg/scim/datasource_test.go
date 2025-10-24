@@ -10,6 +10,7 @@ import (
 	"time"
 
 	framework "github.com/sgnl-ai/adapter-framework"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/scim"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 )
@@ -28,10 +29,11 @@ func TestUserGetPage(t *testing.T) {
 	defer server.Close()
 
 	tests := map[string]struct {
-		context context.Context
-		request *scim.Request
-		wantRes *scim.AdapterResponse
-		wantErr *framework.Error
+		context      context.Context
+		request      *scim.Request
+		wantRes      *scim.AdapterResponse
+		wantErr      *framework.Error
+		expectedLogs []map[string]any
 	}{
 		"first_page": {
 			context: context.Background(),
@@ -51,6 +53,30 @@ func TestUserGetPage(t *testing.T) {
 				NextCursor: "3",
 			},
 			wantErr: nil,
+			expectedLogs: []map[string]any{
+				{
+					"level":                             "info",
+					"msg":                               "Starting datasource request",
+					fields.FieldRequestEntityExternalID: "Users",
+					fields.FieldRequestPageSize:         int64(2),
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Sending request to datasource",
+					fields.FieldRequestEntityExternalID: "Users",
+					fields.FieldRequestPageSize:         int64(2),
+					fields.FieldRequestURL:              server.URL + "/Users?startIndex=1&count=2",
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Datasource request completed successfully",
+					fields.FieldRequestEntityExternalID: "Users",
+					fields.FieldRequestPageSize:         int64(2),
+					fields.FieldResponseStatusCode:      int64(200),
+					fields.FieldResponseObjectCount:     int64(2),
+					fields.FieldResponseNextCursor:      "3",
+				},
+			},
 		},
 		"middle_page": {
 			context: context.Background(),
@@ -245,7 +271,9 @@ func TestUserGetPage(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			gotRes, gotErr := scimClient.GetPage(tt.context, tt.request)
+			ctxWithLogger, observedLogs := testutil.NewContextWithObservableLogger(tt.context)
+
+			gotRes, gotErr := scimClient.GetPage(ctxWithLogger, tt.request)
 
 			if !reflect.DeepEqual(gotRes, tt.wantRes) {
 				t.Errorf("gotRes: %+v, wantRes: %+v", gotRes, tt.wantRes)
@@ -254,6 +282,8 @@ func TestUserGetPage(t *testing.T) {
 			if !reflect.DeepEqual(gotErr, tt.wantErr) {
 				t.Errorf("gotErr: %v, wantErr: %v", gotErr, tt.wantErr)
 			}
+
+			testutil.ValidateLogOutput(t, observedLogs, tt.expectedLogs)
 		})
 	}
 }
@@ -267,10 +297,11 @@ func TestGroupGetPage(t *testing.T) {
 	defer server.Close()
 
 	tests := map[string]struct {
-		context context.Context
-		request *scim.Request
-		wantRes *scim.AdapterResponse
-		wantErr *framework.Error
+		context      context.Context
+		request      *scim.Request
+		wantRes      *scim.AdapterResponse
+		wantErr      *framework.Error
+		expectedLogs []map[string]any
 	}{
 		"first_page": {
 			context: context.Background(),
@@ -384,7 +415,9 @@ func TestGroupGetPage(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			gotRes, gotErr := scimClient.GetPage(tt.context, tt.request)
+			ctxWithLogger, observedLogs := testutil.NewContextWithObservableLogger(tt.context)
+
+			gotRes, gotErr := scimClient.GetPage(ctxWithLogger, tt.request)
 
 			if !reflect.DeepEqual(gotRes, tt.wantRes) {
 				t.Errorf("gotRes: %+v, wantRes: %+v", gotRes, tt.wantRes)
@@ -393,6 +426,8 @@ func TestGroupGetPage(t *testing.T) {
 			if !reflect.DeepEqual(gotErr, tt.wantErr) {
 				t.Errorf("gotErr: %v, wantErr: %v", gotErr, tt.wantErr)
 			}
+
+			testutil.ValidateLogOutput(t, observedLogs, tt.expectedLogs)
 		})
 	}
 }
