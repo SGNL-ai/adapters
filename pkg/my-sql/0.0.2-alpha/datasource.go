@@ -40,6 +40,11 @@ func (d *Datasource) ProxyRequest(ctx context.Context, request *Request, ci *con
 	logger := zaplogger.FromContext(ctx).With(
 		fields.RequestEntityExternalID(request.EntityConfig.ExternalId),
 		fields.RequestPageSize(request.PageSize),
+		fields.ConnectorID(ci.ID),
+		fields.ConnectorSourceID(ci.SourceID),
+		fields.ConnectorSourceType(int(ci.SourceType)),
+		fields.BaseURL(request.BaseURL),
+		fields.Database(request.Database),
 	)
 
 	logger.Info("Starting datasource request")
@@ -119,6 +124,8 @@ func (d *Datasource) Request(ctx context.Context, request *Request) (*Response, 
 	logger := zaplogger.FromContext(ctx).With(
 		fields.RequestEntityExternalID(request.EntityConfig.ExternalId),
 		fields.RequestPageSize(request.PageSize),
+		fields.BaseURL(request.BaseURL),
+		fields.Database(request.Database),
 	)
 
 	logger.Info("Starting datasource request")
@@ -127,10 +134,8 @@ func (d *Datasource) Request(ctx context.Context, request *Request) (*Response, 
 		return nil, err
 	}
 
-	datasourceName := request.DatasourceName()
-	if err := d.Client.Connect(datasourceName); err != nil {
+	if err := d.Client.Connect(request.DatasourceName()); err != nil {
 		logger.Error("Failed to connect to datasource",
-			fields.RequestURL(datasourceName),
 			fields.SGNLEventTypeError(),
 			zap.Error(err),
 		)
@@ -149,12 +154,11 @@ func (d *Datasource) Request(ctx context.Context, request *Request) (*Response, 
 		}
 	}
 
-	logger.Info("Sending request to datasource", fields.RequestURL(datasourceName))
+	logger.Info("Sending request to datasource")
 
 	rows, err := d.Client.Query(query, args...)
 	if err != nil {
 		logger.Error("Request to datasource failed",
-			fields.RequestURL(datasourceName),
 			fields.SGNLEventTypeError(),
 			zap.Error(err),
 		)

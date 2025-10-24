@@ -141,13 +141,16 @@ func TestGivenRequestWithoutConnectorCtxWhenGetPageRequestedThenSQLResponseStatu
 			"msg":                               "Starting datasource request",
 			fields.FieldRequestEntityExternalID: "users",
 			fields.FieldRequestPageSize:         int64(100),
+			fields.FieldBaseURL:                 "localhost:3306",
+			fields.FieldDatabase:                "testdb",
 		},
 		{
 			"level":                             "info",
 			"msg":                               "Sending request to datasource",
 			fields.FieldRequestEntityExternalID: "users",
 			fields.FieldRequestPageSize:         int64(100),
-			fields.FieldRequestURL:              "testuser:testpass@tcp(localhost:3306)/testdb",
+			fields.FieldBaseURL:                 "localhost:3306",
+			fields.FieldDatabase:                "testdb",
 		},
 		{
 			"level":                             "info",
@@ -157,6 +160,8 @@ func TestGivenRequestWithoutConnectorCtxWhenGetPageRequestedThenSQLResponseStatu
 			fields.FieldResponseStatusCode:      int64(200),
 			fields.FieldResponseObjectCount:     int64(2),
 			fields.FieldResponseNextCursor:      nil,
+			fields.FieldBaseURL:                 "localhost:3306",
+			fields.FieldDatabase:                "testdb",
 		},
 	}
 
