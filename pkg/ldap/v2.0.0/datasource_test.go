@@ -87,7 +87,7 @@ type testProxyClient struct {
 	proxiedRequest bool
 }
 
-func (c *testProxyClient) ProxyRequest(ctx context.Context, ci *connector.ConnectorInfo, request *ldap.Request) (*ldap.Response, *framework.Error) {
+func (c *testProxyClient) ProxyRequest(_ context.Context, ci *connector.ConnectorInfo, _ *ldap.Request) (*ldap.Response, *framework.Error) {
 	// Ensure connector info matches the configured value.
 	if c.ci != nil {
 		if diff := cmp.Diff(c.ci, ci); diff != "" {
