@@ -16,7 +16,10 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	customerror "github.com/sgnl-ai/adapters/pkg/errors"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
+	"go.uber.org/zap"
 )
 
 const (
@@ -122,6 +125,13 @@ func NewClient(client *http.Client) Client {
 // regardless of status code, a Response object is returned with the response body and the status code.
 // If the request fails, an appropriate framework.Error is returned.
 func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, *framework.Error) {
+	logger := zaplogger.FromContext(ctx).With(
+		fields.RequestEntityExternalID(request.EntityExternalID),
+		fields.RequestPageSize(request.PageSize),
+	)
+
+	logger.Info("Starting datasource request")
+
 	// ValidateGetPageRequest already checks if the entity exists in the valid entities map.
 	entity := ValidEntityExternalIDs[request.EntityExternalID]
 
@@ -174,8 +184,16 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 
 	req.Header.Add("Authorization", request.AuthorizationHeader)
 
+	logger.Info("Sending request to datasource", fields.RequestURL(url))
+
 	res, err := d.Client.Do(req)
 	if err != nil {
+		logger.Error("Request to datasource failed",
+			fields.RequestURL(url),
+			fields.SGNLEventTypeError(),
+			zap.Error(err),
+		)
+
 		return nil, customerror.UpdateError(&framework.Error{
 			Message: fmt.Sprintf("Failed to execute Jira request: %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
@@ -200,6 +218,14 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	}
 
 	if res.StatusCode != http.StatusOK {
+		logger.Error("Datasource responded with an error",
+			fields.RequestURL(url),
+			fields.ResponseStatusCode(res.StatusCode),
+			fields.ResponseRetryAfterHeader(response.RetryAfterHeader),
+			fields.ResponseBody(body),
+			fields.SGNLEventTypeError(),
+		)
+
 		return response, nil
 	}
 
@@ -259,6 +285,12 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	if nextCursor == nil && cursor.CollectionCursor == nil {
 		response.NextCursor = nil
 	}
+
+	logger.Info("Datasource request completed successfully",
+		fields.ResponseStatusCode(response.StatusCode),
+		fields.ResponseObjectCount(len(response.Objects)),
+		fields.ResponseNextCursor(response.NextCursor),
+	)
 
 	return response, nil
 }
