@@ -502,6 +502,10 @@ func TestAdapterGetPage(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
+			if tt.ctx == nil {
+				tt.ctx = t.Context()
+			}
+
 			ctxWithLogger, observedLogs := testutil.NewContextWithObservableLogger(tt.ctx)
 
 			gotResponse := adapter.GetPage(ctxWithLogger, tt.request)
