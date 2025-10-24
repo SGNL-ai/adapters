@@ -144,11 +144,11 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	req.Header.Add("Authorization", request.Token)
 	req.Header.Add("Content-Type", "application/json;okta-response=omitCredentials,omitCredentialsLinks")
 
-	logger.Info("Sending HTTP request to datasource", fields.RequestURL(endpoint))
+	logger.Info("Sending request to datasource", fields.RequestURL(endpoint))
 
 	res, err := d.Client.Do(req)
 	if err != nil {
-		logger.Error("HTTP request to datasource failed",
+		logger.Error("Request to datasource failed",
 			fields.RequestURL(endpoint),
 			fields.SGNLEventTypeError(),
 			zap.Error(err),
@@ -170,7 +170,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	}
 
 	if res.StatusCode != http.StatusOK {
-		logger.Error("Datasource request failed",
+		logger.Error("Datasource responded with an error",
 			fields.RequestURL(endpoint),
 			fields.ResponseStatusCode(res.StatusCode),
 			fields.ResponseRetryAfterHeader(response.RetryAfterHeader),

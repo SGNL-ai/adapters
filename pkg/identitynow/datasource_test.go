@@ -1094,7 +1094,7 @@ func TestGetAccountsPage(t *testing.T) {
 				},
 				{
 					"level":                             "info",
-					"msg":                               "Sending HTTP request to datasource",
+					"msg":                               "Sending request to datasource",
 					fields.FieldRequestEntityExternalID: "accounts",
 					fields.FieldRequestPageSize:         int64(2),
 					fields.FieldRequestURL:              server.URL + "/v3/accounts?limit=2&offset=0",

@@ -184,11 +184,11 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 
 	req.Header.Add("Authorization", request.AuthorizationHeader)
 
-	logger.Info("Sending HTTP request to datasource", fields.RequestURL(url))
+	logger.Info("Sending request to datasource", fields.RequestURL(url))
 
 	res, err := d.Client.Do(req)
 	if err != nil {
-		logger.Error("HTTP request to datasource failed",
+		logger.Error("Request to datasource failed",
 			fields.RequestURL(url),
 			fields.SGNLEventTypeError(),
 			zap.Error(err),
@@ -218,7 +218,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	}
 
 	if res.StatusCode != http.StatusOK {
-		logger.Error("Datasource request failed",
+		logger.Error("Datasource responded with an error",
 			fields.RequestURL(url),
 			fields.ResponseStatusCode(res.StatusCode),
 			fields.ResponseRetryAfterHeader(response.RetryAfterHeader),

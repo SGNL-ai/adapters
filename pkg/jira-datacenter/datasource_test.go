@@ -971,7 +971,7 @@ func (ts *TestSuite) TestGetPageUsers(t *testing.T) {
 				},
 				{
 					"level":                             "info",
-					"msg":                               "Sending HTTP request to datasource",
+					"msg":                               "Sending request to datasource",
 					fields.FieldRequestEntityExternalID: "Group",
 					fields.FieldRequestPageSize:         int64(1),
 					fields.FieldRequestURL:              ts.server.URL + "/rest/api/latest/groups/picker",
@@ -989,7 +989,7 @@ func (ts *TestSuite) TestGetPageUsers(t *testing.T) {
 				},
 				{
 					"level":                             "info",
-					"msg":                               "Sending HTTP request to datasource",
+					"msg":                               "Sending request to datasource",
 					fields.FieldRequestEntityExternalID: "User",
 					fields.FieldRequestPageSize:         int64(10),
 					// nolint: lll

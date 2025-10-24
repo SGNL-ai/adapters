@@ -1405,7 +1405,7 @@ func (ts *TestSuite) TestGetPageGroups(t *testing.T) {
 				},
 				{
 					"level":                             "info",
-					"msg":                               "Sending HTTP request to datasource",
+					"msg":                               "Sending request to datasource",
 					fields.FieldRequestEntityExternalID: "Group",
 					fields.FieldRequestPageSize:         int64(10),
 					fields.FieldRequestURL:              ts.server.URL + "/rest/api/3/group/bulk?startAt=0&maxResults=10",

@@ -731,7 +731,7 @@ func TestGetUsersPage(t *testing.T) {
 				},
 				{
 					"level":                             "info",
-					"msg":                               "Sending HTTP request to datasource",
+					"msg":                               "Sending request to datasource",
 					fields.FieldRequestEntityExternalID: "User",
 					fields.FieldRequestPageSize:         int64(2),
 					fields.FieldRequestURL:              server.URL + "/api/v1/users?limit=2",
