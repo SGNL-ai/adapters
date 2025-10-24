@@ -165,7 +165,7 @@ func TestGetUsersPage(t *testing.T) {
 				},
 				{
 					"level":                             "info",
-					"msg":                               "Sending HTTP request to datasource",
+					"msg":                               "Sending request to datasource",
 					fields.FieldRequestEntityExternalID: "User",
 					fields.FieldRequestPageSize:         int64(1),
 					fields.FieldRequestURL:              server.URL + "/admin/directory/v1/users?domain=sgnldemos.com&maxResults=1",

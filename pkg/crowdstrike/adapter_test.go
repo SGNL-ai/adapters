@@ -93,7 +93,7 @@ func TestAdapterUserGetPage(t *testing.T) {
 				},
 				{
 					"level":                             "info",
-					"msg":                               "Sending HTTP request to datasource",
+					"msg":                               "Sending request to datasource",
 					fields.FieldRequestEntityExternalID: "user",
 					fields.FieldRequestPageSize:         int64(2),
 					fields.FieldRequestURL:              server.URL + "/identity-protection/combined/graphql/v1",

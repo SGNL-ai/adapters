@@ -117,11 +117,11 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
 
-	logger.Info("Sending HTTP request to datasource", fields.RequestURL(endpointInfo.URL))
+	logger.Info("Sending request to datasource", fields.RequestURL(endpointInfo.URL))
 
 	res, err := d.Client.Do(req)
 	if err != nil {
-		logger.Error("HTTP request to datasource failed",
+		logger.Error("Request to datasource failed",
 			fields.RequestURL(endpointInfo.URL),
 			fields.SGNLEventTypeError(),
 			zap.Error(err),
@@ -143,7 +143,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	}
 
 	if res.StatusCode != http.StatusOK {
-		logger.Error("Datasource request failed",
+		logger.Error("Datasource responded with an error",
 			fields.RequestURL(endpointInfo.URL),
 			fields.ResponseStatusCode(response.StatusCode),
 			fields.ResponseRetryAfterHeader(response.RetryAfterHeader),

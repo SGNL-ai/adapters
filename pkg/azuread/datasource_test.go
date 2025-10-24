@@ -143,7 +143,7 @@ func TestGetUsersPage(t *testing.T) {
 				},
 				{
 					"level":                             "info",
-					"msg":                               "Sending HTTP request to datasource",
+					"msg":                               "Sending request to datasource",
 					fields.FieldRequestEntityExternalID: "User",
 					fields.FieldRequestPageSize:         int64(2),
 					fields.FieldRequestURL:              server.URL + "/v1.0/users?$select=id&$top=2",
@@ -878,7 +878,7 @@ func TestGetGroupMembersPage(t *testing.T) {
 				},
 				{
 					"level":                             "info",
-					"msg":                               "Sending HTTP request to datasource",
+					"msg":                               "Sending request to datasource",
 					fields.FieldRequestEntityExternalID: "Group",
 					fields.FieldRequestPageSize:         int64(1),
 					fields.FieldRequestURL:              server.URL + "/v1.0/groups?$select=id&$top=1",
@@ -896,7 +896,7 @@ func TestGetGroupMembersPage(t *testing.T) {
 				},
 				{
 					"level":                             "info",
-					"msg":                               "Sending HTTP request to datasource",
+					"msg":                               "Sending request to datasource",
 					fields.FieldRequestEntityExternalID: "GroupMember",
 					fields.FieldRequestPageSize:         int64(2),
 					fields.FieldRequestURL:              server.URL + "/v1.0/groups/02bd9fd6-8f93-4758-87c3-1fb73740a315/members?$select=id&$top=2",

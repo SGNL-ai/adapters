@@ -294,11 +294,11 @@ func (d *Datasource) getPageBase(ctx context.Context, request *Request) (*Respon
 		req.Header.Add("ConsistencyLevel", "eventual")
 	}
 
-	logger.Info("Sending HTTP request to datasource", fields.RequestURL(endpoint))
+	logger.Info("Sending request to datasource", fields.RequestURL(endpoint))
 
 	res, err := d.Client.Do(req)
 	if err != nil {
-		logger.Error("HTTP request to datasource failed",
+		logger.Error("Request to datasource failed",
 			fields.RequestURL(endpoint),
 			fields.SGNLEventTypeError(),
 			zap.Error(err),
@@ -320,7 +320,7 @@ func (d *Datasource) getPageBase(ctx context.Context, request *Request) (*Respon
 	}
 
 	if res.StatusCode != http.StatusOK {
-		logger.Error("Datasource request failed",
+		logger.Error("Datasource responded with an error",
 			fields.RequestURL(endpoint),
 			fields.ResponseStatusCode(response.StatusCode),
 			fields.ResponseRetryAfterHeader(response.RetryAfterHeader),

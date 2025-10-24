@@ -1158,7 +1158,7 @@ func TestGetOrganizationPage(t *testing.T) {
 				},
 				{
 					"level":                             "info",
-					"msg":                               "Sending HTTP request to datasource",
+					"msg":                               "Sending request to datasource",
 					fields.FieldRequestEntityExternalID: "Organization",
 					fields.FieldRequestPageSize:         int64(1),
 					fields.FieldRequestURL:              server.URL + "/api/graphql",

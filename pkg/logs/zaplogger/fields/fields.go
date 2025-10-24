@@ -21,7 +21,7 @@ const (
 
 	// FieldSGNLEventType is a special field used by SGNL to identify the type of event being logged.
 	FieldSGNLEventType      = "eventType"
-	SgnlEventTypeErrorValue = "sgnl.adapterSvc.error"
+	SGNLEventTypeErrorValue = "sgnl.adapterSvc.error"
 )
 
 func RequestEntityExternalID(entityExternalID string) zap.Field {
@@ -75,5 +75,5 @@ func ResponseStatusCode(statusCode int) zap.Field {
 }
 
 func SGNLEventTypeError() zap.Field {
-	return zap.String(FieldSGNLEventType, SgnlEventTypeErrorValue)
+	return zap.String(FieldSGNLEventType, SGNLEventTypeErrorValue)
 }
