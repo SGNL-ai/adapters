@@ -93,6 +93,10 @@ func (c *ldapClient) ProxyRequest(
 	logger := zaplogger.FromContext(ctx).With(
 		fields.RequestEntityExternalID(request.EntityExternalID),
 		fields.RequestPageSize(request.PageSize),
+		fields.BaseURL(request.BaseURL),
+		fields.ConnectorID(ci.ID),
+		fields.ConnectorSourceID(ci.SourceID),
+		fields.ConnectorSourceType(int(ci.SourceType)),
 	)
 
 	logger.Info("Sending request to datasource")

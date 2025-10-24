@@ -314,6 +314,10 @@ func TestGivenRequestWithConnectorContextWhenProxyServiceReturnValidResponseThen
 			"msg":                               "Sending request to datasource",
 			fields.FieldRequestEntityExternalID: "Person",
 			fields.FieldRequestPageSize:         int64(1),
+			fields.FieldBaseURL:                 mockLDAPAddr,
+			fields.FieldConnectorID:             "test-connector-id",
+			fields.FieldConnectorSourceID:       "",
+			fields.FieldConnectorSourceType:     int64(0),
 		},
 		{
 			"level":                             "info",
@@ -323,6 +327,10 @@ func TestGivenRequestWithConnectorContextWhenProxyServiceReturnValidResponseThen
 			fields.FieldResponseStatusCode:      int64(200),
 			fields.FieldResponseObjectCount:     int64(2),
 			fields.FieldResponseNextCursor:      (*pagination.CompositeCursor[string])(nil),
+			fields.FieldBaseURL:                 mockLDAPAddr,
+			fields.FieldConnectorID:             "test-connector-id",
+			fields.FieldConnectorSourceID:       "",
+			fields.FieldConnectorSourceType:     int64(0),
 		},
 	}
 
