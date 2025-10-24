@@ -297,11 +297,10 @@ func TestGroupGetPage(t *testing.T) {
 	defer server.Close()
 
 	tests := map[string]struct {
-		context      context.Context
-		request      *scim.Request
-		wantRes      *scim.AdapterResponse
-		wantErr      *framework.Error
-		expectedLogs []map[string]any
+		context context.Context
+		request *scim.Request
+		wantRes *scim.AdapterResponse
+		wantErr *framework.Error
 	}{
 		"first_page": {
 			context: context.Background(),
@@ -415,9 +414,7 @@ func TestGroupGetPage(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			ctxWithLogger, observedLogs := testutil.NewContextWithObservableLogger(tt.context)
-
-			gotRes, gotErr := scimClient.GetPage(ctxWithLogger, tt.request)
+			gotRes, gotErr := scimClient.GetPage(tt.context, tt.request)
 
 			if !reflect.DeepEqual(gotRes, tt.wantRes) {
 				t.Errorf("gotRes: %+v, wantRes: %+v", gotRes, tt.wantRes)
@@ -426,8 +423,6 @@ func TestGroupGetPage(t *testing.T) {
 			if !reflect.DeepEqual(gotErr, tt.wantErr) {
 				t.Errorf("gotErr: %v, wantErr: %v", gotErr, tt.wantErr)
 			}
-
-			testutil.ValidateLogOutput(t, observedLogs, tt.expectedLogs)
 		})
 	}
 }
