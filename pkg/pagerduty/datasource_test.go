@@ -5,7 +5,6 @@ package pagerduty_test
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -14,15 +13,10 @@ import (
 
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
-	framework_logs "github.com/sgnl-ai/adapter-framework/pkg/logs"
-	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
 	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagerduty"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-	"go.uber.org/zap/zaptest/observer"
 )
 
 // Define the endpoints and responses for the mock PagerDuty server.
@@ -283,10 +277,10 @@ func TestGetPage(t *testing.T) {
 				},
 				{
 					"level":                             "info",
-					"msg":                               "Sending HTTP request to datasource",
+					"msg":                               "Sending request to datasource",
 					fields.FieldRequestEntityExternalID: pagerduty.Users,
 					fields.FieldRequestPageSize:         int64(1),
-					fields.FieldURL:                     server.URL + "/users?offset=0&limit=1",
+					fields.FieldRequestURL:              server.URL + "/users?offset=0&limit=1",
 				},
 				{
 					"level":                             "info",
@@ -363,14 +357,15 @@ func TestGetPage(t *testing.T) {
 				},
 				{
 					"level":                             "info",
-					"msg":                               "Sending HTTP request to datasource",
+					"msg":                               "Sending request to datasource",
 					fields.FieldRequestEntityExternalID: "invalid_entity",
 					fields.FieldRequestPageSize:         int64(1),
-					fields.FieldURL:                     server.URL + "/invalid_entity?offset=0&limit=1",
+					fields.FieldRequestURL:              server.URL + "/invalid_entity?offset=0&limit=1",
 				},
 				{
 					"level":                              "error",
-					"msg":                                "Datasource request failed",
+					"msg":                                "Datasource responded with an error",
+					fields.FieldRequestURL:               server.URL + "/invalid_entity?offset=0&limit=1",
 					fields.FieldRequestEntityExternalID:  "invalid_entity",
 					fields.FieldRequestPageSize:          int64(1),
 					fields.FieldResponseStatusCode:       int64(404),
@@ -381,6 +376,7 @@ func TestGetPage(t *testing.T) {
 							"code":    float64(404),
 						},
 					},
+					fields.FieldSGNLEventType: fields.SGNLEventTypeErrorValue,
 				},
 			},
 		},
@@ -407,19 +403,21 @@ func TestGetPage(t *testing.T) {
 				},
 				{
 					"level":                             "info",
-					"msg":                               "Sending HTTP request to datasource",
+					"msg":                               "Sending request to datasource",
 					fields.FieldRequestEntityExternalID: "html_error",
 					fields.FieldRequestPageSize:         int64(1),
-					fields.FieldURL:                     server.URL + "/html_error?offset=0&limit=1",
+					fields.FieldRequestURL:              server.URL + "/html_error?offset=0&limit=1",
 				},
 				{
 					"level":                              "error",
-					"msg":                                "Datasource request failed",
+					"msg":                                "Datasource responded with an error",
+					fields.FieldRequestURL:               server.URL + "/html_error?offset=0&limit=1",
 					fields.FieldRequestEntityExternalID:  "html_error",
 					fields.FieldRequestPageSize:          int64(1),
 					fields.FieldResponseStatusCode:       int64(500),
 					fields.FieldResponseRetryAfterHeader: "",
 					fields.FieldResponseBody:             "<html><body><h1>500 Internal Server Error</h1></body></html>",
+					fields.FieldSGNLEventType:            fields.SGNLEventTypeErrorValue,
 				},
 			},
 		},
@@ -715,14 +713,9 @@ func TestGetPage(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			// Create an observable logger to capture log output.
-			observedCore, observedLogs := observer.New(zapcore.InfoLevel)
-			observableLogger := zap.New(observedCore)
+			ctxWithLogger, observedLogs := testutil.NewContextWithObservableLogger(tt.context)
 
-			// Enrich context with logger
-			ctx := framework_logs.NewContextWithLogger(tt.context, zaplogger.NewFrameworkLogger(observableLogger))
-
-			gotRes, gotErr := pagerdutyClient.GetPage(ctx, tt.request)
+			gotRes, gotErr := pagerdutyClient.GetPage(ctxWithLogger, tt.request)
 
 			if !reflect.DeepEqual(gotRes, tt.wantRes) {
 				t.Errorf("gotRes: %v, wantRes: %v", gotRes, tt.wantRes)
@@ -732,38 +725,7 @@ func TestGetPage(t *testing.T) {
 				t.Errorf("gotErr: %v, wantErr: %v", gotErr, tt.wantErr)
 			}
 
-			if len(tt.expectedLogs) > 0 {
-				gotLogs := observedLogs.All()
-
-				if len(gotLogs) != len(tt.expectedLogs) {
-					t.Errorf("expected %d logs, got %d", len(tt.expectedLogs), len(gotLogs))
-				}
-
-				for i, expectedLog := range tt.expectedLogs {
-					gotLog := gotLogs[i].ContextMap()           // Get all the log fields as a map.
-					gotLog["msg"] = gotLogs[i].Message          // Add the "msg" field since that's not included in ContextMap().
-					gotLog["level"] = gotLogs[i].Level.String() // Add the "level" field.
-
-					if cursorMap := pagination.ParseCursorFromLog(gotLog, "responseNextCursor"); cursorMap != nil {
-						gotLog["responseNextCursor"] = cursorMap
-					}
-
-					// Parse responseBody if it's a json.RawMessage.
-					if responseBody, ok := gotLog[fields.FieldResponseBody]; ok {
-						if rawJSON, ok := responseBody.(json.RawMessage); ok {
-							var parsed map[string]any
-
-							if err := json.Unmarshal(rawJSON, &parsed); err == nil {
-								gotLog[fields.FieldResponseBody] = parsed
-							}
-						}
-					}
-
-					if !reflect.DeepEqual(gotLog, expectedLog) {
-						t.Errorf("log %d mismatch:\ngot:  %#v\nwant: %#v", i, gotLog, expectedLog)
-					}
-				}
-			}
+			testutil.ValidateLogOutput(t, observedLogs, tt.expectedLogs)
 		})
 	}
 }

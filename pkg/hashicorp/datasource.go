@@ -13,7 +13,10 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	customerror "github.com/sgnl-ai/adapters/pkg/errors"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
+	"go.uber.org/zap"
 )
 
 const (
@@ -198,6 +201,13 @@ func (d *Datasource) authenticate(auth *Auth, baseURL string) (*string, *framewo
 func (d *Datasource) getResourcePage(
 	ctx context.Context,
 	request *Request) (*Response, *framework.Error) {
+	logger := zaplogger.FromContext(ctx).With(
+		fields.RequestEntityExternalID(request.EntityExternalID),
+		fields.RequestPageSize(request.PageSize),
+	)
+
+	logger.Info("Starting datasource request")
+
 	url := ConstructEndpoint(request)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -214,8 +224,16 @@ func (d *Datasource) getResourcePage(
 	req = req.WithContext(apiCtx)
 	req.Header.Add("Authorization", request.authToken)
 
+	logger.Info("Sending request to datasource", fields.RequestURL(url))
+
 	res, err := d.Client.Do(req)
 	if err != nil {
+		logger.Error("Request to datasource failed",
+			fields.RequestURL(url),
+			fields.SGNLEventTypeError(),
+			zap.Error(err),
+		)
+
 		return nil, customerror.UpdateError(&framework.Error{
 			Message: fmt.Sprintf("Failed to execute request: %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
@@ -239,6 +257,14 @@ func (d *Datasource) getResourcePage(
 	}
 
 	if res.StatusCode != http.StatusOK {
+		logger.Error("Datasource responded with an error",
+			fields.RequestURL(url),
+			fields.ResponseStatusCode(response.StatusCode),
+			fields.ResponseRetryAfterHeader(response.RetryAfterHeader),
+			fields.ResponseBody(body),
+			fields.SGNLEventTypeError(),
+		)
+
 		return response, nil
 	}
 
@@ -249,6 +275,12 @@ func (d *Datasource) getResourcePage(
 
 	response.Objects = objects
 	response.NextCursor = nextCursor
+
+	logger.Info("Datasource request completed successfully",
+		fields.ResponseStatusCode(response.StatusCode),
+		fields.ResponseObjectCount(len(response.Objects)),
+		fields.ResponseNextCursor(response.NextCursor),
+	)
 
 	return response, nil
 }

@@ -203,11 +203,15 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 
 	req.Header.Add("Authorization", request.Token)
 
-	logger.Info("Sending HTTP request to datasource", fields.URL(requestURL))
+	logger.Info("Sending request to datasource", fields.RequestURL(requestURL))
 
 	res, err := d.Client.Do(req)
 	if err != nil {
-		logger.Error("HTTP request to datasource failed", fields.URL(requestURL), zap.Error(err))
+		logger.Error("Request to datasource failed",
+			fields.RequestURL(requestURL),
+			fields.SGNLEventTypeError(),
+			zap.Error(err),
+		)
 
 		return nil, customerror.UpdateError(&framework.Error{
 			Message: fmt.Sprintf("Failed to execute PagerDuty request: %v.", err),
@@ -232,10 +236,12 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	}
 
 	if res.StatusCode != http.StatusOK {
-		logger.Error("Datasource request failed",
+		logger.Error("Datasource responded with an error",
+			fields.RequestURL(requestURL),
 			fields.ResponseStatusCode(response.StatusCode),
 			fields.ResponseRetryAfterHeader(response.RetryAfterHeader),
 			fields.ResponseBody(body),
+			fields.SGNLEventTypeError(),
 		)
 
 		return response, nil
