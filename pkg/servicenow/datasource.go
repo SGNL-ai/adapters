@@ -2,6 +2,7 @@
 package servicenow
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -13,6 +14,9 @@ import (
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	customerror "github.com/sgnl-ai/adapters/pkg/errors"
 	"github.com/sgnl-ai/adapters/pkg/extractor"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
+	"go.uber.org/zap"
 )
 
 const (
@@ -50,7 +54,16 @@ func NewClient(client *http.Client) Client {
 }
 
 func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, *framework.Error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ConstructEndpoint(request), nil)
+	logger := zaplogger.FromContext(ctx).With(
+		fields.RequestEntityExternalID(request.EntityExternalID),
+		fields.RequestPageSize(request.PageSize),
+	)
+
+	logger.Info("Starting datasource request")
+
+	endpoint := ConstructEndpoint(request)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
 	if err != nil {
 		return nil, &framework.Error{
 			Message: fmt.Sprintf("Failed to create request to datasource: %v.", err),
@@ -66,8 +79,16 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 
 	req.Header.Add("Authorization", request.AuthorizationHeader)
 
+	logger.Info("Sending request to datasource", fields.RequestURL(endpoint))
+
 	res, err := d.Client.Do(req)
 	if err != nil {
+		logger.Error("Request to datasource failed",
+			fields.RequestURL(endpoint),
+			fields.SGNLEventTypeError(),
+			zap.Error(err),
+		)
+
 		return nil, customerror.UpdateError(&framework.Error{
 			Message: fmt.Sprintf("Failed to execute request: %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
@@ -95,6 +116,14 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	// ServiceNow will return a 400 Bad Request with a message "Pagination not supported" and the reason.
 	// We need to surface this error to the user.
 	if res.StatusCode != http.StatusOK {
+		logger.Error("Datasource responded with an error",
+			fields.RequestURL(endpoint),
+			fields.ResponseStatusCode(res.StatusCode),
+			fields.ResponseRetryAfterHeader(res.Header.Get("Retry-After")),
+			fields.ResponseBody(io.NopCloser(bytes.NewReader(body))),
+			fields.SGNLEventTypeError(),
+		)
+
 		var errorResponse DatasourceErrorResponse
 
 		if err := json.Unmarshal(body, &errorResponse); err == nil {
@@ -123,6 +152,12 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	if cursor := extractor.ValueFromList(res.Header.Values("Link"), "https://", ">;rel=\"next\""); cursor != "" {
 		response.NextCursor = &cursor
 	}
+
+	logger.Info("Datasource request completed successfully",
+		fields.ResponseStatusCode(response.StatusCode),
+		fields.ResponseObjectCount(len(response.Objects)),
+		fields.ResponseNextCursor(response.NextCursor),
+	)
 
 	return response, nil
 }

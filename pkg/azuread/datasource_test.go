@@ -15,6 +15,7 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	"github.com/sgnl-ai/adapters/pkg/azuread"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 )
@@ -75,13 +76,17 @@ func TestGetUsersPage(t *testing.T) {
 	}
 
 	azureadClient := azuread.NewClient(client)
-	server := httptest.NewServer(TestServerHandler)
+	var server *httptest.Server
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		CreateTestServerHandler(server.URL).ServeHTTP(w, r)
+	}))
 
 	tests := map[string]struct {
-		context context.Context
-		request *azuread.Request
-		wantRes *azuread.Response
-		wantErr *framework.Error
+		context      context.Context
+		request      *azuread.Request
+		wantRes      *azuread.Response
+		wantErr      *framework.Error
+		expectedLogs []map[string]any
 	}{
 		"first_page": {
 			context: context.Background(),
@@ -126,7 +131,33 @@ func TestGetUsersPage(t *testing.T) {
 					},
 				},
 				NextCursor: &pagination.CompositeCursor[string]{
-					Cursor: testutil.GenPtr("https://graph.microsoft.com/v1.0/users?$select=id&$top=2&$skiptoken=RFNwdAIAAQAAACM6QWRlbGVWQE0zNjV4MjE0MzU1Lm9ubWljcm9zb2Z0LmNvbSlVc2VyXzg3ZDM0OWVkLTQ0ZDctNDNlMS05YTgzLTVmMjQwNmRlZTViZLkAAAAAAAAAAAAA"),
+					Cursor: testutil.GenPtr(server.URL + "/v1.0/users?$select=id&$top=2&$skiptoken=RFNwdAIAAQAAACM6QWRlbGVWQE0zNjV4MjE0MzU1Lm9ubWljcm9zb2Z0LmNvbSlVc2VyXzg3ZDM0OWVkLTQ0ZDctNDNlMS05YTgzLTVmMjQwNmRlZTViZLkAAAAAAAAAAAAA"),
+				},
+			},
+			expectedLogs: []map[string]any{
+				{
+					"level":                             "info",
+					"msg":                               "Starting datasource request",
+					fields.FieldRequestEntityExternalID: "User",
+					fields.FieldRequestPageSize:         int64(2),
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Sending request to datasource",
+					fields.FieldRequestEntityExternalID: "User",
+					fields.FieldRequestPageSize:         int64(2),
+					fields.FieldRequestURL:              server.URL + "/v1.0/users?$select=id&$top=2",
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Datasource request completed successfully",
+					fields.FieldRequestEntityExternalID: "User",
+					fields.FieldRequestPageSize:         int64(2),
+					fields.FieldResponseStatusCode:      int64(200),
+					fields.FieldResponseObjectCount:     int64(2),
+					fields.FieldResponseNextCursor: map[string]any{
+						"cursor": server.URL + "/v1.0/users?$select=id&$top=2&$skiptoken=RFNwdAIAAQAAACM6QWRlbGVWQE0zNjV4MjE0MzU1Lm9ubWljcm9zb2Z0LmNvbSlVc2VyXzg3ZDM0OWVkLTQ0ZDctNDNlMS05YTgzLTVmMjQwNmRlZTViZLkAAAAAAAAAAAAA",
+					},
 				},
 			},
 			wantErr: nil,
@@ -185,7 +216,11 @@ func TestGetUsersPage(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			gotRes, gotErr := azureadClient.GetPage(tt.context, tt.request)
+			ctx, observedLogs := testutil.NewContextWithObservableLogger(tt.context)
+
+			gotRes, gotErr := azureadClient.GetPage(ctx, tt.request)
+
+			testutil.ValidateLogOutput(t, observedLogs, tt.expectedLogs)
 
 			if !reflect.DeepEqual(gotRes, tt.wantRes) {
 				t.Errorf("gotRes: %v, wantRes: %v", gotRes, tt.wantRes)
@@ -204,7 +239,10 @@ func TestGetRolesPage(t *testing.T) {
 	}
 
 	azureadClient := azuread.NewClient(client)
-	server := httptest.NewServer(TestServerHandler)
+	var server *httptest.Server
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		CreateTestServerHandler(server.URL).ServeHTTP(w, r)
+	}))
 
 	tests := map[string]struct {
 		context context.Context
@@ -450,7 +488,10 @@ func TestGetApplicationsPage(t *testing.T) {
 	}
 
 	azureadClient := azuread.NewClient(client)
-	server := httptest.NewServer(TestServerHandler)
+	var server *httptest.Server
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		CreateTestServerHandler(server.URL).ServeHTTP(w, r)
+	}))
 
 	tests := map[string]struct {
 		context context.Context
@@ -567,7 +608,7 @@ func TestGetApplicationsPage(t *testing.T) {
 					},
 				},
 				NextCursor: &pagination.CompositeCursor[string]{
-					Cursor: testutil.GenPtr("https://graph.microsoft.com/v1.0/applications?$select=id&$top=2&$skiptoken=RFNwdAIAAQAAADBBcHBsaWNhdGlvbl9jZmE5OGFjMC1hMzJjLTRiNGMtYTc4Yi05NGM5OTEyZWQ3YjIwQXBwbGljYXRpb25fY2ZhOThhYzAtYTMyYy00YjRjLWE3OGItOTRjOTkxMmVkN2IyAAAAAAAAAAAAAAA"),
+					Cursor: testutil.GenPtr(server.URL + "/v1.0/applications?$select=id&$top=2&$skiptoken=RFNwdAIAAQAAADBBcHBsaWNhdGlvbl9jZmE5OGFjMC1hMzJjLTRiNGMtYTc4Yi05NGM5OTEyZWQ3YjIwQXBwbGljYXRpb25fY2ZhOThhYzAtYTMyYy00YjRjLWE3OGItOTRjOTkxMmVkN2IyAAAAAAAAAAAAAAA"),
 				},
 			},
 			wantErr: nil,
@@ -662,7 +703,10 @@ func TestGetDevicesPage(t *testing.T) {
 	}
 
 	azureadClient := azuread.NewClient(client)
-	server := httptest.NewServer(TestServerHandler)
+	var server *httptest.Server
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		CreateTestServerHandler(server.URL).ServeHTTP(w, r)
+	}))
 
 	tests := map[string]struct {
 		context context.Context
@@ -711,7 +755,7 @@ func TestGetDevicesPage(t *testing.T) {
 					},
 				},
 				NextCursor: &pagination.CompositeCursor[string]{
-					Cursor: testutil.GenPtr("https://graph.microsoft.com/v1.0/devices?$select=id&$top=2&$skiptoken=RFNwdAIAAQAAADBBcHBsaWNhdGlvbl9jZmE5OGFjMC1hMzJjLTRiNGMtYTc4Yi05NGM5OTEyZWQ3YjIwQXBwbGljYXRpb25fY2ZhOThhYzAtYTMyYy00YjRjLWE3OGItOTRjOTkxMmVkN2IyAAAAAAAAAAAAAAA"),
+					Cursor: testutil.GenPtr(server.URL + "/v1.0/devices?$select=id&$top=2&$skiptoken=RFNwdAIAAQAAADBBcHBsaWNhdGlvbl9jZmE5OGFjMC1hMzJjLTRiNGMtYTc4Yi05NGM5OTEyZWQ3YjIwQXBwbGljYXRpb25fY2ZhOThhYzAtYTMyYy00YjRjLWE3OGItOTRjOTkxMmVkN2IyAAAAAAAAAAAAAAA"),
 				},
 			},
 			wantErr: nil,
@@ -775,13 +819,17 @@ func TestGetGroupMembersPage(t *testing.T) {
 	}
 
 	azureadClient := azuread.NewClient(client)
-	server := httptest.NewServer(TestServerHandler)
+	var server *httptest.Server
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		CreateTestServerHandler(server.URL).ServeHTTP(w, r)
+	}))
 
 	tests := map[string]struct {
-		context context.Context
-		request *azuread.Request
-		wantRes *azuread.Response
-		wantErr *framework.Error
+		context      context.Context
+		request      *azuread.Request
+		wantRes      *azuread.Response
+		wantErr      *framework.Error
+		expectedLogs []map[string]any
 	}{
 		"group_page_1_of_2_member_page_1_of_2": {
 			context: context.Background(),
@@ -809,10 +857,62 @@ func TestGetGroupMembersPage(t *testing.T) {
 				},
 				NextCursor: &pagination.CompositeCursor[string]{
 					// We're of syncing Members for a specific Groups, so this cursor is to the next page of Members.
-					Cursor:       testutil.GenPtr("https://graph.microsoft.com/v1.0/groups/02bd9fd6-8f93-4758-87c3-1fb73740a315/members?$select=id&$top=2&$skiptoken=RFNwdAIAAQAAACM6QWRlbGVWQE0zNjV4MjE0MzU1Lm9ubWljcm9zb2Z0LmNvbSlVc2VyXzg3ZDM0OWVkLTQ0ZDctNDNlMS05YTgzLTVmMjQwNmRlZTViZLkAAAAAAAAAAAAA"),
+					Cursor:       testutil.GenPtr(server.URL + "/v1.0/groups/02bd9fd6-8f93-4758-87c3-1fb73740a315/members?$select=id&$top=2&$skiptoken=RFNwdAIAAQAAACM6QWRlbGVWQE0zNjV4MjE0MzU1Lm9ubWljcm9zb2Z0LmNvbSlVc2VyXzg3ZDM0OWVkLTQ0ZDctNDNlMS05YTgzLTVmMjQwNmRlZTViZLkAAAAAAAAAAAAA"),
 					CollectionID: testutil.GenPtr("02bd9fd6-8f93-4758-87c3-1fb73740a315"),
 					// GroupCursor to the next page of Groups.
-					CollectionCursor: testutil.GenPtr("https://graph.microsoft.com/v1.0/groups?$select=id&$top=1&$skiptoken=RFNwdAIAAQAAACpHcm91cF8wNmY2MmY3MC05ODI3LTRlNmUtOTNlZi04ZTBmMmQ5YjdiMjMqR3JvdXBfMDZmNjJmNzAtOTgyNy00ZTZlLTkzZWYtOGUwZjJkOWI3YjIzAAAAAAAAAAAAAAA"),
+					CollectionCursor: testutil.GenPtr(server.URL + "/v1.0/groups?$select=id&$top=1&$skiptoken=RFNwdAIAAQAAACpHcm91cF8wNmY2MmY3MC05ODI3LTRlNmUtOTNlZi04ZTBmMmQ5YjdiMjMqR3JvdXBfMDZmNjJmNzAtOTgyNy00ZTZlLTkzZWYtOGUwZjJkOWI3YjIzAAAAAAAAAAAAAAA"),
+				},
+			},
+			expectedLogs: []map[string]any{
+				{
+					"level":                             "info",
+					"msg":                               "Starting datasource request",
+					fields.FieldRequestEntityExternalID: "GroupMember",
+					fields.FieldRequestPageSize:         int64(2),
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Starting datasource request",
+					fields.FieldRequestEntityExternalID: "Group",
+					fields.FieldRequestPageSize:         int64(1),
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Sending request to datasource",
+					fields.FieldRequestEntityExternalID: "Group",
+					fields.FieldRequestPageSize:         int64(1),
+					fields.FieldRequestURL:              server.URL + "/v1.0/groups?$select=id&$top=1",
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Datasource request completed successfully",
+					fields.FieldRequestEntityExternalID: "Group",
+					fields.FieldRequestPageSize:         int64(1),
+					fields.FieldResponseStatusCode:      int64(200),
+					fields.FieldResponseObjectCount:     int64(1),
+					fields.FieldResponseNextCursor: map[string]any{
+						"cursor": server.URL + "/v1.0/groups?$select=id&$top=1&$skiptoken=RFNwdAIAAQAAACpHcm91cF8wNmY2MmY3MC05ODI3LTRlNmUtOTNlZi04ZTBmMmQ5YjdiMjMqR3JvdXBfMDZmNjJmNzAtOTgyNy00ZTZlLTkzZWYtOGUwZjJkOWI3YjIzAAAAAAAAAAAAAAA",
+					},
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Sending request to datasource",
+					fields.FieldRequestEntityExternalID: "GroupMember",
+					fields.FieldRequestPageSize:         int64(2),
+					fields.FieldRequestURL:              server.URL + "/v1.0/groups/02bd9fd6-8f93-4758-87c3-1fb73740a315/members?$select=id&$top=2",
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Datasource request completed successfully",
+					fields.FieldRequestEntityExternalID: "GroupMember",
+					fields.FieldRequestPageSize:         int64(2),
+					fields.FieldResponseStatusCode:      int64(200),
+					fields.FieldResponseObjectCount:     int64(2),
+					fields.FieldResponseNextCursor: map[string]any{
+						"cursor":           server.URL + "/v1.0/groups/02bd9fd6-8f93-4758-87c3-1fb73740a315/members?$select=id&$top=2&$skiptoken=RFNwdAIAAQAAACM6QWRlbGVWQE0zNjV4MjE0MzU1Lm9ubWljcm9zb2Z0LmNvbSlVc2VyXzg3ZDM0OWVkLTQ0ZDctNDNlMS05YTgzLTVmMjQwNmRlZTViZLkAAAAAAAAAAAAA",
+						"collectionId":     "02bd9fd6-8f93-4758-87c3-1fb73740a315",
+						"collectionCursor": server.URL + "/v1.0/groups?$select=id&$top=1&$skiptoken=RFNwdAIAAQAAACpHcm91cF8wNmY2MmY3MC05ODI3LTRlNmUtOTNlZi04ZTBmMmQ5YjdiMjMqR3JvdXBfMDZmNjJmNzAtOTgyNy00ZTZlLTkzZWYtOGUwZjJkOWI3YjIzAAAAAAAAAAAAAAA",
+					},
 				},
 			},
 			wantErr: nil,
@@ -889,7 +989,7 @@ func TestGetGroupMembersPage(t *testing.T) {
 				},
 				NextCursor: &pagination.CompositeCursor[string]{
 					// We're of syncing Members for a specific Groups, so this cursor is to the next page of Members.
-					Cursor:       testutil.GenPtr("https://graph.microsoft.com/v1.0/groups/06f62f70-9827-4e6e-93ef-8e0f2d9b7b23/members?$select=id&$top=2&$skiptoken=RFNwdAIAAQAAACM6QWRlbGVWQE0zNjV4MjE0MzU1Lm9ubWljcm9zb2Z0LmNvbSlVc2VyXzg3ZDM0OWVkLTQ0ZDctNDNlMS05YTgzLTVmMjQwNmRlZTViZLkAAAAAAAAAAAAA"),
+					Cursor:       testutil.GenPtr(server.URL + "/v1.0/groups/06f62f70-9827-4e6e-93ef-8e0f2d9b7b23/members?$select=id&$top=2&$skiptoken=RFNwdAIAAQAAACM6QWRlbGVWQE0zNjV4MjE0MzU1Lm9ubWljcm9zb2Z0LmNvbSlVc2VyXzg3ZDM0OWVkLTQ0ZDctNDNlMS05YTgzLTVmMjQwNmRlZTViZLkAAAAAAAAAAAAA"),
 					CollectionID: testutil.GenPtr("06f62f70-9827-4e6e-93ef-8e0f2d9b7b23"),
 					// There is no CollectionCursor since we're currently processing the last Group.
 				},
@@ -962,6 +1062,7 @@ func TestGetGroupMembersPage(t *testing.T) {
 			},
 			wantRes: &azuread.Response{
 				StatusCode: http.StatusOK,
+				Objects:    []map[string]any{},
 			},
 		},
 		"group_member_invalid_group_cursor": {
@@ -988,7 +1089,7 @@ func TestGetGroupMembersPage(t *testing.T) {
 				Token:                 "Bearer Testtoken",
 				BaseURL:               server.URL,
 				EntityExternalID:      "GroupMember",
-				PageSize:              2,
+				PageSize:              1,
 				APIVersion:            "v1.0",
 				RequestTimeoutSeconds: 5,
 				Filter:                testutil.GenPtr("id eq '6e7b768e-07e2-4810-8459-485f84f8f204'"),
@@ -1004,11 +1105,43 @@ func TestGetGroupMembersPage(t *testing.T) {
 					},
 				},
 				NextCursor: &pagination.CompositeCursor[string]{
+					Cursor:           testutil.GenPtr(server.URL + "/v1.0/users?$select=id&$top=1&$skiptoken=RFNwdAIAAQAAACM6QWRlbGVWQE0zNjV4MjE0MzU1Lm9ubWljcm9zb2Z0LmNvbSlVc2VyXzg3ZDM0OWVkLTQ0ZDctNDNlMS05YTgzLTVmMjQwNmRlZTViZLkAAAAAAAAAAAAA"),
+					CollectionID:     testutil.GenPtr("02bd9fd6-8f93-4758-87c3-1fb73740a315"),
+					CollectionCursor: testutil.GenPtr(server.URL + "/v1.0/groups?$select=id&$top=1&$filter=id+in+%28%2702bd9fd6-8f93-4758-87c3-1fb73740a315%27%2C%270a53828f-36c9-44c3-be3d-99a7fce977ac%27%29&$skiptoken=RFNwdAIAAQAAACpHcm91cF8wNmY2MmY3MC05ODI3LTRlNmUtOTNlZi04ZTBmMmQ5YjdiMjMqR3JvdXBfMDZmNjJmNzAtOTgyNy00ZTZlLTkzZWYtOGUwZjJkOWI3YjIzAAAAAAAAAAAAAAA"),
+				},
+			},
+			wantErr: nil,
+		},
+		"group_members_pagesize_overflow_prevention": {
+			context: context.Background(),
+			request: &azuread.Request{
+				Token:                 "Bearer Testtoken",
+				BaseURL:               server.URL,
+				EntityExternalID:      "GroupMember",
+				PageSize:              3,
+				APIVersion:            "v1.0",
+				RequestTimeoutSeconds: 5,
+			},
+			wantRes: &azuread.Response{
+				StatusCode: http.StatusOK,
+				Objects: []map[string]any{
+					{
+						"id":       "6e7b768e-07e2-4810-8459-485f84f8f204-02bd9fd6-8f93-4758-87c3-1fb73740a315",
+						"memberId": "6e7b768e-07e2-4810-8459-485f84f8f204",
+						"groupId":  "02bd9fd6-8f93-4758-87c3-1fb73740a315",
+					},
+					{
+						"id":       "87d349ed-44d7-43e1-9a83-5f2406dee5bd-02bd9fd6-8f93-4758-87c3-1fb73740a315",
+						"memberId": "87d349ed-44d7-43e1-9a83-5f2406dee5bd",
+						"groupId":  "02bd9fd6-8f93-4758-87c3-1fb73740a315",
+					},
+				},
+				NextCursor: &pagination.CompositeCursor[string]{
 					// We're of syncing Members for a specific Groups, so this cursor is to the next page of Members.
-					Cursor:       testutil.GenPtr("https://graph.microsoft.com/v1.0/users?$select=id&$top=2&$skiptoken=RFNwdAIAAQAAACM6QWRlbGVWQE0zNjV4MjE0MzU1Lm9ubWljcm9zb2Z0LmNvbSlVc2VyXzg3ZDM0OWVkLTQ0ZDctNDNlMS05YTgzLTVmMjQwNmRlZTViZLkAAAAAAAAAAAAA"),
+					Cursor:       testutil.GenPtr(server.URL + "/v1.0/groups/02bd9fd6-8f93-4758-87c3-1fb73740a315/members?$select=id&$top=2&$skiptoken=RFNwdAIAAQAAACM6QWRlbGVWQE0zNjV4MjE0MzU1Lm9ubWljcm9zb2Z0LmNvbSlVc2VyXzg3ZDM0OWVkLTQ0ZDctNDNlMS05YTgzLTVmMjQwNmRlZTViZLkAAAAAAAAAAAAA"),
 					CollectionID: testutil.GenPtr("02bd9fd6-8f93-4758-87c3-1fb73740a315"),
 					// GroupCursor to the next page of Groups.
-					CollectionCursor: testutil.GenPtr("https://graph.microsoft.com/v1.0/groups?$select=id&$top=1&$filter=id+in+%28%2702bd9fd6-8f93-4758-87c3-1fb73740a315%27%2C%270a53828f-36c9-44c3-be3d-99a7fce977ac%27%29&$skiptoken=RFNwdAIAAQAAACpHcm91cF8wNmY2MmY3MC05ODI3LTRlNmUtOTNlZi04ZTBmMmQ5YjdiMjMqR3JvdXBfMDZmNjJmNzAtOTgyNy00ZTZlLTkzZWYtOGUwZjJkOWI3YjIzAAAAAAAAAAAAAAA"),
+					CollectionCursor: testutil.GenPtr(server.URL + "/v1.0/groups?$select=id&$top=1&$skiptoken=RFNwdAIAAQAAACpHcm91cF8wNmY2MmY3MC05ODI3LTRlNmUtOTNlZi04ZTBmMmQ5YjdiMjMqR3JvdXBfMDZmNjJmNzAtOTgyNy00ZTZlLTkzZWYtOGUwZjJkOWI3YjIzAAAAAAAAAAAAAAA"),
 				},
 			},
 			wantErr: nil,
@@ -1017,7 +1150,11 @@ func TestGetGroupMembersPage(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			gotRes, gotErr := azureadClient.GetPage(tt.context, tt.request)
+			ctx, observedLogs := testutil.NewContextWithObservableLogger(tt.context)
+
+			gotRes, gotErr := azureadClient.GetPage(ctx, tt.request)
+
+			testutil.ValidateLogOutput(t, observedLogs, tt.expectedLogs)
 
 			if !reflect.DeepEqual(gotRes, tt.wantRes) {
 				t.Errorf("gotRes: %v, wantRes: %v", gotRes, tt.wantRes)
@@ -1036,7 +1173,10 @@ func TestGetRoleMembersPage(t *testing.T) {
 	}
 
 	azureadClient := azuread.NewClient(client)
-	server := httptest.NewServer(TestServerHandler)
+	var server *httptest.Server
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		CreateTestServerHandler(server.URL).ServeHTTP(w, r)
+	}))
 
 	tests := map[string]struct {
 		context context.Context
@@ -1070,10 +1210,10 @@ func TestGetRoleMembersPage(t *testing.T) {
 				},
 				NextCursor: &pagination.CompositeCursor[string]{
 					// We're of syncing Roles for a specific Users, so this cursor is to the next page of Roles.
-					Cursor:       testutil.GenPtr("https://graph.microsoft.com/v1.0/users/65bb46a4-7d3j-9302-8a21-4d90f7a0efdb/transitiveMemberOf/microsoft.graph.directoryRole?$select=id&$top=2&$skiptoken=NEXTLINK_TOKEN_PLACEHOLDER_4"),
+					Cursor:       testutil.GenPtr(server.URL + "/v1.0/users/65bb46a4-7d3j-9302-8a21-4d90f7a0efdb/transitiveMemberOf/microsoft.graph.directoryRole?$select=id&$top=2&$skiptoken=NEXTLINK_TOKEN_PLACEHOLDER_4"),
 					CollectionID: testutil.GenPtr("65bb46a4-7d3j-9302-8a21-4d90f7a0efdb"),
 					// UserCursor to the next page of Users.
-					CollectionCursor: testutil.GenPtr("https://graph.microsoft.com/v1.0/users?$select=id&$top=1&$skiptoken=NEXTLINK_TOKEN_PLACEHOLDER_1"),
+					CollectionCursor: testutil.GenPtr(server.URL + "/v1.0/users?$select=id&$top=1&$skiptoken=NEXTLINK_TOKEN_PLACEHOLDER_1"),
 				},
 			},
 			wantErr: nil,
@@ -1084,7 +1224,7 @@ func TestGetRoleMembersPage(t *testing.T) {
 				Token:                 "Bearer Testtoken",
 				BaseURL:               server.URL,
 				EntityExternalID:      "RoleMember",
-				PageSize:              2,
+				PageSize:              3,
 				APIVersion:            "v1.0",
 				RequestTimeoutSeconds: 5,
 				Cursor: &pagination.CompositeCursor[string]{
@@ -1103,36 +1243,6 @@ func TestGetRoleMembersPage(t *testing.T) {
 						"roleId":   "62ceaa28-4794-48f9-9b54-f8ed6e9a7c84",
 						"memberId": "65bb46a4-7d3j-9302-8a21-4d90f7a0efdb",
 					},
-				},
-				NextCursor: &pagination.CompositeCursor[string]{
-					// There is no Cursor since we've finished all pages of Roles for the current User.
-					CollectionID: testutil.GenPtr("65bb46a4-7d3j-9302-8a21-4d90f7a0efdb"),
-					// UserCursor to the next page of Users.
-					CollectionCursor: testutil.GenPtr(server.URL + "/v1.0/users?$select=id&$top=1&$skiptoken=NEXTLINK_TOKEN_PLACEHOLDER_1"),
-				},
-			},
-			wantErr: nil,
-		},
-
-		"user_page_2_of_4_role_page_1_of_2": {
-			context: context.Background(),
-			request: &azuread.Request{
-				Token:                 "Bearer Testtoken",
-				BaseURL:               server.URL,
-				EntityExternalID:      "RoleMember",
-				PageSize:              2,
-				APIVersion:            "v1.0",
-				RequestTimeoutSeconds: 5,
-				Cursor: &pagination.CompositeCursor[string]{
-					// There is no Cursor since we've finished all pages of Roles for the current User.
-					CollectionID: testutil.GenPtr("65bb46a4-7d3j-9302-8a21-4d90f7a0efdb"),
-					// UserCursor to the next page of Users.
-					CollectionCursor: testutil.GenPtr(server.URL + "/v1.0/users?$select=id&$top=1&$skiptoken=NEXTLINK_TOKEN_PLACEHOLDER_1"),
-				},
-			},
-			wantRes: &azuread.Response{
-				StatusCode: http.StatusOK,
-				Objects: []map[string]any{
 					{
 						"id":       "62ceaa28-4794-48f9-9b54-f8ed6e9a7c84-df102bb2-2365-235g-a2g6-edb774169548",
 						"roleId":   "62ceaa28-4794-48f9-9b54-f8ed6e9a7c84",
@@ -1146,10 +1256,10 @@ func TestGetRoleMembersPage(t *testing.T) {
 				},
 				NextCursor: &pagination.CompositeCursor[string]{
 					// We're of syncing Role for a specific Users, so this cursor is to the next page of Roles.
-					Cursor:       testutil.GenPtr("https://graph.microsoft.com/v1.0/users/df102bb2-2365-235g-a2g6-edb774169548/transitiveMemberOf/microsoft.graph.directoryRole?$select=id&$top=2&$skiptoken=NEXTLINK_TOKEN_PLACEHOLDER_4"),
+					Cursor:       testutil.GenPtr(server.URL + "/v1.0/users/df102bb2-2365-235g-a2g6-edb774169548/transitiveMemberOf/microsoft.graph.directoryRole?$select=id&$top=2&$skiptoken=NEXTLINK_TOKEN_PLACEHOLDER_4"),
 					CollectionID: testutil.GenPtr("df102bb2-2365-235g-a2g6-edb774169548"),
 					// UserCursor to the next page of Users.
-					CollectionCursor: testutil.GenPtr("https://graph.microsoft.com/v1.0/users?$select=id&$top=1&$skiptoken=RFNwdAIAADA6YWFyb24uYXlhbGE4OTUwNzM0N0BzZ25sYWFkZGV2MS5vbm1pY3Jvc29mdC5jb20pVXNlcl9kZjEwMmJiMi0zNTMyLTQ1M2MtYTNiNC1lZGI3NzQxNjk1NDgAMDphYXJvbi5heWFsYTg5NTA3MzQ3QHNnbmxhYWRkZXYxLm9ubWljcm9zb2Z0LmNvbSlVc2VyX2RmMTAyYmIyLTM1MzItNDUzYy1hM2I0LWVkYjc3NDE2OTU0OLkAAAAAAAAAAAAA"),
+					CollectionCursor: testutil.GenPtr(server.URL + "/v1.0/users?$select=id&$top=1&$skiptoken=RFNwdAIAADA6YWFyb24uYXlhbGE4OTUwNzM0N0BzZ25sYWFkZGV2MS5vbm1pY3Jvc29mdC5jb20pVXNlcl9kZjEwMmJiMi0zNTMyLTQ1M2MtYTNiNC1lZGI3NzQxNjk1NDgAMDphYXJvbi5heWFsYTg5NTA3MzQ3QHNnbmxhYWRkZXYxLm9ubWljcm9zb2Z0LmNvbSlVc2VyX2RmMTAyYmIyLTM1MzItNDUzYy1hM2I0LWVkYjc3NDE2OTU0OLkAAAAAAAAAAAAA"),
 				},
 			},
 			wantErr: nil,
@@ -1161,7 +1271,7 @@ func TestGetRoleMembersPage(t *testing.T) {
 				Token:                 "Bearer Testtoken",
 				BaseURL:               server.URL,
 				EntityExternalID:      "RoleMember",
-				PageSize:              2,
+				PageSize:              1,
 				APIVersion:            "v1.0",
 				RequestTimeoutSeconds: 5,
 				Cursor: &pagination.CompositeCursor[string]{
@@ -1205,34 +1315,6 @@ func TestGetRoleMembersPage(t *testing.T) {
 			wantRes: &azuread.Response{
 				StatusCode: http.StatusOK,
 				// User has no role assignments
-				Objects: []map[string]any{},
-				// Cursor and CollectionCursor are both nil, so no cursor is set as this is the last page for the sync.
-				NextCursor: &pagination.CompositeCursor[string]{
-					CollectionID:     testutil.GenPtr("201d31c0-653d-43a6-adf0-aee89a79c805"),
-					CollectionCursor: testutil.GenPtr("https://graph.microsoft.com/v1.0/users?$select=id&$top=1&$skiptoken=NEXTLINK_TOKEN_PLACEHOLDER_2"),
-				},
-			},
-			wantErr: nil,
-		},
-
-		// API: /v1.0/users/{user_id}/transitiveMemberOf/microsoft.graph.directoryRole
-		// Issue: The API performs pagination before applying role filtering, leading to potential scenarios as follows:
-		"user_page_4__role_page_1__two_roles_and_next_cursor": {
-			context: context.Background(),
-			request: &azuread.Request{
-				Token:                 "Bearer Testtoken",
-				BaseURL:               server.URL,
-				EntityExternalID:      "RoleMember",
-				PageSize:              2,
-				APIVersion:            "v1.0",
-				RequestTimeoutSeconds: 5,
-				Cursor: &pagination.CompositeCursor[string]{
-					CollectionID:     testutil.GenPtr("201d31c0-653d-43a6-adf0-aee89a79c805"),
-					CollectionCursor: testutil.GenPtr(server.URL + "/v1.0/users?$select=id&$top=1&$skiptoken=NEXTLINK_TOKEN_PLACEHOLDER_2"),
-				},
-			},
-			wantRes: &azuread.Response{
-				StatusCode: http.StatusOK,
 				Objects: []map[string]any{
 					{
 						"id":       "0fea7f0d-dea1-458d-9099-69fcc2e3cd42-uuuuuuuu-vvvv-wwww-xxxx-yyyyyyyyyyyy",
@@ -1246,7 +1328,7 @@ func TestGetRoleMembersPage(t *testing.T) {
 					},
 				},
 				NextCursor: &pagination.CompositeCursor[string]{
-					Cursor:       testutil.GenPtr("https://graph.microsoft.com/v1.0/users/uuuuuuuu-vvvv-wwww-xxxx-yyyyyyyyyyyy/transitiveMemberOf/microsoft.graph.directoryRole?$select=id%2cdisplayName&$top=2&$skiptoken=RFNwdAoAAQAAAAAAAAAAFAAAABkp8fswrv1Ls8cLjYDqBRABAAAAAAAAAAAAAAAAAAAXMS4yLjg0MC4xMTM1NTYuMS40LjIzMzEGAAAAAY8MlBPpl2xBua2SNJARSM0AAfn9agujeJBOp41SpLihArMBzAAAAAEBAAAA"),
+					Cursor:       testutil.GenPtr(server.URL + "/v1.0/users/uuuuuuuu-vvvv-wwww-xxxx-yyyyyyyyyyyy/transitiveMemberOf/microsoft.graph.directoryRole?$select=id%2cdisplayName&$top=2&$skiptoken=RFNwdAoAAQAAAAAAAAAAFAAAABkp8fswrv1Ls8cLjYDqBRABAAAAAAAAAAAAAAAAAAAXMS4yLjg0MC4xMTM1NTYuMS40LjIzMzEGAAAAAY8MlBPpl2xBua2SNJARSM0AAfn9agujeJBOp41SpLihArMBzAAAAAEBAAAA"),
 					CollectionID: testutil.GenPtr("uuuuuuuu-vvvv-wwww-xxxx-yyyyyyyyyyyy"),
 					// CollectionCursor is nil as this is the last page of users
 				},
@@ -1270,65 +1352,12 @@ func TestGetRoleMembersPage(t *testing.T) {
 			},
 			wantRes: &azuread.Response{
 				StatusCode: http.StatusOK,
-				Objects:    []map[string]any{},
-				NextCursor: &pagination.CompositeCursor[string]{
-					Cursor:       testutil.GenPtr("https://graph.microsoft.com/v1.0/users/uuuuuuuu-vvvv-wwww-xxxx-yyyyyyyyyyyy/transitiveMemberOf/microsoft.graph.directoryRole?$top=2&$select=id%2cdisplayName&$skiptoken=RFNwdAoAAAAAAAAAAAAAFAAAAPWE8iLxC5NNtqCdf_NZ8bcCAAAAAAAAAAAAAAAAAAAXMS4yLjg0MC4xMTM1NTYuMS40LjIzMzEGAAAAAY8MlBPpl2xBua2SNJARSM0AAfn9agujeJBOp41SpLihArMBzAAAAAEBAAAA"),
-					CollectionID: testutil.GenPtr("uuuuuuuu-vvvv-wwww-xxxx-yyyyyyyyyyyy"),
-					// CollectionCursor is nil as this is the last page of users
-				},
-			},
-			wantErr: nil,
-		},
-
-		"user_page_4__role_page_2__one_role_and_next_cursor": {
-			context: context.Background(),
-			request: &azuread.Request{
-				Token:                 "Bearer Testtoken",
-				BaseURL:               server.URL,
-				EntityExternalID:      "RoleMember",
-				PageSize:              2,
-				APIVersion:            "v1.0",
-				RequestTimeoutSeconds: 5,
-				Cursor: &pagination.CompositeCursor[string]{
-					Cursor:       testutil.GenPtr(server.URL + "/v1.0/users/uuuuuuuu-vvvv-wwww-xxxx-yyyyyyyyyyyy/transitiveMemberOf/microsoft.graph.directoryRole?$top=2&$select=id%2cdisplayName&$skiptoken=RFNwdAoAAAAAAAAAAAAAFAAAAPWE8iLxC5NNtqCdf_NZ8bcCAAAAAAAAAAAAAAAAAAAXMS4yLjg0MC4xMTM1NTYuMS40LjIzMzEGAAAAAY8MlBPpl2xBua2SNJARSM0AAfn9agujeJBOp41SpLihArMBzAAAAAEBAAAA"),
-					CollectionID: testutil.GenPtr("uuuuuuuu-vvvv-wwww-xxxx-yyyyyyyyyyyy"),
-				},
-			},
-			wantRes: &azuread.Response{
-				StatusCode: http.StatusOK,
 				Objects: []map[string]any{
 					{
 						"id":       "540b4b34-c25b-437d-8eee-329463952334-uuuuuuuu-vvvv-wwww-xxxx-yyyyyyyyyyyy",
 						"roleId":   "540b4b34-c25b-437d-8eee-329463952334",
 						"memberId": "uuuuuuuu-vvvv-wwww-xxxx-yyyyyyyyyyyy",
 					},
-				},
-				NextCursor: &pagination.CompositeCursor[string]{
-					Cursor:       testutil.GenPtr("https://graph.microsoft.com/v1.0/users/uuuuuuuu-vvvv-wwww-xxxx-yyyyyyyyyyyy/transitiveMemberOf/microsoft.graph.directoryRole?$top=2&$select=id%2cdisplayName&$skiptoken=RFNwdAoAAAAAAAAAAAAAFAAAABgFnxJuzI1NsFSV18Bt7PgCAAAAAAAAAAAAAAAAAAAXMS4yLjg0MC4xMTM1NTYuMS40LjIzMzEGAAAAAY8MlBPpl2xBua2SNJARSM0AAfn9agujeJBOp41SpLihArMBzAAAAAEBAAAA"),
-					CollectionID: testutil.GenPtr("uuuuuuuu-vvvv-wwww-xxxx-yyyyyyyyyyyy"),
-					// CollectionCursor is nil as this is the last page of users
-				},
-			},
-			wantErr: nil,
-		},
-
-		"user_page_4__role_page_4__one_role_and_No_cursor": {
-			context: context.Background(),
-			request: &azuread.Request{
-				Token:                 "Bearer Testtoken",
-				BaseURL:               server.URL,
-				EntityExternalID:      "RoleMember",
-				PageSize:              2,
-				APIVersion:            "v1.0",
-				RequestTimeoutSeconds: 5,
-				Cursor: &pagination.CompositeCursor[string]{
-					Cursor:       testutil.GenPtr(server.URL + "/v1.0/users/uuuuuuuu-vvvv-wwww-xxxx-yyyyyyyyyyyy/transitiveMemberOf/microsoft.graph.directoryRole?$top=2&$select=id%2cdisplayName&$skiptoken=RFNwdAoAAAAAAAAAAAAAFAAAABgFnxJuzI1NsFSV18Bt7PgCAAAAAAAAAAAAAAAAAAAXMS4yLjg0MC4xMTM1NTYuMS40LjIzMzEGAAAAAY8MlBPpl2xBua2SNJARSM0AAfn9agujeJBOp41SpLihArMBzAAAAAEBAAAA"),
-					CollectionID: testutil.GenPtr("uuuuuuuu-vvvv-wwww-xxxx-yyyyyyyyyyyy"),
-				},
-			},
-			wantRes: &azuread.Response{
-				StatusCode: http.StatusOK,
-				Objects: []map[string]any{
 					{
 						"id":       "fc6c3c82-669c-4e24-b089-2a2847a43d14-uuuuuuuu-vvvv-wwww-xxxx-yyyyyyyyyyyy",
 						"roleId":   "fc6c3c82-669c-4e24-b089-2a2847a43d14",
