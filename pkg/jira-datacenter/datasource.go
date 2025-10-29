@@ -16,7 +16,10 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	customerror "github.com/sgnl-ai/adapters/pkg/errors"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
+	"go.uber.org/zap"
 )
 
 const (
@@ -122,6 +125,13 @@ func NewClient(client *http.Client) Client {
 // regardless of status code, a Response object is returned with the response body and the status code.
 // If the request fails, an appropriate framework.Error is returned.
 func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, *framework.Error) {
+	logger := zaplogger.FromContext(ctx).With(
+		fields.RequestEntityExternalID(request.EntityExternalID),
+		fields.RequestPageSize(request.PageSize),
+	)
+
+	logger.Info("Starting datasource request")
+
 	// ValidateGetPageRequest already checks if the entity exists in the valid entities map.
 	entity := ValidEntityExternalIDs[request.EntityExternalID]
 
@@ -174,8 +184,16 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 
 	req.Header.Add("Authorization", request.AuthorizationHeader)
 
+	logger.Info("Sending request to datasource", fields.RequestURL(url))
+
 	res, err := d.Client.Do(req)
 	if err != nil {
+		logger.Error("Request to datasource failed",
+			fields.RequestURL(url),
+			fields.SGNLEventTypeError(),
+			zap.Error(err),
+		)
+
 		return nil, customerror.UpdateError(&framework.Error{
 			Message: fmt.Sprintf("Failed to execute Jira request: %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
@@ -200,6 +218,14 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	}
 
 	if res.StatusCode != http.StatusOK {
+		logger.Error("Datasource responded with an error",
+			fields.RequestURL(url),
+			fields.ResponseStatusCode(res.StatusCode),
+			fields.ResponseRetryAfterHeader(response.RetryAfterHeader),
+			fields.ResponseBody(body),
+			fields.SGNLEventTypeError(),
+		)
+
 		return response, nil
 	}
 
@@ -259,6 +285,12 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	if nextCursor == nil && cursor.CollectionCursor == nil {
 		response.NextCursor = nil
 	}
+
+	logger.Info("Datasource request completed successfully",
+		fields.ResponseStatusCode(response.StatusCode),
+		fields.ResponseObjectCount(len(response.Objects)),
+		fields.ResponseNextCursor(response.NextCursor),
+	)
 
 	return response, nil
 }
@@ -524,8 +556,8 @@ func (e Entity) ConstructURL(request *Request, cursor *pagination.CompositeCurso
 			sb.WriteRune('&')
 		}
 
-		// Build fields parameter from attributes
-		fieldsParam := EncodedAttributes(request.Attributes)
+		// Build fields parameter from attributes including child entity attributes
+		fieldsParam := BuildJiraFieldsParam(request.Entity)
 		fieldsStr := "fields=" + fieldsParam + "&"
 		sb.Grow(len(fieldsStr))
 		sb.WriteString(fieldsStr)
@@ -610,17 +642,31 @@ func filterAndPaginateGroups(
 	return objects, nextCursor
 }
 
+// removeArrayIndices removes array indices (like [0]) from field names.
+// Examples:
+//   - customfield_10209[0] → customfield_10209
+//   - assignee[0] → assignee
+//   - summary → summary (unchanged)
+func removeArrayIndices(fieldName string) string {
+	if idx := strings.Index(fieldName, "["); idx != -1 {
+		return fieldName[:idx]
+	}
+
+	return fieldName
+}
+
 // extractFieldFromJSONPath extracts the Jira field name from a JSON path.
 // Examples:
 //   - $.fields.summary → summary
 //   - $.fields.issuetype.id → issuetype
 //   - $.fields.assignee.key → assignee
+//   - $.fields.customfield_10209[0].value → customfield_10209
 //   - $.id → id
 //   - id → id (handles non-JSON path field names)
 func extractFieldFromJSONPath(jsonPath string) string {
 	// Handle non-JSON path field names (like "id", "key", "self")
 	if !strings.HasPrefix(jsonPath, "$.") {
-		return jsonPath
+		return removeArrayIndices(jsonPath)
 	}
 
 	// Remove the "$." prefix
@@ -631,53 +677,37 @@ func extractFieldFromJSONPath(jsonPath string) string {
 
 	// For paths like "$.id", return "id"
 	if len(segments) == 1 {
-		return segments[0]
+		return removeArrayIndices(segments[0])
 	}
 
 	// For paths like "$.fields.summary", return "summary"
 	// For paths like "$.fields.issuetype.id", return "issuetype"
+	// For paths like "$.fields.customfield_10209[0].value", return "customfield_10209"
 	if len(segments) >= 2 && segments[0] == JiraFieldsPrefix {
-		return segments[1]
+		return removeArrayIndices(segments[1])
 	}
 
 	// For other cases, return the first segment
-	return segments[0]
+	return removeArrayIndices(segments[0])
 }
 
-// EncodedAttributes constructs the fields parameter for Jira API requests.
-// It extracts field names from JSON paths and deduplicates them.
-// If no attributes are provided, it returns "*navigable".
+// BuildJiraFieldsParam constructs the 'fields' query parameter for Jira API requests.
+// It extracts Jira field names from entity attribute JSON paths and deduplicates them.
+// Returns "*navigable" if no attributes are provided (Jira's default for search endpoints).
+// The returned string is URL-encoded and ready for use in API requests.
 // It respects the Jira conventions for field selection:
 // - *all - include all fields
 // - *navigable - include just navigable fields (default for search)
 // - field1,field2 - include specific fields
 // - -field - exclude a field.
-func EncodedAttributes(attributes []*framework.AttributeConfig) string {
-	if len(attributes) == 0 {
-		// Default to *navigable
+func BuildJiraFieldsParam(entity *framework.EntityConfig) string {
+	encodedAttrs := ExtractEntityFieldNames("", entity)
+	if len(encodedAttrs) == 0 {
 		return "*navigable"
 	}
-
-	// Use a map to deduplicate field names
-	fieldSet := make(map[string]struct{})
-
-	for _, attribute := range attributes {
-		if attribute.ExternalId != "" {
-			fieldName := extractFieldFromJSONPath(attribute.ExternalId)
-			if fieldName != "" {
-				fieldSet[fieldName] = struct{}{}
-			}
-		}
-	}
-
-	// If no valid fields were found, default to *navigable
-	if len(fieldSet) == 0 {
-		return "*navigable"
-	}
-
 	// Convert map to slice
-	fields := make([]string, 0, len(fieldSet))
-	for field := range fieldSet {
+	fields := make([]string, 0, len(encodedAttrs))
+	for field := range encodedAttrs {
 		fields = append(fields, field)
 	}
 
@@ -686,4 +716,58 @@ func EncodedAttributes(attributes []*framework.AttributeConfig) string {
 
 	// Join fields with comma and then URL-encode the entire string
 	return net_url.QueryEscape(strings.Join(fields, ","))
+}
+
+// ExtractEntityFieldNames recursively extracts Jira field names from an entity configuration
+// and all its child entities. It processes the entity's attributes and combines them with
+// field names from nested child entities using dot notation for prefixes.
+// Returns a set of unique field names suitable for Jira API field selection.
+func ExtractEntityFieldNames(prefix string, entity *framework.EntityConfig) map[string]struct{} {
+	if entity == nil {
+		return map[string]struct{}{}
+	}
+
+	encodedAttrs := ExtractFieldNamesFromAttributes(prefix, entity.Attributes)
+
+	// Include field attribute names from child entities.
+	for _, childEntity := range entity.ChildEntities {
+		if prefix != "" {
+			prefix += "."
+		}
+
+		for attr := range ExtractEntityFieldNames(prefix+childEntity.ExternalId, childEntity) {
+			encodedAttrs[attr] = struct{}{}
+		}
+	}
+
+	return encodedAttrs
+}
+
+// ExtractFieldNamesFromAttributes extracts Jira field names from a list of attribute configurations.
+// It processes each attribute's ExternalId (which may be a JSON path) and converts it to a
+// Jira field name using extractFieldFromJSONPath. Prefixes are applied for nested attributes.
+// Returns a deduplicated set of field names.
+func ExtractFieldNamesFromAttributes(prefix string, attributes []*framework.AttributeConfig) map[string]struct{} {
+	// Use a map to deduplicate field names
+	fieldSet := make(map[string]struct{})
+	if len(attributes) == 0 {
+		return fieldSet
+	}
+
+	for _, attribute := range attributes {
+		if attribute.ExternalId != "" {
+			attr := attribute.ExternalId
+			if prefix != "" {
+				attr = prefix + "." + attr
+			}
+
+			fieldName := extractFieldFromJSONPath(attr)
+
+			if fieldName != "" {
+				fieldSet[fieldName] = struct{}{}
+			}
+		}
+	}
+
+	return fieldSet
 }

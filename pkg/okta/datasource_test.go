@@ -13,6 +13,7 @@ import (
 
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/okta"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
@@ -493,6 +494,86 @@ var TestServerHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Req
 		}
 	]`))
 
+	// Applications Page 1
+	case "/api/v1/apps?limit=2":
+		w.Header().Add("link", `<https://test-instance.oktapreview.com/api/v1/apps?limit=2>; rel="self"`)
+		w.Header().Add("link", `<https://test-instance.oktapreview.com/api/v1/apps?after=0oav0t9spdHM3sWaO697&limit=2>; rel="next"`)
+		w.Write([]byte(`[
+			{
+				"id": "0oav0szjt4RXG5wFN697",
+				"orn": "orn:okta:idp:00ov0szjsuWEizmLm697:apps:saasure:0oav0szjt4RXG5wFN697",
+				"name": "saasure",
+				"label": "Okta Admin Console",
+				"status": "ACTIVE",
+				"lastUpdated": "2025-09-01T17:06:17.000Z",
+				"created": "2025-09-01T17:06:16.000Z",
+				"signOnMode": "OPENID_CONNECT"
+			},
+			{
+				"id": "0oav0t9spdHM3sWaO697",
+				"orn": "orn:okta:idp:00ov0szjsuWEizmLm697:apps:okta_enduser:0oav0t9spdHM3sWaO697",
+				"name": "okta_enduser",
+				"label": "Okta Dashboard",
+				"status": "ACTIVE",
+				"lastUpdated": "2025-09-01T17:06:17.000Z",
+				"created": "2025-09-01T17:06:17.000Z",
+				"signOnMode": "OPENID_CONNECT"
+			}
+		]`))
+
+	// Applications Page 2
+	case "/api/v1/apps?after=0oav0t9spdHM3sWaO697&limit=2":
+		w.Header().Add("link", `<https://test-instance.oktapreview.com/api/v1/apps?after=0oav0t9spdHM3sWaO697&limit=2>; rel="self"`)
+		w.Write([]byte(`[
+			{
+				"id": "0oav0t9srlTfo2iV0697",
+				"orn": "orn:okta:idp:00ov0szjsuWEizmLm697:apps:okta_browser_plugin:0oav0t9srlTfo2iV0697",
+				"name": "okta_browser_plugin",
+				"label": "Okta Browser Plugin",
+				"status": "ACTIVE",
+				"lastUpdated": "2025-09-01T17:06:20.000Z",
+				"created": "2025-09-01T17:06:20.000Z",
+				"signOnMode": "OPENID_CONNECT"
+			},
+			{
+				"id": "0oav0t9syuiVUVZIT697",
+				"orn": "orn:okta:idp:00ov0szjsuWEizmLm697:apps:okta_oin_submission_tester_app:0oav0t9syuiVUVZIT697",
+				"name": "okta_oin_submission_tester_app",
+				"label": "Okta OIN Submission Tester",
+				"status": "ACTIVE",
+				"lastUpdated": "2025-09-01T17:06:25.000Z",
+				"created": "2025-09-01T17:06:25.000Z",
+				"signOnMode": "OPENID_CONNECT"
+			}
+		]`))
+
+	// Applications with filter
+	case "/api/v1/apps?filter=status+eq+%22ACTIVE%22&limit=2":
+		w.Header().Add("link", `<https://test-instance.oktapreview.com/api/v1/apps?filter=status+eq+%22ACTIVE%22&limit=2>; rel="self"`)
+		w.Header().Add("link", `<https://test-instance.oktapreview.com/api/v1/apps?filter=status+eq+%22ACTIVE%22&after=0oav0t9spdHM3sWaO697&limit=2>; rel="next"`)
+		w.Write([]byte(`[
+			{
+				"id": "0oav0szjt4RXG5wFN697",
+				"orn": "orn:okta:idp:00ov0szjsuWEizmLm697:apps:saasure:0oav0szjt4RXG5wFN697",
+				"name": "saasure",
+				"label": "Okta Admin Console",
+				"status": "ACTIVE",
+				"lastUpdated": "2025-09-01T17:06:17.000Z",
+				"created": "2025-09-01T17:06:16.000Z",
+				"signOnMode": "OPENID_CONNECT"
+			},
+			{
+				"id": "0oav0t9spdHM3sWaO697",
+				"orn": "orn:okta:idp:00ov0szjsuWEizmLm697:apps:okta_enduser:0oav0t9spdHM3sWaO697",
+				"name": "okta_enduser",
+				"label": "Okta Dashboard",
+				"status": "ACTIVE",
+				"lastUpdated": "2025-09-01T17:06:17.000Z",
+				"created": "2025-09-01T17:06:17.000Z",
+				"signOnMode": "OPENID_CONNECT"
+			}
+		]`))
+
 	default:
 		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte(``))
@@ -552,10 +633,11 @@ func TestGetUsersPage(t *testing.T) {
 	server := httptest.NewServer(TestServerHandler)
 
 	tests := map[string]struct {
-		context context.Context
-		request *okta.Request
-		wantRes *okta.Response
-		wantErr *framework.Error
+		context      context.Context
+		request      *okta.Request
+		wantRes      *okta.Response
+		wantErr      *framework.Error
+		expectedLogs []map[string]any
 	}{
 		"first_page": {
 			context: context.Background(),
@@ -640,6 +722,32 @@ func TestGetUsersPage(t *testing.T) {
 				},
 			},
 			wantErr: nil,
+			expectedLogs: []map[string]any{
+				{
+					"level":                             "info",
+					"msg":                               "Starting datasource request",
+					fields.FieldRequestEntityExternalID: "User",
+					fields.FieldRequestPageSize:         int64(2),
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Sending request to datasource",
+					fields.FieldRequestEntityExternalID: "User",
+					fields.FieldRequestPageSize:         int64(2),
+					fields.FieldRequestURL:              server.URL + "/api/v1/users?limit=2",
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Datasource request completed successfully",
+					fields.FieldRequestEntityExternalID: "User",
+					fields.FieldRequestPageSize:         int64(2),
+					fields.FieldResponseStatusCode:      int64(200),
+					fields.FieldResponseObjectCount:     int64(2),
+					fields.FieldResponseNextCursor: map[string]any{
+						"cursor": "https://test-instance.oktapreview.com/api/v1/users?after=100u65xtp32NovHoPx1d7&limit=2",
+					},
+				},
+			},
 		},
 		"last_page": {
 			context: context.Background(),
@@ -697,7 +805,9 @@ func TestGetUsersPage(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			gotRes, gotErr := oktaClient.GetPage(tt.context, tt.request)
+			ctxWithLogger, observedLogs := testutil.NewContextWithObservableLogger(tt.context)
+
+			gotRes, gotErr := oktaClient.GetPage(ctxWithLogger, tt.request)
 
 			if !reflect.DeepEqual(gotRes, tt.wantRes) {
 				t.Errorf("gotRes: %v, wantRes: %v", gotRes, tt.wantRes)
@@ -706,6 +816,8 @@ func TestGetUsersPage(t *testing.T) {
 			if !reflect.DeepEqual(gotErr, tt.wantErr) {
 				t.Errorf("gotErr: %v, wantErr: %v", gotErr, tt.wantErr)
 			}
+
+			testutil.ValidateLogOutput(t, observedLogs, tt.expectedLogs)
 		})
 	}
 }
@@ -1205,6 +1317,157 @@ func TestGetGroupMembersPage(t *testing.T) {
 				Message: "Datasource rejected request, returned status code: 404.",
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			},
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			gotRes, gotErr := oktaClient.GetPage(tt.context, tt.request)
+
+			if !reflect.DeepEqual(gotRes, tt.wantRes) {
+				t.Errorf("gotRes: %v, wantRes: %v", gotRes, tt.wantRes)
+			}
+
+			if !reflect.DeepEqual(gotErr, tt.wantErr) {
+				t.Errorf("gotErr: %v, wantErr: %v", gotErr, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestGetApplicationsPage(t *testing.T) {
+	server := httptest.NewServer(TestServerHandler)
+	defer server.Close()
+
+	oktaClient := okta.NewClient(&http.Client{})
+
+	tests := map[string]struct {
+		context context.Context
+		request *okta.Request
+		wantRes *okta.Response
+		wantErr *framework.Error
+	}{
+		"applications_page_1_of_2": {
+			context: context.Background(),
+			request: &okta.Request{
+				Token:                 "SSWS testtoken",
+				BaseURL:               server.URL,
+				EntityExternalID:      "Application",
+				PageSize:              2,
+				APIVersion:            "v1",
+				RequestTimeoutSeconds: 5,
+			},
+			wantRes: &okta.Response{
+				StatusCode: http.StatusOK,
+				Objects: []map[string]any{
+					{
+						"id":          "0oav0szjt4RXG5wFN697",
+						"orn":         "orn:okta:idp:00ov0szjsuWEizmLm697:apps:saasure:0oav0szjt4RXG5wFN697",
+						"name":        "saasure",
+						"label":       "Okta Admin Console",
+						"status":      "ACTIVE",
+						"lastUpdated": "2025-09-01T17:06:17.000Z",
+						"created":     "2025-09-01T17:06:16.000Z",
+						"signOnMode":  "OPENID_CONNECT",
+					},
+					{
+						"id":          "0oav0t9spdHM3sWaO697",
+						"orn":         "orn:okta:idp:00ov0szjsuWEizmLm697:apps:okta_enduser:0oav0t9spdHM3sWaO697",
+						"name":        "okta_enduser",
+						"label":       "Okta Dashboard",
+						"status":      "ACTIVE",
+						"lastUpdated": "2025-09-01T17:06:17.000Z",
+						"created":     "2025-09-01T17:06:17.000Z",
+						"signOnMode":  "OPENID_CONNECT",
+					},
+				},
+				NextCursor: &pagination.CompositeCursor[string]{
+					Cursor: testutil.GenPtr("https://test-instance.oktapreview.com/api/v1/apps?after=0oav0t9spdHM3sWaO697&limit=2"),
+				},
+			},
+			wantErr: nil,
+		},
+		"applications_page_2_of_2": {
+			context: context.Background(),
+			request: &okta.Request{
+				Token:                 "SSWS testtoken",
+				BaseURL:               server.URL,
+				EntityExternalID:      "Application",
+				PageSize:              2,
+				APIVersion:            "v1",
+				RequestTimeoutSeconds: 5,
+				Cursor: &pagination.CompositeCursor[string]{
+					Cursor: testutil.GenPtr(server.URL + "/api/v1/apps?after=0oav0t9spdHM3sWaO697&limit=2"),
+				},
+			},
+			wantRes: &okta.Response{
+				StatusCode: http.StatusOK,
+				Objects: []map[string]any{
+					{
+						"id":          "0oav0t9srlTfo2iV0697",
+						"orn":         "orn:okta:idp:00ov0szjsuWEizmLm697:apps:okta_browser_plugin:0oav0t9srlTfo2iV0697",
+						"name":        "okta_browser_plugin",
+						"label":       "Okta Browser Plugin",
+						"status":      "ACTIVE",
+						"lastUpdated": "2025-09-01T17:06:20.000Z",
+						"created":     "2025-09-01T17:06:20.000Z",
+						"signOnMode":  "OPENID_CONNECT",
+					},
+					{
+						"id":          "0oav0t9syuiVUVZIT697",
+						"orn":         "orn:okta:idp:00ov0szjsuWEizmLm697:apps:okta_oin_submission_tester_app:0oav0t9syuiVUVZIT697",
+						"name":        "okta_oin_submission_tester_app",
+						"label":       "Okta OIN Submission Tester",
+						"status":      "ACTIVE",
+						"lastUpdated": "2025-09-01T17:06:25.000Z",
+						"created":     "2025-09-01T17:06:25.000Z",
+						"signOnMode":  "OPENID_CONNECT",
+					},
+				},
+				NextCursor: nil,
+			},
+			wantErr: nil,
+		},
+		"applications_with_filter": {
+			context: context.Background(),
+			request: &okta.Request{
+				Token:                 "SSWS testtoken",
+				BaseURL:               server.URL,
+				EntityExternalID:      "Application",
+				PageSize:              2,
+				APIVersion:            "v1",
+				RequestTimeoutSeconds: 5,
+				Filter:                "status eq \"ACTIVE\"",
+			},
+			wantRes: &okta.Response{
+				StatusCode: http.StatusOK,
+				Objects: []map[string]any{
+					{
+						"id":          "0oav0szjt4RXG5wFN697",
+						"orn":         "orn:okta:idp:00ov0szjsuWEizmLm697:apps:saasure:0oav0szjt4RXG5wFN697",
+						"name":        "saasure",
+						"label":       "Okta Admin Console",
+						"status":      "ACTIVE",
+						"lastUpdated": "2025-09-01T17:06:17.000Z",
+						"created":     "2025-09-01T17:06:16.000Z",
+						"signOnMode":  "OPENID_CONNECT",
+					},
+					{
+						"id":          "0oav0t9spdHM3sWaO697",
+						"orn":         "orn:okta:idp:00ov0szjsuWEizmLm697:apps:okta_enduser:0oav0t9spdHM3sWaO697",
+						"name":        "okta_enduser",
+						"label":       "Okta Dashboard",
+						"status":      "ACTIVE",
+						"lastUpdated": "2025-09-01T17:06:17.000Z",
+						"created":     "2025-09-01T17:06:17.000Z",
+						"signOnMode":  "OPENID_CONNECT",
+					},
+				},
+				NextCursor: &pagination.CompositeCursor[string]{
+					Cursor: testutil.GenPtr("https://test-instance.oktapreview.com/api/v1/apps?filter=status+eq+%22ACTIVE%22&after=0oav0t9spdHM3sWaO697&limit=2"),
+				},
+			},
+			wantErr: nil,
 		},
 	}
 

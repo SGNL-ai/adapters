@@ -13,6 +13,7 @@ import (
 
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagerduty"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
@@ -91,9 +92,14 @@ var TestServerHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Req
 		w.Write([]byte(`{"oncalls": [{"user": {"id": "user2"}, "escalation_policy": {"id": "policy2"},` +
 			`"start": "2015-03-06T15:28:51-05:00", "end": 1234}], "more": false}`))
 
+	// HTML error response for testing non-JSON error bodies
+	case "/html_error?offset=0&limit=1":
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`<html><body><h1>500 Internal Server Error</h1></body></html>`))
+
 	default:
 		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte(``))
+		w.Write([]byte(`{"error":{"message":"Not Found","code":404}}`))
 	}
 })
 
@@ -237,10 +243,11 @@ func TestGetPage(t *testing.T) {
 	server := httptest.NewServer(TestServerHandler)
 
 	tests := map[string]struct {
-		context context.Context
-		request *pagerduty.Request
-		wantRes *pagerduty.Response
-		wantErr *framework.Error
+		context      context.Context
+		request      *pagerduty.Request
+		wantRes      *pagerduty.Response
+		wantErr      *framework.Error
+		expectedLogs []map[string]any
 	}{
 		"first_page": {
 			context: context.Background(),
@@ -261,6 +268,32 @@ func TestGetPage(t *testing.T) {
 				},
 			},
 			wantErr: nil,
+			expectedLogs: []map[string]any{
+				{
+					"level":                             "info",
+					"msg":                               "Starting datasource request",
+					fields.FieldRequestEntityExternalID: pagerduty.Users,
+					fields.FieldRequestPageSize:         int64(1),
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Sending request to datasource",
+					fields.FieldRequestEntityExternalID: pagerduty.Users,
+					fields.FieldRequestPageSize:         int64(1),
+					fields.FieldRequestURL:              server.URL + "/users?offset=0&limit=1",
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Datasource request completed successfully",
+					fields.FieldRequestEntityExternalID: pagerduty.Users,
+					fields.FieldRequestPageSize:         int64(1),
+					fields.FieldResponseStatusCode:      int64(200),
+					fields.FieldResponseObjectCount:     int64(1),
+					fields.FieldResponseNextCursor: map[string]any{
+						"cursor": int64(1),
+					},
+				},
+			},
 		},
 		"middle_page": {
 			context: context.Background(),
@@ -300,6 +333,93 @@ func TestGetPage(t *testing.T) {
 				},
 			},
 			wantErr: nil,
+		},
+		"http_not_found_error": {
+			context: context.Background(),
+			request: &pagerduty.Request{
+				BaseURL:               server.URL,
+				RequestTimeoutSeconds: 5,
+				Token:                 "Token token=1234",
+				EntityExternalID:      "invalid_entity",
+				PageSize:              1,
+			},
+			wantRes: &pagerduty.Response{
+				StatusCode:       http.StatusNotFound,
+				RetryAfterHeader: "",
+			},
+			wantErr: nil,
+			expectedLogs: []map[string]any{
+				{
+					"level":                             "info",
+					"msg":                               "Starting datasource request",
+					fields.FieldRequestEntityExternalID: "invalid_entity",
+					fields.FieldRequestPageSize:         int64(1),
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Sending request to datasource",
+					fields.FieldRequestEntityExternalID: "invalid_entity",
+					fields.FieldRequestPageSize:         int64(1),
+					fields.FieldRequestURL:              server.URL + "/invalid_entity?offset=0&limit=1",
+				},
+				{
+					"level":                              "error",
+					"msg":                                "Datasource responded with an error",
+					fields.FieldRequestURL:               server.URL + "/invalid_entity?offset=0&limit=1",
+					fields.FieldRequestEntityExternalID:  "invalid_entity",
+					fields.FieldRequestPageSize:          int64(1),
+					fields.FieldResponseStatusCode:       int64(404),
+					fields.FieldResponseRetryAfterHeader: "",
+					fields.FieldResponseBody: map[string]any{
+						"error": map[string]any{
+							"message": "Not Found",
+							"code":    float64(404),
+						},
+					},
+					fields.FieldSGNLEventType: fields.SGNLEventTypeErrorValue,
+				},
+			},
+		},
+		"http_internal_server_error_with_html_body": {
+			context: context.Background(),
+			request: &pagerduty.Request{
+				BaseURL:               server.URL,
+				RequestTimeoutSeconds: 5,
+				Token:                 "Token token=1234",
+				EntityExternalID:      "html_error",
+				PageSize:              1,
+			},
+			wantRes: &pagerduty.Response{
+				StatusCode:       http.StatusInternalServerError,
+				RetryAfterHeader: "",
+			},
+			wantErr: nil,
+			expectedLogs: []map[string]any{
+				{
+					"level":                             "info",
+					"msg":                               "Starting datasource request",
+					fields.FieldRequestEntityExternalID: "html_error",
+					fields.FieldRequestPageSize:         int64(1),
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Sending request to datasource",
+					fields.FieldRequestEntityExternalID: "html_error",
+					fields.FieldRequestPageSize:         int64(1),
+					fields.FieldRequestURL:              server.URL + "/html_error?offset=0&limit=1",
+				},
+				{
+					"level":                              "error",
+					"msg":                                "Datasource responded with an error",
+					fields.FieldRequestURL:               server.URL + "/html_error?offset=0&limit=1",
+					fields.FieldRequestEntityExternalID:  "html_error",
+					fields.FieldRequestPageSize:          int64(1),
+					fields.FieldResponseStatusCode:       int64(500),
+					fields.FieldResponseRetryAfterHeader: "",
+					fields.FieldResponseBody:             "<html><body><h1>500 Internal Server Error</h1></body></html>",
+					fields.FieldSGNLEventType:            fields.SGNLEventTypeErrorValue,
+				},
+			},
 		},
 		"first_member_page_first_group": {
 			context: context.Background(),
@@ -593,7 +713,9 @@ func TestGetPage(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			gotRes, gotErr := pagerdutyClient.GetPage(tt.context, tt.request)
+			ctxWithLogger, observedLogs := testutil.NewContextWithObservableLogger(tt.context)
+
+			gotRes, gotErr := pagerdutyClient.GetPage(ctxWithLogger, tt.request)
 
 			if !reflect.DeepEqual(gotRes, tt.wantRes) {
 				t.Errorf("gotRes: %v, wantRes: %v", gotRes, tt.wantRes)
@@ -602,6 +724,8 @@ func TestGetPage(t *testing.T) {
 			if !reflect.DeepEqual(gotErr, tt.wantErr) {
 				t.Errorf("gotErr: %v, wantErr: %v", gotErr, tt.wantErr)
 			}
+
+			testutil.ValidateLogOutput(t, observedLogs, tt.expectedLogs)
 		})
 	}
 }

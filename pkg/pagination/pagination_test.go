@@ -675,7 +675,7 @@ func TestPaginateObjectsString(t *testing.T) {
 			wantObjects:    nil,
 			wantNextCursor: nil,
 			wantErr: &framework.Error{
-				Message: "unable to parse cursor: want valid number, got {random}",
+				Message: "Unable to parse cursor: want valid number, got {random}.",
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_PAGE_REQUEST_CONFIG,
 			},
 		},
@@ -1139,7 +1139,7 @@ func TestPaginateObjectsString(t *testing.T) {
 			},
 			wantObjects: nil,
 			wantErr: &framework.Error{
-				Message: "unable to parse cursor: want valid number, got {h7fy7}",
+				Message: "Unable to parse cursor: want valid number, got {h7fy7}.",
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_PAGE_REQUEST_CONFIG,
 			},
 			wantNextCursor: nil,

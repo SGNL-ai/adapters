@@ -12,10 +12,11 @@ import (
 	"time"
 
 	"github.com/docker/go-connections/nat"
+	ldap_v3 "github.com/go-ldap/ldap/v3"
 	"github.com/google/go-cmp/cmp"
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
-	ldap_adapter "github.com/sgnl-ai/adapters/pkg/ldap"
+	ldap_adapter "github.com/sgnl-ai/adapters/pkg/ldap/v1.0.0"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 	"github.com/testcontainers/testcontainers-go"
@@ -783,6 +784,243 @@ func (s *LDAPTestSuite) Test_HostnameValidation() {
 
 			if response.Success == nil {
 				t.Fatal("expected success response, got nil")
+			}
+		})
+	}
+}
+
+func (s *LDAPTestSuite) Test_AdapterGetPage_MissingAttributes_PanicRegression() {
+	adapter := ldap_adapter.NewAdapter(nil, time.Minute, time.Minute)
+	tests := map[string]struct {
+		ctx                context.Context
+		request            *framework.Request[ldap_adapter.Config]
+		inputRequestCursor *pagination.CompositeCursor[string]
+		wantResponse       framework.Response
+		wantCursor         *pagination.CompositeCursor[string]
+	}{
+		"request_missing_attributes_should_not_panic": {
+			ctx: context.Background(),
+			request: &framework.Request[ldap_adapter.Config]{
+				Address: s.ldapHost,
+				Auth:    validAuthCredentials,
+				Config: &ldap_adapter.Config{
+					BaseDN: "dc=example,dc=org",
+					EntityConfigMap: map[string]*ldap_adapter.EntityConfig{
+						"Person": {
+							// Query all person objects - some may not have all requested attributes
+							Query: "(&(objectClass=person))",
+						},
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "Person",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "dn",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+							UniqueId:   true,
+						},
+						{
+							// This attribute may not exist on all entries - testing empty Values scenario
+							ExternalId: "nonExistentAttr",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+						{
+							// This binary attribute doesn't exist in our test LDIF - testing empty ByteValues scenario
+							ExternalId: "objectGUID",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+						{
+							// Another binary attribute that doesn't exist - testing empty ByteValues scenario
+							ExternalId: "objectSid",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+						{
+							// Testing with different attribute types that may be missing
+							ExternalId: "missingBoolAttr",
+							Type:       framework.AttributeTypeBool,
+							List:       false,
+						},
+						{
+							ExternalId: "missingIntAttr",
+							Type:       framework.AttributeTypeInt64,
+							List:       false,
+						},
+						{
+							ExternalId: "missingDoubleAttr",
+							Type:       framework.AttributeTypeDouble,
+							List:       false,
+						},
+						{
+							ExternalId: "missingDateAttr",
+							Type:       framework.AttributeTypeDateTime,
+							List:       false,
+						},
+						{
+							// Test existing attribute to ensure normal case still works
+							ExternalId: "cn",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+					},
+				},
+				PageSize: 5, // Get multiple entries to test various scenarios
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					// Should return entries successfully even with missing attributes
+					// The key test is that it doesn't panic - exact objects may vary
+					Objects: []framework.Object{
+						// We expect at least some entries with dn and cn, missing attrs should be nil or absent
+					},
+				},
+			},
+		},
+	}
+
+	for name, tt := range tests {
+		s.T().Run(name, func(_ *testing.T) {
+			if tt.inputRequestCursor != nil {
+				encodedCursor, err := pagination.MarshalCursor(tt.inputRequestCursor)
+				if err != nil {
+					s.T().Error(err)
+				}
+
+				tt.request.Cursor = encodedCursor
+			}
+
+			// This is the key test - it should not panic
+			gotResponse := adapter.GetPage(tt.ctx, tt.request)
+
+			// If we got an error, it should be a proper framework error, not a panic
+			if gotResponse.Error != nil {
+				s.T().Logf("Got expected error (not panic): %v", gotResponse.Error.Message)
+				// Error is acceptable as long as we didn't panic
+				return
+			}
+
+			// If successful, verify we got some objects
+			if gotResponse.Success == nil {
+				s.T().Errorf("got nil success response when error was also nil")
+
+				return
+			}
+
+			if len(gotResponse.Success.Objects) == 0 {
+				s.T().Errorf("expected at least some objects in successful response")
+			}
+
+			// Log the objects to see what we got
+			s.T().Logf("Successfully retrieved %d objects without panic", len(gotResponse.Success.Objects))
+
+			for i, obj := range gotResponse.Success.Objects {
+				s.T().Logf("Object %d: %+v", i, obj)
+			}
+		})
+	}
+}
+
+// Test_EmptyAttributeValues_DirectPanicRegression tests for the specific case where
+// empty attribute values cause a panic.
+func (s *LDAPTestSuite) Test_EmptyAttributeValues_DirectPanicRegression() {
+	tests := []struct {
+		name        string
+		attr        *ldap_v3.EntryAttribute
+		attrType    framework.AttributeType
+		expectError bool
+		errorMsg    string
+	}{
+		{
+			name: "empty_string_attr_values",
+			attr: &ldap_v3.EntryAttribute{
+				Name:   "description",
+				Values: []string{}, // This is the condition that caused the original panic
+			},
+			attrType:    framework.AttributeTypeString,
+			expectError: false,
+		},
+		{
+			name: "empty_values_with_requested_bool",
+			attr: &ldap_v3.EntryAttribute{
+				Name:   "accountDisabled",
+				Values: []string{}, // Empty values that would cause panic on attr.Values[0]
+			},
+			attrType:    framework.AttributeTypeBool,
+			expectError: false,
+		},
+		{
+			name: "empty_values_with_requested_int",
+			attr: &ldap_v3.EntryAttribute{
+				Name:   "employeeNumber",
+				Values: []string{}, // Empty values that would cause panic
+			},
+			attrType:    framework.AttributeTypeInt64,
+			expectError: false,
+		},
+		{
+			name: "empty_values_with_requested_double",
+			attr: &ldap_v3.EntryAttribute{
+				Name:   "salary",
+				Values: []string{}, // Empty values that would cause panic
+			},
+			attrType:    framework.AttributeTypeDouble,
+			expectError: false,
+		},
+		{
+			name: "empty_values_with_requested_datetime",
+			attr: &ldap_v3.EntryAttribute{
+				Name:   "whenCreated",
+				Values: []string{}, // Empty values that would cause panic
+			},
+			attrType:    framework.AttributeTypeDateTime,
+			expectError: false,
+		},
+		{
+			name: "empty_values_with_requested_duration",
+			attr: &ldap_v3.EntryAttribute{
+				Name:   "lockoutDuration",
+				Values: []string{}, // Empty values that would cause panic
+			},
+			attrType:    framework.AttributeTypeDuration,
+			expectError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		s.T().Run(tt.name, func(t *testing.T) {
+			// This directly calls the function that was panicking
+			result, err := ldap_adapter.StringAttrValuesToRequestedType(tt.attr, false, tt.attrType)
+
+			if tt.expectError {
+				if err == nil {
+					t.Errorf("expected error, got nil")
+
+					return
+				}
+
+				if err.Message != tt.errorMsg {
+					t.Errorf("expected error message '%s', got '%s'", tt.errorMsg, err.Message)
+				}
+
+				if err.Code != api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ATTRIBUTE_TYPE {
+					t.Errorf("expected error code ERROR_CODE_INVALID_ATTRIBUTE_TYPE, got %v", err.Code)
+				}
+
+				if result != nil {
+					t.Errorf("expected nil result when error occurs, got %v", result)
+				}
+			} else {
+				if err != nil {
+					t.Errorf("unexpected error: %v", err)
+				}
+				// For non-list types with empty values, should return empty string
+				if result != "" {
+					t.Errorf("expected empty string, got %v", result)
+				}
 			}
 		})
 	}
