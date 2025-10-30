@@ -15,6 +15,7 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	googleworkspace "github.com/sgnl-ai/adapters/pkg/google-workspace"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 )
@@ -84,10 +85,11 @@ func TestGetUsersPage(t *testing.T) {
 	server := httptest.NewServer(TestServerHandler)
 
 	tests := map[string]struct {
-		context context.Context
-		request *googleworkspace.Request
-		wantRes *googleworkspace.Response
-		wantErr *framework.Error
+		context      context.Context
+		request      *googleworkspace.Request
+		wantRes      *googleworkspace.Response
+		wantErr      *framework.Error
+		expectedLogs []map[string]any
 	}{
 		"first_page": {
 			context: context.Background(),
@@ -154,6 +156,32 @@ func TestGetUsersPage(t *testing.T) {
 				},
 			},
 			wantErr: nil,
+			expectedLogs: []map[string]any{
+				{
+					"level":                             "info",
+					"msg":                               "Starting datasource request",
+					fields.FieldRequestEntityExternalID: "User",
+					fields.FieldRequestPageSize:         int64(1),
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Sending request to datasource",
+					fields.FieldRequestEntityExternalID: "User",
+					fields.FieldRequestPageSize:         int64(1),
+					fields.FieldRequestURL:              server.URL + "/admin/directory/v1/users?domain=sgnldemos.com&maxResults=1",
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Datasource request completed successfully",
+					fields.FieldRequestEntityExternalID: "User",
+					fields.FieldRequestPageSize:         int64(1),
+					fields.FieldResponseStatusCode:      int64(200),
+					fields.FieldResponseObjectCount:     int64(1),
+					fields.FieldResponseNextCursor: map[string]any{
+						"cursor": "Q0FFUzl3SUJrUHpWQUhTWWhPa2VQc0dabG1wVlBxdld0N2NtenZPTDVMM29ZNTZKK2d6ME5NczdVNTFqWXRUZnVWclQzd0c3cVZWZk8rR0M0V1FhTWpyV2R3cnZzdS9ld3BUamNkSm1BMmhEZjFIcGw5QUhyWG8yazV1WjJONzdnNHhaMjU5R2pSenIveWpOeDZOT093bk1NY20zYW9DVitJMmc0WUlEajRDYW93RDk4T0M2MjM4aGlxdUE5U05BT2lnemtlYnpJSXorVGU5SUFSYzRBd2M5OUlJdngrQ3YzMkRLekFTWGpuSlR2aERqTHMyNnpxNXZLZG9yekxKSUZDdWFUdjd1OVpJZWNMWDBXejhwVWdUMDNSbVhUSzJ1eGoxeVBaanJXalkrUzZWWlJ2MnZJeUUrM3lkU3hqUHFsL2w1S0FwUG9lZ21TbUh0MHZiR3YvV04raUQxczh3NnFTNnJCNFhLS20wZExVR21zSkNJR09Vc2lXQjhoVjFkZUkrZmlDNW85aW5lUWFjYkZsTXVacS90ejlWM0JEbnk1Uk5mUDk1cm1Ed2hsRXRjMUZTeGNocU02QUw1OFhHVFVDTTVnOWZZYVZJN0E4THE5WHNITE9Wd3gyQ1FPbWk5cURMYy9pdXp1S1NJeE8xbTlFaXhyRlFFZDBRPQ==",
+					},
+				},
+			},
 		},
 		"second_page": {
 			context: context.Background(),
@@ -296,7 +324,9 @@ func TestGetUsersPage(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			gotRes, gotErr := googleworkspaceClient.GetPage(tt.context, tt.request)
+			ctxWithLogger, observedLogs := testutil.NewContextWithObservableLogger(tt.context)
+
+			gotRes, gotErr := googleworkspaceClient.GetPage(ctxWithLogger, tt.request)
 
 			if diff := cmp.Diff(gotRes, tt.wantRes); diff != "" {
 				t.Errorf("gotRes: %v, wantRes: %v\n%s", gotRes, tt.wantRes, diff)
@@ -309,6 +339,8 @@ func TestGetUsersPage(t *testing.T) {
 			if !reflect.DeepEqual(gotErr, tt.wantErr) {
 				t.Errorf("gotErr: %v, wantErr: %v", gotErr, tt.wantErr)
 			}
+
+			testutil.ValidateLogOutput(t, observedLogs, tt.expectedLogs)
 		})
 	}
 }

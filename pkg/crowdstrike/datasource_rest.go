@@ -19,9 +19,12 @@ import (
 	"time"
 
 	framework "github.com/sgnl-ai/adapter-framework"
+	"go.uber.org/zap"
 
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	customerror "github.com/sgnl-ai/adapters/pkg/errors"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 )
 
@@ -120,6 +123,13 @@ func generateRequestBodyBytes(request *Request, resourceIDs []string) ([]byte, e
 }
 
 func (d *Datasource) getRESTPage(ctx context.Context, request *Request) (*Response, *framework.Error) {
+	logger := zaplogger.FromContext(ctx).With(
+		fields.RequestEntityExternalID(request.EntityExternalID),
+		fields.RequestPageSize(request.PageSize),
+	)
+
+	logger.Info("Starting datasource request")
+
 	// Fetch all resourceIDs before fetching the detailed information, if applicable.
 	// For Alerts we have a combined API which doesn't require to fetch resource IDs separately.
 	resourceIDs, nextCursor, httpResp, listErr := d.getResourceIDs(ctx, request)
@@ -175,8 +185,16 @@ func (d *Datasource) getRESTPage(ctx context.Context, request *Request) (*Respon
 	req.Header.Add("Authorization", request.Token)
 	req.Header.Set("Content-Type", "application/json")
 
+	logger.Info("Sending request to datasource", fields.RequestURL(*url))
+
 	res, err := d.Client.Do(req)
 	if err != nil {
+		logger.Error("Request to datasource failed",
+			fields.RequestURL(*url),
+			fields.SGNLEventTypeError(),
+			zap.Error(err),
+		)
+
 		return nil, customerror.UpdateError(&framework.Error{
 			Message: fmt.Sprintf("Failed to execute CrowdStrike request: %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
@@ -201,6 +219,14 @@ func (d *Datasource) getRESTPage(ctx context.Context, request *Request) (*Respon
 	}
 
 	if res.StatusCode != http.StatusOK {
+		logger.Error("Datasource responded with an error",
+			fields.RequestURL(*url),
+			fields.ResponseStatusCode(res.StatusCode),
+			fields.ResponseRetryAfterHeader(response.RetryAfterHeader),
+			fields.ResponseBody(body),
+			fields.SGNLEventTypeError(),
+		)
+
 		return response, nil
 	}
 
@@ -221,6 +247,12 @@ func (d *Datasource) getRESTPage(ctx context.Context, request *Request) (*Respon
 
 	response.NextRESTCursor = nextCursor
 	response.Objects = objects
+
+	logger.Info("Datasource request completed successfully",
+		fields.ResponseStatusCode(response.StatusCode),
+		fields.ResponseObjectCount(len(response.Objects)),
+		fields.ResponseNextCursor(response.NextRESTCursor),
+	)
 
 	return response, nil
 }
