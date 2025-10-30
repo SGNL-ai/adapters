@@ -57,7 +57,7 @@ func TestLoadConfiguration(t *testing.T) {
 				"SGNL_LOG_FILE_MAX_SIZE": "not_a_number", // Should be an int.
 			},
 			wantConfiguration: nil,
-			wantError:         errors.New("decoding failed due to the following error(s):\n\n'file_max_size' cannot parse value as 'int': strconv.ParseInt: parsing \"not_a_number\": invalid syntax"),
+			wantError:         errors.New("decoding failed due to the following error(s):\n\n'file_max_size' cannot parse value as 'int': strconv.ParseInt: invalid syntax"),
 		},
 	}
 
