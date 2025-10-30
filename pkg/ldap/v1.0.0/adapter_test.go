@@ -16,7 +16,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
-	ldap_adapter "github.com/sgnl-ai/adapters/pkg/ldap"
+	ldap_adapter "github.com/sgnl-ai/adapters/pkg/ldap/v1.0.0"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 	"github.com/testcontainers/testcontainers-go"

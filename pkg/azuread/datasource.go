@@ -7,13 +7,19 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	customerror "github.com/sgnl-ai/adapters/pkg/errors"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
+	"go.uber.org/zap"
 )
 
 // Datasource directly implements a Client interface to allow querying an external datasource.
@@ -70,6 +76,18 @@ var (
 		RoleAssignmentScheduleRequest:  {},
 		GroupAssignmentScheduleRequest: {},
 	}
+
+	// Advanced query operators that require the `ConsistencyLevel: eventual` header.
+	// These need to be matched as whole words/operators, not substrings.
+	advancedQueryOperators = map[string]struct{}{
+		"endswith":   {},
+		"contains":   {},
+		"startswith": {},
+	}
+
+	// Regex patterns for advanced query operators that need word boundary matching.
+	neOperatorRegex  = regexp.MustCompile(`\bne\b`)  // 'ne' as whole word
+	notOperatorRegex = regexp.MustCompile(`\bnot\b`) // 'not' as whole word
 )
 
 // NewClient returns a Client to query the datasource.
@@ -79,28 +97,99 @@ func NewClient(client *http.Client) Client {
 	}
 }
 
-func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, *framework.Error) {
-	// [MemberEntities] For member entities, we need to set the `CollectionID` and `CollectionCursor`.
-	parentEntityExternalID := ValidEntityExternalIDs[request.EntityExternalID].memberOf
-
-	if request.UseAdvancedFilters {
-		switch request.EntityExternalID {
-		case User:
-			parentEntityExternalID = func() *string {
-				s := Group
-
-				return &s
-			}()
-		case Group:
-			if request.AdvancedFilterMemberExternalID != nil {
-				parentEntityExternalID = func() *string {
-					s := Group
-
-					return &s
-				}()
-			}
-		}
+// deepCopyCursor creates a deep copy of a CompositeCursor.
+func deepCopyCursor(cursor *pagination.CompositeCursor[string]) *pagination.CompositeCursor[string] {
+	if cursor == nil {
+		return nil
 	}
+
+	result := &pagination.CompositeCursor[string]{}
+
+	if cursor.Cursor != nil {
+		cursorVal := *cursor.Cursor
+		result.Cursor = &cursorVal
+	}
+
+	if cursor.CollectionID != nil {
+		collectionIDVal := *cursor.CollectionID
+		result.CollectionID = &collectionIDVal
+	}
+
+	if cursor.CollectionCursor != nil {
+		collectionCursorVal := *cursor.CollectionCursor
+		result.CollectionCursor = &collectionCursorVal
+	}
+
+	return result
+}
+
+// GetPage fetches a page of data, accumulating members from multiple parent groups if needed to satisfy page size.
+func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, *framework.Error) {
+	// Check if this is a member entity that needs accumulation
+	parentEntityExternalID := getParentEntityExternalID(request)
+
+	// For non-member entities, just use the base implementation
+	if parentEntityExternalID == nil {
+		return d.getPageBase(ctx, request)
+	}
+
+	// For member entities, accumulate members from multiple parent groups to satisfy page size
+	accumulatedObjects := make([]map[string]any, 0)
+	currentRequest := *request
+
+	var nextCursor *pagination.CompositeCursor[string]
+
+	for int64(len(accumulatedObjects)) < request.PageSize {
+		response, err := d.getPageBase(ctx, &currentRequest)
+		if err != nil {
+			return nil, err
+		}
+
+		if response.StatusCode != http.StatusOK {
+			return response, nil
+		}
+
+		if len(response.Objects) > 0 {
+			if int64(len(response.Objects)+len(accumulatedObjects)) > request.PageSize {
+				// Received more data than asked for.
+				break
+			}
+
+			accumulatedObjects = append(accumulatedObjects, response.Objects...)
+		}
+
+		// Check if we have more data to fetch
+		if response.NextCursor == nil {
+			nextCursor = nil
+
+			break // No more data available
+		}
+
+		// Save the cursor
+		nextCursor = deepCopyCursor(response.NextCursor)
+
+		// Update the cursor
+		currentRequest.Cursor = response.NextCursor
+	}
+
+	// Build final response with accumulated objects
+	return &Response{
+		StatusCode: http.StatusOK,
+		Objects:    accumulatedObjects,
+		NextCursor: nextCursor,
+	}, nil
+}
+
+func (d *Datasource) getPageBase(ctx context.Context, request *Request) (*Response, *framework.Error) {
+	logger := zaplogger.FromContext(ctx).With(
+		fields.RequestEntityExternalID(request.EntityExternalID),
+		fields.RequestPageSize(request.PageSize),
+	)
+
+	logger.Info("Starting datasource request")
+
+	// [MemberEntities] For member entities, we need to set the `CollectionID` and `CollectionCursor`.
+	parentEntityExternalID := getParentEntityExternalID(request)
 
 	if parentEntityExternalID != nil {
 		memberReq := &Request{
@@ -130,7 +219,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 			func(ctx context.Context, _ *Request) (
 				int, string, []map[string]any, *pagination.CompositeCursor[string], *framework.Error,
 			) {
-				resp, err := d.GetPage(ctx, memberReq)
+				resp, err := d.getPageBase(ctx, memberReq)
 				if err != nil {
 					return 0, "", nil, nil, err
 				}
@@ -200,12 +289,21 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 
 	req.Header.Add("Authorization", request.Token)
 
-	if request.UseAdvancedFilters {
+	// Enhanced advanced query detection - check if we need ConsistencyLevel: eventual
+	if IsAdvancedQuery(request, endpoint) {
 		req.Header.Add("ConsistencyLevel", "eventual")
 	}
 
+	logger.Info("Sending request to datasource", fields.RequestURL(endpoint))
+
 	res, err := d.Client.Do(req)
 	if err != nil {
+		logger.Error("Request to datasource failed",
+			fields.RequestURL(endpoint),
+			fields.SGNLEventTypeError(),
+			zap.Error(err),
+		)
+
 		return nil, customerror.UpdateError(&framework.Error{
 			Message: fmt.Sprintf("Failed to execute Azure AD request: %v.", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
@@ -222,6 +320,14 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	}
 
 	if res.StatusCode != http.StatusOK {
+		logger.Error("Datasource responded with an error",
+			fields.RequestURL(endpoint),
+			fields.ResponseStatusCode(response.StatusCode),
+			fields.ResponseRetryAfterHeader(response.RetryAfterHeader),
+			fields.ResponseBody(res.Body),
+			fields.SGNLEventTypeError(),
+		)
+
 		return response, nil
 	}
 
@@ -308,7 +414,38 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 
 	response.Objects = objects
 
+	logger.Info("Datasource request completed successfully",
+		fields.ResponseStatusCode(response.StatusCode),
+		fields.ResponseObjectCount(len(response.Objects)),
+		fields.ResponseNextCursor(response.NextCursor),
+	)
+
 	return response, nil
+}
+
+func getParentEntityExternalID(request *Request) *string {
+	parentEntityExternalID := ValidEntityExternalIDs[request.EntityExternalID].memberOf
+
+	if request.UseAdvancedFilters {
+		switch request.EntityExternalID {
+		case User:
+			parentEntityExternalID = func() *string {
+				s := Group
+
+				return &s
+			}()
+		case Group:
+			if request.AdvancedFilterMemberExternalID != nil {
+				parentEntityExternalID = func() *string {
+					s := Group
+
+					return &s
+				}()
+			}
+		}
+	}
+
+	return parentEntityExternalID
 }
 
 func ParseResponse(body []byte) (objects []map[string]any, nextLink *string, err *framework.Error) {
@@ -322,4 +459,61 @@ func ParseResponse(body []byte) (objects []map[string]any, nextLink *string, err
 	}
 
 	return data.Values, data.NextLink, nil
+}
+
+// nolint: lll
+// IsAdvancedQuery determines if the request requires advanced query capabilities
+// based on Microsoft Graph advanced query documentation.
+// If any of the conditions are met, it returns true and a header "ConsistencyLevel: eventual"
+// should be added to the request.
+// See: https://learn.microsoft.com/en-us/graph/aad-advanced-queries?tabs=http#microsoft-entra-id-directory-objects-that-support-advanced-query-capabilities
+// for more information.
+// The ODATA logical operator NOT also needs the ConsistencyLevel header.
+// See: https://learn.microsoft.com/en-us/graph/api/group-list?view=graph-rest-1.0&tabs=http
+// The function checks for the following conditions:
+// 1. If the request already has UseAdvancedFilters set to true, it returns true.
+// 2. If the endpoint contains $count, $search, or $orderby query parameters.
+// 3. If the endpoint contains $filter with advanced operators like endsWith, contains, startsWith.
+// 4. If the endpoint contains $filter with 'ne' or 'not' operators as whole words.
+// 5. If the endpoint contains $filter with 'NOT' operator as a whole word.
+func IsAdvancedQuery(request *Request, endpoint string) bool {
+	// If UseAdvancedFilters is already set, respect that.
+	if request.UseAdvancedFilters {
+		return true
+	}
+
+	// Check if endpoint contains $count, $search, or $orderby (all require advanced query).
+	// Also check for $count as URL segment (e.g., ~/groups/$count).
+	if strings.Contains(endpoint, "$count=true") ||
+		strings.Contains(endpoint, "$search=") ||
+		strings.Contains(endpoint, "$orderby=") ||
+		strings.Contains(endpoint, "/$count") {
+		return true
+	}
+
+	// Check if endpoint contains $filter with advanced operators.
+	if strings.Contains(endpoint, "$filter=") {
+		// URL decode the endpoint for proper pattern matching
+		decodedEndpoint := endpoint
+		if decoded, err := url.QueryUnescape(endpoint); err == nil {
+			decodedEndpoint = decoded
+		}
+
+		endpointLower := strings.ToLower(decodedEndpoint)
+
+		// Check for advanced function operators (can be substring matches).
+		for operator := range advancedQueryOperators {
+			if strings.Contains(endpointLower, operator) {
+				return true
+			}
+		}
+
+		// Check for 'ne' and 'not' operators using word boundary regex on decoded endpoint.
+		decodedEndpointLower := strings.ToLower(decodedEndpoint)
+		if neOperatorRegex.MatchString(decodedEndpointLower) || notOperatorRegex.MatchString(decodedEndpointLower) {
+			return true
+		}
+	}
+
+	return false
 }

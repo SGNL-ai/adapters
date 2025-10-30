@@ -20,7 +20,9 @@ import (
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	"github.com/sgnl-ai/adapter-framework/pkg/connector"
 	customerror "github.com/sgnl-ai/adapters/pkg/errors"
-	ldap "github.com/sgnl-ai/adapters/pkg/ldap"
+	ldap "github.com/sgnl-ai/adapters/pkg/ldap/v2.0.0"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
+	"github.com/sgnl-ai/adapters/pkg/pagination"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -154,7 +156,8 @@ func TestGivenRequestWithoutConnectorContextWhenGetPageRequestedThenLdapResponse
 	}
 
 	// Act
-	resp, err := ds.GetPage(context.Background(), testRequest)
+	ctxWithLogger, _ := testutil.NewContextWithObservableLogger(t.Context())
+	resp, err := ds.GetPage(ctxWithLogger, testRequest)
 
 	// Assert
 	if err != nil {
@@ -181,10 +184,11 @@ func TestGivenRequestWithConnectorAndWithoutProxyContextWhenGetPageRequestedThen
 		},
 	}
 
-	ctx, _ := connector.WithContext(context.Background(), ci)
+	ctx, _ := connector.WithContext(t.Context(), ci)
+	ctxWithLogger, _ := testutil.NewContextWithObservableLogger(ctx)
 
 	// Act
-	resp, err := ds.GetPage(ctx, testRequest)
+	resp, err := ds.GetPage(ctxWithLogger, testRequest)
 
 	// Assert
 	if err != nil {
@@ -211,10 +215,11 @@ func TestGivenRequestWithConnectorContextWhenGetPageRequestedThenLdapResponseSta
 		},
 	}
 
-	ctx, _ := connector.WithContext(context.Background(), ci)
+	ctx, _ := connector.WithContext(t.Context(), ci)
+	ctxWithLogger, _ := testutil.NewContextWithObservableLogger(ctx)
 
 	// Act
-	resp, err := ds.GetPage(ctx, testRequest)
+	resp, err := ds.GetPage(ctxWithLogger, testRequest)
 
 	// Assert
 	if err != nil {
@@ -237,10 +242,11 @@ func TestGivenRequestWithConnectorContextWhenProxyServiceConnectionFailsWithGrpc
 
 	ds := ldap.NewClient(client, ldap.NewSessionPool(1*time.Minute, time.Minute))
 
-	ctx, _ := connector.WithContext(context.Background(), testutil.TestConnectorInfo)
+	ctx, _ := connector.WithContext(t.Context(), testutil.TestConnectorInfo)
+	ctxWithLogger, _ := testutil.NewContextWithObservableLogger(ctx)
 
 	// Act
-	resp, ferr := ds.GetPage(ctx, testRequest)
+	resp, ferr := ds.GetPage(ctxWithLogger, testRequest)
 	if ferr != nil {
 		t.Errorf("expecting error code in response, %v", ferr)
 	}
@@ -266,9 +272,10 @@ func TestGivenRequestWithConnectorContextWhenProxyServiceReturnEmptyResponseThen
 	ds := ldap.NewClient(client, ldap.NewSessionPool(1*time.Minute, time.Minute))
 
 	ctx, _ := connector.WithContext(context.Background(), testutil.TestConnectorInfo)
+	ctxWithLogger, _ := testutil.NewContextWithObservableLogger(ctx)
 
 	// Act
-	resp, ferr := ds.GetPage(ctx, testRequest)
+	resp, ferr := ds.GetPage(ctxWithLogger, testRequest)
 	if resp != nil {
 		t.Errorf("expecting nil response %v", resp.StatusCode)
 	}
@@ -298,10 +305,37 @@ func TestGivenRequestWithConnectorContextWhenProxyServiceReturnValidResponseThen
 
 	ds := ldap.NewClient(client, ldap.NewSessionPool(1*time.Minute, time.Minute))
 
-	ctx, _ := connector.WithContext(context.Background(), testutil.TestConnectorInfo)
+	ctx, _ := connector.WithContext(t.Context(), testutil.TestConnectorInfo)
+	ctxWithLogger, observedLogs := testutil.NewContextWithObservableLogger(ctx)
+
+	expectedLogs := []map[string]any{
+		{
+			"level":                             "info",
+			"msg":                               "Sending request to datasource",
+			fields.FieldRequestEntityExternalID: "Person",
+			fields.FieldRequestPageSize:         int64(1),
+			fields.FieldBaseURL:                 mockLDAPAddr,
+			fields.FieldConnectorID:             "test-connector-id",
+			fields.FieldConnectorSourceID:       "",
+			fields.FieldConnectorSourceType:     int64(0),
+		},
+		{
+			"level":                             "info",
+			"msg":                               "Datasource request completed successfully",
+			fields.FieldRequestEntityExternalID: "Person",
+			fields.FieldRequestPageSize:         int64(1),
+			fields.FieldResponseStatusCode:      int64(200),
+			fields.FieldResponseObjectCount:     int64(2),
+			fields.FieldResponseNextCursor:      (*pagination.CompositeCursor[string])(nil),
+			fields.FieldBaseURL:                 mockLDAPAddr,
+			fields.FieldConnectorID:             "test-connector-id",
+			fields.FieldConnectorSourceID:       "",
+			fields.FieldConnectorSourceType:     int64(0),
+		},
+	}
 
 	// Act
-	resp, ferr := ds.GetPage(ctx, testRequest)
+	resp, ferr := ds.GetPage(ctxWithLogger, testRequest)
 	if ferr != nil {
 		t.Errorf("expecting nil err %v", ferr)
 	}
@@ -315,6 +349,8 @@ func TestGivenRequestWithConnectorContextWhenProxyServiceReturnValidResponseThen
 	if diff := cmp.Diff(testResponse, resp); diff != "" {
 		t.Errorf("response payload mismatch (-want +got):%s", diff)
 	}
+
+	testutil.ValidateLogOutput(t, observedLogs, expectedLogs)
 }
 
 func TestGivenRequestWithConnectorContextWhenProxyServiceReturnValidResponseWithErrorShouldReturnErroredResponse(t *testing.T) {
@@ -335,10 +371,11 @@ func TestGivenRequestWithConnectorContextWhenProxyServiceReturnValidResponseWith
 
 	ds := ldap.NewClient(client, ldap.NewSessionPool(1*time.Minute, time.Minute))
 
-	ctx, _ := connector.WithContext(context.Background(), testutil.TestConnectorInfo)
+	ctx, _ := connector.WithContext(t.Context(), testutil.TestConnectorInfo)
+	ctxWithLogger, _ := testutil.NewContextWithObservableLogger(ctx)
 
 	// Act
-	_, ferr := ds.GetPage(ctx, testRequest)
+	_, ferr := ds.GetPage(ctxWithLogger, testRequest)
 
 	// Assert
 	if ferr == nil {
@@ -707,6 +744,311 @@ func TestStringAttrValuesToRequestedType_EmptyByteValuesHandling(t *testing.T) {
 				if result == nil {
 					t.Errorf("expected result, got nil")
 				}
+			}
+		})
+	}
+}
+
+func TestParseResponse(t *testing.T) {
+	tests := []struct {
+		name             string
+		searchResult     *ldap_v3.SearchResult
+		attributes       map[string]*framework.AttributeConfig
+		expectedObjs     int
+		expectedPageInfo bool
+		shouldError      bool
+	}{
+		{
+			name: "parse_simple_response",
+			searchResult: &ldap_v3.SearchResult{
+				Entries: []*ldap_v3.Entry{
+					{
+						DN: "CN=user1,OU=Users,DC=example,DC=com",
+						Attributes: []*ldap_v3.EntryAttribute{
+							{
+								Name:   "cn",
+								Values: []string{"user1"},
+							},
+						},
+					},
+				},
+			},
+			attributes: map[string]*framework.AttributeConfig{
+				"cn": {
+					Type: framework.AttributeTypeString,
+					List: false,
+				},
+			},
+			expectedObjs:     1,
+			expectedPageInfo: false,
+			shouldError:      false,
+		},
+		{
+			name: "parse_response_with_paging_control",
+			searchResult: &ldap_v3.SearchResult{
+				Entries: []*ldap_v3.Entry{
+					{
+						DN: "CN=user1,OU=Users,DC=example,DC=com",
+						Attributes: []*ldap_v3.EntryAttribute{
+							{
+								Name:   "cn",
+								Values: []string{"user1"},
+							},
+						},
+					},
+				},
+				Controls: []ldap_v3.Control{
+					&ldap_v3.ControlPaging{
+						Cookie: []byte("test-cookie"),
+					},
+				},
+			},
+			attributes: map[string]*framework.AttributeConfig{
+				"cn": {
+					Type: framework.AttributeTypeString,
+					List: false,
+				},
+			},
+			expectedObjs:     1,
+			expectedPageInfo: true,
+			shouldError:      false,
+		},
+		{
+			name: "parse_empty_response",
+			searchResult: &ldap_v3.SearchResult{
+				Entries: []*ldap_v3.Entry{},
+			},
+			attributes:       map[string]*framework.AttributeConfig{},
+			expectedObjs:     0,
+			expectedPageInfo: false,
+			shouldError:      false,
+		},
+		{
+			name: "parse_response_with_nil_entry",
+			searchResult: &ldap_v3.SearchResult{
+				Entries: []*ldap_v3.Entry{
+					{
+						DN: "CN=user1,OU=Users,DC=example,DC=com",
+						Attributes: []*ldap_v3.EntryAttribute{
+							{
+								Name:   "cn",
+								Values: []string{"user1"},
+							},
+						},
+					},
+					nil, // Nil entry should be skipped
+					{
+						DN: "CN=user2,OU=Users,DC=example,DC=com",
+						Attributes: []*ldap_v3.EntryAttribute{
+							{
+								Name:   "cn",
+								Values: []string{"user2"},
+							},
+						},
+					},
+				},
+			},
+			attributes: map[string]*framework.AttributeConfig{
+				"cn": {
+					Type: framework.AttributeTypeString,
+					List: false,
+				},
+			},
+			expectedObjs:     2,
+			expectedPageInfo: false,
+			shouldError:      false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			objects, pageInfo, err := ldap.ParseResponse(tt.searchResult, tt.attributes)
+
+			if tt.shouldError {
+				if err == nil {
+					t.Errorf("Expected error, got nil")
+				}
+
+				return
+			}
+
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+
+				return
+			}
+
+			if len(objects) != tt.expectedObjs {
+				t.Errorf("Expected %d objects, got %d", tt.expectedObjs, len(objects))
+			}
+
+			if tt.expectedPageInfo {
+				if pageInfo == nil {
+					t.Errorf("Expected pageInfo, got nil")
+				}
+			} else {
+				if pageInfo != nil {
+					t.Errorf("Expected no pageInfo, got %v", pageInfo)
+				}
+			}
+		})
+	}
+}
+
+func TestEntryToObject(t *testing.T) {
+	tests := []struct {
+		name         string
+		entry        *ldap_v3.Entry
+		attrConfig   map[string]*framework.AttributeConfig
+		expectedKeys []string
+		shouldError  bool
+	}{
+		{
+			name: "convert_simple_entry",
+			entry: &ldap_v3.Entry{
+				DN: "CN=user1,OU=Users,DC=example,DC=com",
+				Attributes: []*ldap_v3.EntryAttribute{
+					{
+						Name:   "cn",
+						Values: []string{"user1"},
+					},
+					{
+						Name:   "mail",
+						Values: []string{"user1@example.com"},
+					},
+				},
+			},
+			attrConfig: map[string]*framework.AttributeConfig{
+				"cn": {
+					Type: framework.AttributeTypeString,
+					List: false,
+				},
+				"mail": {
+					Type: framework.AttributeTypeString,
+					List: false,
+				},
+			},
+			expectedKeys: []string{"dn", "cn", "mail"},
+			shouldError:  false,
+		},
+		{
+			name: "convert_entry_with_range_attribute",
+			entry: &ldap_v3.Entry{
+				DN: "CN=group1,OU=Groups,DC=example,DC=com",
+				Attributes: []*ldap_v3.EntryAttribute{
+					{
+						Name:   "cn",
+						Values: []string{"group1"},
+					},
+					{
+						Name: "member;range=0-1499",
+						Values: []string{
+							"CN=user1,OU=Users,DC=example,DC=com",
+							"CN=user2,OU=Users,DC=example,DC=com",
+						},
+					},
+				},
+			},
+			attrConfig: map[string]*framework.AttributeConfig{
+				"cn": {
+					Type: framework.AttributeTypeString,
+					List: false,
+				},
+			},
+			expectedKeys: []string{"dn", "cn", "member;range=0-1499"},
+			shouldError:  false,
+		},
+		{
+			name: "convert_entry_skips_unconfigured_attributes",
+			entry: &ldap_v3.Entry{
+				DN: "CN=user1,OU=Users,DC=example,DC=com",
+				Attributes: []*ldap_v3.EntryAttribute{
+					{
+						Name:   "cn",
+						Values: []string{"user1"},
+					},
+					{
+						Name:   "unknownAttr",
+						Values: []string{"value"},
+					},
+				},
+			},
+			attrConfig: map[string]*framework.AttributeConfig{
+				"cn": {
+					Type: framework.AttributeTypeString,
+					List: false,
+				},
+			},
+			expectedKeys: []string{"dn", "cn"},
+			shouldError:  false,
+		},
+		{
+			name: "convert_entry_with_list_attribute",
+			entry: &ldap_v3.Entry{
+				DN: "CN=user1,OU=Users,DC=example,DC=com",
+				Attributes: []*ldap_v3.EntryAttribute{
+					{
+						Name:   "memberOf",
+						Values: []string{"group1", "group2"},
+					},
+				},
+			},
+			attrConfig: map[string]*framework.AttributeConfig{
+				"memberOf": {
+					Type: framework.AttributeTypeString,
+					List: true,
+				},
+			},
+			expectedKeys: []string{"dn", "memberOf"},
+			shouldError:  false,
+		},
+		{
+			name: "convert_entry_with_empty_attributes",
+			entry: &ldap_v3.Entry{
+				DN:         "CN=user1,OU=Users,DC=example,DC=com",
+				Attributes: []*ldap_v3.EntryAttribute{},
+			},
+			attrConfig:   map[string]*framework.AttributeConfig{},
+			expectedKeys: []string{"dn"},
+			shouldError:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			obj, err := ldap.EntryToObject(tt.entry, tt.attrConfig)
+
+			if tt.shouldError {
+				if err == nil {
+					t.Errorf("Expected error, got nil")
+				}
+
+				return
+			}
+
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+
+				return
+			}
+
+			// Check that all expected keys are present
+			for _, expectedKey := range tt.expectedKeys {
+				if _, exists := obj[expectedKey]; !exists {
+					t.Errorf("Expected key %s not found in object", expectedKey)
+				}
+			}
+
+			// Check that dn is always set
+			if dn, exists := obj["dn"]; !exists {
+				t.Errorf("DN should always be present")
+			} else if dn != tt.entry.DN {
+				t.Errorf("Expected DN %s, got %s", tt.entry.DN, dn)
+			}
+
+			// Check object has expected number of keys
+			if len(obj) != len(tt.expectedKeys) {
+				t.Errorf("Expected %d keys, got %d", len(tt.expectedKeys), len(obj))
 			}
 		})
 	}

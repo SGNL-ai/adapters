@@ -14,6 +14,7 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	"github.com/sgnl-ai/adapters/pkg/duo"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 )
@@ -1121,10 +1122,11 @@ func TestGetUserPage(t *testing.T) {
 	duoClient := duo.NewClient(client)
 	server := httptest.NewServer(TestServerHandler)
 	tests := map[string]struct {
-		context context.Context
-		request *duo.Request
-		wantRes *duo.Response
-		wantErr *framework.Error
+		context      context.Context
+		request      *duo.Request
+		wantRes      *duo.Response
+		wantErr      *framework.Error
+		expectedLogs []map[string]any
 	}{
 		"first_page": {
 			context: context.Background(),
@@ -1136,6 +1138,32 @@ func TestGetUserPage(t *testing.T) {
 				EntityExternalID:      "User",
 				APIVersion:            "v1",
 				RequestTimeoutSeconds: 5,
+			},
+			expectedLogs: []map[string]any{
+				{
+					"level":                             "info",
+					"msg":                               "Starting datasource request",
+					fields.FieldRequestEntityExternalID: "User",
+					fields.FieldRequestPageSize:         int64(4),
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Sending request to datasource",
+					fields.FieldRequestEntityExternalID: "User",
+					fields.FieldRequestPageSize:         int64(4),
+					fields.FieldRequestURL:              server.URL + "/admin/v1/users?limit=4&offset=0",
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Datasource request completed successfully",
+					fields.FieldRequestEntityExternalID: "User",
+					fields.FieldRequestPageSize:         int64(4),
+					fields.FieldResponseStatusCode:      int64(200),
+					fields.FieldResponseObjectCount:     int64(4),
+					fields.FieldResponseNextCursor: map[string]any{
+						"cursor": int64(4),
+					},
+				},
 			},
 			wantRes: &duo.Response{
 				StatusCode: http.StatusOK,
@@ -1723,7 +1751,9 @@ func TestGetUserPage(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			gotRes, gotErr := duoClient.GetPage(tt.context, tt.request)
+			ctxWithLogger, observedLogs := testutil.NewContextWithObservableLogger(tt.context)
+
+			gotRes, gotErr := duoClient.GetPage(ctxWithLogger, tt.request)
 
 			if !reflect.DeepEqual(gotRes, tt.wantRes) {
 				t.Errorf("gotRes: %v, wantRes: %v", gotRes, tt.wantRes)
@@ -1732,6 +1762,8 @@ func TestGetUserPage(t *testing.T) {
 			if !reflect.DeepEqual(gotErr, tt.wantErr) {
 				t.Errorf("gotErr: %v, wantErr: %v", gotErr, tt.wantErr)
 			}
+
+			testutil.ValidateLogOutput(t, observedLogs, tt.expectedLogs)
 		})
 	}
 }
