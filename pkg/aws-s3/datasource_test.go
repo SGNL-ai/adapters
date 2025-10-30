@@ -15,6 +15,7 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	s3_adapter "github.com/sgnl-ai/adapters/pkg/aws-s3"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 )
@@ -104,6 +105,7 @@ func TestDatasource_GetPage(t *testing.T) {
 		getObjectStatusCode  int
 		expectedResponse     *s3_adapter.Response
 		expectedError        *framework.Error
+		expectedLogs         []map[string]any
 	}{
 		"success_small_file_traditional_path": {
 			request: &s3_adapter.Request{
@@ -132,6 +134,25 @@ func TestDatasource_GetPage(t *testing.T) {
 						"Subscription Date": "2021-01-01", "Website": "https://www.paul.org/"},
 				},
 				NextCursor: &pagination.CompositeCursor[int64]{Cursor: testutil.GenPtr(cursorPage1Next)},
+			},
+			expectedLogs: []map[string]any{
+				{
+					"level":                             "info",
+					"msg":                               "Starting datasource request",
+					fields.FieldRequestEntityExternalID: "customers",
+					fields.FieldRequestPageSize:         int64(2),
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Datasource request completed successfully",
+					fields.FieldRequestEntityExternalID: "customers",
+					fields.FieldRequestPageSize:         int64(2),
+					fields.FieldResponseStatusCode:      int64(200),
+					fields.FieldResponseObjectCount:     int64(2),
+					fields.FieldResponseNextCursor: map[string]any{
+						"cursor": int64(validCSVDataHeaderLength + validCSVDataRow1Length + validCSVDataRow2Length),
+					},
+				},
 			},
 		},
 		"success_with_cursor": {
@@ -282,13 +303,17 @@ func TestDatasource_GetPage(t *testing.T) {
 			}
 
 			ctx := context.Background()
-			response, frameworkErr := datasource.GetPage(ctx, tt.request)
+			ctxWithLogger, observedLogs := testutil.NewContextWithObservableLogger(ctx)
+
+			response, frameworkErr := datasource.GetPage(ctxWithLogger, tt.request)
 
 			if tt.expectedError != nil {
 				validateErrorCase(t, frameworkErr, response, tt.expectedError)
 			} else {
 				validateSuccessCase(t, frameworkErr, response, tt.expectedResponse, name, int(tt.request.PageSize))
 			}
+
+			testutil.ValidateLogOutput(t, observedLogs, tt.expectedLogs)
 		})
 	}
 }

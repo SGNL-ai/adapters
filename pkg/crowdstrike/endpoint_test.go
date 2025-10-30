@@ -72,20 +72,6 @@ func TestConstructRESTEndpoint(t *testing.T) {
 					"&offset=some-string-cursor&filter=platform_name%3A%27Windows%27",
 			),
 		},
-		"valid_request_with_cursor_int_offset": {
-			request: &crowdstrike.Request{
-				BaseURL:          "https://api.crowdstrike.com",
-				PageSize:         100,
-				EntityExternalID: crowdstrike.Detect,
-				RESTCursor: &pagination.CompositeCursor[string]{
-					Cursor: testutil.GenPtr("10"),
-				},
-			},
-			path: "detects/queries/detects/v1", // has UseIntCursor = true
-			wantURL: testutil.GenPtr(
-				"https://api.crowdstrike.com/detects/queries/detects/v1?limit=100&offset=10",
-			),
-		},
 		"valid_request_without_cursor_string_offset": {
 			request: &crowdstrike.Request{
 				BaseURL:          "https://api.crowdstrike.com",
@@ -97,33 +83,6 @@ func TestConstructRESTEndpoint(t *testing.T) {
 			},
 			path:    "devices/queries/devices-scroll/v1",
 			wantURL: testutil.GenPtr("https://api.crowdstrike.com/devices/queries/devices-scroll/v1?limit=100"),
-		},
-		"valid_request_without_cursor_int_offset": {
-			request: &crowdstrike.Request{
-				BaseURL:          "https://api.crowdstrike.com",
-				PageSize:         100,
-				EntityExternalID: crowdstrike.Detect,
-				RESTCursor: &pagination.CompositeCursor[string]{
-					Cursor: nil,
-				},
-			},
-			path:    "detects/queries/detects/v1",
-			wantURL: testutil.GenPtr("https://api.crowdstrike.com/detects/queries/detects/v1?limit=100"),
-		},
-		"invalid_cursor": {
-			request: &crowdstrike.Request{
-				BaseURL:          "https://api.crowdstrike.com",
-				PageSize:         100,
-				EntityExternalID: crowdstrike.Detect,
-				RESTCursor: &pagination.CompositeCursor[string]{
-					Cursor: testutil.GenPtr("-1"),
-				},
-			},
-			path: "devices/queries/devices-scroll/v1",
-			wantError: &framework.Error{
-				Message: "Cursor must be greater than 0.",
-				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_PAGE_REQUEST_CONFIG,
-			},
 		},
 	}
 

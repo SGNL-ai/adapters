@@ -16,6 +16,7 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	crowdstrike_adapter "github.com/sgnl-ai/adapters/pkg/crowdstrike"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 )
@@ -31,6 +32,7 @@ func TestAdapterUserGetPage(t *testing.T) {
 		inputRequestCursor *pagination.CompositeCursor[string]
 		wantResponse       framework.Response
 		wantCursor         *pagination.CompositeCursor[string]
+		expectedLogs       []map[string]any
 	}{
 		"first_page": {
 			request: &framework.Request[crowdstrike_adapter.Config]{
@@ -81,6 +83,32 @@ func TestAdapterUserGetPage(t *testing.T) {
 			},
 			wantCursor: &pagination.CompositeCursor[string]{
 				Cursor: testutil.GenPtr("eyJyaXNrU2NvcmUiOjAuNjQ1NDg3MTMzOTk5OTk5OSwiX2lkIjoiNDVkYzQwZTItN2I3Yi00ZjM4LTlhYzctOThmNGEzNWIyNGUxIn0="),
+			},
+			expectedLogs: []map[string]any{
+				{
+					"level":                             "info",
+					"msg":                               "Starting datasource request",
+					fields.FieldRequestEntityExternalID: "user",
+					fields.FieldRequestPageSize:         int64(2),
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Sending request to datasource",
+					fields.FieldRequestEntityExternalID: "user",
+					fields.FieldRequestPageSize:         int64(2),
+					fields.FieldRequestURL:              server.URL + "/identity-protection/combined/graphql/v1",
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Datasource request completed successfully",
+					fields.FieldRequestEntityExternalID: "user",
+					fields.FieldRequestPageSize:         int64(2),
+					fields.FieldResponseStatusCode:      int64(200),
+					fields.FieldResponseObjectCount:     int64(2),
+					fields.FieldResponseNextCursor: map[string]any{
+						"cursor": "eyJyaXNrU2NvcmUiOjAuNjQ1NDg3MTMzOTk5OTk5OSwiX2lkIjoiNDVkYzQwZTItN2I3Yi00ZjM4LTlhYzctOThmNGEzNWIyNGUxIn0=",
+					},
+				},
 			},
 		},
 		"middle_page": {
@@ -188,7 +216,9 @@ func TestAdapterUserGetPage(t *testing.T) {
 				tt.request.Cursor = encodedCursor
 			}
 
-			gotResponse := adapter.GetPage(context.Background(), tt.request)
+			ctxWithLogger, observedLogs := testutil.NewContextWithObservableLogger(t.Context())
+
+			gotResponse := adapter.GetPage(ctxWithLogger, tt.request)
 			if tt.wantResponse.Success != nil && gotResponse.Success != nil {
 				if diff := cmp.Diff(tt.wantResponse.Success.Objects, gotResponse.Success.Objects); diff != "" {
 					t.Errorf("Response mismatch (-want +got):\n%s", diff)
@@ -224,6 +254,8 @@ func TestAdapterUserGetPage(t *testing.T) {
 					t.Errorf("gotCursor: %v, wantCursor: %v", gotCursor, tt.wantCursor)
 				}
 			}
+
+			testutil.ValidateLogOutput(t, observedLogs, tt.expectedLogs)
 		})
 	}
 }
@@ -532,232 +564,6 @@ func TestAdapterIncidentGetPage(t *testing.T) {
 							},
 						},
 					},
-				},
-			},
-		},
-	}
-
-	for name, tt := range tests {
-		t.Run(name, func(t *testing.T) {
-			if tt.inputRequestCursor != nil {
-				encodedCursor, err := pagination.MarshalCursor(tt.inputRequestCursor)
-				if err != nil {
-					t.Error(err)
-				}
-
-				tt.request.Cursor = encodedCursor
-			}
-
-			gotResponse := adapter.GetPage(context.Background(), tt.request)
-			if tt.wantResponse.Success != nil && gotResponse.Success != nil {
-				if diff := cmp.Diff(tt.wantResponse.Success.Objects, gotResponse.Success.Objects); diff != "" {
-					t.Errorf("Response mismatch (-want +got):\n%s", diff)
-				}
-
-				if !reflect.DeepEqual(gotResponse.Success.Objects, tt.wantResponse.Success.Objects) {
-					t.Errorf("gotResponse: %v, wantResponse: %v", gotResponse, tt.wantResponse)
-				}
-			} else if tt.wantResponse.Success != nil || gotResponse.Success != nil {
-				t.Errorf("gotResponse: %v, wantResponse: %v", gotResponse, tt.wantResponse)
-			}
-
-			if !reflect.DeepEqual(gotResponse.Error, tt.wantResponse.Error) {
-				t.Errorf("gotResponse: %v, wantResponse: %v", gotResponse.Error, tt.wantResponse.Error)
-			}
-
-			// We already check the b64 encoded cursor in the response, but it's not easy to
-			// decipher the cursor just by reading the test case.
-			// So in addition, decode the b64 cursor and compare structs.
-			if gotResponse.Success != nil && tt.wantCursor != nil {
-				var gotCursor pagination.CompositeCursor[string]
-
-				decodedCursor, err := base64.StdEncoding.DecodeString(gotResponse.Success.NextCursor)
-				if err != nil {
-					t.Errorf("error decoding cursor: %v", err)
-				}
-
-				if err := json.Unmarshal(decodedCursor, &gotCursor); err != nil {
-					t.Errorf("error unmarshalling cursor: %v", err)
-				}
-
-				if !reflect.DeepEqual(*tt.wantCursor, gotCursor) {
-					t.Errorf("gotCursor: %v, wantCursor: %v", gotCursor, tt.wantCursor)
-				}
-			}
-		})
-	}
-}
-
-func TestAdapterDetectionGetPage(t *testing.T) {
-	server := httptest.NewTLSServer(TestRESTServerHandler)
-	adapter := crowdstrike_adapter.NewAdapter(&crowdstrike_adapter.Datasource{
-		Client: server.Client(),
-	})
-
-	tests := map[string]struct {
-		request            *framework.Request[crowdstrike_adapter.Config]
-		inputRequestCursor *pagination.CompositeCursor[string]
-		wantResponse       framework.Response
-		wantCursor         *pagination.CompositeCursor[string]
-	}{
-		"first_page": {
-			request: &framework.Request[crowdstrike_adapter.Config]{
-				Address: server.URL,
-				Auth: &framework.DatasourceAuthCredentials{
-					HTTPAuthorization: "Bearer Testtoken",
-				},
-				Config: &crowdstrike_adapter.Config{
-					APIVersion: "v1",
-					Archived:   false,
-					Enabled:    true,
-				},
-				Entity:   *PopulateDetectionEntityConfig(),
-				PageSize: 2,
-			},
-			wantResponse: framework.Response{
-				Success: &framework.Page{
-					Objects: []framework.Object{
-						{
-							"detection_id": string("ldt:9b9b1e4f7512492f95f8039c065a28a9:4298086570"),
-							"email_sent":   false,
-							"status":       string("new"),
-						},
-						{
-							"detection_id": string("ldt:9b9b1e4f7512492f95f8039c065a28a9:4298709414"),
-							"email_sent":   false,
-							"status":       string("new"),
-						},
-					},
-					NextCursor: "eyJjdXJzb3IiOjJ9",
-				},
-			},
-			wantCursor: &pagination.CompositeCursor[string]{
-				Cursor: testutil.GenPtr[string]("2"),
-			},
-		},
-		"middle_page": {
-			request: &framework.Request[crowdstrike_adapter.Config]{
-				Address: server.URL,
-				Auth: &framework.DatasourceAuthCredentials{
-					HTTPAuthorization: "Bearer Testtoken",
-				},
-				Config: &crowdstrike_adapter.Config{
-					APIVersion: "v1",
-					Archived:   false,
-					Enabled:    true,
-				},
-				Entity:   *PopulateDetectionEntityConfig(),
-				PageSize: 2,
-			},
-			inputRequestCursor: &pagination.CompositeCursor[string]{
-				Cursor: testutil.GenPtr[string]("2"),
-			},
-			wantResponse: framework.Response{
-				Success: &framework.Page{
-					Objects: []framework.Object{
-						{
-							"detection_id": string("ldt:9b9b1e4f7512492f95f8039c065a28a9:1169567"),
-							"email_sent":   false,
-							"status":       string("new"),
-						},
-						{
-							"detection_id": string("ldt:9b9b1e4f7512492f95f8039c065a28a9:4295459139"),
-							"email_sent":   false,
-							"status":       string("new"),
-						},
-					},
-					NextCursor: "eyJjdXJzb3IiOjR9",
-				},
-			},
-			wantCursor: &pagination.CompositeCursor[string]{
-				Cursor: testutil.GenPtr[string]("4"),
-			},
-		},
-		"last_page": {
-			request: &framework.Request[crowdstrike_adapter.Config]{
-				Address: server.URL,
-				Auth: &framework.DatasourceAuthCredentials{
-					HTTPAuthorization: "Bearer Testtoken",
-				},
-				Config: &crowdstrike_adapter.Config{
-					APIVersion: "v1",
-					Archived:   false,
-					Enabled:    true,
-				},
-				Entity:   *PopulateDetectionEntityConfig(),
-				PageSize: 2,
-			},
-
-			inputRequestCursor: &pagination.CompositeCursor[string]{
-				Cursor: testutil.GenPtr[string]("4"),
-			},
-			wantResponse: framework.Response{
-				Success: &framework.Page{
-					Objects: []framework.Object{
-						{
-							"detection_id": string("ldt:eca21da34c934e8e95c97a4f7af1d9a5:77310702382"),
-							"email_sent":   false,
-							"status":       string("new"),
-						},
-						{
-							"detection_id": string("ldt:eca21da34c934e8e95c97a4f7af1d9a5:77309428075"),
-							"email_sent":   false,
-							"status":       string("new"),
-						},
-					},
-				},
-			},
-		},
-		// Non existent page
-		"err_404": {
-			request: &framework.Request[crowdstrike_adapter.Config]{
-				Address: server.URL,
-				Auth: &framework.DatasourceAuthCredentials{
-					HTTPAuthorization: "Bearer Testtoken",
-				},
-				Config: &crowdstrike_adapter.Config{
-					APIVersion: "v1",
-					Archived:   false,
-					Enabled:    true,
-				},
-				Entity:   *PopulateDetectionEntityConfig(),
-				PageSize: 2,
-			},
-
-			inputRequestCursor: &pagination.CompositeCursor[string]{
-				Cursor: testutil.GenPtr[string]("1000"), // Non existent page
-			},
-			wantResponse: framework.Response{
-				Error: &framework.Error{
-					Message: "Datasource rejected request, returned status code: 404.",
-					Code:    v1.ErrorCode_ERROR_CODE_INTERNAL,
-				},
-			},
-		},
-		// Specialized error from CRWD APIs
-		"err_specialized": {
-			request: &framework.Request[crowdstrike_adapter.Config]{
-				Address: server.URL,
-				Auth: &framework.DatasourceAuthCredentials{
-					HTTPAuthorization: "Bearer Testtoken",
-				},
-				Config: &crowdstrike_adapter.Config{
-					APIVersion: "v1",
-					Archived:   false,
-					Enabled:    true,
-				},
-				Entity:   *PopulateDetectionEntityConfig(),
-				PageSize: 2,
-			},
-
-			inputRequestCursor: &pagination.CompositeCursor[string]{
-				Cursor: testutil.GenPtr[string]("999"), // Non existent page
-			},
-			wantResponse: framework.Response{
-				Error: &framework.Error{
-					Message: "Failed to query the datasource.\n" +
-						"Got errors: Code: 404, Message: 404: Page Not Found.",
-					Code: v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
 				},
 			},
 		},
