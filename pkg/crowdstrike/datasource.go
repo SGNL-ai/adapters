@@ -18,7 +18,6 @@ const (
 	Endpoint         string = "endpoint"
 	Device           string = "endpoint_protection_device"
 	EndpointIncident string = "endpoint_protection_incident"
-	Detect           string = "endpoint_protection_detect"
 	Alerts           string = "endpoint_protection_alert"
 )
 
@@ -60,7 +59,6 @@ var (
 
 	ValidRESTEntityExternalIDs = map[string]Entity{
 		Device:           {},
-		Detect:           {UseIntCursor: true},
 		EndpointIncident: {UseIntCursor: true},
 		Alerts:           {},
 	}
