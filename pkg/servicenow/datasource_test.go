@@ -14,6 +14,7 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	"github.com/sgnl-ai/adapters/pkg/auth"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/servicenow"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 )
@@ -735,10 +736,11 @@ func TestGetUsersPage(t *testing.T) {
 	server := httptest.NewServer(TestServerHandler)
 
 	tests := map[string]struct {
-		context context.Context
-		request *servicenow.Request
-		wantRes *servicenow.Response
-		wantErr *framework.Error
+		context      context.Context
+		request      *servicenow.Request
+		wantRes      *servicenow.Response
+		wantErr      *framework.Error
+		expectedLogs []map[string]any
 	}{
 		"first_page": {
 			context: context.Background(),
@@ -792,6 +794,30 @@ func TestGetUsersPage(t *testing.T) {
 				NextCursor: testutil.GenPtr("https://localhost/api/now/v2/table/sys_user?sysparm_fields=sys_id,manager,email,sys_created_on,active&sysparm_exclude_reference_link=true&sysparm_limit=0&sysparm_query=ORDERBYsys_id&sysparm_offset=3"),
 			},
 			wantErr: nil,
+			expectedLogs: []map[string]any{
+				{
+					"level":                             "info",
+					"msg":                               "Starting datasource request",
+					fields.FieldRequestEntityExternalID: "sys_user",
+					fields.FieldRequestPageSize:         int64(200),
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Sending request to datasource",
+					fields.FieldRequestEntityExternalID: "sys_user",
+					fields.FieldRequestPageSize:         int64(200),
+					fields.FieldRequestURL:              server.URL + "/api/now/v2/table/sys_user?sysparm_fields=sys_id,email,sys_created_on&sysparm_exclude_reference_link=true&sysparm_limit=200&sysparm_query=ORDERBYsys_id",
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Datasource request completed successfully",
+					fields.FieldRequestEntityExternalID: "sys_user",
+					fields.FieldRequestPageSize:         int64(200),
+					fields.FieldResponseStatusCode:      int64(200),
+					fields.FieldResponseObjectCount:     int64(3),
+					fields.FieldResponseNextCursor:      "https://localhost/api/now/v2/table/sys_user?sysparm_fields=sys_id,manager,email,sys_created_on,active&sysparm_exclude_reference_link=true&sysparm_limit=0&sysparm_query=ORDERBYsys_id&sysparm_offset=3",
+				},
+			},
 		},
 		"last_page": {
 			context: context.Background(),
@@ -887,7 +913,9 @@ func TestGetUsersPage(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			gotRes, gotErr := servicenowClient.GetPage(tt.context, tt.request)
+			ctxWithLogger, observedLogs := testutil.NewContextWithObservableLogger(tt.context)
+
+			gotRes, gotErr := servicenowClient.GetPage(ctxWithLogger, tt.request)
 
 			if !reflect.DeepEqual(gotRes, tt.wantRes) {
 				t.Errorf("gotRes: %v, wantRes: %v", gotRes, tt.wantRes)
@@ -896,6 +924,8 @@ func TestGetUsersPage(t *testing.T) {
 			if !reflect.DeepEqual(gotErr, tt.wantErr) {
 				t.Errorf("gotErr: %v, wantErr: %v", gotErr, tt.wantErr)
 			}
+
+			testutil.ValidateLogOutput(t, observedLogs, tt.expectedLogs)
 		})
 	}
 }

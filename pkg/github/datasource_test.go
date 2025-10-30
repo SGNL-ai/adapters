@@ -15,6 +15,7 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	adapter_api_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	"github.com/sgnl-ai/adapters/pkg/github"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 )
@@ -1076,7 +1077,7 @@ func TestParseRESTResponse(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			gotObjects, gotNextCursor, gotErr := github.ParseRESTReponse(tt.body, tt.links, 0, 0)
+			gotObjects, gotNextCursor, gotErr := github.ParseRESTResponse(tt.body, tt.links, 0, 0)
 
 			if diff := cmp.Diff(tt.wantObjects, gotObjects); diff != "" {
 				t.Errorf("Response mismatch (-want +got):\n%s", diff)
@@ -1105,10 +1106,11 @@ func TestGetOrganizationPage(t *testing.T) {
 	githubClient := github.NewClient(client)
 	server := httptest.NewServer(TestServerHandler)
 	tests := map[string]struct {
-		context context.Context
-		request *github.Request
-		wantRes *github.Response
-		wantErr *framework.Error
+		context      context.Context
+		request      *github.Request
+		wantRes      *github.Response
+		wantErr      *framework.Error
+		expectedLogs []map[string]any
 	}{
 		"first_page": {
 			context: context.Background(),
@@ -1147,6 +1149,32 @@ func TestGetOrganizationPage(t *testing.T) {
 				),
 			},
 			wantErr: nil,
+			expectedLogs: []map[string]any{
+				{
+					"level":                             "info",
+					"msg":                               "Starting datasource request",
+					fields.FieldRequestEntityExternalID: "Organization",
+					fields.FieldRequestPageSize:         int64(1),
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Sending request to datasource",
+					fields.FieldRequestEntityExternalID: "Organization",
+					fields.FieldRequestPageSize:         int64(1),
+					fields.FieldRequestURL:              server.URL + "/api/graphql",
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Datasource request completed successfully",
+					fields.FieldRequestEntityExternalID: "Organization",
+					fields.FieldRequestPageSize:         int64(1),
+					fields.FieldResponseStatusCode:      int64(200),
+					fields.FieldResponseObjectCount:     int64(1),
+					fields.FieldResponseNextCursor: map[string]any{
+						"cursor": "eyJoYXNOZXh0UGFnZSI6ZmFsc2UsImVuZEN1cnNvciI6IlkzVnljMjl5T25ZeU9wS3FRWEoyYVc1a1QzSm5NUWs9Iiwib3JnYW5pemF0aW9uT2Zmc2V0IjowLCJJbm5lclBhZ2VJbmZvIjpudWxsfQ==",
+					},
+				},
+			},
 		},
 		"second_page": {
 			context: context.Background(),
@@ -1230,7 +1258,9 @@ func TestGetOrganizationPage(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			gotRes, gotErr := githubClient.GetPage(tt.context, tt.request)
+			ctxWithLogger, observedLogs := testutil.NewContextWithObservableLogger(tt.context)
+
+			gotRes, gotErr := githubClient.GetPage(ctxWithLogger, tt.request)
 
 			if diff := cmp.Diff(gotRes.Objects, tt.wantRes.Objects); diff != "" {
 				t.Errorf("Differences found: (-got +want)\n%s", diff)
@@ -1247,6 +1277,8 @@ func TestGetOrganizationPage(t *testing.T) {
 			if !reflect.DeepEqual(gotErr, tt.wantErr) {
 				t.Errorf("gotErr: %v, wantErr: %v", gotErr, tt.wantErr)
 			}
+
+			testutil.ValidateLogOutput(t, observedLogs, tt.expectedLogs)
 		})
 	}
 }

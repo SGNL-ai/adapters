@@ -216,6 +216,7 @@ func TestAdapterGetPage(t *testing.T) {
 		request      *framework.Request[hashicorp_adapter.Config]
 		wantResponse framework.Response
 		wantCursor   *pagination.CompositeCursor[string]
+		expectedLogs []map[string]any
 	}{
 		"valid_request_for_hosts": {
 			ctx: context.Background(),
@@ -501,7 +502,13 @@ func TestAdapterGetPage(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			gotResponse := adapter.GetPage(tt.ctx, tt.request)
+			if tt.ctx == nil {
+				tt.ctx = t.Context()
+			}
+
+			ctxWithLogger, observedLogs := testutil.NewContextWithObservableLogger(tt.ctx)
+
+			gotResponse := adapter.GetPage(ctxWithLogger, tt.request)
 
 			if diff := cmp.Diff(tt.wantResponse, gotResponse); diff != "" {
 				t.Errorf("gotResponse: %v, wantResponse: %v. Diff: %v", gotResponse, tt.wantResponse, diff)
@@ -523,6 +530,8 @@ func TestAdapterGetPage(t *testing.T) {
 					t.Errorf("gotCursor: %v, wantCursor: %v", gotCursor, tt.wantCursor)
 				}
 			}
+
+			testutil.ValidateLogOutput(t, observedLogs, tt.expectedLogs)
 		})
 	}
 }
