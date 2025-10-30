@@ -6,14 +6,16 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"os"
 	"time"
 
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	grpc_proxy_v1 "github.com/sgnl-ai/adapter-framework/pkg/grpc_proxy/v1"
 	"github.com/sgnl-ai/adapter-framework/server"
-	"github.com/sgnl-ai/adapters/pkg/ldap"
+	adapter_v1 "github.com/sgnl-ai/adapters/pkg/ldap/v1.0.0"
+	adapter_v2 "github.com/sgnl-ai/adapters/pkg/ldap/v2.0.0"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -38,32 +40,51 @@ func main() {
 		log.Fatal("LDAP_ADAPTER_CONNECTOR_SERVICE_URL environment variable is required")
 	}
 
-	logger := log.New(
-		os.Stdout, "ldap-adapter", log.Lmicroseconds|log.LUTC|log.Lshortfile,
-	)
+	loggerCfg, err := zaplogger.LoadConfig()
+	if err != nil {
+		log.Fatalf("Failed to load logger configuration: %v", err)
+	}
+
+	logger := zaplogger.New(*loggerCfg, zap.WithCaller(true))
+
+	defer func() {
+		if err := logger.Sync(); err != nil {
+			logger.Error("Failed to sync logger", zap.Error(err))
+		}
+	}()
 
 	list, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
-		logger.Fatalf("Failed to open server port: %v.", err)
+		logger.Fatal(fmt.Sprintf("Failed to open server port: %d", port), zap.Error(err))
 	}
 
 	s := grpc.NewServer()
 	stop := make(chan struct{})
-	adapterServer := server.New(stop)
+	adapterServer := server.New(stop, server.WithLogger(zaplogger.NewFrameworkLogger(logger)))
 
 	connectorServiceClient, err := grpc.Dial(
 		connectorServiceURL,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		logger.Fatalf("Failed to create a grpc client to the connector service: %v.", err)
+		logger.Fatal("Failed to create a grpc client to the connector service", zap.Error(err))
 	}
 
-	// Register only the LDAP adapter
+	// Register LDAP-v1.0.0 adapter.
 	server.RegisterAdapter(
 		adapterServer,
 		"LDAP-1.0.0",
-		ldap.NewAdapter(
+		adapter_v1.NewAdapter(
+			grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
+			time.Duration(adapterTTL)*time.Minute,
+			time.Duration(adapterCleanupInterval)*time.Minute),
+	)
+
+	// Register LDAP-v2.0.0 adapter.
+	server.RegisterAdapter(
+		adapterServer,
+		"LDAP-2.0.0",
+		adapter_v2.NewAdapter(
 			grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
 			time.Duration(adapterTTL)*time.Minute,
 			time.Duration(adapterCleanupInterval)*time.Minute),
@@ -71,12 +92,13 @@ func main() {
 
 	api_adapter_v1.RegisterAdapterServer(s, adapterServer)
 
-	logger.Printf("LDAP Adapter gRPC server listening on %d.", port)
+	logger.Info(fmt.Sprintf("Started LDAP adapter gRPC server on port %d", port))
 
 	if err := s.Serve(list); err != nil {
 		close(stop)
-		logger.Fatalf("Failed to serve: %v.", err)
+
+		logger.Fatal(fmt.Sprintf("Failed to listen on server port: %d", port), zap.Error(err))
 	}
 
-	logger.Println("Cleanup complete, exiting.")
+	logger.Info("Cleanup complete, exiting")
 }
