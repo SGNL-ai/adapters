@@ -149,6 +149,8 @@ func FromContext(ctx context.Context) *zap.Logger {
 		}
 	}
 
+	zap.L().Warn("No logger found in context, falling back to global logger")
+
 	// Return the global logger as a fallback.
 	return zap.L()
 }

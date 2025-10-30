@@ -16,6 +16,7 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	aws_adapter "github.com/sgnl-ai/adapters/pkg/aws"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 )
@@ -243,6 +244,7 @@ func TestAdapterGetUserPage(t *testing.T) {
 		inputRequestCursor *pagination.CompositeCursor[string]
 		wantResponse       framework.Response
 		wantCursor         *pagination.CompositeCursor[string]
+		expectedLogs       []map[string]any
 	}{
 		"valid_request_page_1": {
 			ctx: context.Background(),
@@ -312,6 +314,25 @@ func TestAdapterGetUserPage(t *testing.T) {
 			},
 			wantCursor: &pagination.CompositeCursor[string]{
 				Cursor: testutil.GenPtr("2"),
+			},
+			expectedLogs: []map[string]any{
+				{
+					"level":                             "info",
+					"msg":                               "Starting datasource request",
+					fields.FieldRequestEntityExternalID: "User",
+					fields.FieldRequestPageSize:         int64(2),
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Datasource request completed successfully",
+					fields.FieldRequestEntityExternalID: "User",
+					fields.FieldRequestPageSize:         int64(2),
+					fields.FieldResponseStatusCode:      int64(200),
+					fields.FieldResponseObjectCount:     int64(2),
+					fields.FieldResponseNextCursor: map[string]any{
+						"cursor": "2",
+					},
+				},
 			},
 		},
 		"valid_request_page_2": {
@@ -826,7 +847,9 @@ func TestAdapterGetUserPage(t *testing.T) {
 				tt.request.Cursor = encodedCursor
 			}
 
-			gotResponse := adapter.GetPage(tt.ctx, tt.request)
+			ctxWithLogger, observedLogs := testutil.NewContextWithObservableLogger(tt.ctx)
+
+			gotResponse := adapter.GetPage(ctxWithLogger, tt.request)
 
 			if !reflect.DeepEqual(gotResponse, tt.wantResponse) {
 				t.Errorf("gotResponse: %v, wantResponse: %v", gotResponse, tt.wantResponse)
@@ -851,6 +874,8 @@ func TestAdapterGetUserPage(t *testing.T) {
 					t.Errorf("gotCursor: %v, wantCursor: %v", gotCursor, tt.wantCursor)
 				}
 			}
+
+			testutil.ValidateLogOutput(t, observedLogs, tt.expectedLogs)
 		})
 	}
 }
