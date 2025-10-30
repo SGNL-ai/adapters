@@ -2,6 +2,7 @@
 package jira_test
 
 import (
+	"context"
 	"reflect"
 	"strings"
 	"testing"
@@ -392,7 +393,7 @@ func TestValidateGetPageRequest(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			gotErr := adapter.ValidateGetPageRequest(nil, tt.request)
+			gotErr := adapter.ValidateGetPageRequest(context.TODO(), tt.request)
 
 			if !reflect.DeepEqual(gotErr, tt.wantErr) {
 				t.Errorf("gotErr: %v, wantErr: %v", gotErr, tt.wantErr)

@@ -14,6 +14,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	framework "github.com/sgnl-ai/adapter-framework"
 	adapter_api_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 	"github.com/sgnl-ai/adapters/pkg/workday"
@@ -200,10 +201,11 @@ func TestGetWorkerPage(t *testing.T) {
 	server := httptest.NewServer(TestServerHandler)
 
 	tests := map[string]struct {
-		context context.Context
-		request *workday.Request
-		wantRes *workday.Response
-		wantErr *framework.Error
+		context      context.Context
+		request      *workday.Request
+		wantRes      *workday.Response
+		wantErr      *framework.Error
+		expectedLogs []map[string]any
 	}{
 		"first_page": {
 			context: context.Background(),
@@ -400,6 +402,32 @@ func TestGetWorkerPage(t *testing.T) {
 				},
 			},
 			wantErr: nil,
+			expectedLogs: []map[string]any{
+				{
+					"level":                             "info",
+					"msg":                               "Starting datasource request",
+					fields.FieldRequestEntityExternalID: "allWorkers",
+					fields.FieldRequestPageSize:         int64(5),
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Sending request to datasource",
+					fields.FieldRequestEntityExternalID: "allWorkers",
+					fields.FieldRequestPageSize:         int64(5),
+					fields.FieldRequestURL:              server.URL + "/api/wql/v1/SGNL/data?limit=5&offset=0&query=SELECT+FTE%2C+company%2C+email_Work%2C+employeeID%2C+employeeType%2C+gender%2C+hireDate%2C+jobTitle%2C+managementLevel%2C+positionID%2C+worker%2C+workerActive+FROM+allWorkers",
+				},
+				{
+					"level":                             "info",
+					"msg":                               "Datasource request completed successfully",
+					fields.FieldRequestEntityExternalID: "allWorkers",
+					fields.FieldRequestPageSize:         int64(5),
+					fields.FieldResponseStatusCode:      int64(200),
+					fields.FieldResponseObjectCount:     int64(5),
+					fields.FieldResponseNextCursor: map[string]any{
+						"cursor": int64(5),
+					},
+				},
+			},
 		},
 		"second_page": {
 			context: context.Background(),
@@ -911,7 +939,9 @@ func TestGetWorkerPage(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			gotRes, gotErr := workdayClient.GetPage(tt.context, tt.request)
+			ctxWithLogger, observedLogs := testutil.NewContextWithObservableLogger(tt.context)
+
+			gotRes, gotErr := workdayClient.GetPage(ctxWithLogger, tt.request)
 
 			if diff := cmp.Diff(gotRes.Objects, tt.wantRes.Objects); diff != "" {
 				t.Errorf("Differences found: (-got +want)\n%s", diff)
@@ -928,6 +958,8 @@ func TestGetWorkerPage(t *testing.T) {
 			if !reflect.DeepEqual(gotErr, tt.wantErr) {
 				t.Errorf("gotErr: %v, wantErr: %v", gotErr, tt.wantErr)
 			}
+
+			testutil.ValidateLogOutput(t, observedLogs, tt.expectedLogs)
 		})
 	}
 }

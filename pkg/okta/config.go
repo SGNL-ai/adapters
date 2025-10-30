@@ -23,7 +23,8 @@ var supportedAPIVersions = map[string]struct{}{
     "apiVersion": "v1",
     "filters": {
         "User": "status eq \"ACTIVE\"",
-        "Group": "type eq \"OKTA_GROUP\""
+        "Group": "type eq \"OKTA_GROUP\"",
+        "Application": "status eq \"ACTIVE\""
     },
 	"search": {
         "User": "profile.department eq \"Engineering\""

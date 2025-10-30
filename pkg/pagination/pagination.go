@@ -58,7 +58,7 @@ func UnmarshalCursor[T int64 | string](cursor string) (*CompositeCursor[T], *fra
 	}
 
 	unmarshalErr := json.Unmarshal(cursorBytes, unmarshaledCursor)
-	if unmarshalErr != nil || unmarshaledCursor == nil {
+	if unmarshalErr != nil {
 		return nil, &framework.Error{
 			Message: fmt.Sprintf("Failed to unmarshal JSON cursor: %v.", unmarshalErr),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_PAGE_REQUEST_CONFIG,
@@ -248,7 +248,7 @@ func (c *CompositeCursor[T]) ParseOffsetValue() (int64, *framework.Error) {
 		offsetInt, err := strconv.ParseInt(offsetStr, 10, 64)
 		if err != nil {
 			return 0, &framework.Error{
-				Message: fmt.Sprintf("unable to parse cursor: want valid number, got {%v}", *c.Cursor),
+				Message: fmt.Sprintf("Unable to parse cursor: want valid number, got {%v}.", *c.Cursor),
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_PAGE_REQUEST_CONFIG,
 			}
 		}
@@ -312,7 +312,7 @@ func PaginateObjects[T int64 | string](
 
 		if !ok {
 			return nil, nil, &framework.Error{
-				Message: "unable to convert next index to cursor type",
+				Message: "Unable to convert next index to cursor type.",
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_PAGE_REQUEST_CONFIG,
 			}
 		}
