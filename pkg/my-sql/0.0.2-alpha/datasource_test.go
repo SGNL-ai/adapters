@@ -114,7 +114,7 @@ var (
 func TestGivenRequestWithoutConnectorCtxWhenGetPageRequestedThenSQLResponseStatusIsOk(t *testing.T) {
 	// Arrange
 	db, mock, _ := sqlmock.New()
-	mockQuery := func(mockDB *sql.DB, query string, _ ...any) (*sql.Rows, error) {
+	mockQuery := func(_ *sql.DB, query string, _ ...any) (*sql.Rows, error) {
 		expectedQuery := "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id`, " +
 			"COUNT(*) OVER() AS `total_remaining_rows` FROM `users` ORDER BY `str_id` ASC LIMIT ?"
 		mock.ExpectQuery(regexp.QuoteMeta(expectedQuery)).WillReturnRows(sqlRows)
@@ -201,7 +201,7 @@ func TestGivenRequestWithoutConnectorCtxWhenGetPageRequestedThenSQLResponseStatu
 func TestGivenRequestWithConnectorCtxAndWithoutProxyWhenGetPageRequestedThenSQLResponseStatusIsOk(t *testing.T) {
 	// Arrange
 	db, mock, _ := sqlmock.New()
-	mockQuery := func(mockDB *sql.DB, query string, _ ...any) (*sql.Rows, error) {
+	mockQuery := func(_ *sql.DB, query string, _ ...any) (*sql.Rows, error) {
 		expectedQuery := "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id`, " +
 			"COUNT(*) OVER() AS `total_remaining_rows` FROM `users` ORDER BY `str_id` ASC"
 		mock.ExpectQuery(regexp.QuoteMeta(expectedQuery)).WillReturnRows(sqlRows)
