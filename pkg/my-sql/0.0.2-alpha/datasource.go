@@ -255,7 +255,7 @@ func (d *Datasource) Request(ctx context.Context, request *Request) (*Response, 
 	}
 
 	// Set NextCursor if we have any objects (continue until zero rows)
-	if len(objs) >= 1 {
+	if len(objs) > 0 {
 		lastObj := objs[len(objs)-1]
 
 		lastID, ok := lastObj[request.UniqueAttributeExternalID]
