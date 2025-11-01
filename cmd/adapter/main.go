@@ -56,6 +56,10 @@ func main() {
 	viper.SetDefault("MAX_S3_CSV_ROW_SIZE_BYTES", 1*MiB)
 	// ADAPTER_MAX_S3_BYTES_TO_PROCESS_PER_PAGE: The maximum number of bytes to process per page (default: 10MiB)
 	viper.SetDefault("MAX_S3_BYTES_TO_PROCESS_PER_PAGE", 10*MiB)
+	// ADAPTER_MAX_CALL_RECV_MSG_SIZE_MB: Maximum gRPC receive message size in MB (default: 8MB, matches ingestion)
+	viper.SetDefault("MAX_CALL_RECV_MSG_SIZE_MB", 8)
+	// ADAPTER_MAX_CALL_SEND_MSG_SIZE_MB: Maximum gRPC send message size in MB (default: 8MB, matches ingestion)
+	viper.SetDefault("MAX_CALL_SEND_MSG_SIZE_MB", 8)
 	// Read config from environment variables
 	var (
 		port                     = viper.GetInt("PORT")                        // ADAPTER_PORT
@@ -65,6 +69,8 @@ func main() {
 		maxCSVRowSizeBytes       = viper.GetInt64("MAX_S3_CSV_ROW_SIZE_BYTES") // ADAPTER_MAX_S3_CSV_ROW_SIZE_BYTES
 		maxBytesToProcessPerPage = viper.GetInt64(
 			"MAX_S3_BYTES_TO_PROCESS_PER_PAGE") // ADAPTER_MAX_S3_BYTES_TO_PROCESS_PER_PAGE
+		maxCallRecvMsgSizeMB = viper.GetInt("MAX_CALL_RECV_MSG_SIZE_MB") // ADAPTER_MAX_CALL_RECV_MSG_SIZE_MB
+		maxCallSendMsgSizeMB = viper.GetInt("MAX_CALL_SEND_MSG_SIZE_MB") // ADAPTER_MAX_CALL_SEND_MSG_SIZE_MB
 	)
 
 	if connectorServiceURL == "" {
@@ -98,6 +104,10 @@ func main() {
 	connectorServiceClient, err := grpc.NewClient(
 		connectorServiceURL,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDefaultCallOptions(
+			grpc.MaxCallRecvMsgSize(maxCallRecvMsgSizeMB),
+			grpc.MaxCallSendMsgSize(maxCallSendMsgSizeMB),
+		),
 	)
 	if err != nil {
 		logger.Fatal("Failed to create a grpc client to the connector service", zap.Error(err))

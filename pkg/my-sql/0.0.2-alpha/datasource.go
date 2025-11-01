@@ -34,6 +34,84 @@ func NewClient(client SQLClient) Client {
 	}
 }
 
+// validateProxyResponse validates the proxy response and handles all error cases.
+// Returns the unmarshaled Response or a framework.Error if any validation fails.
+func validateProxyResponse(proxyResp *grpc_proxy_v1.Response, err error) (*Response, *framework.Error) {
+	response := &Response{}
+
+	// Check for gRPC call error
+	if err != nil {
+		if st, ok := status.FromError(err); ok {
+			code := customerror.GRPCErrStatusToHTTPStatusCode(st, err)
+			response.StatusCode = code
+
+			return response, nil
+		}
+
+		return nil, &framework.Error{
+			Message: fmt.Sprintf("Error querying SQL server: %v.", err),
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}
+	}
+
+	// Check for nil response
+	if proxyResp == nil {
+		return nil, &framework.Error{
+			Message: "Error received nil response from the proxy.",
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}
+	}
+
+	// Check Response.Error field (proxy-level error)
+	if proxyResp.Error != "" {
+		return nil, &framework.Error{
+			Message: fmt.Sprintf("Error received from proxy: %s.", proxyResp.Error),
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}
+	}
+
+	// Get SqlQueryResponse
+	resp := proxyResp.GetSqlQueryResponse()
+	if resp == nil {
+		return nil, &framework.Error{
+			Message: "Error received nil SqlQueryResponse from the proxy.",
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}
+	}
+
+	// Check SQLQueryResponse.Error field (database-level error)
+	if resp.Error != "" {
+		var respErr framework.Error
+		// Unmarshal the error response from the proxy.
+		if err := json.Unmarshal([]byte(resp.Error), &respErr); err != nil {
+			return nil, &framework.Error{
+				Message: fmt.Sprintf("Error unmarshalling SQL error response from the proxy: %v.", err),
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+			}
+		}
+
+		return nil, &respErr
+	}
+
+	// Check for empty response string
+	if resp.Response == "" {
+		return nil, &framework.Error{
+			Message: "Error received empty response from the proxy",
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}
+	}
+
+	// Unmarshal the final response
+	if err := json.Unmarshal([]byte(resp.Response), response); err != nil {
+		return nil, &framework.Error{
+			Message: fmt.Sprintf("Error unmarshalling SQL response from the proxy: %v.", err),
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}
+	}
+
+	return response, nil
+}
+
 // ProxyRequest sends serialized SQL query request to the on-premises connector.
 func (d *Datasource) ProxyRequest(ctx context.Context, request *Request, ci *connector.ConnectorInfo,
 ) (*Response, *framework.Error) {
@@ -72,41 +150,18 @@ func (d *Datasource) ProxyRequest(ctx context.Context, request *Request, ci *con
 
 	logger.Info("Sending request to datasource via proxy")
 
-	response := &Response{}
-
 	proxyResp, err := d.Client.Proxy(ctx, proxyRequest)
-	if err != nil {
+
+	// Validate and unmarshal proxy response and handle all error cases.
+	response, frameworkErr := validateProxyResponse(proxyResp, err)
+	if frameworkErr != nil {
 		logger.Error("Datasource responded with an error",
 			fields.SGNLEventTypeError(),
-			zap.Error(err),
+			zap.String("error_message", frameworkErr.Message),
+			zap.String("error_code", frameworkErr.Code.String()),
 		)
 
-		if st, ok := status.FromError(err); ok {
-			code := customerror.GRPCErrStatusToHTTPStatusCode(st, err)
-			response.StatusCode = code
-
-			return response, nil
-		}
-
-		return nil, &framework.Error{
-			Message: fmt.Sprintf("Error querying SQL server: %v.", err),
-			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
-		}
-	}
-
-	resp := proxyResp.GetSqlQueryResponse()
-	if resp == nil {
-		return nil, &framework.Error{
-			Message: "Error received nil response from the proxy.",
-			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
-		}
-	}
-
-	if err = json.Unmarshal([]byte(resp.Response), response); err != nil {
-		return nil, &framework.Error{
-			Message: fmt.Sprintf("Error unmarshalling SQL response from the proxy: %v.", err),
-			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
-		}
+		return nil, frameworkErr
 	}
 
 	logger.Info("Datasource request completed successfully",
