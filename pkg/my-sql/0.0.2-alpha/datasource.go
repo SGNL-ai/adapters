@@ -96,7 +96,7 @@ func validateProxyResponse(proxyResp *grpc_proxy_v1.Response, err error) (*Respo
 	// Check for empty response string
 	if resp.Response == "" {
 		return nil, &framework.Error{
-			Message: "Error received empty response from the proxy",
+			Message: "Error received empty response from the proxy.",
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		}
 	}

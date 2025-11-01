@@ -105,8 +105,8 @@ func main() {
 		connectorServiceURL,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithDefaultCallOptions(
-			grpc.MaxCallRecvMsgSize(maxCallRecvMsgSizeMB),
-			grpc.MaxCallSendMsgSize(maxCallSendMsgSizeMB),
+			grpc.MaxCallRecvMsgSize(maxCallRecvMsgSizeMB*MiB),
+			grpc.MaxCallSendMsgSize(maxCallSendMsgSizeMB*MiB),
 		),
 	)
 	if err != nil {
