@@ -30,10 +30,11 @@ type mockSQLClient struct {
 	proxyErr     error
 	proxyRespErr string
 	proxyResp    string
-	mockConnect  func(string) error
-	mockQuery    func(string, ...any) (*sql.Rows, error)
+	mockConnect  func(string) (*sql.DB, error)
+	mockQuery    func(*sql.DB, string, ...any) (*sql.Rows, error)
 	mockProxy    func(context.Context, *grpc_proxy_v1.ProxyRequestMessage,
 	) (*grpc_proxy_v1.Response, error)
+	mockDB *sql.DB
 }
 
 func (c *mockSQLClient) IsProxied() bool {
@@ -50,10 +51,17 @@ func (c *mockSQLClient) Connect(name string) (*sql.DB, error) {
 	}
 
 	if c.mockConnect != nil {
-		return nil, c.mockConnect(name)
+		return c.mockConnect(name)
 	}
 
-	return &sql.DB{}, nil
+	if c.mockDB != nil {
+		return c.mockDB, nil
+	}
+
+	// Return a properly initialized mock DB for tests
+	db, _, _ := sqlmock.New()
+
+	return db, nil
 }
 
 func (c *mockSQLClient) Query(db *sql.DB, query string, args ...any) (*sql.Rows, error) {
@@ -62,7 +70,7 @@ func (c *mockSQLClient) Query(db *sql.DB, query string, args ...any) (*sql.Rows,
 	}
 
 	if c.mockQuery != nil {
-		return c.mockQuery(query, args)
+		return c.mockQuery(db, query, args...)
 	}
 
 	if c.queryErr != nil {
@@ -106,7 +114,7 @@ var (
 func TestGivenRequestWithoutConnectorCtxWhenGetPageRequestedThenSQLResponseStatusIsOk(t *testing.T) {
 	// Arrange
 	db, mock, _ := sqlmock.New()
-	mockQuery := func(query string, _ ...any) (*sql.Rows, error) {
+	mockQuery := func(mockDB *sql.DB, query string, _ ...any) (*sql.Rows, error) {
 		expectedQuery := "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id`, " +
 			"COUNT(*) OVER() AS `total_remaining_rows` FROM `users` ORDER BY `str_id` ASC LIMIT ?"
 		mock.ExpectQuery(regexp.QuoteMeta(expectedQuery)).WillReturnRows(sqlRows)
@@ -115,6 +123,7 @@ func TestGivenRequestWithoutConnectorCtxWhenGetPageRequestedThenSQLResponseStatu
 	}
 	ds := Datasource{
 		Client: &mockSQLClient{
+			mockDB:    db,
 			mockQuery: mockQuery,
 		},
 	}
@@ -192,7 +201,7 @@ func TestGivenRequestWithoutConnectorCtxWhenGetPageRequestedThenSQLResponseStatu
 func TestGivenRequestWithConnectorCtxAndWithoutProxyWhenGetPageRequestedThenSQLResponseStatusIsOk(t *testing.T) {
 	// Arrange
 	db, mock, _ := sqlmock.New()
-	mockQuery := func(query string, _ ...any) (*sql.Rows, error) {
+	mockQuery := func(mockDB *sql.DB, query string, _ ...any) (*sql.Rows, error) {
 		expectedQuery := "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id`, " +
 			"COUNT(*) OVER() AS `total_remaining_rows` FROM `users` ORDER BY `str_id` ASC"
 		mock.ExpectQuery(regexp.QuoteMeta(expectedQuery)).WillReturnRows(sqlRows)
@@ -201,6 +210,7 @@ func TestGivenRequestWithConnectorCtxAndWithoutProxyWhenGetPageRequestedThenSQLR
 	}
 	ds := Datasource{
 		Client: &mockSQLClient{
+			mockDB:    db,
 			mockQuery: mockQuery,
 		},
 	}
