@@ -135,6 +135,7 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 		).WithArgs(values...).WillReturnRows(mockRows)
 
 	// Third (second last) page of users.
+	//nolint:dupl
 	case pageSize == 5 && cursor == "10":
 		columns := []*sqlmock.Column{
 			sqlmock.NewColumn("id").OfType("VARCHAR", ""),
@@ -246,6 +247,7 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 		).WithArgs(values...).WillReturnRows(mockRows)
 
 	// Test: First page of users filtered active only and risk > 2
+	//nolint:dupl
 	case pageSize == 5 && cursor == "204":
 		columns := []*sqlmock.Column{
 			sqlmock.NewColumn("id").OfType("VARCHAR", ""),

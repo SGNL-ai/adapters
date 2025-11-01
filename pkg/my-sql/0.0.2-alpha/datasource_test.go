@@ -102,9 +102,9 @@ func TestGivenRequestWithoutConnectorCtxWhenGetPageRequestedThenSQLResponseStatu
 	// Arrange
 	db, mock, _ := sqlmock.New()
 	mockQuery := func(query string, _ ...any) (*sql.Rows, error) {
-		mock.ExpectQuery(
-			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id`, COUNT(*) OVER() AS `total_remaining_rows` FROM `users` ORDER BY `str_id` ASC LIMIT ?"),
-		).WillReturnRows(sqlRows)
+		expectedQuery := "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id`, " +
+			"COUNT(*) OVER() AS `total_remaining_rows` FROM `users` ORDER BY `str_id` ASC LIMIT ?"
+		mock.ExpectQuery(regexp.QuoteMeta(expectedQuery)).WillReturnRows(sqlRows)
 
 		return db.Query(query)
 	}
@@ -188,9 +188,9 @@ func TestGivenRequestWithConnectorCtxAndWithoutProxyWhenGetPageRequestedThenSQLR
 	// Arrange
 	db, mock, _ := sqlmock.New()
 	mockQuery := func(query string, _ ...any) (*sql.Rows, error) {
-		mock.ExpectQuery(
-			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id`, COUNT(*) OVER() AS `total_remaining_rows` FROM `users` ORDER BY `str_id` ASC"),
-		).WillReturnRows(sqlRows)
+		expectedQuery := "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id`, " +
+			"COUNT(*) OVER() AS `total_remaining_rows` FROM `users` ORDER BY `str_id` ASC"
+		mock.ExpectQuery(regexp.QuoteMeta(expectedQuery)).WillReturnRows(sqlRows)
 
 		return db.Query(query)
 	}
