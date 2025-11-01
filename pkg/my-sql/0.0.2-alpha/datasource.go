@@ -169,6 +169,8 @@ func (d *Datasource) Request(ctx context.Context, request *Request) (*Response, 
 		}
 	}
 
+	defer rows.Close() // Ensure rows are closed to prevent resource leaks
+
 	// Parse the rows to a list of objects and the total remaining count
 	objs, totalRemaining, frameworkErr := ParseResponse(rows, request)
 	if frameworkErr != nil {
