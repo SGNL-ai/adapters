@@ -15,7 +15,6 @@ import (
 )
 
 type MockSQLClient struct {
-	DB   *sql.DB
 	Mock sqlmock.Sqlmock
 }
 
@@ -31,24 +30,23 @@ func (c *MockSQLClient) IsProxied() bool {
 	return false
 }
 
-func (c *MockSQLClient) Connect(datasourceName string) error {
+func (c *MockSQLClient) Connect(datasourceName string) (*sql.DB, error) {
 	if strings.Contains(datasourceName, TestDatasourceForConnectFailure) {
-		return errors.New("failed to connect to mock sql service")
+		return nil, errors.New("failed to connect to mock sql service")
 	}
 
 	db, mock, err := sqlmock.New()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	c.Mock = mock
-	c.DB = db
 
-	return nil
+	return db, nil
 }
 
 // nolint: lll
-func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
+func (c *MockSQLClient) Query(db *sql.DB, query string, args ...any) (*sql.Rows, error) {
 	var (
 		pageSize int64
 		cursor   string
@@ -279,7 +277,7 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 
 	// This is not a prepared query so this may be vulnerable to SQL injection attacks, but this is only used
 	// for tests so this is not a concern.
-	rows, err := c.DB.Query(query, args...)
+	rows, err := db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}

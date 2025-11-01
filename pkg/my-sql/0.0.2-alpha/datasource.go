@@ -134,7 +134,8 @@ func (d *Datasource) Request(ctx context.Context, request *Request) (*Response, 
 		return nil, err
 	}
 
-	if err := d.Client.Connect(request.DatasourceName()); err != nil {
+	db, err := d.Client.Connect(request.DatasourceName())
+	if err != nil {
 		logger.Error("Failed to connect to datasource",
 			fields.SGNLEventTypeError(),
 			zap.Error(err),
@@ -156,7 +157,7 @@ func (d *Datasource) Request(ctx context.Context, request *Request) (*Response, 
 
 	logger.Info("Sending request to datasource")
 
-	rows, err := d.Client.Query(query, args...)
+	rows, err := d.Client.Query(db, query, args...)
 	if err != nil {
 		logger.Error("Request to datasource failed",
 			fields.SGNLEventTypeError(),
@@ -169,7 +170,23 @@ func (d *Datasource) Request(ctx context.Context, request *Request) (*Response, 
 		}
 	}
 
-	defer rows.Close() // Ensure rows are closed to prevent resource leaks
+	defer func() {
+		rows.Close() // Ensure rows are closed to prevent resource leaks
+
+		// In the current approach, each request is opening a new DB connection.
+		// So, we are closing the database connection at the end of the request.
+
+		// TODO: Fix critical performance issue
+		// Opening a new connection per request is extremely resource-intensive
+		// and risky. However, since this adapter must dynamically connect to
+		// different databases, we cannot establish a single connection at
+		// application startup.
+		//
+		// Solution: Implement a connection pool cache that:
+		// - Maintains pools for each unique database
+		// - Reuses existing connections when available
+		db.Close()
+	}()
 
 	// Parse the rows to a list of objects and the total remaining count
 	objs, totalRemaining, frameworkErr := ParseResponse(rows, request)

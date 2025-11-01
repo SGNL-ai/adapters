@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"regexp"
 	"testing"
@@ -43,19 +44,23 @@ func (c *mockSQLClient) IsProxied() bool {
 	return false
 }
 
-func (c *mockSQLClient) Connect(name string) error {
+func (c *mockSQLClient) Connect(name string) (*sql.DB, error) {
 	if c.connectErr != nil {
-		return c.connectErr
+		return nil, c.connectErr
 	}
 
 	if c.mockConnect != nil {
-		return c.mockConnect(name)
+		return nil, c.mockConnect(name)
 	}
 
-	return nil
+	return &sql.DB{}, nil
 }
 
-func (c *mockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
+func (c *mockSQLClient) Query(db *sql.DB, query string, args ...any) (*sql.Rows, error) {
+	if db == nil {
+		return nil, errors.New("no open datasource connection")
+	}
+
 	if c.mockQuery != nil {
 		return c.mockQuery(query, args)
 	}
