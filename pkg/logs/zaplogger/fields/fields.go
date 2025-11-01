@@ -23,6 +23,7 @@ const (
 	FieldResponseObjectCount      = "responseObjectCount"
 	FieldResponseRetryAfterHeader = "responseRetryAfterHeader"
 	FieldResponseStatusCode       = "responseStatusCode"
+	FieldTotalRemainingObjects    = "totalRemainingObjects"
 
 	// FieldSGNLEventType is a special field used by SGNL to identify the type of event being logged.
 	FieldSGNLEventType      = "eventType"
@@ -101,4 +102,8 @@ func ResponseStatusCode(statusCode int) zap.Field {
 
 func SGNLEventTypeError() zap.Field {
 	return zap.String(FieldSGNLEventType, SGNLEventTypeErrorValue)
+}
+
+func TotalRemainingObjects(totalRemaning int64) zap.Field {
+	return zap.Int64(FieldTotalRemainingObjects, totalRemaning)
 }

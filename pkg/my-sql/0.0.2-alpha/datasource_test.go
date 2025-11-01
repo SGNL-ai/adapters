@@ -91,10 +91,11 @@ var (
 	sqlColumns = []*sqlmock.Column{
 		sqlmock.NewColumn("id").OfType("VARCHAR", ""),
 		sqlmock.NewColumn("name").OfType("VARCHAR", ""),
+		sqlmock.NewColumn("total_remaining_rows").OfType("BIGINT", ""),
 	}
 	sqlRows = sqlmock.NewRowsWithColumnDefinition(sqlColumns...).
-		AddRow("1", "test-name-1").
-		AddRow("2", "test-name-2")
+		AddRow("1", "test-name-1", 1000).
+		AddRow("2", "test-name-2", 1000)
 )
 
 func TestGivenRequestWithoutConnectorCtxWhenGetPageRequestedThenSQLResponseStatusIsOk(t *testing.T) {
@@ -102,7 +103,7 @@ func TestGivenRequestWithoutConnectorCtxWhenGetPageRequestedThenSQLResponseStatu
 	db, mock, _ := sqlmock.New()
 	mockQuery := func(query string, _ ...any) (*sql.Rows, error) {
 		mock.ExpectQuery(
-			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT ?"),
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id`, COUNT(*) OVER() AS `total_remaining_rows` FROM `users` ORDER BY `str_id` ASC LIMIT ?"),
 		).WillReturnRows(sqlRows)
 
 		return db.Query(query)
@@ -159,9 +160,10 @@ func TestGivenRequestWithoutConnectorCtxWhenGetPageRequestedThenSQLResponseStatu
 			fields.FieldRequestPageSize:         int64(100),
 			fields.FieldResponseStatusCode:      int64(200),
 			fields.FieldResponseObjectCount:     int64(2),
-			fields.FieldResponseNextCursor:      nil,
+			fields.FieldResponseNextCursor:      "2",
 			fields.FieldBaseURL:                 "localhost:3306",
 			fields.FieldDatabase:                "testdb",
+			fields.FieldTotalRemainingObjects:   int64(1000),
 		},
 	}
 
@@ -187,7 +189,7 @@ func TestGivenRequestWithConnectorCtxAndWithoutProxyWhenGetPageRequestedThenSQLR
 	db, mock, _ := sqlmock.New()
 	mockQuery := func(query string, _ ...any) (*sql.Rows, error) {
 		mock.ExpectQuery(
-			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC"),
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id`, COUNT(*) OVER() AS `total_remaining_rows` FROM `users` ORDER BY `str_id` ASC"),
 		).WillReturnRows(sqlRows)
 
 		return db.Query(query)

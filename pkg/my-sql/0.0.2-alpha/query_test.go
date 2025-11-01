@@ -33,7 +33,7 @@ func TestConstructQuery(t *testing.T) {
 				PageSize:                  100,
 				Cursor:                    testutil.GenPtr("500"),
 			},
-			wantQuery: "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE (CAST(`id` AS CHAR(50)) > ?) ORDER BY `str_id` ASC LIMIT ?",
+			wantQuery: "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id`, COUNT(*) OVER() AS `total_remaining_rows` FROM `users` WHERE (CAST(`id` AS CHAR(50)) > ?) ORDER BY `str_id` ASC LIMIT ?",
 			wantAttrs: []any{
 				string("500"),
 				int64(100),
@@ -52,7 +52,7 @@ func TestConstructQuery(t *testing.T) {
 				UniqueAttributeExternalID: "groupId",
 				PageSize:                  100,
 			},
-			wantQuery: "SELECT *, CAST(`groupId` AS CHAR(50)) AS `str_id` FROM `groups` WHERE (`status` = ?) ORDER BY `str_id` ASC LIMIT ?",
+			wantQuery: "SELECT *, CAST(`groupId` AS CHAR(50)) AS `str_id`, COUNT(*) OVER() AS `total_remaining_rows` FROM `groups` WHERE (`status` = ?) ORDER BY `str_id` ASC LIMIT ?",
 			wantAttrs: []any{
 				"active",
 				int64(100),
@@ -88,7 +88,7 @@ func TestConstructQuery(t *testing.T) {
 				}),
 				UniqueAttributeExternalID: "id",
 			},
-			wantQuery: "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE (((`age` > ?) AND (`country` = ?)) OR (`verified` IS TRUE)) ORDER BY `str_id` ASC",
+			wantQuery: "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id`, COUNT(*) OVER() AS `total_remaining_rows` FROM `users` WHERE (((`age` > ?) AND (`country` = ?)) OR (`verified` IS TRUE)) ORDER BY `str_id` ASC",
 			wantAttrs: []any{
 				int64(18),
 				"USA",
@@ -166,7 +166,7 @@ func TestConstructQuery(t *testing.T) {
 				PageSize:                  100,
 				Cursor:                    testutil.GenPtr("500"),
 			},
-			wantQuery: "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE ((CAST(`id` AS CHAR(50)) > ?) AND (`status` = ?)) ORDER BY `str_id` ASC LIMIT ?",
+			wantQuery: "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id`, COUNT(*) OVER() AS `total_remaining_rows` FROM `users` WHERE ((CAST(`id` AS CHAR(50)) > ?) AND (`status` = ?)) ORDER BY `str_id` ASC LIMIT ?",
 			wantAttrs: []any{
 				string("500"),
 				"active';DROP sampletable;--",
@@ -240,7 +240,7 @@ func TestConstructQuery(t *testing.T) {
 				UniqueAttributeExternalID: "groupId",
 				PageSize:                  100,
 			},
-			wantQuery: "SELECT *, CAST(`groupId` AS CHAR(50)) AS `str_id` FROM `groups` WHERE ((`age` > ?) AND (`age` < ?) AND (`balance` >= ?) AND (`balance` <= ?) AND (`status` = ?) AND (`riskScore` != ?) AND (`verified` IS TRUE) AND (`enabled` IS NOT FALSE) AND (`countryCode` IN (?, ?, ?)) AND (`assignedCases` IN (?, ?, ?)) AND (`status` IN (?))) ORDER BY `str_id` ASC LIMIT ?",
+			wantQuery: "SELECT *, CAST(`groupId` AS CHAR(50)) AS `str_id`, COUNT(*) OVER() AS `total_remaining_rows` FROM `groups` WHERE ((`age` > ?) AND (`age` < ?) AND (`balance` >= ?) AND (`balance` <= ?) AND (`status` = ?) AND (`riskScore` != ?) AND (`verified` IS TRUE) AND (`enabled` IS NOT FALSE) AND (`countryCode` IN (?, ?, ?)) AND (`assignedCases` IN (?, ?, ?)) AND (`status` IN (?))) ORDER BY `str_id` ASC LIMIT ?",
 			wantAttrs: []any{
 				int64(21),
 				int64(100),

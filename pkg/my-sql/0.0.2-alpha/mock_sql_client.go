@@ -85,14 +85,15 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 			sqlmock.NewColumn("employee_number").OfType("INT", ""),
 			sqlmock.NewColumn("risk_score").OfType("FLOAT", ""),
 			sqlmock.NewColumn("last_modified").OfType("DATETIME", ""),
+			sqlmock.NewColumn("total_remaining_rows").OfType("BIGINT", ""),
 		}
 
 		mockRows := sqlmock.NewRowsWithColumnDefinition(columns...).
-			AddRow("a20bab52-52e3-46c2-bd6a-2ad1512f713f", "Ernesto Gregg", true, 1, 1.0, "2025-02-12T22:38:00+00:00").
-			AddRow("d35c298e-d343-4ad8-ac35-f7c5d9d47cb9", "Eleanor Watts", true, 2, 1.562, "2025-02-12T22:38:00+00:00").
-			AddRow("62c74831-be4a-4cad-88fa-4e02640269d2", "Chris Griffin", true, 3, 4.23, "2025-02-12T22:38:00+00:00").
-			AddRow("65b8fa65-25c5-4682-997f-ca86923e59e4", "Casey Manning", false, 4, 10, "2025-02-12T22:38:00+00:00").
-			AddRow("6598acf9-cccc-48c9-ab9b-754bbe9ad146", "Helen Gray", true, 5, 3.25, "2025-02-12T22:38:00+00:00")
+			AddRow("a20bab52-52e3-46c2-bd6a-2ad1512f713f", "Ernesto Gregg", true, 1, 1.0, "2025-02-12T22:38:00+00:00", 7).
+			AddRow("d35c298e-d343-4ad8-ac35-f7c5d9d47cb9", "Eleanor Watts", true, 2, 1.562, "2025-02-12T22:38:00+00:00", 7).
+			AddRow("62c74831-be4a-4cad-88fa-4e02640269d2", "Chris Griffin", true, 3, 4.23, "2025-02-12T22:38:00+00:00", 7).
+			AddRow("65b8fa65-25c5-4682-997f-ca86923e59e4", "Casey Manning", false, 4, 10, "2025-02-12T22:38:00+00:00", 7).
+			AddRow("6598acf9-cccc-48c9-ab9b-754bbe9ad146", "Helen Gray", true, 5, 3.25, "2025-02-12T22:38:00+00:00", 7)
 
 		values := []driver.Value{}
 
@@ -101,7 +102,7 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 		}
 
 		c.Mock.ExpectQuery(
-			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT ?"),
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id`, COUNT(*) OVER() AS `total_remaining_rows` FROM `users` ORDER BY `str_id` ASC LIMIT ?"),
 		).WithArgs(values...).WillReturnRows(mockRows)
 
 	// Second (middle) page of users. Tests providing BOOLs as TINYINT.
@@ -113,14 +114,15 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 			sqlmock.NewColumn("employee_number").OfType("INT", ""),
 			sqlmock.NewColumn("risk_score").OfType("FLOAT", ""),
 			sqlmock.NewColumn("last_modified").OfType("DATETIME", ""),
+			sqlmock.NewColumn("total_remaining_rows").OfType("BIGINT", ""),
 		}
 
 		mockRows := sqlmock.NewRowsWithColumnDefinition(columns...).
-			AddRow("7390f7fc-0145-4691-9f55-b5c783369db9", "Martha Pollard", 1, 6, 1.0, "2025-02-12T22:38:00+00:00").
-			AddRow("745cf6d6-55c8-4863-9bf6-1b1a80ff1515", "Roxanne Dixon", 1, 7, 1.0, "2025-02-12T22:38:00+00:00").
-			AddRow("776b45f0-a2e3-4424-8ef7-84f3052bebc7", "Verna Ferrell", 1, 8, 1.0, "2025-02-12T22:38:00+00:00").
-			AddRow("8b9643f9-25b4-458a-ad4f-81e61d106a57", "Adrian Carey", 1, 9, 1.0, "2025-02-12T22:38:00+00:00").
-			AddRow("88ff7d742-fb3c-4103-af4b-fcd4315bae66", "Joshua Martinez", 1, 10, 1.0, "2025-02-12T22:38:00+00:00")
+			AddRow("7390f7fc-0145-4691-9f55-b5c783369db9", "Martha Pollard", 1, 6, 1.0, "2025-02-12T22:38:00+00:00", 2).
+			AddRow("745cf6d6-55c8-4863-9bf6-1b1a80ff1515", "Roxanne Dixon", 1, 7, 1.0, "2025-02-12T22:38:00+00:00", 2).
+			AddRow("776b45f0-a2e3-4424-8ef7-84f3052bebc7", "Verna Ferrell", 1, 8, 1.0, "2025-02-12T22:38:00+00:00", 2).
+			AddRow("8b9643f9-25b4-458a-ad4f-81e61d106a57", "Adrian Carey", 1, 9, 1.0, "2025-02-12T22:38:00+00:00", 2).
+			AddRow("88ff7d742-fb3c-4103-af4b-fcd4315bae66", "Joshua Martinez", 1, 10, 1.0, "2025-02-12T22:38:00+00:00", 2)
 
 		values := []driver.Value{}
 
@@ -129,10 +131,10 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 		}
 
 		c.Mock.ExpectQuery(
-			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE (CAST(`id` AS CHAR(50)) > ?) ORDER BY `str_id` ASC LIMIT ?"),
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id`, COUNT(*) OVER() AS `total_remaining_rows` FROM `users` WHERE (CAST(`id` AS CHAR(50)) > ?) ORDER BY `str_id` ASC LIMIT ?"),
 		).WithArgs(values...).WillReturnRows(mockRows)
 
-	// Third (last) page of users.
+	// Third (second last) page of users.
 	case pageSize == 5 && cursor == "10":
 		columns := []*sqlmock.Column{
 			sqlmock.NewColumn("id").OfType("VARCHAR", ""),
@@ -141,11 +143,12 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 			sqlmock.NewColumn("employee_number").OfType("INT", ""),
 			sqlmock.NewColumn("risk_score").OfType("FLOAT", ""),
 			sqlmock.NewColumn("last_modified").OfType("DATETIME", ""),
+			sqlmock.NewColumn("total_remaining_rows").OfType("BIGINT", ""),
 		}
 
 		mockRows := sqlmock.NewRowsWithColumnDefinition(columns...).
-			AddRow("9cf5a596-0df2-4510-a403-9b514fd500b8", "Erica Meadows", true, 6, 1.0, "2025-02-12T22:38:00+00:00").
-			AddRow("987053f0-c06c-48ee-9c99-81f3a96af639", "Carole Crawford", true, 7, 1.0, "2025-02-12T22:38:00+00:00")
+			AddRow("9cf5a596-0df2-4510-a403-9b514fd500b8", "Erica Meadows", true, 6, 1.0, "2025-02-12T22:38:00+00:00", 0).
+			AddRow("987053f0-c06c-48ee-9c99-81f3a96af639", "Carole Crawford", true, 7, 1.0, "2025-02-12T22:38:00+00:00", 0)
 
 		values := []driver.Value{}
 
@@ -154,7 +157,31 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 		}
 
 		c.Mock.ExpectQuery(
-			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE (CAST(`id` AS CHAR(50)) > ?) ORDER BY `str_id` ASC LIMIT ?"),
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id`, COUNT(*) OVER() AS `total_remaining_rows` FROM `users` WHERE (CAST(`id` AS CHAR(50)) > ?) ORDER BY `str_id` ASC LIMIT ?"),
+		).WithArgs(values...).WillReturnRows(mockRows)
+
+		// Fourth (last) page of users.
+	case pageSize == 5 && cursor == "12":
+		columns := []*sqlmock.Column{
+			sqlmock.NewColumn("id").OfType("VARCHAR", ""),
+			sqlmock.NewColumn("name").OfType("VARCHAR", ""),
+			sqlmock.NewColumn("active").OfType("BOOL", ""),
+			sqlmock.NewColumn("employee_number").OfType("INT", ""),
+			sqlmock.NewColumn("risk_score").OfType("FLOAT", ""),
+			sqlmock.NewColumn("last_modified").OfType("DATETIME", ""),
+			sqlmock.NewColumn("total_remaining_rows").OfType("BIGINT", ""),
+		}
+
+		mockRows := sqlmock.NewRowsWithColumnDefinition(columns...)
+
+		values := []driver.Value{}
+
+		for _, arg := range args {
+			values = append(values, driver.Value(arg))
+		}
+
+		c.Mock.ExpectQuery(
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id`, COUNT(*) OVER() AS `total_remaining_rows` FROM `users` WHERE (CAST(`id` AS CHAR(50)) > ?) ORDER BY `str_id` ASC LIMIT ?"),
 		).WithArgs(values...).WillReturnRows(mockRows)
 
 	// Test: Failed to query datasource
@@ -170,6 +197,7 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 			sqlmock.NewColumn("employee_number").OfType("BIGINT", ""),
 			sqlmock.NewColumn("risk_score").OfType("FLOAT", ""),
 			sqlmock.NewColumn("last_modified").OfType("DATETIME", ""),
+			sqlmock.NewColumn("total_remaining_rows").OfType("BIGINT", ""),
 		}
 
 		mockRows := sqlmock.NewRowsWithColumnDefinition(columns...).
@@ -177,8 +205,8 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 			// Any Int ingested with more than 16 digits will lose precision (according to IEEE 754) since we cast
 			// all Ints to Float64 before storing them. This is why we're using `1<<53-1` instead of `1<<63-1` since we
 			// will lose precision using the MaxInt64 const.
-			AddRow("9cf5a596-0df2-4510-a403-9b514fd500b8", "Erica Meadows", true, 1<<53-1, math.MaxFloat64, "2025-02-12T22:38:00+00:00").
-			AddRow("dfaf01cc-85b7-4e2e-b2d7-608d1f1904fe", "Eleanor Watts", true, math.MinInt64, -math.MaxFloat64, "2025-02-12T22:38:00+00:00")
+			AddRow("9cf5a596-0df2-4510-a403-9b514fd500b8", "Erica Meadows", true, 1<<53-1, math.MaxFloat64, "2025-02-12T22:38:00+00:00", 0).
+			AddRow("dfaf01cc-85b7-4e2e-b2d7-608d1f1904fe", "Eleanor Watts", true, math.MinInt64, -math.MaxFloat64, "2025-02-12T22:38:00+00:00", 0)
 
 		values := []driver.Value{}
 
@@ -187,7 +215,7 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 		}
 
 		c.Mock.ExpectQuery(
-			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE (CAST(`id` AS CHAR(50)) > ?) ORDER BY `str_id` ASC LIMIT ?"),
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id`, COUNT(*) OVER() AS `total_remaining_rows` FROM `users` WHERE (CAST(`id` AS CHAR(50)) > ?) ORDER BY `str_id` ASC LIMIT ?"),
 		).WithArgs(values...).WillReturnRows(mockRows)
 
 	// Test: Edge case with empty values
@@ -199,12 +227,13 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 			sqlmock.NewColumn("employee_number").OfType("BIGINT", ""),
 			sqlmock.NewColumn("risk_score").OfType("FLOAT", ""),
 			sqlmock.NewColumn("last_modified").OfType("DATETIME", ""),
+			sqlmock.NewColumn("total_remaining_rows").OfType("BIGINT", ""),
 		}
 
 		mockRows := sqlmock.NewRowsWithColumnDefinition(columns...).
-			AddRow("9cf5a596-0df2-4510-a403-9b514fd500b8", nil, nil, nil, nil, nil).
-			AddRow("8f678b7c-2571-45fe-ba01-a6cad31b02de", "", "", "", "", "").
-			AddRow("a20bab52-52e3-46c2-bd6a-2ad1512f713f", "Ernesto Gregg", true, 1, 1.0, "2025-02-12T22:38:00+00:00")
+			AddRow("9cf5a596-0df2-4510-a403-9b514fd500b8", nil, nil, nil, nil, nil, 0).
+			AddRow("8f678b7c-2571-45fe-ba01-a6cad31b02de", "", "", "", "", "", 0).
+			AddRow("a20bab52-52e3-46c2-bd6a-2ad1512f713f", "Ernesto Gregg", true, 1, 1.0, "2025-02-12T22:38:00+00:00", 0)
 
 		values := []driver.Value{}
 
@@ -213,7 +242,7 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 		}
 
 		c.Mock.ExpectQuery(
-			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE (CAST(`id` AS CHAR(50)) > ?) ORDER BY `str_id` ASC LIMIT ?"),
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id`, COUNT(*) OVER() AS `total_remaining_rows` FROM `users` WHERE (CAST(`id` AS CHAR(50)) > ?) ORDER BY `str_id` ASC LIMIT ?"),
 		).WithArgs(values...).WillReturnRows(mockRows)
 
 	// Test: First page of users filtered active only and risk > 2
@@ -225,11 +254,12 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 			sqlmock.NewColumn("employee_number").OfType("INT", ""),
 			sqlmock.NewColumn("risk_score").OfType("FLOAT", ""),
 			sqlmock.NewColumn("last_modified").OfType("DATETIME", ""),
+			sqlmock.NewColumn("total_remaining_rows").OfType("BIGINT", ""),
 		}
 
 		mockRows := sqlmock.NewRowsWithColumnDefinition(columns...).
-			AddRow("62c74831-be4a-4cad-88fa-4e02640269d2", "Chris Griffin", true, 3, 4.23, "2025-02-12T22:38:00+00:00").
-			AddRow("6598acf9-cccc-48c9-ab9b-754bbe9ad146", "Helen Gray", true, 5, 3.25, "2025-02-12T22:38:00+00:00")
+			AddRow("62c74831-be4a-4cad-88fa-4e02640269d2", "Chris Griffin", true, 3, 4.23, "2025-02-12T22:38:00+00:00", 0).
+			AddRow("6598acf9-cccc-48c9-ab9b-754bbe9ad146", "Helen Gray", true, 5, 3.25, "2025-02-12T22:38:00+00:00", 0)
 
 		values := []driver.Value{}
 
@@ -238,7 +268,7 @@ func (c *MockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
 		}
 
 		c.Mock.ExpectQuery(
-			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` WHERE ((CAST(`id` AS CHAR(50)) > ?) AND ((`active` IS TRUE) AND (`risk_score` > ?))) ORDER BY `str_id` ASC LIMIT ?"),
+			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id`, COUNT(*) OVER() AS `total_remaining_rows` FROM `users` WHERE ((CAST(`id` AS CHAR(50)) > ?) AND ((`active` IS TRUE) AND (`risk_score` > ?))) ORDER BY `str_id` ASC LIMIT ?"),
 		).WithArgs(values...).WillReturnRows(mockRows)
 
 	default:
