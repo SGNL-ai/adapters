@@ -196,7 +196,7 @@ func TestAdapterGetPage(t *testing.T) {
 				},
 			},
 		},
-		"valid_request_third_last_page": {
+		"valid_request_third_second_last_page": {
 			request: &framework.Request[mysql_0_0_2_alpha.Config]{
 				Address: "127.0.0.1",
 				Auth: &framework.DatasourceAuthCredentials{
@@ -246,7 +246,50 @@ func TestAdapterGetPage(t *testing.T) {
 							"name": "Carole Crawford",
 						},
 					},
+					NextCursor: "987053f0-c06c-48ee-9c99-81f3a96af639",
 				},
+			},
+		},
+		"valid_request_fourth_last_page": {
+			request: &framework.Request[mysql_0_0_2_alpha.Config]{
+				Address: "127.0.0.1",
+				Auth: &framework.DatasourceAuthCredentials{
+					Basic: &framework.BasicAuthCredentials{
+						Username: "testusername",
+						Password: "testpassword",
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "users",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "id",
+							Type:       framework.AttributeTypeString,
+							UniqueId:   true,
+						},
+						{
+							ExternalId: "name",
+							Type:       framework.AttributeTypeString,
+						},
+						{
+							ExternalId: "missing_field",
+							Type:       framework.AttributeTypeString,
+						},
+					},
+				},
+				Config: &mysql_0_0_2_alpha.Config{
+					CommonConfig: &config.CommonConfig{
+						RequestTimeoutSeconds: testutil.GenPtr(10),
+						LocalTimeZoneOffset:   -18000, // UTC−05:00 (EST)
+					},
+					Database: "sgnl",
+				},
+				Ordered:  true,
+				PageSize: 5,
+				Cursor:   "12",
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{},
 			},
 		},
 		"failed_to_connect_to_datasource": {
@@ -457,6 +500,7 @@ func TestAdapterGetPage(t *testing.T) {
 							"risk_score":      -math.MaxFloat64,
 						},
 					},
+					NextCursor: "dfaf01cc-85b7-4e2e-b2d7-608d1f1904fe",
 				},
 			},
 		},
@@ -532,6 +576,7 @@ func TestAdapterGetPage(t *testing.T) {
 							"risk_score":      float64(1),
 						},
 					},
+					NextCursor: "a20bab52-52e3-46c2-bd6a-2ad1512f713f",
 				},
 			},
 		},
@@ -856,6 +901,7 @@ func TestAdapterGetPage(t *testing.T) {
 							"risk_score":      float64(3.25),
 						},
 					},
+					NextCursor: "6598acf9-cccc-48c9-ab9b-754bbe9ad146",
 				},
 			},
 		},

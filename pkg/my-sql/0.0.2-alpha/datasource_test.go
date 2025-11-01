@@ -32,10 +32,11 @@ type mockSQLClient struct {
 	proxyErr     error
 	proxyRespErr string
 	proxyResp    string
-	mockConnect  func(string) error
-	mockQuery    func(string, ...any) (*sql.Rows, error)
+	mockConnect  func(string) (*sql.DB, error)
+	mockQuery    func(*sql.DB, string, ...any) (*sql.Rows, error)
 	mockProxy    func(context.Context, *grpc_proxy_v1.ProxyRequestMessage,
 	) (*grpc_proxy_v1.Response, error)
+	mockDB *sql.DB
 }
 
 func (c *mockSQLClient) IsProxied() bool {
@@ -46,21 +47,32 @@ func (c *mockSQLClient) IsProxied() bool {
 	return false
 }
 
-func (c *mockSQLClient) Connect(name string) error {
+func (c *mockSQLClient) Connect(name string) (*sql.DB, error) {
 	if c.connectErr != nil {
-		return c.connectErr
+		return nil, c.connectErr
 	}
 
 	if c.mockConnect != nil {
 		return c.mockConnect(name)
 	}
 
-	return nil
+	if c.mockDB != nil {
+		return c.mockDB, nil
+	}
+
+	// Return a properly initialized mock DB for tests
+	db, _, _ := sqlmock.New()
+
+	return db, nil
 }
 
-func (c *mockSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
+func (c *mockSQLClient) Query(db *sql.DB, query string, args ...any) (*sql.Rows, error) {
+	if db == nil {
+		return nil, errors.New("no open datasource connection")
+	}
+
 	if c.mockQuery != nil {
-		return c.mockQuery(query, args)
+		return c.mockQuery(db, query, args...)
 	}
 
 	if c.queryErr != nil {
@@ -94,24 +106,26 @@ var (
 	sqlColumns = []*sqlmock.Column{
 		sqlmock.NewColumn("id").OfType("VARCHAR", ""),
 		sqlmock.NewColumn("name").OfType("VARCHAR", ""),
+		sqlmock.NewColumn("total_remaining_rows").OfType("BIGINT", ""),
 	}
 	sqlRows = sqlmock.NewRowsWithColumnDefinition(sqlColumns...).
-		AddRow("1", "test-name-1").
-		AddRow("2", "test-name-2")
+		AddRow("1", "test-name-1", 1000).
+		AddRow("2", "test-name-2", 1000)
 )
 
 func TestGivenRequestWithoutConnectorCtxWhenGetPageRequestedThenSQLResponseStatusIsOk(t *testing.T) {
 	// Arrange
 	db, mock, _ := sqlmock.New()
-	mockQuery := func(query string, _ ...any) (*sql.Rows, error) {
-		mock.ExpectQuery(
-			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC LIMIT ?"),
-		).WillReturnRows(sqlRows)
+	mockQuery := func(_ *sql.DB, query string, _ ...any) (*sql.Rows, error) {
+		expectedQuery := "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id`, " +
+			"COUNT(*) OVER() AS `total_remaining_rows` FROM `users` ORDER BY `str_id` ASC LIMIT ?"
+		mock.ExpectQuery(regexp.QuoteMeta(expectedQuery)).WillReturnRows(sqlRows)
 
 		return db.Query(query)
 	}
 	ds := Datasource{
 		Client: &mockSQLClient{
+			mockDB:    db,
 			mockQuery: mockQuery,
 		},
 	}
@@ -162,9 +176,10 @@ func TestGivenRequestWithoutConnectorCtxWhenGetPageRequestedThenSQLResponseStatu
 			fields.FieldRequestPageSize:         int64(100),
 			fields.FieldResponseStatusCode:      int64(200),
 			fields.FieldResponseObjectCount:     int64(2),
-			fields.FieldResponseNextCursor:      nil,
+			fields.FieldResponseNextCursor:      "2",
 			fields.FieldBaseURL:                 "localhost:3306",
 			fields.FieldDatabase:                "testdb",
+			fields.FieldTotalRemainingObjects:   int64(1000),
 		},
 	}
 
@@ -188,15 +203,16 @@ func TestGivenRequestWithoutConnectorCtxWhenGetPageRequestedThenSQLResponseStatu
 func TestGivenRequestWithConnectorCtxAndWithoutProxyWhenGetPageRequestedThenSQLResponseStatusIsOk(t *testing.T) {
 	// Arrange
 	db, mock, _ := sqlmock.New()
-	mockQuery := func(query string, _ ...any) (*sql.Rows, error) {
-		mock.ExpectQuery(
-			regexp.QuoteMeta("SELECT *, CAST(`id` AS CHAR(50)) AS `str_id` FROM `users` ORDER BY `str_id` ASC"),
-		).WillReturnRows(sqlRows)
+	mockQuery := func(_ *sql.DB, query string, _ ...any) (*sql.Rows, error) {
+		expectedQuery := "SELECT *, CAST(`id` AS CHAR(50)) AS `str_id`, " +
+			"COUNT(*) OVER() AS `total_remaining_rows` FROM `users` ORDER BY `str_id` ASC"
+		mock.ExpectQuery(regexp.QuoteMeta(expectedQuery)).WillReturnRows(sqlRows)
 
 		return db.Query(query)
 	}
 	ds := Datasource{
 		Client: &mockSQLClient{
+			mockDB:    db,
 			mockQuery: mockQuery,
 		},
 	}

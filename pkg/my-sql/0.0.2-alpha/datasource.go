@@ -189,7 +189,8 @@ func (d *Datasource) Request(ctx context.Context, request *Request) (*Response, 
 		return nil, err
 	}
 
-	if err := d.Client.Connect(request.DatasourceName()); err != nil {
+	db, err := d.Client.Connect(request.DatasourceName())
+	if err != nil {
 		logger.Error("Failed to connect to datasource",
 			fields.SGNLEventTypeError(),
 			zap.Error(err),
@@ -211,7 +212,7 @@ func (d *Datasource) Request(ctx context.Context, request *Request) (*Response, 
 
 	logger.Info("Sending request to datasource")
 
-	rows, err := d.Client.Query(query, args...)
+	rows, err := d.Client.Query(db, query, args...)
 	if err != nil {
 		logger.Error("Request to datasource failed",
 			fields.SGNLEventTypeError(),
@@ -224,8 +225,26 @@ func (d *Datasource) Request(ctx context.Context, request *Request) (*Response, 
 		}
 	}
 
-	// Parse the rows to a list of objects.
-	objs, frameworkErr := ParseResponse(rows, request)
+	defer func() {
+		rows.Close() // Ensure rows are closed to prevent resource leaks
+
+		// In the current approach, each request is opening a new DB connection.
+		// So, we are closing the database connection at the end of the request.
+
+		// TODO: Fix critical performance issue
+		// Opening a new connection per request is extremely resource-intensive
+		// and risky. However, since this adapter must dynamically connect to
+		// different databases, we cannot establish a single connection at
+		// application startup.
+		//
+		// Solution: Implement a connection pool cache that:
+		// - Maintains pools for each unique database
+		// - Reuses existing connections when available
+		db.Close()
+	}()
+
+	// Parse the rows to a list of objects and the total remaining count
+	objs, totalRemaining, frameworkErr := ParseResponse(rows, request)
 	if frameworkErr != nil {
 		return nil, frameworkErr
 	}
@@ -235,11 +254,8 @@ func (d *Datasource) Request(ctx context.Context, request *Request) (*Response, 
 		Objects:    objs,
 	}
 
-	// If we have less objects than the current PageSize, this is the last page and
-	// we should not set a NextCursor.
-	//
-	// We perform a redundant check to ensure we don't hit a NPE with an invalid page size.
-	if len(objs) >= int(request.PageSize) && len(objs) >= 1 {
+	// Set NextCursor if we have any objects (continue until zero rows)
+	if len(objs) > 0 {
 		lastObj := objs[len(objs)-1]
 
 		lastID, ok := lastObj[request.UniqueAttributeExternalID]
@@ -271,6 +287,7 @@ func (d *Datasource) Request(ctx context.Context, request *Request) (*Response, 
 		fields.ResponseStatusCode(response.StatusCode),
 		fields.ResponseObjectCount(len(response.Objects)),
 		fields.ResponseNextCursor(response.NextCursor),
+		fields.TotalRemainingObjects(totalRemaining),
 	)
 
 	return response, nil
@@ -289,13 +306,15 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 }
 
 // ParseResponse for parsing the SQL query response.
-func ParseResponse(rows *sql.Rows, request *Request) ([]map[string]any, *framework.Error) {
+func ParseResponse(rows *sql.Rows, request *Request) ([]map[string]any, int64, *framework.Error) {
 	objects := make([]map[string]any, 0)
+
+	var totalRemaining int64 = -1 // -1 indicates that count could not be parsed, or the count column is unavailable
 
 	// Get column names present in provided rows.
 	cols, err := rows.Columns()
 	if err != nil {
-		return nil, &framework.Error{
+		return nil, -1, &framework.Error{
 			Message: fmt.Sprintf("Failed to retrieve column names: %s.", err.Error()),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
 		}
@@ -313,7 +332,7 @@ func ParseResponse(rows *sql.Rows, request *Request) ([]map[string]any, *framewo
 	for rows.Next() {
 		err := rows.Scan(vals...)
 		if err != nil {
-			return nil, &framework.Error{
+			return nil, -1, &framework.Error{
 				Message: fmt.Sprintf("Failed to scan current row: %s.", err.Error()),
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
 			}
@@ -321,6 +340,19 @@ func ParseResponse(rows *sql.Rows, request *Request) ([]map[string]any, *framewo
 
 		for i, v := range vals {
 			columnName := cols[i]
+
+			// Extract the total_remaining_rows count (added by window function)
+			if columnName == TotalRemainingRowsColumn {
+				b, ok := v.(*sql.RawBytes)
+				if ok && b != nil && len(*b) > 0 {
+					str := string(*b)
+					if count, err := strconv.ParseInt(str, 10, 64); err == nil {
+						totalRemaining = count
+					}
+				}
+
+				continue // Skip adding this to the object
+			}
 
 			var attribute *framework.AttributeConfig
 
@@ -341,7 +373,7 @@ func ParseResponse(rows *sql.Rows, request *Request) ([]map[string]any, *framewo
 
 			b, ok := v.(*sql.RawBytes)
 			if !ok || b == nil {
-				return nil, &framework.Error{
+				return nil, -1, &framework.Error{
 					Message: "Failed to cast value to sql.RawBytes.",
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 				}
@@ -367,14 +399,14 @@ func ParseResponse(rows *sql.Rows, request *Request) ([]map[string]any, *framewo
 			case framework.AttributeTypeString, framework.AttributeTypeDuration, framework.AttributeTypeDateTime:
 				objects[idx][columnName] = str
 			default:
-				return nil, &framework.Error{
+				return nil, -1, &framework.Error{
 					Message: "Unsupported attribute type provided.",
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ATTRIBUTE_TYPE,
 				}
 			}
 
 			if castErr != nil {
-				return nil, &framework.Error{
+				return nil, -1, &framework.Error{
 					Message: fmt.Sprintf("Failed to parse attribute: (%s) %v.", columnName, castErr),
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ATTRIBUTE_TYPE,
 				}
@@ -385,11 +417,11 @@ func ParseResponse(rows *sql.Rows, request *Request) ([]map[string]any, *framewo
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, &framework.Error{
+		return nil, -1, &framework.Error{
 			Message: fmt.Sprintf("Failed to process rows: %s.", err.Error()),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		}
 	}
 
-	return objects, nil
+	return objects, totalRemaining, nil
 }
