@@ -237,7 +237,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 func ParseResponse(rows *sql.Rows, request *Request) ([]map[string]any, int64, *framework.Error) {
 	objects := make([]map[string]any, 0)
 
-	var totalRemaining int64 = -1 // -1 indicates no count was found
+	var totalRemaining int64 = -1 // -1 indicates that count could not be parsed, or the count column is unavailable
 
 	// Get column names present in provided rows.
 	cols, err := rows.Columns()

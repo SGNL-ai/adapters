@@ -104,6 +104,6 @@ func SGNLEventTypeError() zap.Field {
 	return zap.String(FieldSGNLEventType, SGNLEventTypeErrorValue)
 }
 
-func TotalRemainingObjects(totalRemaning int64) zap.Field {
-	return zap.Int64(FieldTotalRemainingObjects, totalRemaning)
+func TotalRemainingObjects(totalRemaining int64) zap.Field {
+	return zap.Int64(FieldTotalRemainingObjects, totalRemaining)
 }
