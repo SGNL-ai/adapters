@@ -4,18 +4,16 @@
 package rootly_test
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
-	"strings"
 	"testing"
 
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
-	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	rootly_adapter "github.com/sgnl-ai/adapters/pkg/rootly"
-	"github.com/sgnl-ai/adapters/pkg/testutil"
 )
 
 func TestDatasourceGetPage(t *testing.T) {
@@ -24,7 +22,6 @@ func TestDatasourceGetPage(t *testing.T) {
 		request          *rootly_adapter.Request
 		expectedResponse *rootly_adapter.Response
 		expectedError    *framework.Error
-		expectedLogs     []map[string]any
 	}{
 		"successful_incidents_request": {
 			serverHandler: func(w http.ResponseWriter, r *http.Request) {
@@ -78,30 +75,6 @@ func TestDatasourceGetPage(t *testing.T) {
 					},
 				},
 				NextCursor: nil,
-			},
-			expectedLogs: []map[string]any{
-				{
-					"level":                             "info",
-					"msg":                               "Starting datasource request",
-					fields.FieldRequestEntityExternalID: "incidents",
-					fields.FieldRequestPageSize:         int64(10),
-				},
-				{
-					"level":                             "info",
-					"msg":                               "Sending request to datasource",
-					fields.FieldRequestEntityExternalID: "incidents",
-					fields.FieldRequestPageSize:         int64(10),
-					fields.FieldRequestURL:              "DYNAMIC_URL/v1/incidents?page%5Bnumber%5D=1&page%5Bsize%5D=10",
-				},
-				{
-					"level":                             "info",
-					"msg":                               "Datasource request completed successfully",
-					fields.FieldRequestEntityExternalID: "incidents",
-					fields.FieldRequestPageSize:         int64(10),
-					fields.FieldResponseStatusCode:      int64(200),
-					fields.FieldResponseObjectCount:     int64(1),
-					fields.FieldResponseNextCursor:      nil,
-				},
 			},
 		},
 		"successful_users_request": {
@@ -360,8 +333,6 @@ func TestDatasourceGetPage(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			ctxWithLogger, observedLogs := testutil.NewContextWithObservableLogger(t.Context())
-
 			server := httptest.NewTLSServer(tt.serverHandler)
 			defer server.Close()
 
@@ -371,19 +342,7 @@ func TestDatasourceGetPage(t *testing.T) {
 
 			tt.request.BaseURL = server.URL + "/v1"
 
-			// Replace DYNAMIC_URL with actual server URL in expectedLogs.
-			for i := range tt.expectedLogs {
-				urlField, ok := tt.expectedLogs[i][fields.FieldRequestURL]
-				if !ok {
-					continue
-				}
-
-				if urlStr, ok := urlField.(string); ok {
-					tt.expectedLogs[i][fields.FieldRequestURL] = strings.Replace(urlStr, "DYNAMIC_URL", server.URL, 1)
-				}
-			}
-
-			response, err := datasource.GetPage(ctxWithLogger, tt.request)
+			response, err := datasource.GetPage(context.Background(), tt.request)
 
 			if tt.expectedError != nil {
 				if err == nil {
@@ -422,8 +381,6 @@ func TestDatasourceGetPage(t *testing.T) {
 			if !reflect.DeepEqual(response.NextCursor, tt.expectedResponse.NextCursor) {
 				t.Errorf("GetPage() nextCursor = %v, want %v", response.NextCursor, tt.expectedResponse.NextCursor)
 			}
-
-			testutil.ValidateLogOutput(t, observedLogs, tt.expectedLogs)
 		})
 	}
 }

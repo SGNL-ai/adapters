@@ -12,9 +12,6 @@ import (
 
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
-	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
-	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
-	"go.uber.org/zap"
 )
 
 // Datasource directly implements a Client interface to allow querying an external datasource.
@@ -23,8 +20,9 @@ type Datasource struct {
 }
 
 type DatasourceResponse struct {
-	Data []map[string]any `json:"data"`
-	Meta struct {
+	Data     []map[string]any `json:"data"`
+	Included []map[string]any `json:"included,omitempty"`
+	Meta     struct {
 		Page       int `json:"current_page"`
 		Pages      int `json:"total_pages"`
 		TotalCount int `json:"total_count"`
@@ -47,16 +45,7 @@ func NewClient(client *http.Client) Client {
 }
 
 func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, *framework.Error) {
-	logger := zaplogger.FromContext(ctx).With(
-		fields.RequestEntityExternalID(request.EntityExternalID),
-		fields.RequestPageSize(request.PageSize),
-	)
-
-	logger.Info("Starting datasource request")
-
-	endpoint := ConstructEndpoint(request)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ConstructEndpoint(request), nil)
 	if err != nil {
 		return nil, &framework.Error{
 			Message: fmt.Sprintf("Failed to create request to datasource: %v.", err),
@@ -73,17 +62,9 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	req.Header.Add("Authorization", request.HTTPAuthorization)
 	req.Header.Add("Content-Type", "application/vnd.api+json")
 
-	logger.Info("Sending request to datasource", fields.RequestURL(endpoint))
-
 	// Use the client from the datasource instead of the request
 	resp, err := d.Client.Do(req)
 	if err != nil {
-		logger.Error("Request to datasource failed",
-			fields.RequestURL(endpoint),
-			fields.SGNLEventTypeError(),
-			zap.Error(err),
-		)
-
 		return nil, &framework.Error{
 			Message: fmt.Sprintf("Failed to query datasource: %v", err),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
@@ -100,14 +81,6 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		logger.Error("Datasource responded with an error",
-			fields.RequestURL(endpoint),
-			fields.ResponseStatusCode(resp.StatusCode),
-			fields.ResponseRetryAfterHeader(resp.Header.Get("Retry-After")),
-			fields.ResponseBody(body),
-			fields.SGNLEventTypeError(),
-		)
-
 		var errorResponse DatasourceErrorResponse
 		if err := json.Unmarshal(body, &errorResponse); err != nil {
 			return nil, &framework.Error{
@@ -153,16 +126,16 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		nextCursor = &nextPageStr
 	}
 
-	response := &Response{
-		Objects:    datasourceResponse.Data,
-		NextCursor: nextCursor,
+	// Process and merge included data if it exists
+	var processedData []map[string]any
+	if len(datasourceResponse.Included) > 0 {
+		processedData = processIncludes(datasourceResponse.Data, datasourceResponse.Included)
+	} else {
+		processedData = datasourceResponse.Data
 	}
 
-	logger.Info("Datasource request completed successfully",
-		fields.ResponseStatusCode(resp.StatusCode),
-		fields.ResponseObjectCount(len(response.Objects)),
-		fields.ResponseNextCursor(response.NextCursor),
-	)
-
-	return response, nil
+	return &Response{
+		Objects:    processedData,
+		NextCursor: nextCursor,
+	}, nil
 }

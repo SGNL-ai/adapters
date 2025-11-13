@@ -36,6 +36,9 @@ type Request struct {
 	// Filter contains the optional filter to apply to the current request.
 	Filter string
 
+	// Includes contains the optional list of fields to include in the response.
+	Includes string
+
 	// RequestTimeoutSeconds is the timeout duration for requests made to datasources.
 	// This should be set to the number of seconds to wait before timing out.
 	RequestTimeoutSeconds int
