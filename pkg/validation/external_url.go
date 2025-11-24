@@ -17,13 +17,13 @@ type SSRFValidator interface {
 }
 
 // DefaultSSRFValidator implements SSRFValidator with full SSRF protection.
-type defaultSSRFValidator struct{}
+type DefaultSSRFValidator struct{}
 
-var _ SSRFValidator = (*defaultSSRFValidator)(nil)
+var _ SSRFValidator = (*DefaultSSRFValidator)(nil)
 
 // NewDefaultSSRFValidator creates a new DefaultSSRFValidator.
-func NewDefaultSSRFValidator() *defaultSSRFValidator {
-	return &defaultSSRFValidator{}
+func NewDefaultSSRFValidator() *DefaultSSRFValidator {
+	return &DefaultSSRFValidator{}
 }
 
 var (
@@ -54,6 +54,7 @@ var (
 	// Full domain validation: must have at least one dot and valid TLD.
 	// Each label must start/end with alphanumeric, max 63 chars per label.
 	// This is taken from OWASP.
+	// nolint: lll
 	domainRegex = regexp.MustCompile(`^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*\.[a-z]{2,}$`)
 )
 
@@ -73,7 +74,7 @@ func init() {
 // 3. Hostname is not localhost or variations
 // 4. Domain name follows DNS naming conventions
 // 5. All resolved IPs are not in private/reserved ranges.
-func (v *defaultSSRFValidator) ValidateExternalURL(ctx context.Context, rawURL string) error {
+func (v *DefaultSSRFValidator) ValidateExternalURL(ctx context.Context, rawURL string) error {
 	if rawURL == "" {
 		return fmt.Errorf("URL cannot be empty")
 	}

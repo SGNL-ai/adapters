@@ -134,8 +134,10 @@ func TestIsPrivateIP(t *testing.T) {
 func parseIPHelper(t *testing.T, ipStr string) net.IP {
 	t.Helper()
 	ip := net.ParseIP(ipStr)
+
 	if ip == nil {
 		t.Fatalf("Failed to parse IP: %s", ipStr)
 	}
+
 	return ip
 }

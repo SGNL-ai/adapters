@@ -1,6 +1,7 @@
 // Copyright 2025 SGNL.ai, Inc.
 
-//nolint:forcetypeassert
+// nolint: lll
+// nolint:forcetypeassert
 package hashicorp_test
 
 import (

@@ -19,6 +19,6 @@ func NewNoOpSSRFValidator() validation.SSRFValidator {
 var _ validation.SSRFValidator = (*NoOpSSRFValidator)(nil)
 
 // ValidateExternalURL always returns nil, allowing all URLs.
-func (v *NoOpSSRFValidator) ValidateExternalURL(ctx context.Context, rawURL string) error {
+func (v *NoOpSSRFValidator) ValidateExternalURL(_ context.Context, _ string) error {
 	return nil
 }
