@@ -11,13 +11,15 @@ import (
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	hashicorp_adapter "github.com/sgnl-ai/adapters/pkg/hashicorp"
 	"github.com/sgnl-ai/adapters/pkg/mock"
+	"github.com/sgnl-ai/adapters/pkg/validation"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestValidateGetPageRequest(t *testing.T) {
 	tests := map[string]struct {
-		request *framework.Request[hashicorp_adapter.Config]
-		wantErr *framework.Error
+		request            *framework.Request[hashicorp_adapter.Config]
+		inputSSRFValidator validation.SSRFValidator
+		wantErr            *framework.Error
 	}{
 		"nil_request": {
 			request: nil,
@@ -204,13 +206,102 @@ func TestValidateGetPageRequest(t *testing.T) {
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_PAGE_REQUEST_CONFIG,
 			},
 		},
+		"invalid_localhost_address": {
+			request: &framework.Request[hashicorp_adapter.Config]{
+				Config: &hashicorp_adapter.Config{
+					AuthMethodID: "test-auth-method-id",
+				},
+				Auth: &framework.DatasourceAuthCredentials{
+					Basic: &framework.BasicAuthCredentials{
+						Username: "test",
+						Password: "test",
+					},
+				},
+				Entity: framework.EntityConfig{
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "id",
+							Type:       framework.AttributeTypeString,
+						},
+					},
+				},
+				Address:  "https://localhost:8080",
+				PageSize: 100,
+			},
+			inputSSRFValidator: validation.NewDefaultSSRFValidator(),
+			wantErr: &framework.Error{
+				Message: `Address URL validation failed: localhost URLs are not allowed: "https://localhost:8080".`,
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
+			},
+		},
+		"invalid_private_ip_address": {
+			request: &framework.Request[hashicorp_adapter.Config]{
+				Config: &hashicorp_adapter.Config{
+					AuthMethodID: "test-auth-method-id",
+				},
+				Auth: &framework.DatasourceAuthCredentials{
+					Basic: &framework.BasicAuthCredentials{
+						Username: "test",
+						Password: "test",
+					},
+				},
+				Entity: framework.EntityConfig{
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "id",
+							Type:       framework.AttributeTypeString,
+						},
+					},
+				},
+				Address:  "https://192.168.1.1",
+				PageSize: 100,
+			},
+			inputSSRFValidator: validation.NewDefaultSSRFValidator(),
+			wantErr: &framework.Error{
+				Message: `Address URL validation failed: private IP addresses are not allowed for "https://192.168.1.1": 192.168.1.1.`,
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
+			},
+		},
+		"invalid_aws_metadata_address": {
+			request: &framework.Request[hashicorp_adapter.Config]{
+				Config: &hashicorp_adapter.Config{
+					AuthMethodID: "test-auth-method-id",
+				},
+				Auth: &framework.DatasourceAuthCredentials{
+					Basic: &framework.BasicAuthCredentials{
+						Username: "test",
+						Password: "test",
+					},
+				},
+				Entity: framework.EntityConfig{
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "id",
+							Type:       framework.AttributeTypeString,
+						},
+					},
+				},
+				Address:  "https://169.254.169.254",
+				PageSize: 100,
+			},
+			inputSSRFValidator: validation.NewDefaultSSRFValidator(),
+			wantErr: &framework.Error{
+				Message: `Address URL validation failed: private IP addresses are not allowed for "https://169.254.169.254": 169.254.169.254.`,
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
+			},
+		},
 	}
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
+			testSSRFValidator := mock.NewNoOpSSRFValidator()
+			if tt.inputSSRFValidator != nil {
+				testSSRFValidator = tt.inputSSRFValidator
+			}
+
 			adapter := &hashicorp_adapter.Adapter{
 				HashicorpClient: nil,
-				SSRFValidator:   mock.NewNoOpSSRFValidator(),
+				SSRFValidator:   testSSRFValidator,
 			}
 			gotErr := adapter.ValidateGetPageRequest(context.Background(), tt.request)
 

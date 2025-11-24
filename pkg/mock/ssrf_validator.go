@@ -12,7 +12,7 @@ import (
 type NoOpSSRFValidator struct{}
 
 // NewNoOpSSRFValidator creates a new NoOpSSRFValidator.
-func NewNoOpSSRFValidator() *NoOpSSRFValidator {
+func NewNoOpSSRFValidator() validation.SSRFValidator {
 	return &NoOpSSRFValidator{}
 }
 

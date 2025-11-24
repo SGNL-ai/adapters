@@ -61,7 +61,7 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 	if a.SSRFValidator != nil {
 		if err := a.SSRFValidator.ValidateExternalURL(ctx, request.Address); err != nil {
 			return &framework.Error{
-				Message: fmt.Sprintf("Address URL validation failed: %v", err),
+				Message: fmt.Sprintf("Address URL validation failed: %v.", err),
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
 			}
 		}
