@@ -10,6 +10,7 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	hashicorp_adapter "github.com/sgnl-ai/adapters/pkg/hashicorp"
+	"github.com/sgnl-ai/adapters/pkg/mock"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -207,7 +208,10 @@ func TestValidateGetPageRequest(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			adapter := hashicorp_adapter.NewAdapter(nil).(*hashicorp_adapter.Adapter)
+			adapter := &hashicorp_adapter.Adapter{
+				HashicorpClient: nil,
+				SSRFValidator:   mock.NewNoOpSSRFValidator(),
+			}
 			gotErr := adapter.ValidateGetPageRequest(context.Background(), tt.request)
 
 			if tt.wantErr == nil {
