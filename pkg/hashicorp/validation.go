@@ -60,8 +60,8 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 
 	// We prepend "https://" in GetPage so do it here before validation as well.
 	rawURL := strings.TrimSuffix(request.Address, "/")
-	if !strings.HasPrefix(request.Address, "https://") {
-		rawURL = "https://" + request.Address
+	if !strings.HasPrefix(rawURL, "https://") {
+		rawURL = "https://" + rawURL
 	}
 
 	if a.SSRFValidator != nil {
