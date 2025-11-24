@@ -20,6 +20,7 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	hashicorp_adapter "github.com/sgnl-ai/adapters/pkg/hashicorp"
+	"github.com/sgnl-ai/adapters/pkg/mock"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 )
@@ -207,9 +208,12 @@ func (h *testHandler) handleUsersEndpoint(w http.ResponseWriter, r *http.Request
 
 func TestAdapterGetPage(t *testing.T) {
 	server := httptest.NewTLSServer(&testHandler{})
-	adapter := hashicorp_adapter.NewAdapter(&hashicorp_adapter.Datasource{
-		Client: server.Client(),
-	})
+	adapter := &hashicorp_adapter.Adapter{
+		HashicorpClient: &hashicorp_adapter.Datasource{
+			Client: server.Client(),
+		},
+		SSRFValidator: mock.NewNoOpSSRFValidator(),
+	}
 
 	tests := map[string]struct {
 		ctx          context.Context
@@ -554,9 +558,12 @@ func TestAdapterGetPageWithPagination(t *testing.T) {
 	}
 
 	server := httptest.NewTLSServer(handler)
-	adapter := hashicorp_adapter.NewAdapter(&hashicorp_adapter.Datasource{
-		Client: server.Client(),
-	})
+	adapter := &hashicorp_adapter.Adapter{
+		HashicorpClient: &hashicorp_adapter.Datasource{
+			Client: server.Client(),
+		},
+		SSRFValidator: mock.NewNoOpSSRFValidator(),
+	}
 
 	ctx := context.Background()
 	request := &framework.Request[hashicorp_adapter.Config]{
