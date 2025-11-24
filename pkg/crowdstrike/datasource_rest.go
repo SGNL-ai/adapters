@@ -144,11 +144,16 @@ func (d *Datasource) getRESTPage(ctx context.Context, request *Request) (*Respon
 		}, nil
 	}
 
-	// Handle empty resource IDs for entities with two-level API (ListEndpoint -> GetEndpoint)
-	// When the ListEndpoint returns no IDs, return early to avoid calling GetEndpoint with
-	// empty IDs which would cause a 400 error. See: `parseListScrollResponse` for Device edge case.
-	isTwoLevelAPI := request.EntityExternalID == Device || request.EntityExternalID == EndpointIncident
-	if isTwoLevelAPI && len(resourceIDs) == 0 && nextCursor == nil {
+	var usesListThenGet = map[string]bool{
+		Device:           true,
+		EndpointIncident: true,
+	}
+
+	listReturnedEmptyResponse := len(resourceIDs) == 0 && nextCursor == nil
+
+	// Handle empty responses for entities that call both List and Get endpoints.
+	if usesListThenGet[request.EntityExternalID] && listReturnedEmptyResponse {
+		// ListEndpoint returned no IDs - skip GetEndpoint to avoid 400 error.
 		return &Response{
 			StatusCode: httpResp.StatusCode,
 		}, nil
