@@ -144,8 +144,10 @@ func (d *Datasource) getRESTPage(ctx context.Context, request *Request) (*Respon
 		}, nil
 	}
 
-	// 1 beyond the last page. See why in `parseListScrollResponse`
-	if request.EntityExternalID == Device && len(resourceIDs) == 0 && nextCursor == nil {
+	// Handle empty resource IDs for entities with two-level API (ListEndpoint -> GetEndpoint)
+	// When the ListEndpoint returns no IDs, return early to avoid calling GetEndpoint with
+	// empty IDs which would cause a 400 error. See: `parseListScrollResponse` for Device edge case.
+	if (request.EntityExternalID == Device || request.EntityExternalID == EndpointIncident) && len(resourceIDs) == 0 && nextCursor == nil {
 		return &Response{
 			StatusCode: httpResp.StatusCode,
 		}, nil
