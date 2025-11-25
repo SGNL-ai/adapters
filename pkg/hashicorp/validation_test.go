@@ -133,7 +133,9 @@ func TestValidateGetPageRequest(t *testing.T) {
 			},
 		},
 		"valid_request": {
+			inputSSRFValidator: validation.NewDefaultSSRFValidator(),
 			request: &framework.Request[hashicorp_adapter.Config]{
+				Address: "example.com",
 				Config: &hashicorp_adapter.Config{
 					AuthMethodID: "test-auth-method-id",
 				},
