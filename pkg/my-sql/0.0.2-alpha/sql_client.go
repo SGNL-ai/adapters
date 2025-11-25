@@ -17,13 +17,12 @@ type SQLColumnTypes map[string]string
 type SQLClient interface {
 	IsProxied() bool
 	Proxy(ctx context.Context, req *grpc_proxy_v1.ProxyRequestMessage) (*grpc_proxy_v1.Response, error)
-	Connect(dataSourceName string) error
-	Query(query string, args ...any) (*sql.Rows, error)
+	Connect(dataSourceName string) (*sql.DB, error)
+	Query(db *sql.DB, query string, args ...any) (*sql.Rows, error)
 }
 
 type defaultSQLClient struct {
 	proxy grpc_proxy_v1.ProxyServiceClient
-	DB    *sql.DB
 }
 
 // NewDefaultSQLClient creates a new SQLClient instance.
@@ -47,33 +46,31 @@ func (c *defaultSQLClient) IsProxied() bool {
 // should be called just once.
 //
 // This must be called before calling Query, else that function call will fail.
-func (c *defaultSQLClient) Connect(dataSourceName string) error {
+func (c *defaultSQLClient) Connect(dataSourceName string) (*sql.DB, error) {
 	db, err := sql.Open("mysql", dataSourceName)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	db.SetConnMaxLifetime(1 * time.Minute)
 	db.SetMaxOpenConns(10)
 	db.SetMaxIdleConns(10)
 
-	c.DB = db
-
-	return nil
+	return db, nil
 }
 
 // Query prepares a statement and queries a connected database with the provided query.
 //
 // Returns an error if the query fails or if there is no currently open database connection.
-func (c *defaultSQLClient) Query(query string, args ...any) (*sql.Rows, error) {
-	if c.DB == nil {
+func (c *defaultSQLClient) Query(db *sql.DB, query string, args ...any) (*sql.Rows, error) {
+	if db == nil {
 		return nil, errors.New("no open datasource connection")
 	}
 
 	// Prepare query statement. This is done to protect against the risk of SQL
 	// injection attacks, which may be a risk to customer instances if a malicious
 	// user gains inadvertent access to the SGNL console.
-	stmt, err := c.DB.Prepare(query)
+	stmt, err := db.Prepare(query)
 	if err != nil {
 		return nil, err
 	}
