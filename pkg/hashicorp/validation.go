@@ -58,6 +58,21 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 		}
 	}
 
+	// We prepend "https://" in GetPage so do it here before validation as well.
+	rawURL := strings.TrimSuffix(request.Address, "/")
+	if !strings.HasPrefix(rawURL, "https://") {
+		rawURL = "https://" + rawURL
+	}
+
+	if a.SSRFValidator != nil {
+		if err := a.SSRFValidator.ValidateExternalURL(ctx, rawURL); err != nil {
+			return &framework.Error{
+				Message: fmt.Sprintf("Address URL validation failed: %v.", err),
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
+			}
+		}
+	}
+
 	if request.Auth == nil ||
 		request.Auth.Basic == nil ||
 		request.Auth.Basic.Username == "" || request.Auth.Basic.Password == "" {
