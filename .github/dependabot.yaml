@@ -1,6 +1,6 @@
 version: 2
 updates:
-  # Go modules with intelligent grouping
+  # Go modules - grouped by test vs production dependencies
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
@@ -11,63 +11,28 @@ updates:
       - "dependencies"
       - "go"
     groups:
-      # AWS SDK updates - group all AWS packages together
-      aws-sdk:
-        patterns:
-          - "github.com/aws/aws-sdk-go-v2*"
-          - "github.com/aws/smithy-go"
-        update-types:
-          - "minor"
-          - "patch"
-
-      # Docker/Container related packages
-      docker-container:
-        patterns:
-          - "github.com/docker/*"
-          - "github.com/testcontainers/*"
-          - "github.com/containerd/*"
-          - "github.com/moby/*"
-          - "github.com/opencontainers/*"
-        update-types:
-          - "minor"
-          - "patch"
-
-      # OpenTelemetry packages
-      opentelemetry:
-        patterns:
-          - "go.opentelemetry.io/*"
-        update-types:
-          - "minor"
-          - "patch"
-
-      # Testing and mocking packages
-      testing:
+      # Test dependencies - lower risk, safe to group and auto-merge
+      test-dependencies:
         patterns:
           - "github.com/stretchr/testify"
           - "github.com/DATA-DOG/go-sqlmock"
+          - "github.com/testcontainers/testcontainers-go"
           - "gopkg.in/dnaeon/go-vcr.*"
         update-types:
           - "minor"
           - "patch"
 
-      # Minor and patch updates for all other dependencies
-      go-minor-patch:
+      # Production dependencies - actual runtime code
+      production-dependencies:
         patterns:
           - "*"
         update-types:
           - "minor"
           - "patch"
         exclude-patterns:
-          - "github.com/aws/aws-sdk-go-v2*"
-          - "github.com/aws/smithy-go"
-          - "github.com/docker/*"
-          - "github.com/testcontainers/*"
-          - "github.com/containerd/*"
-          - "github.com/moby/*"
-          - "github.com/opencontainers/*"
-          - "go.opentelemetry.io/*"
           - "github.com/stretchr/testify"
           - "github.com/DATA-DOG/go-sqlmock"
+          - "github.com/testcontainers/testcontainers-go"
           - "gopkg.in/dnaeon/go-vcr.*"
 
   # GitHub Actions with grouping
