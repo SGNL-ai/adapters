@@ -145,6 +145,40 @@ var TestServerHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Req
 			]
 		}`))
 
+	// Contact with Multi-Select Picklist
+	case "/services/data/v58.0/query?q=SELECT+Id,Interests__c+FROM+Contact+ORDER+BY+Id+ASC":
+		w.Write([]byte(`{
+			"totalSize": 3,
+			"done": true,
+			"nextRecordsUrl": "",
+			"records": [
+				{
+					"attributes": {
+						"type": "Contact",
+						"url": "/services/data/v58.0/sobjects/Contact/003Hu000020yLuHIAU"
+					},
+					"Id": "003Hu000020yLuHIAU",
+					"Interests__c": "Sports;Music;Reading"
+				},
+				{
+					"attributes": {
+						"type": "Contact",
+						"url": "/services/data/v58.0/sobjects/Contact/003Hu000020yLuMIAU"
+					},
+					"Id": "003Hu000020yLuMIAU",
+					"Interests__c": "Technology"
+				},
+				{
+					"attributes": {
+						"type": "Contact",
+						"url": "/services/data/v58.0/sobjects/Contact/003Hu000020yLuPIAU"
+					},
+					"Id": "003Hu000020yLuPIAU",
+					"Interests__c": null
+				}
+			]
+		}`))
+
 	default:
 		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte(``))

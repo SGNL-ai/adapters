@@ -51,13 +51,28 @@ func (a *Adapter) RequestPageFromDatasource(
 		request.Address = "https://" + request.Address
 	}
 
+	// Build the list of attributes to query from Salesforce.
+	// This includes both regular attributes and multi-select picklist fields (child entities).
+	queryAttributes := make([]*framework.AttributeConfig, 0, len(request.Entity.Attributes)+len(request.Entity.ChildEntities))
+	queryAttributes = append(queryAttributes, request.Entity.Attributes...)
+
+	// Add child entity fields to the query attributes list.
+	// Multi-select picklists are stored as semicolon-separated strings in Salesforce,
+	// so we need to query them as regular fields.
+	for _, childEntity := range request.Entity.ChildEntities {
+		queryAttributes = append(queryAttributes, &framework.AttributeConfig{
+			ExternalId: childEntity.ExternalId,
+			Type:       framework.AttributeTypeString,
+		})
+	}
+
 	salesforceReq := &Request{
 		BaseURL:               request.Address,
 		Token:                 request.Auth.HTTPAuthorization,
 		PageSize:              request.PageSize,
 		EntityExternalID:      request.Entity.ExternalId,
 		APIVersion:            request.Config.APIVersion,
-		Attributes:            request.Entity.Attributes,
+		Attributes:            queryAttributes,
 		RequestTimeoutSeconds: *commonConfig.RequestTimeoutSeconds,
 	}
 
@@ -84,12 +99,37 @@ func (a *Adapter) RequestPageFromDatasource(
 		return framework.NewGetPageResponseError(adapterErr)
 	}
 
+	// Store the transformed multi-select picklist data for later
+	// We'll process child entities AFTER the framework converts regular attributes
+	var multiSelectPicklistData map[int]map[string][]framework.Object
+	if len(request.Entity.ChildEntities) > 0 {
+		multiSelectPicklistData = make(map[int]map[string][]framework.Object)
+		transformedObjects := transformMultiSelectPicklists(resp.Objects, request.Entity.ChildEntities)
+
+		// Extract child entity data before framework processing
+		for i, obj := range transformedObjects {
+			multiSelectPicklistData[i] = make(map[string][]framework.Object)
+			for _, childEntity := range request.Entity.ChildEntities {
+				if childData, exists := obj[childEntity.ExternalId]; exists {
+					if childArray, ok := childData.([]map[string]any); ok {
+						// Convert to framework.Object array
+						frameworkArray := make([]framework.Object, len(childArray))
+						for j, item := range childArray {
+							frameworkArray[j] = framework.Object(item)
+						}
+						multiSelectPicklistData[i][childEntity.ExternalId] = frameworkArray
+					}
+				}
+			}
+		}
+	}
+
 	// The raw JSON objects from the response must be parsed and converted into framework.Objects.
 	// Nested attributes are flattened and delimited by the delimiter specified.
 	// DateTime values are parsed using the specified DateTimeFormatWithTimeZone.
 	parsedObjects, parserErr := web.ConvertJSONObjectList(
-		&request.Entity,
-		resp.Objects,
+		&request.Entity, // Use original entity without child entity placeholders
+		resp.Objects,     // Use original objects without transformation
 
 		// TODO [sc-14078]: Remove support for complex attribute names.
 		web.WithComplexAttributeNameDelimiter("__"),
@@ -116,6 +156,17 @@ func (a *Adapter) RequestPageFromDatasource(
 		)
 	}
 
+	// Add multi-select picklist child entities to the parsed objects
+	if len(multiSelectPicklistData) > 0 {
+		for i, obj := range parsedObjects {
+			if childData, exists := multiSelectPicklistData[i]; exists {
+				for fieldName, fieldValue := range childData {
+					obj[fieldName] = fieldValue
+				}
+			}
+		}
+	}
+
 	page := &framework.Page{
 		Objects: parsedObjects,
 	}
@@ -125,4 +176,81 @@ func (a *Adapter) RequestPageFromDatasource(
 	}
 
 	return framework.NewGetPageResponseSuccess(page)
+}
+
+// transformMultiSelectPicklists transforms multi-select picklist fields from semicolon-separated strings
+// into arrays of objects for child entity processing.
+//
+// In Salesforce, multi-select picklists are returned as semicolon-separated values (e.g., "value1;value2;value3").
+// To support these as child entities in the framework, we need to:
+// 1. Split the semicolon-separated string into individual values
+// 2. Create an array of objects, where each object contains the single attribute specified in the child entity config
+//
+// Example transformation:
+// Input: {"Id": "123", "Interests__c": "Sports;Music;Reading"}
+// With child entity ExternalId="Interests__c" and attribute ExternalId="value"
+// Output: {"Id": "123", "Interests__c": [{"value": "Sports"}, {"value": "Music"}, {"value": "Reading"}]}
+func transformMultiSelectPicklists(objects []map[string]any, childEntities []*framework.EntityConfig) []map[string]any {
+	if len(childEntities) == 0 {
+		return objects
+	}
+
+	// Build a map of field names that need transformation
+	multiSelectFields := make(map[string]string) // maps field name -> attribute name
+	for _, childEntity := range childEntities {
+		if len(childEntity.Attributes) == 1 {
+			multiSelectFields[childEntity.ExternalId] = childEntity.Attributes[0].ExternalId
+		}
+	}
+
+	if len(multiSelectFields) == 0 {
+		return objects
+	}
+
+	// Transform each object
+	transformedObjects := make([]map[string]any, len(objects))
+	for i, obj := range objects {
+		transformedObj := make(map[string]any, len(obj))
+
+		// Copy all fields
+		for key, value := range obj {
+			transformedObj[key] = value
+		}
+
+		// Transform multi-select picklist fields
+		for fieldName, attributeName := range multiSelectFields {
+			if value, exists := obj[fieldName]; exists {
+				// Only transform if the value is a non-empty string
+				if strValue, ok := value.(string); ok && strValue != "" {
+					// Split by semicolon and create array of objects
+					values := strings.Split(strValue, ";")
+					childObjects := make([]map[string]any, 0, len(values))
+
+					for _, val := range values {
+						trimmedVal := strings.TrimSpace(val)
+						if trimmedVal != "" {
+							childObjects = append(childObjects, map[string]any{
+								attributeName: trimmedVal,
+							})
+						}
+					}
+
+					// Replace the semicolon-separated string with the array of objects
+					if len(childObjects) > 0 {
+						transformedObj[fieldName] = childObjects
+					} else {
+						// If no valid values, set to empty array
+						transformedObj[fieldName] = []map[string]any{}
+					}
+				} else if value == nil {
+					// If the value is nil, set to empty array
+					transformedObj[fieldName] = []map[string]any{}
+				}
+			}
+		}
+
+		transformedObjects[i] = transformedObj
+	}
+
+	return transformedObjects
 }

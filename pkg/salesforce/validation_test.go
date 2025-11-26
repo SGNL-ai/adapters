@@ -258,6 +258,10 @@ func TestValidateGetPageRequest(t *testing.T) {
 									ExternalId: "id",
 									Type:       framework.AttributeTypeString,
 								},
+								{
+									ExternalId: "name",
+									Type:       framework.AttributeTypeString,
+								},
 							},
 						},
 					},
@@ -272,9 +276,43 @@ func TestValidateGetPageRequest(t *testing.T) {
 				PageSize: 250,
 			},
 			wantErr: &framework.Error{
-				Message: "Requested entity does not support child entities.",
+				Message: "Child entity 'child' must have exactly one attribute for multi-select picklist support, but has 2 attributes.",
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
 			},
+		},
+		"valid_request_with_single_attribute_child_entity": {
+			request: &framework.Request[salesforce_adapter.Config]{
+				Address: "sgnl-dev.my.salesforce.com",
+				Auth: &framework.DatasourceAuthCredentials{
+					HTTPAuthorization: "Bearer Testtoken",
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "Contact",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "Id",
+							Type:       framework.AttributeTypeString,
+						},
+					},
+					ChildEntities: []*framework.EntityConfig{
+						{
+							ExternalId: "Interests__c",
+							Attributes: []*framework.AttributeConfig{
+								{
+									ExternalId: "value",
+									Type:       framework.AttributeTypeString,
+								},
+							},
+						},
+					},
+				},
+				Config: &salesforce_adapter.Config{
+					APIVersion: "58.0",
+				},
+				Ordered:  true,
+				PageSize: 250,
+			},
+			wantErr: nil,
 		},
 		"invalid_missing_auth": {
 			request: &framework.Request[salesforce_adapter.Config]{

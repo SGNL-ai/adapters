@@ -382,6 +382,65 @@ func TestAdapterGetPage(t *testing.T) {
 				},
 			},
 		},
+		"valid_request_with_multi_select_picklist": {
+			ctx: context.Background(),
+			request: &framework.Request[salesforce_adapter.Config]{
+				Address: server.URL,
+				Auth: &framework.DatasourceAuthCredentials{
+					HTTPAuthorization: "Bearer Testtoken",
+				},
+				Config: &salesforce_adapter.Config{
+					APIVersion: "58.0",
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "Contact",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "Id",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+					},
+					ChildEntities: []*framework.EntityConfig{
+						{
+							ExternalId: "Interests__c",
+							Attributes: []*framework.AttributeConfig{
+								{
+									ExternalId: "value",
+									Type:       framework.AttributeTypeString,
+								},
+							},
+						},
+					},
+				},
+				Ordered:  true,
+				PageSize: 200,
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"Id": "003Hu000020yLuHIAU",
+							"Interests__c": []framework.Object{
+								{"value": "Sports"},
+								{"value": "Music"},
+								{"value": "Reading"},
+							},
+						},
+						{
+							"Id": "003Hu000020yLuMIAU",
+							"Interests__c": []framework.Object{
+								{"value": "Technology"},
+							},
+						},
+						{
+							"Id":            "003Hu000020yLuPIAU",
+							"Interests__c": []framework.Object{},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for name, tt := range tests {
