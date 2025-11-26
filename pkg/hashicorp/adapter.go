@@ -11,12 +11,14 @@ import (
 	"github.com/sgnl-ai/adapter-framework/web"
 	"github.com/sgnl-ai/adapters/pkg/config"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
+	"github.com/sgnl-ai/adapters/pkg/validation"
 )
 
 // Adapter implements the framework.Adapter interface to query pages of objects
 // from datasources. It handles pagination and authentication for HashiCorp API requests.
 type Adapter struct {
 	HashicorpClient Client
+	SSRFValidator   validation.SSRFValidator
 }
 
 // NewAdapter creates a new instance of the HashiCorp adapter with the provided client.
@@ -24,6 +26,7 @@ type Adapter struct {
 func NewAdapter(client Client) framework.Adapter[Config] {
 	return &Adapter{
 		HashicorpClient: client,
+		SSRFValidator:   validation.NewDefaultSSRFValidator(),
 	}
 }
 
