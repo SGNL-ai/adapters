@@ -98,6 +98,11 @@ type AlertsPagination struct {
 	Total int    `json:"total"`
 }
 
+var usesListThenGet = map[string]bool{
+	Device:           true,
+	EndpointIncident: true,
+}
+
 // generateRequestBodyBytes creates the request body bytes based on the entity type and request parameters.
 func generateRequestBodyBytes(request *Request, resourceIDs []string) ([]byte, error) {
 	if request.EntityExternalID == Alerts {
@@ -142,11 +147,6 @@ func (d *Datasource) getRESTPage(ctx context.Context, request *Request) (*Respon
 			StatusCode:       httpResp.StatusCode,
 			RetryAfterHeader: httpResp.Header.Get("Retry-After"),
 		}, nil
-	}
-
-	var usesListThenGet = map[string]bool{
-		Device:           true,
-		EndpointIncident: true,
 	}
 
 	listReturnedEmptyResponse := len(resourceIDs) == 0 && nextCursor == nil
