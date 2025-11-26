@@ -1,17 +1,90 @@
-# To get started with Dependabot version updates, you'll need to specify which
-# package ecosystems to update and where the package manifests are located.
-# Please see the documentation for all configuration options:
-# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
-
 version: 2
 updates:
+  # Go modules with intelligent grouping
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+      day: "monday"
     open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "go"
+    groups:
+      # AWS SDK updates - group all AWS packages together
+      aws-sdk:
+        patterns:
+          - "github.com/aws/aws-sdk-go-v2*"
+          - "github.com/aws/smithy-go"
+        update-types:
+          - "minor"
+          - "patch"
+
+      # Docker/Container related packages
+      docker-container:
+        patterns:
+          - "github.com/docker/*"
+          - "github.com/testcontainers/*"
+          - "github.com/containerd/*"
+          - "github.com/moby/*"
+          - "github.com/opencontainers/*"
+        update-types:
+          - "minor"
+          - "patch"
+
+      # OpenTelemetry packages
+      opentelemetry:
+        patterns:
+          - "go.opentelemetry.io/*"
+        update-types:
+          - "minor"
+          - "patch"
+
+      # Testing and mocking packages
+      testing:
+        patterns:
+          - "github.com/stretchr/testify"
+          - "github.com/DATA-DOG/go-sqlmock"
+          - "gopkg.in/dnaeon/go-vcr.*"
+        update-types:
+          - "minor"
+          - "patch"
+
+      # Minor and patch updates for all other dependencies
+      go-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+        exclude-patterns:
+          - "github.com/aws/aws-sdk-go-v2*"
+          - "github.com/aws/smithy-go"
+          - "github.com/docker/*"
+          - "github.com/testcontainers/*"
+          - "github.com/containerd/*"
+          - "github.com/moby/*"
+          - "github.com/opencontainers/*"
+          - "go.opentelemetry.io/*"
+          - "github.com/stretchr/testify"
+          - "github.com/DATA-DOG/go-sqlmock"
+          - "gopkg.in/dnaeon/go-vcr.*"
+
+  # GitHub Actions with grouping
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
-    open-pull-requests-limit: 10
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+    groups:
+      # Group all GitHub Actions minor/patch updates
+      github-actions-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"

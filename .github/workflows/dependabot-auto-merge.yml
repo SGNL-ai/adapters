@@ -1,0 +1,66 @@
+name: Dependabot Auto-Merge
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  label-and-auto-merge:
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add version-specific labels
+        run: |
+          UPDATE_TYPE="${{ steps.metadata.outputs.update-type }}"
+
+          case "$UPDATE_TYPE" in
+            version-update:semver-major)
+              gh pr edit ${{ github.event.pull_request.number }} --add-label "major-update"
+              echo "Added major-update label"
+              ;;
+            version-update:semver-minor)
+              gh pr edit ${{ github.event.pull_request.number }} --add-label "minor-update"
+              echo "Added minor-update label"
+              ;;
+            version-update:semver-patch)
+              gh pr edit ${{ github.event.pull_request.number }} --add-label "patch-update"
+              echo "Added patch-update label"
+              ;;
+          esac
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable auto-merge for minor and patch updates
+        if: |
+          steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
+          steps.metadata.outputs.update-type == 'version-update:semver-patch'
+        run: |
+          gh pr merge --auto --squash ${{ github.event.pull_request.number }}
+          echo "Auto-merge enabled for ${{ steps.metadata.outputs.update-type }} update"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Comment on major updates
+        if: steps.metadata.outputs.update-type == 'version-update:semver-major'
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} --body \
+            "🔔 **Major version update detected!**
+
+            This PR contains a major version update and requires manual review before merging.
+
+            Please review the changelog and breaking changes before approving."
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
