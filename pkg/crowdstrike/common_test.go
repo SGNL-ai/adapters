@@ -197,6 +197,30 @@ func PopulateIncidentEntityConfig() *framework.EntityConfig {
 	}
 }
 
+func PopulateEndpointIncidentEntityConfig() *framework.EntityConfig {
+	return &framework.EntityConfig{
+		ExternalId: crowdstrike.EndpointIncident,
+		Attributes: []*framework.AttributeConfig{
+			{
+				ExternalId: "incident_id",
+				Type:       framework.AttributeTypeString,
+				List:       false,
+				UniqueId:   true,
+			},
+			{
+				ExternalId: "state",
+				Type:       framework.AttributeTypeString,
+				List:       false,
+			},
+			{
+				ExternalId: "status",
+				Type:       framework.AttributeTypeInt64,
+				List:       false,
+			},
+		},
+	}
+}
+
 func PopulateAlertsEntityConfig() *framework.EntityConfig {
 	return &framework.EntityConfig{
 		ExternalId: crowdstrike.Alerts,
@@ -348,6 +372,38 @@ var TestRESTServerHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http
 		}`))
 	}
 	switch r.URL.RequestURI() {
+
+	// ************************ Endpoint Incidents ************************
+	case "/incidents/queries/incidents/v1?limit=100":
+		// Handle GET request for incident IDs - empty list
+		if r.Method == http.MethodGet {
+			w.Write([]byte(EndpointIncidentEmptyListResponse))
+		} else {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+		}
+
+	case "/incidents/entities/incidents/GET/v1?limit=100":
+		// Handle POST request for incident details - should error with empty IDs
+		if r.Method == http.MethodPost {
+			body, _ := io.ReadAll(r.Body)
+			var reqBody map[string]any
+			json.Unmarshal(body, &reqBody)
+
+			// Check if ids array is empty or missing
+			ids, hasIDs := reqBody["ids"]
+			if !hasIDs || ids == nil {
+				w.WriteHeader(http.StatusBadRequest)
+				w.Write([]byte(EndpointIncidentEmptyIDsErrorResponse))
+			} else if idsArray, ok := ids.([]any); ok && len(idsArray) == 0 {
+				w.WriteHeader(http.StatusBadRequest)
+				w.Write([]byte(EndpointIncidentEmptyIDsErrorResponse))
+			} else {
+				// Valid IDs provided - return success
+				w.Write([]byte(EndpointIncidentValidResponse))
+			}
+		} else {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+		}
 
 	// ************************ Alerts ************************
 	case "/alerts/combined/alerts/v1?limit=2":

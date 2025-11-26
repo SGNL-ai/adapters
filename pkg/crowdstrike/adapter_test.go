@@ -903,3 +903,45 @@ func TestAdapterAlertGetPage(t *testing.T) {
 		})
 	}
 }
+
+func TestAdapterEndpointIncidentEmptyList(t *testing.T) {
+	server := httptest.NewTLSServer(TestRESTServerHandler)
+	defer server.Close()
+
+	adapter := crowdstrike_adapter.NewAdapter(&crowdstrike_adapter.Datasource{
+		Client: server.Client(),
+	})
+
+	request := &framework.Request[crowdstrike_adapter.Config]{
+		Address: server.URL,
+		Auth: &framework.DatasourceAuthCredentials{
+			HTTPAuthorization: "Bearer Testtoken",
+		},
+		Config: &crowdstrike_adapter.Config{
+			APIVersion: "v1",
+			Archived:   false,
+			Enabled:    true,
+		},
+		Entity:   *PopulateEndpointIncidentEntityConfig(),
+		PageSize: 100,
+	}
+
+	gotResponse := adapter.GetPage(context.Background(), request)
+
+	// Expected response should be successful with empty objects
+	if gotResponse.Error != nil {
+		t.Errorf("Expected successful response, got error: %+v", gotResponse.Error)
+	}
+
+	if gotResponse.Success == nil {
+		t.Fatalf("Expected success response, got nil")
+	}
+
+	if len(gotResponse.Success.Objects) != 0 {
+		t.Errorf("Expected empty objects list, got %d objects", len(gotResponse.Success.Objects))
+	}
+
+	if gotResponse.Success.NextCursor != "" {
+		t.Errorf("Expected empty cursor, got: %s", gotResponse.Success.NextCursor)
+	}
+}

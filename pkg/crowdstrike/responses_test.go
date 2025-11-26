@@ -2454,4 +2454,58 @@ var (
             }
         ]
     }`
+
+	// ************************ Endpoint Incident Responses ************************.
+	EndpointIncidentEmptyListResponse = `{
+		"meta": {
+			"query_time": 0.003925287,
+			"pagination": {
+				"offset": 0,
+				"limit": 100,
+				"total": 0
+			},
+			"powered_by": "incident-api",
+			"trace_id": "15c77695-57f4-4fb9-bce2-93a3bfa4dc49"
+		},
+		"resources": [],
+		"errors": []
+	}`
+
+	EndpointIncidentEmptyIDsErrorResponse = `{
+		"meta": {
+			"query_time": 0.000824576,
+			"powered_by": "incident-api",
+			"trace_id": "3627e1c1-5aa5-433e-bb33-e322d95c1a38"
+		},
+		"resources": [],
+		"errors": [
+			{
+				"code": 400,
+				"message": "The 'ids' parameter must be present at least once and can be present up to 500 times."
+			}
+		]
+	}`
+
+	EndpointIncidentValidResponse = `{
+		"meta": {
+			"query_time": 0.002345678,
+			"powered_by": "incident-api",
+			"trace_id": "abc12345-def6-7890-gh12-ijklmn345678"
+		},
+		"resources": [
+			{
+				"incident_id": "inc:test123:abc456",
+				"state": "closed",
+				"status": 20,
+				"incident_type": 1,
+				"cid": "test-customer-id",
+				"host_ids": ["host123", "host456"],
+				"created": "2025-01-01T10:00:00Z",
+				"start": "2025-01-01T09:30:00Z",
+				"end": "2025-01-01T11:00:00Z",
+				"fine_score": 75
+			}
+		],
+		"errors": []
+	}`
 )
