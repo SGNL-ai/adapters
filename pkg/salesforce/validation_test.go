@@ -437,6 +437,100 @@ func TestValidateGetPageRequest(t *testing.T) {
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
 			},
 		},
+		"valid_request_with_custom_field_ending_in_c": {
+			request: &framework.Request[salesforce_adapter.Config]{
+				Address: "sgnl-dev.my.salesforce.com",
+				Auth: &framework.DatasourceAuthCredentials{
+					HTTPAuthorization: "Bearer testtoken",
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "User",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "Id",
+							Type:       framework.AttributeTypeString,
+						},
+						{
+							ExternalId: "CustomField__c",
+							Type:       framework.AttributeTypeString,
+						},
+					},
+				},
+				Config: &salesforce_adapter.Config{
+					APIVersion: "58.0",
+				},
+				Ordered:  true,
+				PageSize: 250,
+			},
+			wantErr: nil,
+		},
+		"invalid_request_attribute_with_double_underscore_not_ending_in_c": {
+			request: &framework.Request[salesforce_adapter.Config]{
+				Address: "sgnl-dev.my.salesforce.com",
+				Auth: &framework.DatasourceAuthCredentials{
+					HTTPAuthorization: "Bearer testtoken",
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "User",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "Id",
+							Type:       framework.AttributeTypeString,
+						},
+						{
+							ExternalId: "Invalid__Field",
+							Type:       framework.AttributeTypeString,
+						},
+					},
+				},
+				Config: &salesforce_adapter.Config{
+					APIVersion: "58.0",
+				},
+				Ordered:  true,
+				PageSize: 250,
+			},
+			wantErr: &framework.Error{
+				Message: "Attribute 'Invalid__Field' contains '__' but does not end with '__c'. Only Salesforce custom fields (ending with '__c') are allowed to contain '__'.",
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
+			},
+		},
+		"invalid_request_child_entity_with_double_underscore_not_ending_in_c": {
+			request: &framework.Request[salesforce_adapter.Config]{
+				Address: "sgnl-dev.my.salesforce.com",
+				Auth: &framework.DatasourceAuthCredentials{
+					HTTPAuthorization: "Bearer testtoken",
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "User",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "Id",
+							Type:       framework.AttributeTypeString,
+						},
+					},
+					ChildEntities: []*framework.EntityConfig{
+						{
+							ExternalId: "Invalid__Child",
+							Attributes: []*framework.AttributeConfig{
+								{
+									ExternalId: "value",
+									Type:       framework.AttributeTypeString,
+								},
+							},
+						},
+					},
+				},
+				Config: &salesforce_adapter.Config{
+					APIVersion: "58.0",
+				},
+				Ordered:  true,
+				PageSize: 250,
+			},
+			wantErr: &framework.Error{
+				Message: "Attribute 'Invalid__Child' contains '__' but does not end with '__c'. Only Salesforce custom fields (ending with '__c') are allowed to contain '__'.",
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
+			},
+		},
 	}
 
 	adapter := &salesforce_adapter.Adapter{}

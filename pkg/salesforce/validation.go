@@ -56,8 +56,11 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 	for _, attribute := range request.Entity.Attributes {
 		if attribute.ExternalId == uniqueIDAttribute {
 			uniqueIDAttributeFound = true
+		}
 
-			break
+		// Validate attribute names: allow custom fields ending with __c, but block other __ patterns
+		if err := validateAttributeName(attribute.ExternalId); err != nil {
+			return err
 		}
 	}
 
@@ -81,6 +84,11 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 				Code: api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
 			}
 		}
+
+		// Validate child entity external ID: allow custom fields ending with __c, but block other __ patterns
+		if err := validateAttributeName(childEntity.ExternalId); err != nil {
+			return err
+		}
 	}
 
 	if !request.Ordered {
@@ -101,4 +109,29 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 	}
 
 	return nil
+}
+
+// validateAttributeName validates that an attribute name is allowed.
+// Salesforce custom fields end with __c, which should be allowed.
+// However, other attributes containing __ should be blocked to prevent
+// issues with complex attribute name delimiter parsing.
+func validateAttributeName(name string) *framework.Error {
+	// Allow attributes that don't contain __
+	if !strings.Contains(name, "__") {
+		return nil
+	}
+
+	// Allow Salesforce custom fields that end with __c
+	if strings.HasSuffix(name, "__c") {
+		return nil
+	}
+
+	// Block all other attributes containing __
+	return &framework.Error{
+		Message: fmt.Sprintf(
+			"Attribute '%s' contains '__' but does not end with '__c'. Only Salesforce custom fields (ending with '__c') are allowed to contain '__'.",
+			name,
+		),
+		Code: api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
+	}
 }
