@@ -57,14 +57,59 @@ func encodedAttributes(attributes []*framework.AttributeConfig) string {
 	attributesBuilder.Grow(len(attributes) * 6)
 
 	for _, attribute := range attributes {
-		if attribute.ExternalId == "Id" {
+		// Extract the actual field name from JSONPath or use as-is
+		fieldName := extractFieldName(attribute.ExternalId)
+
+		if fieldName == "Id" {
 			// Id is already added above
 			continue
 		}
 
 		attributesBuilder.WriteRune(',')
-		attributesBuilder.WriteString(url.QueryEscape(attribute.ExternalId))
+		attributesBuilder.WriteString(url.QueryEscape(fieldName))
 	}
 
 	return attributesBuilder.String()
+}
+
+// extractFieldName extracts the field name from a JSON path or attribute name.
+// Examples:
+//   - $.CustomField__c → CustomField__c
+//   - $.Account.Name → Account.Name
+//   - $.Emails[*].value → Emails
+//   - $.Contacts[?(@.primary==true)].Email → Contacts
+//   - Name → Name (handles non-JSON path field names)
+func extractFieldName(attributeName string) string {
+	// Handle non-JSON path field names (like "Id", "Name", etc.)
+	if !strings.HasPrefix(attributeName, "$.") {
+		return removeArraySyntax(attributeName)
+	}
+
+	path := strings.TrimPrefix(attributeName, "$.")
+
+	hasArraySyntax := strings.Contains(path, "[")
+
+	path = removeArraySyntax(path)
+
+	if hasArraySyntax {
+		if dotIdx := strings.Index(path, "."); dotIdx != -1 {
+			return path[:dotIdx]
+		}
+	}
+
+	return path
+}
+
+// removeArraySyntax removes array access syntax from field names.
+// Examples:
+//   - Emails[*] → Emails
+//   - Contacts[0] → Contacts
+//   - Emails[?(@.primary==true)] → Emails
+//   - CustomField__c → CustomField__c (unchanged)
+func removeArraySyntax(fieldName string) string {
+	if idx := strings.Index(fieldName, "["); idx != -1 {
+		return fieldName[:idx]
+	}
+
+	return fieldName
 }
