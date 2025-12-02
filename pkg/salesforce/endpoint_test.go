@@ -213,7 +213,8 @@ func TestConstructEndpointWithJSONPath(t *testing.T) {
 					},
 				},
 			},
-			wantEndpoint: "https://test.salesforce.com/services/data/v58.0/query?q=SELECT+Id,CustomField__c,AnotherCustom__c+FROM+CustomObject+ORDER+BY+Id+ASC",
+			wantEndpoint: "https://test.salesforce.com/services/data/v58.0/query?q=SELECT+Id,CustomField__c," +
+				"AnotherCustom__c+FROM+CustomObject+ORDER+BY+Id+ASC",
 		},
 		"jsonpath_relationships": {
 			request: &Request{
@@ -235,7 +236,8 @@ func TestConstructEndpointWithJSONPath(t *testing.T) {
 					},
 				},
 			},
-			wantEndpoint: "https://test.salesforce.com/services/data/v58.0/query?q=SELECT+Id,Account.Name,Owner.Email+FROM+Contact+ORDER+BY+Id+ASC",
+			wantEndpoint: "https://test.salesforce.com/services/data/v58.0/query?q=SELECT+Id,Account.Name," +
+				"Owner.Email+FROM+Contact+ORDER+BY+Id+ASC",
 		},
 		"jsonpath_array_fields": {
 			request: &Request{
@@ -254,7 +256,8 @@ func TestConstructEndpointWithJSONPath(t *testing.T) {
 					},
 				},
 			},
-			wantEndpoint: "https://test.salesforce.com/services/data/v58.0/query?q=SELECT+Id,Emails+FROM+Contact+ORDER+BY+Id+ASC",
+			wantEndpoint: "https://test.salesforce.com/services/data/v58.0/query?q=SELECT+Id,Emails+" +
+				"FROM+Contact+ORDER+BY+Id+ASC",
 		},
 		"mixed_syntax": {
 			request: &Request{
@@ -280,7 +283,8 @@ func TestConstructEndpointWithJSONPath(t *testing.T) {
 					},
 				},
 			},
-			wantEndpoint: "https://test.salesforce.com/services/data/v58.0/query?q=SELECT+Id,Name,CustomField__c,Account.Name+FROM+Contact+ORDER+BY+Id+ASC",
+			wantEndpoint: "https://test.salesforce.com/services/data/v58.0/query?q=SELECT+Id,Name," +
+				"CustomField__c,Account.Name+FROM+Contact+ORDER+BY+Id+ASC",
 		},
 	}
 
