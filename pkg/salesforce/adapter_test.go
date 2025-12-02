@@ -434,7 +434,7 @@ func TestAdapterGetPage(t *testing.T) {
 							},
 						},
 						{
-							"Id":            "003Hu000020yLuPIAU",
+							"Id":           "003Hu000020yLuPIAU",
 							"Interests__c": []framework.Object{},
 						},
 					},

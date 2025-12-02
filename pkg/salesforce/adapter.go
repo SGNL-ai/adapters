@@ -53,7 +53,11 @@ func (a *Adapter) RequestPageFromDatasource(
 
 	// Build the list of attributes to query from Salesforce.
 	// This includes both regular attributes and multi-select picklist fields (child entities).
-	queryAttributes := make([]*framework.AttributeConfig, 0, len(request.Entity.Attributes)+len(request.Entity.ChildEntities))
+	queryAttributes := make(
+		[]*framework.AttributeConfig,
+		0,
+		len(request.Entity.Attributes)+len(request.Entity.ChildEntities),
+	)
 	queryAttributes = append(queryAttributes, request.Entity.Attributes...)
 
 	// Add child entity fields to the query attributes list.
@@ -109,6 +113,7 @@ func (a *Adapter) RequestPageFromDatasource(
 		// Extract child entity data before framework processing
 		for i, obj := range transformedObjects {
 			multiSelectPicklistData[i] = make(map[string][]framework.Object)
+
 			for _, childEntity := range request.Entity.ChildEntities {
 				if childData, exists := obj[childEntity.ExternalId]; exists {
 					if childArray, ok := childData.([]map[string]any); ok {
@@ -117,6 +122,7 @@ func (a *Adapter) RequestPageFromDatasource(
 						for j, item := range childArray {
 							frameworkArray[j] = framework.Object(item)
 						}
+
 						multiSelectPicklistData[i][childEntity.ExternalId] = frameworkArray
 					}
 				}
@@ -129,7 +135,7 @@ func (a *Adapter) RequestPageFromDatasource(
 	// DateTime values are parsed using the specified DateTimeFormatWithTimeZone.
 	parsedObjects, parserErr := web.ConvertJSONObjectList(
 		&request.Entity, // Use original entity without child entity placeholders
-		resp.Objects,     // Use original objects without transformation
+		resp.Objects,    // Use original objects without transformation
 
 		// TODO [sc-14078]: Remove support for complex attribute names.
 		web.WithComplexAttributeNameDelimiter("__"),
@@ -189,7 +195,7 @@ func (a *Adapter) RequestPageFromDatasource(
 // Example transformation:
 // Input: {"Id": "123", "Interests__c": "Sports;Music;Reading"}
 // With child entity ExternalId="Interests__c" and attribute ExternalId="value"
-// Output: {"Id": "123", "Interests__c": [{"value": "Sports"}, {"value": "Music"}, {"value": "Reading"}]}
+// Output: {"Id": "123", "Interests__c": [{"value": "Sports"}, {"value": "Music"}, {"value": "Reading"}]}.
 func transformMultiSelectPicklists(objects []map[string]any, childEntities []*framework.EntityConfig) []map[string]any {
 	if len(childEntities) == 0 {
 		return objects
@@ -197,6 +203,7 @@ func transformMultiSelectPicklists(objects []map[string]any, childEntities []*fr
 
 	// Build a map of field names that need transformation
 	multiSelectFields := make(map[string]string) // maps field name -> attribute name
+
 	for _, childEntity := range childEntities {
 		if len(childEntity.Attributes) == 1 {
 			multiSelectFields[childEntity.ExternalId] = childEntity.Attributes[0].ExternalId

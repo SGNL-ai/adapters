@@ -276,8 +276,9 @@ func TestValidateGetPageRequest(t *testing.T) {
 				PageSize: 250,
 			},
 			wantErr: &framework.Error{
-				Message: "Child entity 'child' must have exactly one attribute for multi-select picklist support, but has 2 attributes.",
-				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
+				Message: "Child entity 'child' must have exactly one attribute for multi-select picklist " +
+					"support, but has 2 attributes.",
+				Code: api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
 			},
 		},
 		"valid_request_with_single_attribute_child_entity": {
