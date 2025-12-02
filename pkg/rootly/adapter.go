@@ -3,7 +3,6 @@ package rootly
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -83,9 +82,6 @@ func (a *Adapter) RequestPageFromDatasource(
 	if err != nil {
 		return framework.NewGetPageResponseError(err)
 	}
-
-	responseJSON, _ := json.MarshalIndent(response, "", "  ")
-	fmt.Printf("Response from Rootly API: %s\n", responseJSON)
 
 	// Type conversion for Rootly attributes
 	for i, obj := range response.Objects {
