@@ -427,6 +427,96 @@ func TestAdapterGetPage(t *testing.T) {
 				},
 			},
 		},
+		"valid_request_with_custom_fields_jsonpath": {
+			ctx: context.Background(),
+			request: &framework.Request[salesforce_adapter.Config]{
+				Address: server.URL,
+				Auth: &framework.DatasourceAuthCredentials{
+					HTTPAuthorization: "Bearer Testtoken",
+				},
+				Config: &salesforce_adapter.Config{
+					APIVersion: "58.0",
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "CustomObject",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "Id",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+						{
+							ExternalId: "$.CustomField__c",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+						{
+							ExternalId: "$.AnotherCustom__c",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+					},
+				},
+				Ordered:  true,
+				PageSize: 200,
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"Id":                 "a00Hu000000AbCDEF",
+							"$.CustomField__c":   "CustomValue1",
+							"$.AnotherCustom__c": "CustomValue2",
+						},
+					},
+				},
+			},
+		},
+		"valid_request_with_jsonpath_relationship": {
+			ctx: context.Background(),
+			request: &framework.Request[salesforce_adapter.Config]{
+				Address: server.URL,
+				Auth: &framework.DatasourceAuthCredentials{
+					HTTPAuthorization: "Bearer Testtoken",
+				},
+				Config: &salesforce_adapter.Config{
+					APIVersion: "58.0",
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "Contact",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "Id",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+						{
+							ExternalId: "$.Name",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+						{
+							ExternalId: "$.Account.Name",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+					},
+				},
+				Ordered:  true,
+				PageSize: 200,
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"Id":             "003Hu000000AbCDEF",
+							"$.Name":         "John Doe",
+							"$.Account.Name": "Acme Corporation",
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for name, tt := range tests {

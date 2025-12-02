@@ -164,6 +164,31 @@ var TestServerHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Req
 			]
 		}`))
 
+	// Contact with relationship field (Account.Name)
+	case "/services/data/v58.0/query?q=SELECT+Id,Name,Account.Name+FROM+Contact+ORDER+BY+Id+ASC":
+		w.Write([]byte(`{
+			"totalSize": 1,
+			"done": true,
+			"nextRecordsUrl": "",
+			"records": [
+				{
+					"attributes": {
+						"type": "Contact",
+						"url": "/services/data/v58.0/sobjects/Contact/003Hu000000AbCDEF"
+					},
+					"Id": "003Hu000000AbCDEF",
+					"Name": "John Doe",
+					"Account": {
+						"attributes": {
+							"type": "Account",
+							"url": "/services/data/v58.0/sobjects/Account/001Hu000000XyZ"
+						},
+						"Name": "Acme Corporation"
+					}
+				}
+			]
+		}`))
+
 	default:
 		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte(``))
