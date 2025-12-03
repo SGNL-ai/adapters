@@ -83,6 +83,50 @@ func (a *Adapter) RequestPageFromDatasource(
 		return framework.NewGetPageResponseError(err)
 	}
 
+	// Type conversion for Rootly attributes
+	for i, obj := range response.Objects {
+		attrsMap, ok := obj["attributes"].(map[string]any)
+		if !ok {
+			continue
+		}
+
+		// Look for the source field in raw data
+		val, exists := attrsMap["sequential_id"]
+		if !exists {
+			continue
+		}
+
+		// Find the corresponding attribute definition
+		for _, attr := range request.Entity.Attributes {
+			if attr.ExternalId != "sequential_id" {
+				continue
+			}
+
+			// Convert to the requested type
+			switch attr.Type {
+			case framework.AttributeTypeInt64, framework.AttributeTypeDouble:
+				if floatVal, err := castToFloat64(val); err == nil {
+					attrsMap["sequential_id"] = floatVal
+				}
+			case framework.AttributeTypeBool:
+				if boolVal, err := castToBool(val); err == nil {
+					attrsMap["sequential_id"] = boolVal
+				}
+			case framework.AttributeTypeString,
+				framework.AttributeTypeDateTime,
+				framework.AttributeTypeDuration:
+				if strVal, err := castToString(val); err == nil {
+					attrsMap["sequential_id"] = strVal
+				}
+			}
+
+			break // Found it, no need to continue
+		}
+
+		obj["attributes"] = attrsMap
+		response.Objects[i] = obj
+	}
+
 	// Convert JSON objects to framework objects
 	parsedObjects, parserErr := web.ConvertJSONObjectList(
 		&request.Entity,

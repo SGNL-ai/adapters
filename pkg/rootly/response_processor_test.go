@@ -2,7 +2,6 @@
 package rootly
 
 import (
-	"reflect"
 	"testing"
 )
 
@@ -504,88 +503,6 @@ func TestToMap(t *testing.T) {
 			// Assert
 			if (got == nil) != tt.wantNil {
 				t.Errorf("toMap() returned nil=%v, want nil=%v", got == nil, tt.wantNil)
-			}
-		})
-	}
-}
-
-func TestCopyMap(t *testing.T) {
-	// Arrange
-	original := map[string]any{
-		"id":   "1",
-		"name": "Test",
-		"nested": map[string]any{
-			"value": 42,
-		},
-	}
-
-	// Act
-	copied := copyMap(original)
-
-	// Assert
-	// Check that all keys are copied
-	if !reflect.DeepEqual(original, copied) {
-		t.Error("copyMap() did not create equal map")
-	}
-
-	// Check that it's a different map (not same reference)
-	copied["id"] = "2"
-	if original["id"] == "2" {
-		t.Error("copyMap() did not create a new map (shallow copy issue)")
-	}
-
-	// Note: This is a shallow copy, so nested maps are still shared
-	// This is intentional for performance reasons
-}
-
-func TestGetAttributes(t *testing.T) {
-	tests := []struct {
-		name    string
-		item    map[string]any
-		wantOk  bool
-		wantLen int
-	}{
-		{
-			name: "valid attributes",
-			item: map[string]any{
-				"attributes": map[string]any{
-					"key1": "value1",
-					"key2": "value2",
-				},
-			},
-			wantOk:  true,
-			wantLen: 2,
-		},
-		{
-			name:    "missing attributes",
-			item:    map[string]any{"id": "1"},
-			wantOk:  false,
-			wantLen: 0,
-		},
-		{
-			name: "attributes is not a map",
-			item: map[string]any{
-				"attributes": "not a map",
-			},
-			wantOk:  false,
-			wantLen: 0,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Arrange is in test table (tt.item)
-
-			// Act
-			got, ok := getAttributes(tt.item)
-
-			// Assert
-			if ok != tt.wantOk {
-				t.Errorf("getAttributes() ok = %v, want %v", ok, tt.wantOk)
-			}
-
-			if ok && len(got) != tt.wantLen {
-				t.Errorf("getAttributes() returned map with %d items, want %d", len(got), tt.wantLen)
 			}
 		})
 	}

@@ -4,7 +4,10 @@
 // ABOUTME: Handles enrichment of incident data with included relationships.
 package rootly
 
-import "fmt"
+import (
+	"fmt"
+	"maps"
+)
 
 // IncludedItemProcessor processes included items and enriches incident data.
 // It handles the extraction and flattening of nested relationships from Rootly's JSON:API format.
@@ -37,7 +40,7 @@ func (p *IncludedItemProcessor) FindMatching() []map[string]any {
 	var matching []map[string]any
 
 	for _, item := range p.included {
-		attrs, ok := getAttributes(item)
+		attrs, ok := item["attributes"].(map[string]any)
 		if !ok {
 			continue
 		}
@@ -74,7 +77,7 @@ func (p *IncludedItemProcessor) extractEntitiesWithFieldID(entityKey string) []a
 	var result []any
 
 	for _, item := range p.included {
-		attrs, ok := getAttributes(item)
+		attrs, ok := item["attributes"].(map[string]any)
 		if !ok {
 			continue
 		}
@@ -108,7 +111,7 @@ func (p *IncludedItemProcessor) ProcessAndExpand() []any {
 	expanded := make([]any, 0, len(p.included))
 
 	for _, item := range p.included {
-		attrs, ok := getAttributes(item)
+		attrs, ok := item["attributes"].(map[string]any)
 		if !ok {
 			continue
 		}
@@ -126,7 +129,8 @@ func (p *IncludedItemProcessor) ProcessAndExpand() []any {
 			entities := extractArrayField(attrs, entityKey)
 
 			for _, entity := range entities {
-				expandedItem := copyMap(entity)
+				expandedItem := make(map[string]any, len(item))
+				maps.Copy(expandedItem, entity)
 				expandedItem["entity_type"] = entityKey
 
 				if formFieldID != "" {
@@ -138,7 +142,9 @@ func (p *IncludedItemProcessor) ProcessAndExpand() []any {
 		}
 
 		// Also include the original item with form_field_id flattened
-		modifiedItem := copyMap(item)
+		modifiedItem := make(map[string]any, len(item))
+		maps.Copy(modifiedItem, item)
+
 		if formFieldID != "" {
 			modifiedItem["form_field_id"] = formFieldID
 		}
@@ -151,22 +157,23 @@ func (p *IncludedItemProcessor) ProcessAndExpand() []any {
 
 // EnrichIncidentData enriches a single incident data object with its included items.
 func EnrichIncidentData(dataObject map[string]any, included []map[string]any) map[string]any {
-	// Create a copy of the original object
-	enriched := copyMap(dataObject)
-
 	// Only process included items if there are any
 	if len(included) == 0 {
-		return enriched
+		return dataObject
 	}
 
 	// Get the incident ID
 	incidentID, ok := dataObject["id"]
 	if !ok {
 		// If no id found, nothing to enrich
-		return enriched
+		return dataObject
 	}
 
 	incidentIDStr := fmt.Sprint(incidentID)
+
+	// Create a copy of the original object
+	enriched := make(map[string]any, len(dataObject))
+	maps.Copy(enriched, dataObject)
 
 	// Create processor for this incident
 	processor := NewIncludedItemProcessor(incidentIDStr, included)
@@ -189,6 +196,11 @@ func EnrichIncidentData(dataObject map[string]any, included []map[string]any) ma
 
 // EnrichAllIncidentData enriches all incident data objects with their included items.
 func EnrichAllIncidentData(data []map[string]any, included []map[string]any) []map[string]any {
+	// Only process included items if there are any
+	if len(included) == 0 {
+		return data
+	}
+
 	result := make([]map[string]any, len(data))
 
 	for i, dataObject := range data {
@@ -199,13 +211,6 @@ func EnrichAllIncidentData(data []map[string]any, included []map[string]any) []m
 }
 
 // Helper functions
-
-// getAttributes safely extracts the attributes field from a map.
-func getAttributes(item map[string]any) (map[string]any, bool) {
-	attrs, ok := item["attributes"].(map[string]any)
-
-	return attrs, ok
-}
 
 // extractArrayField extracts an array field from a map and converts it to []map[string]any.
 // Handles both []any and []interface{} types automatically.
@@ -245,14 +250,4 @@ func toMap(value any) map[string]any {
 	default:
 		return nil
 	}
-}
-
-// copyMap creates a shallow copy of a map[string]any.
-func copyMap(original map[string]any) map[string]any {
-	copied := make(map[string]any, len(original))
-	for key, value := range original {
-		copied[key] = value
-	}
-
-	return copied
 }
