@@ -59,6 +59,7 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 		}
 
 		// Validate relationship depth: Salesforce SOQL supports up to 5 levels
+		// See: https://developer.salesforce.com/docs/atlas.en-us.soql_sosl.meta/soql_sosl/sforce_api_calls_soql_relationships_query_limits.htm
 		if strings.HasPrefix(attribute.ExternalId, "$.") {
 			path := strings.TrimPrefix(attribute.ExternalId, "$.")
 
