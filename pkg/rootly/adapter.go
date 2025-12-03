@@ -112,8 +112,10 @@ func (a *Adapter) RequestPageFromDatasource(
 					}
 				}
 			}
+
 			obj["attributes"] = attrsMap
 		}
+
 		response.Objects[i] = obj
 	}
 

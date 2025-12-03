@@ -1,0 +1,235 @@
+{
+  "data": [
+    {
+      "id": "test-incident-1",
+      "type": "incidents",
+      "attributes": {
+        "parent_incident_id": null,
+        "sequential_id": 1001,
+        "title": "[TEST] Test Incident",
+        "slug": "test-incident-slug",
+        "kind": "normal",
+        "private": false,
+        "summary": "Test incident for integration testing",
+        "status": "started",
+        "source": "slack",
+        "url": "https://rootly.example.com/incidents/1001",
+        "short_url": "https://root.ly/test1",
+        "user": {
+          "data": {
+            "id": "user-1",
+            "type": "users",
+            "attributes": {
+              "name": "Test User 1",
+              "email": "user1@example.com",
+              "phone": "+15555551001",
+              "first_name": "Test",
+              "last_name": "User 1",
+              "full_name": "Test User 1",
+              "slack_id": "SLACKID001",
+              "time_zone": "America/Los_Angeles"
+            }
+          }
+        },
+        "severity": {
+          "data": {
+            "id": "severity-1",
+            "type": "severities",
+            "attributes": {
+              "name": "Minor",
+              "slug": "minor",
+              "description": "A minor inconvenience",
+              "severity": "low",
+              "color": "#7748F6",
+              "position": 4
+            }
+          }
+        },
+        "started_by": {
+          "data": {
+            "id": "user-2",
+            "type": "users",
+            "attributes": {
+              "name": "Test User 2",
+              "email": "user2@example.com",
+              "phone": "+15555551002",
+              "first_name": "Test",
+              "last_name": "User 2",
+              "full_name": "Test User 2",
+              "slack_id": "SLACKID002",
+              "time_zone": "America/Los_Angeles"
+            }
+          }
+        },
+        "resolved_by": {
+          "data": {
+            "id": "user-3",
+            "type": "users",
+            "attributes": {
+              "name": "Test User 3",
+              "email": "user3@example.com",
+              "phone": "+15555551003",
+              "first_name": "Test",
+              "last_name": "User 3",
+              "full_name": "Test User 3",
+              "slack_id": "SLACKID003",
+              "time_zone": "America/Los_Angeles"
+            }
+          }
+        },
+        "slack_channel_name": "test-incident-channel",
+        "slack_channel_id": "CHANNELID001",
+        "in_triage_at": "2025-01-01T10:00:00.000Z",
+        "started_at": "2025-01-01T10:15:00.000Z",
+        "created_at": "2025-01-01T10:00:00.000Z",
+        "updated_at": "2025-01-01T11:00:00.000Z"
+      },
+      "relationships": {
+        "causes": {
+          "data": []
+        },
+        "environments": {
+          "data": []
+        },
+        "services": {
+          "data": []
+        },
+        "functionalities": {
+          "data": []
+        },
+        "groups": {
+          "data": []
+        }
+      }
+    }
+  ],
+  "included": [
+    {
+      "id": "custom-field-1",
+      "type": "custom_field_selections",
+      "attributes": {
+        "incident_id": "test-incident-1",
+        "form_field_id": "field-users",
+        "selected_users": [
+          {
+            "id": "user-10",
+            "name": "Selected User 1",
+            "email": "selected1@example.com"
+          },
+          {
+            "id": "user-11",
+            "name": "Selected User 2",
+            "email": "selected2@example.com"
+          }
+        ]
+      }
+    },
+    {
+      "id": "custom-field-2",
+      "type": "custom_field_selections",
+      "attributes": {
+        "incident_id": "test-incident-1",
+        "form_field_id": "field-groups",
+        "selected_groups": [
+          {
+            "id": "group-1",
+            "name": "Engineering Team"
+          },
+          {
+            "id": "group-2",
+            "name": "Operations Team"
+          }
+        ]
+      }
+    },
+    {
+      "id": "custom-field-3",
+      "type": "custom_field_selections",
+      "attributes": {
+        "incident_id": "test-incident-1",
+        "form_field_id": "field-services",
+        "selected_services": [
+          {
+            "id": "service-1",
+            "name": "API Service",
+            "status": "operational"
+          },
+          {
+            "id": "service-2",
+            "name": "Web Service",
+            "status": "degraded"
+          }
+        ]
+      }
+    },
+    {
+      "id": "custom-field-4",
+      "type": "custom_field_selections",
+      "attributes": {
+        "incident_id": "test-incident-1",
+        "form_field_id": "field-options",
+        "selected_options": [
+          {
+            "id": "option-1",
+            "value": "high_priority",
+            "label": "High Priority"
+          }
+        ]
+      }
+    },
+    {
+      "id": "custom-field-5",
+      "type": "custom_field_selections",
+      "attributes": {
+        "incident_id": "test-incident-1",
+        "form_field_id": "field-functionalities",
+        "selected_functionalities": [
+          {
+            "id": "func-1",
+            "name": "Authentication",
+            "description": "User authentication system"
+          },
+          {
+            "id": "func-2",
+            "name": "Payment Processing",
+            "description": "Payment gateway integration"
+          }
+        ]
+      }
+    },
+    {
+      "id": "custom-field-6",
+      "type": "custom_field_selections",
+      "attributes": {
+        "incident_id": "test-incident-1",
+        "form_field_id": "field-catalog",
+        "selected_catalog_entities": [
+          {
+            "id": "entity-1",
+            "name": "User Database",
+            "type": "database"
+          }
+        ]
+      }
+    },
+    {
+      "id": "custom-field-7",
+      "type": "custom_field_selections",
+      "attributes": {
+        "incident_id": "test-incident-2",
+        "form_field_id": "field-other",
+        "selected_users": [
+          {
+            "id": "user-99",
+            "name": "Other Incident User"
+          }
+        ]
+      }
+    }
+  ],
+  "meta": {
+    "page": 1,
+    "pages": 1,
+    "total_count": 1
+  }
+}

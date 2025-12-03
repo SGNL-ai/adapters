@@ -217,8 +217,12 @@ func TestCastToBool(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Arrange is in test table (tt.input)
+
+			// Act
 			result, err := castToBool(tt.input)
 
+			// Assert
 			if tt.expectErr {
 				if err == nil {
 					t.Errorf("expected error but got nil")
@@ -448,8 +452,12 @@ func TestCastToFloat64(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Arrange is in test table (tt.input)
+
+			// Act
 			result, err := castToFloat64(tt.input)
 
+			// Assert
 			if tt.expectErr {
 				if err == nil {
 					t.Errorf("expected error but got nil")
@@ -663,8 +671,12 @@ func TestCastToString(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Arrange is in test table (tt.input)
+
+			// Act
 			result, err := castToString(tt.input)
 
+			// Assert
 			if tt.expectErr {
 				if err == nil {
 					t.Errorf("expected error but got nil")
@@ -697,7 +709,12 @@ func TestCastToStringComplexTypes(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Arrange is in test table (tt.input)
+
+			// Act
 			result, err := castToString(tt.input)
+
+			// Assert
 			if err != nil {
 				t.Errorf("unexpected error for complex type: %v", err)
 			}
