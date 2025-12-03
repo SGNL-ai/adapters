@@ -98,6 +98,11 @@ type AlertsPagination struct {
 	Total int    `json:"total"`
 }
 
+var usesListThenGet = map[string]bool{
+	Device:           true,
+	EndpointIncident: true,
+}
+
 // generateRequestBodyBytes creates the request body bytes based on the entity type and request parameters.
 func generateRequestBodyBytes(request *Request, resourceIDs []string) ([]byte, error) {
 	if request.EntityExternalID == Alerts {
@@ -144,8 +149,11 @@ func (d *Datasource) getRESTPage(ctx context.Context, request *Request) (*Respon
 		}, nil
 	}
 
-	// 1 beyond the last page. See why in `parseListScrollResponse`
-	if request.EntityExternalID == Device && len(resourceIDs) == 0 && nextCursor == nil {
+	listReturnedEmptyResponse := len(resourceIDs) == 0 && nextCursor == nil
+
+	// Handle empty responses for entities that call both List and Get endpoints.
+	if usesListThenGet[request.EntityExternalID] && listReturnedEmptyResponse {
+		// ListEndpoint returned no IDs - skip GetEndpoint to avoid 400 error.
 		return &Response{
 			StatusCode: httpResp.StatusCode,
 		}, nil
