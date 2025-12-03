@@ -59,19 +59,25 @@ func TestResponseProcessingIntegration(t *testing.T) {
 	}
 
 	for fieldName, expectedCount := range expectedEntityFields {
-		entities, ok := incident[fieldName].([]map[string]any)
+		entitiesAny, ok := incident[fieldName].([]any)
 		if !ok {
-			t.Errorf("Expected incident to have '%s' field as []map[string]any", fieldName)
+			t.Errorf("Expected incident to have '%s' field as []any", fieldName)
 
 			continue
 		}
 
-		if len(entities) != expectedCount {
-			t.Errorf("Expected %s to have %d items, got %d", fieldName, expectedCount, len(entities))
+		if len(entitiesAny) != expectedCount {
+			t.Errorf("Expected %s to have %d items, got %d", fieldName, expectedCount, len(entitiesAny))
 		}
 
 		// Verify each entity has field_id added
-		for i, entity := range entities {
+		for i, entityAny := range entitiesAny {
+			entity, ok := entityAny.(map[string]any)
+			if !ok {
+				t.Errorf("%s[%d] is not a map", fieldName, i)
+
+				continue
+			}
 			if fieldID, ok := entity["field_id"].(string); !ok || fieldID == "" {
 				t.Errorf("%s[%d] missing field_id", fieldName, i)
 			}
@@ -369,7 +375,7 @@ func TestResponseProcessingWithMultipleIncidents(t *testing.T) {
 
 	// Incident 1 should have users
 	incident1 := processedData[0]
-	if users, ok := incident1["all_selected_users"].([]map[string]any); !ok || len(users) != 1 {
+	if users, ok := incident1["all_selected_users"].([]any); !ok || len(users) != 1 {
 		t.Error("Incident 1 should have 1 user")
 	}
 
@@ -379,7 +385,7 @@ func TestResponseProcessingWithMultipleIncidents(t *testing.T) {
 
 	// Incident 2 should have groups
 	incident2 := processedData[1]
-	if groups, ok := incident2["all_selected_groups"].([]map[string]any); !ok || len(groups) != 1 {
+	if groups, ok := incident2["all_selected_groups"].([]any); !ok || len(groups) != 1 {
 		t.Error("Incident 2 should have 1 group")
 	}
 

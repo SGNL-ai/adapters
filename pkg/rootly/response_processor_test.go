@@ -175,7 +175,13 @@ func TestIncludedItemProcessor_ExtractEntities(t *testing.T) {
 		}
 
 		// Verify field_id was added
-		for _, entity := range entities {
+		for _, entityAny := range entities {
+			entity, ok := entityAny.(map[string]any)
+			if !ok {
+				t.Errorf("ExtractEntities() %s entity is not a map", entityType)
+
+				continue
+			}
 			if fieldID, ok := entity["field_id"].(string); !ok || fieldID != "field-1" {
 				t.Errorf("ExtractEntities() %s entity missing correct field_id", entityType)
 			}
@@ -272,7 +278,7 @@ func TestEnrichIncidentData(t *testing.T) {
 				}
 
 				// Check that all_selected_users exists
-				if users, ok := result["all_selected_users"].([]map[string]any); !ok {
+				if users, ok := result["all_selected_users"].([]any); !ok {
 					t.Error("EnrichIncidentData() missing 'all_selected_users' field")
 				} else if len(users) != 1 {
 					t.Errorf("EnrichIncidentData() all_selected_users has %d items, want 1", len(users))
@@ -316,7 +322,7 @@ func TestEnrichIncidentData(t *testing.T) {
 				}
 
 				for _, field := range expectedFields {
-					if entities, ok := result[field].([]map[string]any); !ok {
+					if entities, ok := result[field].([]any); !ok {
 						t.Errorf("EnrichIncidentData() missing '%s' field", field)
 					} else if len(entities) != 1 {
 						t.Errorf("EnrichIncidentData() %s has %d items, want 1", field, len(entities))

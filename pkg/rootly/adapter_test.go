@@ -45,6 +45,108 @@ func testServerHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Handle incidents endpoint
 	if r.URL.Path == "/v1/incidents" {
+		// Check for test scenario query parameter
+		scenario := r.URL.Query().Get("filter[scenario]")
+
+		// Scenario: incidents with included relationships
+		if scenario == "with_included" {
+			response := rootly_adapter.DatasourceResponse{
+				Data: []map[string]any{
+					{
+						"id":   "incident-with-included",
+						"type": "incidents",
+						"attributes": map[string]any{
+							"title":      "Incident with Relationships",
+							"status":     "open",
+							"slug":       "incident-with-relationships",
+							"created_at": "2025-08-03T20:29:27.326-07:00",
+							"severity":   "sev1",
+							"priority":   "p1",
+						},
+					},
+				},
+				Included: []map[string]any{
+					{
+						"type": "form_field_values",
+						"attributes": map[string]any{
+							"incident_id":   "incident-with-included",
+							"form_field_id": "field-users",
+							"selected_users": []any{
+								map[string]any{"id": "user-100", "name": "Alice Smith", "email": "alice@example.com"},
+								map[string]any{"id": "user-101", "name": "Bob Jones", "email": "bob@example.com"},
+							},
+						},
+					},
+					{
+						"type": "form_field_values",
+						"attributes": map[string]any{
+							"incident_id":   "incident-with-included",
+							"form_field_id": "field-services",
+							"selected_services": []any{
+								map[string]any{"id": "service-1", "name": "API Service", "slug": "api-service"},
+								map[string]any{"id": "service-2", "name": "Database Service", "slug": "db-service"},
+							},
+						},
+					},
+					{
+						"type": "form_field_values",
+						"attributes": map[string]any{
+							"incident_id":   "incident-with-included",
+							"form_field_id": "field-groups",
+							"selected_groups": []any{
+								map[string]any{"id": "group-1", "name": "On-Call Team", "slug": "on-call"},
+							},
+						},
+					},
+					{
+						"type": "form_field_values",
+						"attributes": map[string]any{
+							"incident_id":   "incident-with-included",
+							"form_field_id": "field-functionalities",
+							"selected_functionalities": []any{
+								map[string]any{"id": "func-1", "name": "Authentication", "slug": "auth"},
+								map[string]any{"id": "func-2", "name": "Payment Processing", "slug": "payment"},
+							},
+						},
+					},
+				},
+			}
+			response.Meta.Page = 1
+			response.Meta.Pages = 1
+			response.Meta.TotalCount = 1
+
+			w.Header().Set("Content-Type", "application/vnd.api+json")
+			json.NewEncoder(w).Encode(response)
+
+			return
+		}
+
+		// Scenario: incidents with empty included
+		if scenario == "no_included" {
+			response := rootly_adapter.DatasourceResponse{
+				Data: []map[string]any{
+					{
+						"id":   "incident-no-included",
+						"type": "incidents",
+						"attributes": map[string]any{
+							"title":      "Incident without Relationships",
+							"status":     "resolved",
+							"created_at": "2025-08-03T20:29:27.326-07:00",
+						},
+					},
+				},
+				Included: []map[string]any{},
+			}
+			response.Meta.Page = 1
+			response.Meta.Pages = 1
+			response.Meta.TotalCount = 1
+
+			w.Header().Set("Content-Type", "application/vnd.api+json")
+			json.NewEncoder(w).Encode(response)
+
+			return
+		}
+
 		// Check for filters
 		if r.URL.Query().Get("filter[status]") == "started" {
 			response := rootly_adapter.DatasourceResponse{
@@ -495,12 +597,141 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 			wantError: true,
 		},
+		"incidents_with_included_relationships": {
+			ctx: context.Background(),
+			request: &framework.Request[rootly_adapter.Config]{
+				Address: server.URL,
+				Auth: &framework.DatasourceAuthCredentials{
+					HTTPAuthorization: "Bearer testtoken",
+				},
+				Config: &rootly_adapter.Config{
+					APIVersion: "v1",
+					CommonConfig: &config.CommonConfig{
+						RequestTimeoutSeconds: testutil.GenPtr(30),
+					},
+					Filters: map[string]string{
+						"incidents": "scenario=with_included",
+					},
+					Includes: map[string]string{
+						"incidents": "form_field_values",
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "incidents",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "id",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+						{
+							ExternalId: "$.attributes.title",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+						{
+							ExternalId: "$.attributes.status",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+						{
+							ExternalId: "$.attributes.severity",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+						{
+							ExternalId: "$.attributes.priority",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+						{
+							ExternalId: `$.all_selected_users[?(@.field_id=="field-users")].id`,
+							Type:       framework.AttributeTypeString,
+							List:       true,
+						},
+					},
+				},
+				PageSize: 100,
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"id":                    "incident-with-included",
+							"$.attributes.title":    "Incident with Relationships",
+							"$.attributes.status":   "open",
+							"$.attributes.severity": "sev1",
+							"$.attributes.priority": "p1",
+							// Test complex JSONPath filter expression for enriched data
+							`$.all_selected_users[?(@.field_id=="field-users")].id`: []string{"user-100", "user-101"},
+						},
+					},
+					NextCursor: "",
+				},
+			},
+		},
+		"incidents_with_no_included": {
+			ctx: context.Background(),
+			request: &framework.Request[rootly_adapter.Config]{
+				Address: server.URL,
+				Auth: &framework.DatasourceAuthCredentials{
+					HTTPAuthorization: "Bearer testtoken",
+				},
+				Config: &rootly_adapter.Config{
+					APIVersion: "v1",
+					CommonConfig: &config.CommonConfig{
+						RequestTimeoutSeconds: testutil.GenPtr(30),
+					},
+					Filters: map[string]string{
+						"incidents": "scenario=no_included",
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "incidents",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "id",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+						{
+							ExternalId: "$.attributes.title",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+						{
+							ExternalId: "$.attributes.status",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+					},
+				},
+				PageSize: 50,
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"id":                  "incident-no-included",
+							"$.attributes.title":  "Incident without Relationships",
+							"$.attributes.status": "resolved",
+						},
+					},
+					NextCursor: "",
+				},
+			},
+		},
 	}
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
+			// Arrange
+			// Test setup is done in the test case struct
+
+			// Act
 			response := adapter.GetPage(tt.ctx, tt.request)
 
+			// Assert
 			if tt.wantError {
 				if response.Error == nil {
 					t.Errorf("GetPage() expected error, got success response")

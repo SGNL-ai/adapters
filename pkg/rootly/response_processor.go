@@ -53,8 +53,9 @@ func (p *IncludedItemProcessor) FindMatching() []map[string]any {
 // ExtractEntities extracts and flattens entities of a specific type from all matching included items.
 // Each entity will have a field_id property added for filtering.
 // Returns a map where keys are entity types (e.g., "selected_users") and values are the flattened entities.
-func (p *IncludedItemProcessor) ExtractEntities() map[string][]map[string]any {
-	result := make(map[string][]map[string]any)
+// Returns []any slices to ensure compatibility with JSONPath filter expressions.
+func (p *IncludedItemProcessor) ExtractEntities() map[string][]any {
+	result := make(map[string][]any)
 
 	for _, entityType := range selectedEntityTypes {
 		entities := p.extractEntitiesWithFieldID(entityType)
@@ -68,8 +69,9 @@ func (p *IncludedItemProcessor) ExtractEntities() map[string][]map[string]any {
 
 // extractEntitiesWithFieldID is a helper that extracts entities of a given type
 // and adds the form_field_id as field_id for easy JSONPath filtering.
-func (p *IncludedItemProcessor) extractEntitiesWithFieldID(entityKey string) []map[string]any {
-	var result []map[string]any
+// Returns []any to ensure compatibility with JSONPath filter expressions.
+func (p *IncludedItemProcessor) extractEntitiesWithFieldID(entityKey string) []any {
+	var result []any
 
 	for _, item := range p.included {
 		attrs, ok := getAttributes(item)
