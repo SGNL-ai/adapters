@@ -109,6 +109,14 @@ func testServerHandler(w http.ResponseWriter, r *http.Request) {
 							},
 						},
 					},
+					{
+						"type": "form_field_values",
+						"attributes": map[string]any{
+							"incident_id":   "incident-with-included",
+							"form_field_id": "ad5366c5-2680-4656-913b-331433284941",
+							"value":         "high",
+						},
+					},
 				},
 			}
 			response.Meta.Page = 1
@@ -664,6 +672,69 @@ func TestAdapterGetPage(t *testing.T) {
 							"$.attributes.priority": "p1",
 							// Test complex JSONPath filter expression for enriched data
 							`$.all_selected_users[?(@.field_id=="field-users")].id`: []string{"user-100", "user-101"},
+						},
+					},
+					NextCursor: "",
+				},
+			},
+		},
+		"query_impact_value_from_included": {
+			ctx: context.Background(),
+			request: &framework.Request[rootly_adapter.Config]{
+				Address: server.URL,
+				Auth: &framework.DatasourceAuthCredentials{
+					HTTPAuthorization: "Bearer testtoken",
+				},
+				Config: &rootly_adapter.Config{
+					APIVersion: "v1",
+					CommonConfig: &config.CommonConfig{
+						RequestTimeoutSeconds: testutil.GenPtr(30),
+					},
+					Filters: map[string]string{
+						"incidents": "scenario=with_included",
+					},
+					Includes: map[string]string{
+						"incidents": "form_field_values",
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "incidents",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "id",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+						{
+							ExternalId: "$.attributes.title",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+						{
+							// Query using nested path (original structure)
+							ExternalId: `$.included[?(@.attributes.form_field_id=="ad5366c5-2680-4656-913b-331433284941")].attributes.value`,
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+						{
+							// Query using flattened form_field_id
+							ExternalId: `$.included[?(@.form_field_id=="ad5366c5-2680-4656-913b-331433284941")].attributes.value`,
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+					},
+				},
+				PageSize: 100,
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"id":                 "incident-with-included",
+							"$.attributes.title": "Incident with Relationships",
+							// Both JSONPath queries should return the same value
+							`$.included[?(@.attributes.form_field_id=="ad5366c5-2680-4656-913b-331433284941")].attributes.value`: "high",
+							`$.included[?(@.form_field_id=="ad5366c5-2680-4656-913b-331433284941")].attributes.value`:            "high",
 						},
 					},
 					NextCursor: "",

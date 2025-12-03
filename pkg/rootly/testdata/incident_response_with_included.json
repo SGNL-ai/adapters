@@ -225,6 +225,15 @@
           }
         ]
       }
+    },
+    {
+      "id": "custom-field-8",
+      "type": "custom_field_selections",
+      "attributes": {
+        "incident_id": "test-incident-1",
+        "form_field_id": "ad5366c5-2680-4656-913b-331433284941",
+        "value": "high"
+      }
     }
   ],
   "meta": {

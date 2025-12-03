@@ -224,7 +224,12 @@ func TestIncludedItemProcessor_ProcessAndExpand(t *testing.T) {
 	foundUser := false
 	foundGroup := false
 
-	for _, item := range expanded {
+	for _, itemAny := range expanded {
+		item, ok := itemAny.(map[string]any)
+		if !ok {
+			continue
+		}
+
 		if entityType, ok := item["entity_type"].(string); ok {
 			if entityType == "selected_users" {
 				foundUser = true

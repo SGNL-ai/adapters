@@ -103,8 +103,9 @@ func (p *IncludedItemProcessor) extractEntitiesWithFieldID(entityKey string) []a
 
 // ProcessAndExpand processes matching included items and expands nested arrays.
 // It flattens all selected_* entity types into individual items with metadata.
-func (p *IncludedItemProcessor) ProcessAndExpand() []map[string]any {
-	expanded := make([]map[string]any, 0, len(p.included))
+// Returns []any to ensure compatibility with JSONPath filter expressions.
+func (p *IncludedItemProcessor) ProcessAndExpand() []any {
+	expanded := make([]any, 0, len(p.included))
 
 	for _, item := range p.included {
 		attrs, ok := getAttributes(item)

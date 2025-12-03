@@ -85,18 +85,23 @@ func TestResponseProcessingIntegration(t *testing.T) {
 	}
 
 	// Verify included field exists and contains expanded items
-	includedItems, ok := incident["included"].([]map[string]any)
+	includedItemsAny, ok := incident["included"].([]any)
 	if !ok {
-		t.Fatal("Expected incident to have 'included' field as []map[string]any")
+		t.Fatal("Expected incident to have 'included' field as []any")
 	}
 
-	if len(includedItems) == 0 {
+	if len(includedItemsAny) == 0 {
 		t.Error("Expected included items to be non-empty")
 	}
 
 	// Count expanded items by entity_type
 	entityTypeCounts := make(map[string]int)
-	for _, item := range includedItems {
+	for _, itemAny := range includedItemsAny {
+		item, ok := itemAny.(map[string]any)
+		if !ok {
+			continue
+		}
+
 		if entityType, ok := item["entity_type"].(string); ok {
 			entityTypeCounts[entityType]++
 		}
