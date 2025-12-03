@@ -117,21 +117,17 @@ func TestExtractFieldName(t *testing.T) {
 			attributeName: "$.Account.Name",
 			wantFieldName: "Account.Name",
 		},
-		"jsonpath_deep_relationship": {
+		"jsonpath_3_level_relationship": {
 			attributeName: "$.Owner.Manager.Name",
 			wantFieldName: "Owner.Manager.Name",
 		},
-		"jsonpath_array_wildcard": {
-			attributeName: "$.Emails[*].value",
-			wantFieldName: "Emails",
+		"jsonpath_4_level_relationship": {
+			attributeName: "$.Account.Owner.Manager.Name",
+			wantFieldName: "Account.Owner.Manager.Name",
 		},
-		"jsonpath_array_index": {
-			attributeName: "$.Contacts[0].Email",
-			wantFieldName: "Contacts",
-		},
-		"jsonpath_array_filter": {
-			attributeName: "$.Emails[?(@.primary==true)].value",
-			wantFieldName: "Emails",
+		"jsonpath_5_level_relationship": {
+			attributeName: "$.Account.Parent.Parent.Parent.Name",
+			wantFieldName: "Account.Parent.Parent.Parent.Name",
 		},
 		"jsonpath_simple": {
 			attributeName: "$.Name",
@@ -145,44 +141,6 @@ func TestExtractFieldName(t *testing.T) {
 
 			if gotFieldName != tt.wantFieldName {
 				t.Errorf("extractFieldName(%q) = %q, want %q", tt.attributeName, gotFieldName, tt.wantFieldName)
-			}
-		})
-	}
-}
-
-func TestRemoveArraySyntax(t *testing.T) {
-	tests := map[string]struct {
-		fieldName     string
-		wantFieldName string
-	}{
-		"no_array": {
-			fieldName:     "CustomField__c",
-			wantFieldName: "CustomField__c",
-		},
-		"array_wildcard": {
-			fieldName:     "Emails[*]",
-			wantFieldName: "Emails",
-		},
-		"array_index": {
-			fieldName:     "Contacts[0]",
-			wantFieldName: "Contacts",
-		},
-		"array_filter": {
-			fieldName:     "Emails[?(@.primary==true)]",
-			wantFieldName: "Emails",
-		},
-		"simple_field": {
-			fieldName:     "Name",
-			wantFieldName: "Name",
-		},
-	}
-
-	for name, tt := range tests {
-		t.Run(name, func(t *testing.T) {
-			gotFieldName := removeArraySyntax(tt.fieldName)
-
-			if gotFieldName != tt.wantFieldName {
-				t.Errorf("removeArraySyntax(%q) = %q, want %q", tt.fieldName, gotFieldName, tt.wantFieldName)
 			}
 		})
 	}
@@ -239,25 +197,28 @@ func TestConstructEndpointWithJSONPath(t *testing.T) {
 			wantEndpoint: "https://test.salesforce.com/services/data/v58.0/query?q=SELECT+Id,Account.Name," +
 				"Owner.Email+FROM+Contact+ORDER+BY+Id+ASC",
 		},
-		"jsonpath_array_fields": {
+		"jsonpath_multilevel_relationships": {
 			request: &Request{
 				BaseURL:          "https://test.salesforce.com",
 				APIVersion:       "58.0",
-				EntityExternalID: "Contact",
+				EntityExternalID: "Case",
 				Attributes: []*framework.AttributeConfig{
 					{
 						ExternalId: "Id",
 						Type:       framework.AttributeTypeString,
 					},
 					{
-						ExternalId: "$.Emails[*].value",
+						ExternalId: "$.Account.Owner.Manager.Name",
 						Type:       framework.AttributeTypeString,
-						List:       true,
+					},
+					{
+						ExternalId: "$.Account.Parent.Parent.Name",
+						Type:       framework.AttributeTypeString,
 					},
 				},
 			},
-			wantEndpoint: "https://test.salesforce.com/services/data/v58.0/query?q=SELECT+Id,Emails+" +
-				"FROM+Contact+ORDER+BY+Id+ASC",
+			wantEndpoint: "https://test.salesforce.com/services/data/v58.0/query?q=SELECT+Id," +
+				"Account.Owner.Manager.Name,Account.Parent.Parent.Name+FROM+Case+ORDER+BY+Id+ASC",
 		},
 		"mixed_syntax": {
 			request: &Request{

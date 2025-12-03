@@ -399,6 +399,38 @@ func TestValidateGetPageRequest(t *testing.T) {
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
 			},
 		},
+		"invalid_relationship_depth_6_levels": {
+			request: &framework.Request[salesforce_adapter.Config]{
+				Address: "sgnl-dev.my.salesforce.com",
+				Auth: &framework.DatasourceAuthCredentials{
+					HTTPAuthorization: "Bearer testtoken",
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "Case",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "Id",
+							Type:       framework.AttributeTypeString,
+						},
+						{
+							ExternalId: "$.Account.Parent.Parent.Parent.Parent.Name",
+							Type:       framework.AttributeTypeString,
+						},
+					},
+				},
+				Config: &salesforce_adapter.Config{
+					APIVersion: "58.0",
+				},
+				Ordered:  true,
+				PageSize: 250,
+			},
+			wantErr: &framework.Error{
+				Message: "Attribute '$.Account.Parent.Parent.Parent.Parent.Name' exceeds the maximum " +
+					"relationship depth of 5 levels. Salesforce SOQL supports up to 5 levels of " +
+					"child-to-parent relationship traversal.",
+				Code: api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
+			},
+		},
 	}
 
 	adapter := &salesforce_adapter.Adapter{}

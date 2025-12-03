@@ -50,14 +50,29 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 	}
 
 	// Validate that at least the unique ID attribute for the requested entity
-	// is requested.
+	// is requested, and validate relationship depth for all attributes.
 	var uniqueIDAttributeFound bool
 
 	for _, attribute := range request.Entity.Attributes {
 		if attribute.ExternalId == uniqueIDAttribute {
 			uniqueIDAttributeFound = true
+		}
 
-			break
+		// Validate relationship depth: Salesforce SOQL supports up to 5 levels
+		if strings.HasPrefix(attribute.ExternalId, "$.") {
+			path := strings.TrimPrefix(attribute.ExternalId, "$.")
+
+			dotCount := strings.Count(path, ".")
+			if dotCount >= 5 {
+				return &framework.Error{
+					Message: fmt.Sprintf(
+						"Attribute '%s' exceeds the maximum relationship depth of 5 levels. "+
+							"Salesforce SOQL supports up to 5 levels of child-to-parent relationship traversal.",
+						attribute.ExternalId,
+					),
+					Code: api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
+				}
+			}
 		}
 	}
 
