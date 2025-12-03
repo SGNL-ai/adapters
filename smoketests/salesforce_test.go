@@ -620,3 +620,116 @@ func TestSalesforceAdapter_MultiLevelRelationship(t *testing.T) {
 
 	close(stop)
 }
+
+func TestSalesforceAdapter_FiveLevelRelationship(t *testing.T) {
+	httpClient, recorder := common.StartRecorder(t, "fixtures/salesforce/user_fivelevelrelationship")
+	defer recorder.Stop()
+
+	port := common.AvailableTestPort(t)
+
+	stop := make(chan struct{})
+
+	// Start Adapter Server
+	go func() {
+		stop = common.StartAdapterServer(t, httpClient, port)
+	}()
+
+	time.Sleep(10 * time.Millisecond)
+
+	adapterClient, conn := common.GetNewAdapterClient(t, port)
+	defer conn.Close()
+
+	ctx, cancelCtx := common.GetAdapterCtx()
+	defer cancelCtx()
+
+	gotResp, err := adapterClient.GetPage(ctx, &adapter_api_v1.GetPageRequest{
+		Datasource: &adapter_api_v1.DatasourceConfig{
+			Auth: &adapter_api_v1.DatasourceAuthCredentials{
+				AuthMechanism: &adapter_api_v1.DatasourceAuthCredentials_HttpAuthorization{
+					HttpAuthorization: "Bearer {{OMITTED}}",
+				},
+			},
+			Address: "test-instance.my.salesforce.com",
+			Id:      "Salesforce",
+			Type:    "Salesforce-1.0.1",
+			Config:  []byte(`{"apiVersion":"58.0"}`),
+		},
+		Entity: &adapter_api_v1.EntityConfig{
+			Id:         "SalesforceUser",
+			ExternalId: "User",
+			Ordered:    true,
+			Attributes: []*adapter_api_v1.AttributeConfig{
+				{
+					Id:         "Id",
+					ExternalId: "Id",
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+				},
+				{
+					Id:         "Name",
+					ExternalId: "$.Name",
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+				},
+				{
+					Id:         "ManagerManagerManagerManagerName",
+					ExternalId: "$.Manager.Manager.Manager.Manager.Name",
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+				},
+			},
+			ChildEntities: nil,
+		},
+		PageSize: 200,
+		Cursor:   "",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	wantResp := new(adapter_api_v1.GetPageResponse)
+
+	err = protojson.Unmarshal([]byte(`
+		{
+			"success": {
+				"objects": [
+					{
+						"attributes": [
+							{
+								"id": "ManagerManagerManagerManagerName",
+								"values": [
+									{
+										"string_value": "TopLevel Manager5"
+									}
+								]
+							},
+							{
+								"id": "Name",
+								"values": [
+									{
+										"string_value": "Level Manager1"
+									}
+								]
+							},
+							{
+								"id": "Id",
+								"values": [
+									{
+										"string_value": "005gL00000BHeFdQAL"
+									}
+								]
+							}
+						]
+					}
+				],
+				"nextCursor": ""
+			}
+		}
+	`), wantResp)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if diff := cmp.Diff(gotResp, wantResp, common.CmpOpts...); diff != "" {
+		t.Fatal(diff)
+	}
+
+	close(stop)
+}
