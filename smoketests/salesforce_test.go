@@ -290,3 +290,333 @@ func TestSalesforceAdapter_User(t *testing.T) {
 
 	close(stop)
 }
+
+func TestSalesforceAdapter_CustomFields(t *testing.T) {
+	httpClient, recorder := common.StartRecorder(t, "fixtures/salesforce/account_customfield")
+	defer recorder.Stop()
+
+	port := common.AvailableTestPort(t)
+
+	stop := make(chan struct{})
+
+	// Start Adapter Server
+	go func() {
+		stop = common.StartAdapterServer(t, httpClient, port)
+	}()
+
+	time.Sleep(10 * time.Millisecond)
+
+	adapterClient, conn := common.GetNewAdapterClient(t, port)
+	defer conn.Close()
+
+	ctx, cancelCtx := common.GetAdapterCtx()
+	defer cancelCtx()
+
+	gotResp, err := adapterClient.GetPage(ctx, &adapter_api_v1.GetPageRequest{
+		Datasource: &adapter_api_v1.DatasourceConfig{
+			Auth: &adapter_api_v1.DatasourceAuthCredentials{
+				AuthMechanism: &adapter_api_v1.DatasourceAuthCredentials_HttpAuthorization{
+					HttpAuthorization: "Bearer {{OMITTED}}",
+				},
+			},
+			Address: "test-instance.my.salesforce.com",
+			Id:      "Salesforce",
+			Type:    "Salesforce-1.0.1",
+			Config:  []byte(`{"apiVersion":"58.0"}`),
+		},
+		Entity: &adapter_api_v1.EntityConfig{
+			Id:         "SalesforceAccount",
+			ExternalId: "Account",
+			Ordered:    true,
+			Attributes: []*adapter_api_v1.AttributeConfig{
+				{
+					Id:         "Id",
+					ExternalId: "Id",
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+				},
+				{
+					Id:         "Name",
+					ExternalId: "$.Name",
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+				},
+				{
+					Id:         "Active",
+					ExternalId: "$.Active__c",
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+				},
+			},
+			ChildEntities: nil,
+		},
+		PageSize: 200,
+		Cursor:   "",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	wantResp := new(adapter_api_v1.GetPageResponse)
+
+	err = protojson.Unmarshal([]byte(`
+		{
+			"success": {
+				"objects": [
+					{
+						"attributes": [
+							{
+								"id": "Active",
+								"values": [
+									{
+										"string_value": "Yes"
+									}
+								]
+							},
+							{
+								"id": "Name",
+								"values": [
+									{
+										"string_value": "Edge Communications"
+									}
+								]
+							},
+							{
+								"id": "Id",
+								"values": [
+									{
+										"string_value": "001gL00000WW0iPQAT"
+									}
+								]
+							}
+						]
+					},
+					{
+						"attributes": [
+							{
+								"id": "Name",
+								"values": [
+									{
+										"string_value": "Burlington Textiles Corp of America"
+									}
+								]
+							},
+							{
+								"id": "Id",
+								"values": [
+									{
+										"string_value": "001gL00000WW0iQQAT"
+									}
+								]
+							}
+						]
+					},
+					{
+						"attributes": [
+							{
+								"id": "Active",
+								"values": [
+									{
+										"string_value": "Yes"
+									}
+								]
+							},
+							{
+								"id": "Name",
+								"values": [
+									{
+										"string_value": "Pyramid Construction Inc."
+									}
+								]
+							},
+							{
+								"id": "Id",
+								"values": [
+									{
+										"string_value": "001gL00000WW0iRQAT"
+									}
+								]
+							}
+						]
+					}
+				],
+				"nextCursor": ""
+			}
+		}
+	`), wantResp)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if diff := cmp.Diff(gotResp, wantResp, common.CmpOpts...); diff != "" {
+		t.Fatal(diff)
+	}
+
+	close(stop)
+}
+
+func TestSalesforceAdapter_MultiLevelRelationship(t *testing.T) {
+	httpClient, recorder := common.StartRecorder(t, "fixtures/salesforce/account_relationship")
+	defer recorder.Stop()
+
+	port := common.AvailableTestPort(t)
+
+	stop := make(chan struct{})
+
+	// Start Adapter Server
+	go func() {
+		stop = common.StartAdapterServer(t, httpClient, port)
+	}()
+
+	time.Sleep(10 * time.Millisecond)
+
+	adapterClient, conn := common.GetNewAdapterClient(t, port)
+	defer conn.Close()
+
+	ctx, cancelCtx := common.GetAdapterCtx()
+	defer cancelCtx()
+
+	gotResp, err := adapterClient.GetPage(ctx, &adapter_api_v1.GetPageRequest{
+		Datasource: &adapter_api_v1.DatasourceConfig{
+			Auth: &adapter_api_v1.DatasourceAuthCredentials{
+				AuthMechanism: &adapter_api_v1.DatasourceAuthCredentials_HttpAuthorization{
+					HttpAuthorization: "Bearer {{OMITTED}}",
+				},
+			},
+			Address: "test-instance.my.salesforce.com",
+			Id:      "Salesforce",
+			Type:    "Salesforce-1.0.1",
+			Config:  []byte(`{"apiVersion":"58.0"}`),
+		},
+		Entity: &adapter_api_v1.EntityConfig{
+			Id:         "SalesforceAccount",
+			ExternalId: "Account",
+			Ordered:    true,
+			Attributes: []*adapter_api_v1.AttributeConfig{
+				{
+					Id:         "Id",
+					ExternalId: "Id",
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+				},
+				{
+					Id:         "Name",
+					ExternalId: "$.Name",
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+				},
+				{
+					Id:         "OwnerName",
+					ExternalId: "$.Owner.Name",
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+				},
+			},
+			ChildEntities: nil,
+		},
+		PageSize: 200,
+		Cursor:   "",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	wantResp := new(adapter_api_v1.GetPageResponse)
+
+	err = protojson.Unmarshal([]byte(`
+		{
+			"success": {
+				"objects": [
+					{
+						"attributes": [
+							{
+								"id": "Name",
+								"values": [
+									{
+										"string_value": "Edge Communications"
+									}
+								]
+							},
+							{
+								"id": "OwnerName",
+								"values": [
+									{
+										"string_value": "OrgFarm EPIC"
+									}
+								]
+							},
+							{
+								"id": "Id",
+								"values": [
+									{
+										"string_value": "001gL00000WW0iPQAT"
+									}
+								]
+							}
+						]
+					},
+					{
+						"attributes": [
+							{
+								"id": "Name",
+								"values": [
+									{
+										"string_value": "Burlington Textiles Corp of America"
+									}
+								]
+							},
+							{
+								"id": "OwnerName",
+								"values": [
+									{
+										"string_value": "OrgFarm EPIC"
+									}
+								]
+							},
+							{
+								"id": "Id",
+								"values": [
+									{
+										"string_value": "001gL00000WW0iQQAT"
+									}
+								]
+							}
+						]
+					},
+					{
+						"attributes": [
+							{
+								"id": "Name",
+								"values": [
+									{
+										"string_value": "Pyramid Construction Inc."
+									}
+								]
+							},
+							{
+								"id": "OwnerName",
+								"values": [
+									{
+										"string_value": "OrgFarm EPIC"
+									}
+								]
+							},
+							{
+								"id": "Id",
+								"values": [
+									{
+										"string_value": "001gL00000WW0iRQAT"
+									}
+								]
+							}
+						]
+					}
+				],
+				"nextCursor": ""
+			}
+		}
+	`), wantResp)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if diff := cmp.Diff(gotResp, wantResp, common.CmpOpts...); diff != "" {
+		t.Fatal(diff)
+	}
+
+	close(stop)
+}
