@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-// castToBool attempts to convert a value to a boolean
+// castToBool attempts to convert a value to a boolean.
 func castToBool(val interface{}) (bool, error) {
 	if val == nil {
 		return false, nil
@@ -20,13 +20,23 @@ func castToBool(val interface{}) (bool, error) {
 		return strconv.ParseBool(v)
 	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
 		// Convert non-zero numbers to true, zero to false
-		return reflect.ValueOf(v).Int() != 0, nil
+		rv := reflect.ValueOf(v)
+		switch rv.Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			return rv.Int() != 0, nil
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			return rv.Uint() != 0, nil
+		case reflect.Float32, reflect.Float64:
+			return rv.Float() != 0, nil
+		default:
+			return false, fmt.Errorf("cannot cast %v (type %T) to bool", val, val)
+		}
 	default:
 		return false, fmt.Errorf("cannot cast %v (type %T) to bool", val, val)
 	}
 }
 
-// castToFloat64 attempts to convert a value to a float64
+// castToFloat64 attempts to convert a value to a float64.
 func castToFloat64(val interface{}) (float64, error) {
 	if val == nil {
 		return 0, nil
@@ -63,16 +73,27 @@ func castToFloat64(val interface{}) (float64, error) {
 		if v {
 			return 1, nil
 		}
+
 		return 0, nil
 	default:
 		return 0, fmt.Errorf("cannot cast %v (type %T) to float64", val, val)
 	}
 }
 
-// castToString attempts to convert a value to a string
+// castToString attempts to convert a value to a string.
 func castToString(val interface{}) (string, error) {
 	if val == nil {
 		return "", nil
+	}
+
+	// Handle pointers by dereferencing them
+	rv := reflect.ValueOf(val)
+	if rv.Kind() == reflect.Ptr {
+		if rv.IsNil() {
+			return "", nil
+		}
+		// Dereference and recursively convert
+		return castToString(rv.Elem().Interface())
 	}
 
 	switch v := val.(type) {
