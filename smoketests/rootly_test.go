@@ -642,132 +642,67 @@ func TestRootlyAdapter_IncidentWithIncludedAndSelectedUsers(t *testing.T) {
 		t.Fatalf("GetPage error: %v", err)
 	}
 
-	// Assert: Verify response structure and type
-	t.Logf("Response type: %T", gotResp.Response)
-
-	// Check for error response
-	if errResp, ok := gotResp.Response.(*adapter_api_v1.GetPageResponse_Error); ok {
-		t.Fatalf("Got error response: %+v", errResp)
-	}
-
-	// Verify successful response with at least one object
+	// Assert: Verify response structure
+	// Instead of doing a direct comparison, verify essential enriched attributes are present
+	// This avoids issues with attribute ordering and structure
 	successGot, ok := gotResp.Response.(*adapter_api_v1.GetPageResponse_Success)
-	if !ok || successGot == nil || successGot.Success == nil {
-		t.Fatalf("Expected a successful response, got: ok=%v, successGot=%v, Success=%v",
-			ok, successGot != nil, successGot != nil && successGot.Success != nil)
+	if !ok || successGot == nil || successGot.Success == nil || len(successGot.Success.Objects) == 0 {
+		t.Fatal("Expected a successful response with at least one object")
 	}
 
-	if len(successGot.Success.Objects) == 0 {
-		t.Fatal("Expected at least one object in response")
-	}
-
-	// Assert: Verify enriched attributes in first incident object
+	// Verify key enriched attributes in first object
 	obj := successGot.Success.Objects[0]
 
-	// Helper functions for attribute verification
-	findAttribute := func(id string) *adapter_api_v1.Attribute {
+	// Helper to verify attribute exists
+	verifyAttributeExists := func(id string, expectedValue string) {
+		for _, attr := range obj.Attributes {
+			if attr.Id == id && len(attr.Values) > 0 {
+				if strValue := attr.Values[0].GetStringValue(); strValue == expectedValue {
+					return // Found and matches
+				} else if strValue != "" {
+					t.Errorf("Attribute %s has value %s but expected %s", id, strValue, expectedValue)
+
+					return
+				}
+			}
+		}
+
+		t.Errorf("Attribute %s with value %s not found", id, expectedValue)
+	}
+
+	// Helper to verify list attribute contains expected values
+	verifyListAttributeContains := func(id string, expectedValues []string) {
 		for _, attr := range obj.Attributes {
 			if attr.Id == id {
-				return attr
-			}
-		}
+				if len(attr.Values) != len(expectedValues) {
+					t.Errorf("Attribute %s expected %d values, got %d", id, len(expectedValues), len(attr.Values))
 
-		return nil
-	}
-
-	// Helper to get string values
-	getStringValues := func(attr *adapter_api_v1.Attribute) []string {
-		if attr == nil {
-			return nil
-		}
-		var values []string
-		for _, val := range attr.Values {
-			if strVal := val.GetStringValue(); strVal != "" {
-				values = append(values, strVal)
-			}
-		}
-
-		return values
-	}
-
-	// Assert: Verify basic attributes
-	idAttr := findAttribute("Id")
-	if idAttr == nil || len(idAttr.Values) == 0 {
-		t.Fatal("Id attribute is required")
-	}
-
-	// Assert: Verify SequentialId was converted from int to string
-	// The fixture has sequential_id: 42 (int), should be converted to "42" (string)
-	seqIDAttr := findAttribute("SequentialId")
-	if seqIDAttr != nil && len(seqIDAttr.Values) > 0 {
-		seqVal := seqIDAttr.Values[0].GetStringValue()
-		if seqVal == "" {
-			t.Error("SequentialId should be converted to string")
-		}
-		t.Logf("✓ SequentialId converted to string: %s", seqVal)
-	}
-
-	// Assert: Verify selected_users in array format
-	// Tests enrichment of multiple user objects into flat array with field_id
-	usersAttr := findAttribute("SelectedUsersArray")
-	if usersAttr != nil {
-		users := getStringValues(usersAttr)
-		t.Logf("✓ Selected users (array format): %v", users)
-		if len(users) > 0 {
-			// Verify at least one email is present
-			hasEmail := false
-			for _, user := range users {
-				if user != "" {
-					hasEmail = true
-
-					break
+					return
 				}
-			}
-			if !hasEmail {
-				t.Error("Expected at least one user email in array format")
-			}
-		}
-	}
 
-	// Assert: Verify selected_users in object format
-	// Tests handling of single-value object: {"id": null, "value": "High Impact"}
-	impactAttr := findAttribute("ImpactValue")
-	if impactAttr != nil {
-		impacts := getStringValues(impactAttr)
-		t.Logf("✓ Impact values (object format): %v", impacts)
-		if len(impacts) > 0 {
-			// Verify at least one impact value is present
-			hasValue := false
-			for _, impact := range impacts {
-				if impact != "" {
-					hasValue = true
-
-					break
+				for i, expectedVal := range expectedValues {
+					if attr.Values[i].GetStringValue() != expectedVal {
+						t.Errorf("Attribute %s[%d] expected %s, got %s", id, i, expectedVal, attr.Values[i].GetStringValue())
+					}
 				}
-			}
-			if !hasValue {
-				t.Error("Expected at least one impact value")
+
+				return
 			}
 		}
+
+		t.Errorf("Attribute %s not found", id)
 	}
 
-	// Assert: Verify all_selected_groups
-	// Tests group entity enrichment with field_id for filtering
-	groupsAttr := findAttribute("SelectedGroups")
-	if groupsAttr != nil {
-		groups := getStringValues(groupsAttr)
-		t.Logf("✓ Selected groups: %v", groups)
-	}
+	// Verify required attributes from fixture
+	verifyAttributeExists("Id", "incident-123")
+	verifyAttributeExists("SequentialId", "42") // Converted from int to string
 
-	// Assert: Verify all_selected_services
-	// Tests service entity enrichment with field_id for filtering
-	servicesAttr := findAttribute("SelectedServices")
-	if servicesAttr != nil {
-		services := getStringValues(servicesAttr)
-		t.Logf("✓ Selected services: %v", services)
-	}
-
-	t.Log("✅ Successfully verified incident with included field and selected_users attributes")
+	// Verify enriched attributes from included field
+	// These test the core enrichment functionality with JSONPath filters
+	verifyListAttributeContains("SelectedUsersArray", []string{"alice@example.com", "bob@example.com"})
+	verifyListAttributeContains("ImpactValue", []string{"High Impact"})
+	verifyListAttributeContains("SelectedGroups", []string{"Engineering Team", "Operations Team"})
+	verifyListAttributeContains("SelectedServices", []string{"API Service", "Database Service"})
 
 	close(stop)
 }
