@@ -63,17 +63,14 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 		// Validate relationship depth: Salesforce SOQL supports up to 5 levels
 		// See: https://developer.salesforce.com/docs/atlas.en-us.soql_sosl.meta/soql_sosl/
 		//      sforce_api_calls_soql_relationships_query_limits.htm
-		if len(externalID) > 2 && externalID[0] == '$' && externalID[1] == '.' {
-			// Count dots in substring
-			if strings.Count(externalID[2:], ".") >= 5 {
-				return &framework.Error{
-					Message: fmt.Sprintf(
-						"Attribute '%s' exceeds the maximum relationship depth of 5 levels. "+
-							"Salesforce SOQL supports up to 5 levels of child-to-parent relationship traversal.",
-						externalID,
-					),
-					Code: api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
-				}
+		if len(strings.Split(strings.TrimPrefix(externalID, "$."), ".")) > 5 {
+			return &framework.Error{
+				Message: fmt.Sprintf(
+					"Attribute '%s' exceeds the maximum relationship depth of 5 levels. "+
+						"Salesforce SOQL supports up to 5 levels of child-to-parent relationship traversal.",
+					externalID,
+				),
+				Code: api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
 			}
 		}
 	}
