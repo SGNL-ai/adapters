@@ -1,0 +1,64 @@
+---
+version: 2
+interactions:
+  - id: 0
+    request:
+      proto: HTTP/1.1
+      proto_major: 1
+      proto_minor: 1
+      content_length: 0
+      transfer_encoding: []
+      trailer: {}
+      host: test-instance.my.salesforce.com
+      remote_addr: ""
+      request_uri: ""
+      body: ""
+      form: {}
+      headers:
+        Authorization:
+          - Bearer {{OMITTED}}
+        Sforce-Query-Options:
+          - batchSize=200
+      url: https://test-instance.my.salesforce.com/services/data/v58.0/query?q=SELECT+Id,Name,Manager.Manager.Manager.Manager.Name+FROM+User+ORDER+BY+Id+ASC
+      method: GET
+    response:
+      proto: HTTP/2.0
+      proto_major: 2
+      proto_minor: 0
+      transfer_encoding: []
+      trailer: {}
+      content_length: -1
+      uncompressed: true
+      body: '{"totalSize":1,"done":true,"records":[{"attributes":{"type":"User","url":"/services/data/v58.0/sobjects/User/005gL00000BHeFdQAL"},"Id":"005gL00000BHeFdQAL","Name":"Level Manager1","Manager":{"attributes":{"type":"User","url":"/services/data/v58.0/sobjects/User/005gL00000BHe7ZQAT"},"Manager":{"attributes":{"type":"User","url":"/services/data/v58.0/sobjects/User/005gL00000BHcs9QAD"},"Manager":{"attributes":{"type":"User","url":"/services/data/v58.0/sobjects/User/005gL00000BHcovQAD"},"Manager":{"attributes":{"type":"User","url":"/services/data/v58.0/sobjects/User/005gL00000BHcgrQAD"},"Name":"TopLevel Manager5"}}}}}]}'
+      headers:
+        Cache-Control:
+          - no-cache,must-revalidate,max-age=0,no-store,private
+        Content-Type:
+          - application/json;charset=UTF-8
+        Date:
+          - Wed, 03 Dec 2025 19:45:00 GMT
+        Server:
+          - sfdcedge
+        Set-Cookie:
+          - CookieConsentPolicy=0:1; path=/; expires=Thu, 03-Dec-2026 19:45:00 GMT; Max-Age=31536000; secure
+          - LSKey-c$CookieConsentPolicy=0:1; path=/; expires=Thu, 03-Dec-2026 19:45:00 GMT; Max-Age=31536000; secure
+          - BrowserId=Abc123Example; domain=.salesforce.com; path=/; expires=Thu, 03-Dec-2026 19:45:00 GMT; Max-Age=31536000; secure; SameSite=None
+        Sforce-Limit-Info:
+          - api-usage=10/15000
+        Strict-Transport-Security:
+          - max-age=63072000; includeSubDomains
+        Vary:
+          - Accept-Encoding
+        X-Content-Type-Options:
+          - nosniff
+        X-Request-Id:
+          - abc123example
+        X-Robots-Tag:
+          - none
+        X-Sfdc-Edge-Cache:
+          - MISS
+        X-Sfdc-Request-Id:
+          - abc123example
+      status: 200 OK
+      code: 200
+      duration: 150.000000ms
