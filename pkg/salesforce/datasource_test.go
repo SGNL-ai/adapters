@@ -145,6 +145,50 @@ var TestServerHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Req
 			]
 		}`))
 
+	// Custom Object with Custom Fields
+	case "/services/data/v58.0/query?q=SELECT+Id,CustomField__c,AnotherCustom__c+FROM+CustomObject+ORDER+BY+Id+ASC":
+		w.Write([]byte(`{
+			"totalSize": 1,
+			"done": true,
+			"nextRecordsUrl": "",
+			"records": [
+				{
+					"attributes": {
+						"type": "CustomObject",
+						"url": "/services/data/v58.0/sobjects/CustomObject/a00Hu000000AbCDEF"
+					},
+					"Id": "a00Hu000000AbCDEF",
+					"CustomField__c": "CustomValue1",
+					"AnotherCustom__c": "CustomValue2"
+				}
+			]
+		}`))
+
+	// Contact with relationship field (Account.Name)
+	case "/services/data/v58.0/query?q=SELECT+Id,Name,Account.Name+FROM+Contact+ORDER+BY+Id+ASC":
+		w.Write([]byte(`{
+			"totalSize": 1,
+			"done": true,
+			"nextRecordsUrl": "",
+			"records": [
+				{
+					"attributes": {
+						"type": "Contact",
+						"url": "/services/data/v58.0/sobjects/Contact/003Hu000000AbCDEF"
+					},
+					"Id": "003Hu000000AbCDEF",
+					"Name": "John Doe",
+					"Account": {
+						"attributes": {
+							"type": "Account",
+							"url": "/services/data/v58.0/sobjects/Account/001Hu000000XyZ"
+						},
+						"Name": "Acme Corporation"
+					}
+				}
+			]
+		}`))
+
 	// Contact with Multi-Select Picklist
 	case "/services/data/v58.0/query?q=SELECT+Id,Interests__c+FROM+Contact+ORDER+BY+Id+ASC":
 		w.Write([]byte(`{

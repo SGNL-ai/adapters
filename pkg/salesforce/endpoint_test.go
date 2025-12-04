@@ -87,3 +87,175 @@ func TestConstructEndpoint(t *testing.T) {
 		})
 	}
 }
+
+func TestExtractFieldName(t *testing.T) {
+	tests := map[string]struct {
+		attributeName string
+		wantFieldName string
+	}{
+		"simple_field": {
+			attributeName: "Name",
+			wantFieldName: "Name",
+		},
+		"id_field": {
+			attributeName: "Id",
+			wantFieldName: "Id",
+		},
+		"custom_field": {
+			attributeName: "CustomField__c",
+			wantFieldName: "CustomField__c",
+		},
+		"jsonpath_custom_field": {
+			attributeName: "$.CustomField__c",
+			wantFieldName: "CustomField__c",
+		},
+		"jsonpath_another_custom_field": {
+			attributeName: "$.AnotherCustom__c",
+			wantFieldName: "AnotherCustom__c",
+		},
+		"jsonpath_relationship": {
+			attributeName: "$.Account.Name",
+			wantFieldName: "Account.Name",
+		},
+		"jsonpath_3_level_relationship": {
+			attributeName: "$.Owner.Manager.Name",
+			wantFieldName: "Owner.Manager.Name",
+		},
+		"jsonpath_4_level_relationship": {
+			attributeName: "$.Account.Owner.Manager.Name",
+			wantFieldName: "Account.Owner.Manager.Name",
+		},
+		"jsonpath_5_level_relationship": {
+			attributeName: "$.Account.Parent.Parent.Parent.Name",
+			wantFieldName: "Account.Parent.Parent.Parent.Name",
+		},
+		"jsonpath_simple": {
+			attributeName: "$.Name",
+			wantFieldName: "Name",
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			gotFieldName := extractFieldName(tt.attributeName)
+
+			if gotFieldName != tt.wantFieldName {
+				t.Errorf("extractFieldName(%q) = %q, want %q", tt.attributeName, gotFieldName, tt.wantFieldName)
+			}
+		})
+	}
+}
+
+func TestConstructEndpointWithJSONPath(t *testing.T) {
+	tests := map[string]struct {
+		request      *Request
+		wantEndpoint string
+	}{
+		"jsonpath_custom_fields": {
+			request: &Request{
+				BaseURL:          "https://test.salesforce.com",
+				APIVersion:       "58.0",
+				EntityExternalID: "CustomObject",
+				Attributes: []*framework.AttributeConfig{
+					{
+						ExternalId: "Id",
+						Type:       framework.AttributeTypeString,
+					},
+					{
+						ExternalId: "$.CustomField__c",
+						Type:       framework.AttributeTypeString,
+					},
+					{
+						ExternalId: "$.AnotherCustom__c",
+						Type:       framework.AttributeTypeString,
+					},
+				},
+			},
+			wantEndpoint: "https://test.salesforce.com/services/data/v58.0/query?q=SELECT+Id,CustomField__c," +
+				"AnotherCustom__c+FROM+CustomObject+ORDER+BY+Id+ASC",
+		},
+		"jsonpath_relationships": {
+			request: &Request{
+				BaseURL:          "https://test.salesforce.com",
+				APIVersion:       "58.0",
+				EntityExternalID: "Contact",
+				Attributes: []*framework.AttributeConfig{
+					{
+						ExternalId: "Id",
+						Type:       framework.AttributeTypeString,
+					},
+					{
+						ExternalId: "$.Account.Name",
+						Type:       framework.AttributeTypeString,
+					},
+					{
+						ExternalId: "$.Owner.Email",
+						Type:       framework.AttributeTypeString,
+					},
+				},
+			},
+			wantEndpoint: "https://test.salesforce.com/services/data/v58.0/query?q=SELECT+Id,Account.Name," +
+				"Owner.Email+FROM+Contact+ORDER+BY+Id+ASC",
+		},
+		"jsonpath_multilevel_relationships": {
+			request: &Request{
+				BaseURL:          "https://test.salesforce.com",
+				APIVersion:       "58.0",
+				EntityExternalID: "Case",
+				Attributes: []*framework.AttributeConfig{
+					{
+						ExternalId: "Id",
+						Type:       framework.AttributeTypeString,
+					},
+					{
+						ExternalId: "$.Account.Owner.Manager.Name",
+						Type:       framework.AttributeTypeString,
+					},
+					{
+						ExternalId: "$.Account.Parent.Parent.Name",
+						Type:       framework.AttributeTypeString,
+					},
+				},
+			},
+			wantEndpoint: "https://test.salesforce.com/services/data/v58.0/query?q=SELECT+Id," +
+				"Account.Owner.Manager.Name,Account.Parent.Parent.Name+FROM+Case+ORDER+BY+Id+ASC",
+		},
+		"mixed_syntax": {
+			request: &Request{
+				BaseURL:          "https://test.salesforce.com",
+				APIVersion:       "58.0",
+				EntityExternalID: "Contact",
+				Attributes: []*framework.AttributeConfig{
+					{
+						ExternalId: "Id",
+						Type:       framework.AttributeTypeString,
+					},
+					{
+						ExternalId: "Name",
+						Type:       framework.AttributeTypeString,
+					},
+					{
+						ExternalId: "$.CustomField__c",
+						Type:       framework.AttributeTypeString,
+					},
+					{
+						ExternalId: "$.Account.Name",
+						Type:       framework.AttributeTypeString,
+					},
+				},
+			},
+			wantEndpoint: "https://test.salesforce.com/services/data/v58.0/query?q=SELECT+Id,Name," +
+				"CustomField__c,Account.Name+FROM+Contact+ORDER+BY+Id+ASC",
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			gotEndpoint := ConstructEndpoint(tt.request)
+
+			if gotEndpoint != tt.wantEndpoint {
+				t.Errorf("ConstructEndpoint() = %q, want %q", gotEndpoint, tt.wantEndpoint)
+			}
+		})
+	}
+}
