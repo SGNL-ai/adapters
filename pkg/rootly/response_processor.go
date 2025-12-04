@@ -224,7 +224,7 @@ func extractArrayField(obj map[string]any, key string) []map[string]any {
 }
 
 // toMapSlice converts various slice types to []map[string]any.
-// Handles []any and nested conversions.
+// Handles []any, nested conversions, and single map objects.
 func toMapSlice(value any) []map[string]any {
 	var result []map[string]any
 
@@ -237,6 +237,10 @@ func toMapSlice(value any) []map[string]any {
 		}
 	case []map[string]any:
 		return v
+	case map[string]any:
+		// Handle single object case (e.g., selected_users as object with id/value)
+		// Convert single object to a slice with one element
+		return []map[string]any{v}
 	}
 
 	return result

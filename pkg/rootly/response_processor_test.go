@@ -347,6 +347,55 @@ func TestEnrichIncidentData(t *testing.T) {
 				}
 			},
 		},
+		{
+			name: "handles selected_users as object with id/value",
+			dataObject: map[string]any{
+				"id":   "incident-1",
+				"type": "incidents",
+			},
+			included: []map[string]any{
+				{
+					"id":   "custom-field-1",
+					"type": "incident_form_field_selections",
+					"attributes": map[string]any{
+						"incident_id":   "incident-1",
+						"form_field_id": "ad5366c5-2680-4656-913b-331433284941",
+						"selected_users": map[string]any{
+							"id":    nil,
+							"value": "Non-CSP",
+						},
+					},
+				},
+			},
+			checkFunc: func(t *testing.T, result map[string]any) {
+				// Check that all_selected_users exists and has one item
+				users, ok := result["all_selected_users"].([]any)
+				if !ok {
+					t.Fatal("EnrichIncidentData() missing 'all_selected_users' field")
+				}
+
+				if len(users) != 1 {
+					t.Fatalf("EnrichIncidentData() all_selected_users has %d items, want 1", len(users))
+				}
+
+				// Check that the user object has the expected fields
+				user, ok := users[0].(map[string]any)
+				if !ok {
+					t.Fatal("EnrichIncidentData() user is not a map")
+				}
+
+				// Check field_id is set to the form_field_id
+				expectedFieldID := "ad5366c5-2680-4656-913b-331433284941"
+				if user["field_id"] != expectedFieldID {
+					t.Errorf("EnrichIncidentData() user field_id = %v, want %s", user["field_id"], expectedFieldID)
+				}
+
+				// Check value field is preserved
+				if user["value"] != "Non-CSP" {
+					t.Errorf("EnrichIncidentData() user value = %v, want Non-CSP", user["value"])
+				}
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -447,6 +496,14 @@ func TestToMapSlice(t *testing.T) {
 				map[string]any{"id": "2"},
 			},
 			want: 2,
+		},
+		{
+			name: "single map object - converts to slice",
+			input: map[string]any{
+				"id":    "user-1",
+				"value": "Non-CSP",
+			},
+			want: 1,
 		},
 	}
 

@@ -117,6 +117,17 @@ func testServerHandler(w http.ResponseWriter, r *http.Request) {
 							"value":         "high",
 						},
 					},
+					{
+						"type": "incident_form_field_selections",
+						"attributes": map[string]any{
+							"incident_id":   "incident-with-included",
+							"form_field_id": "uuid-object-format-test",
+							"selected_users": map[string]any{
+								"id":    nil,
+								"value": "Test-Value-Object-Format",
+							},
+						},
+					},
 				},
 			}
 			response.Meta.Page = 1
@@ -786,6 +797,111 @@ func TestAdapterGetPage(t *testing.T) {
 							"id":                  "incident-no-included",
 							"$.attributes.title":  "Incident without Relationships",
 							"$.attributes.status": "resolved",
+						},
+					},
+					NextCursor: "",
+				},
+			},
+		},
+		"query_object_format_selected_users_by_uuid": {
+			ctx: context.Background(),
+			request: &framework.Request[rootly_adapter.Config]{
+				Address: server.URL,
+				Auth: &framework.DatasourceAuthCredentials{
+					HTTPAuthorization: "Bearer testtoken",
+				},
+				Config: &rootly_adapter.Config{
+					APIVersion: "v1",
+					CommonConfig: &config.CommonConfig{
+						RequestTimeoutSeconds: testutil.GenPtr(30),
+					},
+					Filters: map[string]string{
+						"incidents": "scenario=with_included",
+					},
+					Includes: map[string]string{
+						"incidents": "form_field_values",
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "incidents",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "id",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+						{
+							// Query object-format selected_users by UUID field_id
+							ExternalId: `$.all_selected_users[?(@.field_id=="uuid-object-format-test")].value`,
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+					},
+				},
+				PageSize: 100,
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"id": "incident-with-included",
+							`$.all_selected_users[?(@.field_id=="uuid-object-format-test")].value`: "Test-Value-Object-Format",
+						},
+					},
+					NextCursor: "",
+				},
+			},
+		},
+		"query_array_format_selected_groups_by_field_id": {
+			ctx: context.Background(),
+			request: &framework.Request[rootly_adapter.Config]{
+				Address: server.URL,
+				Auth: &framework.DatasourceAuthCredentials{
+					HTTPAuthorization: "Bearer testtoken",
+				},
+				Config: &rootly_adapter.Config{
+					APIVersion: "v1",
+					CommonConfig: &config.CommonConfig{
+						RequestTimeoutSeconds: testutil.GenPtr(30),
+					},
+					Filters: map[string]string{
+						"incidents": "scenario=with_included",
+					},
+					Includes: map[string]string{
+						"incidents": "form_field_values",
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "incidents",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "id",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+						{
+							// Query array-format selected_groups by field_id (returns list of IDs)
+							ExternalId: `$.all_selected_groups[?(@.field_id=="field-groups")].id`,
+							Type:       framework.AttributeTypeString,
+							List:       true,
+						},
+						{
+							// Query array-format selected_groups by field_id (returns list of names)
+							ExternalId: `$.all_selected_groups[?(@.field_id=="field-groups")].name`,
+							Type:       framework.AttributeTypeString,
+							List:       true,
+						},
+					},
+				},
+				PageSize: 100,
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"id": "incident-with-included",
+							`$.all_selected_groups[?(@.field_id=="field-groups")].id`:   []string{"group-1"},
+							`$.all_selected_groups[?(@.field_id=="field-groups")].name`: []string{"On-Call Team"},
 						},
 					},
 					NextCursor: "",
