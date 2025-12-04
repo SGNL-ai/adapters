@@ -123,7 +123,7 @@ func (a *Adapter) RequestPageFromDatasource(
 		response.Objects[i] = obj
 	}
 
-	// Convert JSON objects to framework objects∏∏
+	// Convert JSON objects to framework objects
 	parsedObjects, parserErr := web.ConvertJSONObjectList(
 		&request.Entity,
 		response.Objects,

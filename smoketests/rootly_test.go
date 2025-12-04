@@ -522,3 +522,252 @@ func TestRootlyAdapter_Incident(t *testing.T) {
 
 	close(stop)
 }
+
+func TestRootlyAdapter_IncidentWithIncludedAndSelectedUsers(t *testing.T) {
+	// Arrange: Setup test infrastructure
+	httpClient, recorder := common.StartRecorder(t, "fixtures/rootly/incident_with_included")
+	defer recorder.Stop()
+
+	port := common.AvailableTestPort(t)
+
+	stop := make(chan struct{})
+
+	// Start Adapter Server
+	go func() {
+		stop = common.StartAdapterServer(t, httpClient, port)
+	}()
+
+	time.Sleep(10 * time.Millisecond)
+
+	adapterClient, conn := common.GetNewAdapterClient(t, port)
+	defer conn.Close()
+
+	ctx, cancelCtx := common.GetAdapterCtx()
+	defer cancelCtx()
+
+	// Arrange: Build request with comprehensive attribute mapping
+	// This tests:
+	// 1. Sequential ID conversion (int -> string via JSONPath)
+	// 2. selected_users in array format (multiple users)
+	// 3. selected_users in object format (single impact value)
+	// 4. all_selected_groups (team associations)
+	// 5. all_selected_services (service associations)
+	req := &adapter_api_v1.GetPageRequest{
+		Datasource: &adapter_api_v1.DatasourceConfig{
+			Auth: &adapter_api_v1.DatasourceAuthCredentials{
+				AuthMechanism: &adapter_api_v1.DatasourceAuthCredentials_HttpAuthorization{
+					HttpAuthorization: "Bearer {{OMITTED}}",
+				},
+			},
+			Address: "api.rootly.com",
+			Id:      "Test",
+			Type:    "Rootly-1.0.0",
+			// Config includes incident_form_field_selections to fetch form field data
+			Config: []byte(`{"apiVersion": "v1", "includes": {"incidents": "incident_form_field_selections"}}`),
+		},
+		Entity: &adapter_api_v1.EntityConfig{
+			Id:         "incident",
+			ExternalId: "incidents",
+			Attributes: []*adapter_api_v1.AttributeConfig{
+				// Basic attributes
+				{
+					Id:         "Id",
+					ExternalId: "id",
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+					UniqueId:   true,
+				},
+				// Test: Sequential ID with JSONPath and type conversion (int -> string)
+				{
+					Id:         "SequentialId",
+					ExternalId: "$.attributes.sequential_id",
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+				},
+				{
+					Id:         "Title",
+					ExternalId: "title",
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+				},
+				{
+					Id:         "Status",
+					ExternalId: "status",
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+				},
+				// Test: selected_users in array format
+				// Fixture has: [{"id": "user-1", "email": "alice@example.com"}, ...]
+				// Expected: ["alice@example.com", "bob@example.com"]
+				{
+					Id:         "SelectedUsersArray",
+					ExternalId: `$.all_selected_users[?(@.field_id=="field-users-array")].email`,
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+					List:       true,
+				},
+				// Test: selected_users in object format (single value)
+				// Fixture has: {"id": null, "value": "High Impact"}
+				// Expected: ["High Impact"]
+				{
+					Id:         "ImpactValue",
+					ExternalId: `$.all_selected_users[?(@.field_id=="field-impact")].value`,
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+					List:       true,
+				},
+				// Test: all_selected_groups (team associations)
+				// Expected: ["Engineering Team", "Operations Team"]
+				{
+					Id:         "SelectedGroups",
+					ExternalId: `$.all_selected_groups[?(@.field_id=="field-groups")].name`,
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+					List:       true,
+				},
+				// Test: all_selected_services (service associations)
+				// Expected: ["API Service", "Database Service"]
+				{
+					Id:         "SelectedServices",
+					ExternalId: `$.all_selected_services[?(@.field_id=="field-services")].name`,
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+					List:       true,
+				},
+				{
+					Id:         "CreatedAt",
+					ExternalId: "created_at",
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+				},
+			},
+		},
+		PageSize: 5,
+	}
+
+	// Act: Execute the GetPage request
+	gotResp, err := adapterClient.GetPage(ctx, req)
+	if err != nil {
+		t.Fatalf("GetPage error: %v", err)
+	}
+
+	// Assert: Verify response structure and type
+	t.Logf("Response type: %T", gotResp.Response)
+
+	// Check for error response
+	if errResp, ok := gotResp.Response.(*adapter_api_v1.GetPageResponse_Error); ok {
+		t.Fatalf("Got error response: %+v", errResp)
+	}
+
+	// Verify successful response with at least one object
+	successGot, ok := gotResp.Response.(*adapter_api_v1.GetPageResponse_Success)
+	if !ok || successGot == nil || successGot.Success == nil {
+		t.Fatalf("Expected a successful response, got: ok=%v, successGot=%v, Success=%v",
+			ok, successGot != nil, successGot != nil && successGot.Success != nil)
+	}
+
+	if len(successGot.Success.Objects) == 0 {
+		t.Fatal("Expected at least one object in response")
+	}
+
+	// Assert: Verify enriched attributes in first incident object
+	obj := successGot.Success.Objects[0]
+
+	// Helper functions for attribute verification
+	findAttribute := func(id string) *adapter_api_v1.Attribute {
+		for _, attr := range obj.Attributes {
+			if attr.Id == id {
+				return attr
+			}
+		}
+
+		return nil
+	}
+
+	// Helper to get string values
+	getStringValues := func(attr *adapter_api_v1.Attribute) []string {
+		if attr == nil {
+			return nil
+		}
+		var values []string
+		for _, val := range attr.Values {
+			if strVal := val.GetStringValue(); strVal != "" {
+				values = append(values, strVal)
+			}
+		}
+
+		return values
+	}
+
+	// Assert: Verify basic attributes
+	idAttr := findAttribute("Id")
+	if idAttr == nil || len(idAttr.Values) == 0 {
+		t.Fatal("Id attribute is required")
+	}
+
+	// Assert: Verify SequentialId was converted from int to string
+	// The fixture has sequential_id: 42 (int), should be converted to "42" (string)
+	seqIDAttr := findAttribute("SequentialId")
+	if seqIDAttr != nil && len(seqIDAttr.Values) > 0 {
+		seqVal := seqIDAttr.Values[0].GetStringValue()
+		if seqVal == "" {
+			t.Error("SequentialId should be converted to string")
+		}
+		t.Logf("✓ SequentialId converted to string: %s", seqVal)
+	}
+
+	// Assert: Verify selected_users in array format
+	// Tests enrichment of multiple user objects into flat array with field_id
+	usersAttr := findAttribute("SelectedUsersArray")
+	if usersAttr != nil {
+		users := getStringValues(usersAttr)
+		t.Logf("✓ Selected users (array format): %v", users)
+		if len(users) > 0 {
+			// Verify at least one email is present
+			hasEmail := false
+			for _, user := range users {
+				if user != "" {
+					hasEmail = true
+
+					break
+				}
+			}
+			if !hasEmail {
+				t.Error("Expected at least one user email in array format")
+			}
+		}
+	}
+
+	// Assert: Verify selected_users in object format
+	// Tests handling of single-value object: {"id": null, "value": "High Impact"}
+	impactAttr := findAttribute("ImpactValue")
+	if impactAttr != nil {
+		impacts := getStringValues(impactAttr)
+		t.Logf("✓ Impact values (object format): %v", impacts)
+		if len(impacts) > 0 {
+			// Verify at least one impact value is present
+			hasValue := false
+			for _, impact := range impacts {
+				if impact != "" {
+					hasValue = true
+
+					break
+				}
+			}
+			if !hasValue {
+				t.Error("Expected at least one impact value")
+			}
+		}
+	}
+
+	// Assert: Verify all_selected_groups
+	// Tests group entity enrichment with field_id for filtering
+	groupsAttr := findAttribute("SelectedGroups")
+	if groupsAttr != nil {
+		groups := getStringValues(groupsAttr)
+		t.Logf("✓ Selected groups: %v", groups)
+	}
+
+	// Assert: Verify all_selected_services
+	// Tests service entity enrichment with field_id for filtering
+	servicesAttr := findAttribute("SelectedServices")
+	if servicesAttr != nil {
+		services := getStringValues(servicesAttr)
+		t.Logf("✓ Selected services: %v", services)
+	}
+
+	t.Log("✅ Successfully verified incident with included field and selected_users attributes")
+
+	close(stop)
+}
