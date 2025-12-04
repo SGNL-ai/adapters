@@ -733,3 +733,217 @@ func TestSalesforceAdapter_FiveLevelRelationship(t *testing.T) {
 
 	close(stop)
 }
+
+func TestSalesforceAdapter_MultiSelectPicklist(t *testing.T) {
+	httpClient, recorder := common.StartRecorder(t, "fixtures/salesforce/account_multiselectpicklist")
+	defer recorder.Stop()
+
+	port := common.AvailableTestPort(t)
+
+	stop := make(chan struct{})
+
+	// Start Adapter Server
+	go func() {
+		stop = common.StartAdapterServer(t, httpClient, port)
+	}()
+
+	time.Sleep(10 * time.Millisecond)
+
+	adapterClient, conn := common.GetNewAdapterClient(t, port)
+	defer conn.Close()
+
+	ctx, cancelCtx := common.GetAdapterCtx()
+	defer cancelCtx()
+
+	gotResp, err := adapterClient.GetPage(ctx, &adapter_api_v1.GetPageRequest{
+		Datasource: &adapter_api_v1.DatasourceConfig{
+			Auth: &adapter_api_v1.DatasourceAuthCredentials{
+				AuthMechanism: &adapter_api_v1.DatasourceAuthCredentials_HttpAuthorization{
+					HttpAuthorization: "Bearer {{OMITTED}}",
+				},
+			},
+			Address: "test-instance.my.salesforce.com",
+			Id:      "Salesforce",
+			Type:    "Salesforce-1.0.1",
+			Config:  []byte(`{"apiVersion":"58.0"}`),
+		},
+		Entity: &adapter_api_v1.EntityConfig{
+			Id:         "SalesforceAccount",
+			ExternalId: "Account",
+			Ordered:    true,
+			Attributes: []*adapter_api_v1.AttributeConfig{
+				{
+					Id:         "Id",
+					ExternalId: "Id",
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+				},
+				{
+					Id:         "Name",
+					ExternalId: "Name",
+					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+				},
+			},
+			ChildEntities: []*adapter_api_v1.EntityConfig{
+				{
+					Id:         "Locations",
+					ExternalId: "Locations__c",
+					Attributes: []*adapter_api_v1.AttributeConfig{
+						{
+							Id:         "value",
+							ExternalId: "value",
+							Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+						},
+					},
+				},
+			},
+		},
+		PageSize: 200,
+		Cursor:   "",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	wantResp := new(adapter_api_v1.GetPageResponse)
+
+	err = protojson.Unmarshal([]byte(`
+		{
+			"success": {
+				"objects": [
+					{
+						"attributes": [
+							{
+								"id": "Id",
+								"values": [
+									{
+										"string_value": "001gL00000XgJxhQAF"
+									}
+								]
+							},
+							{
+								"id": "Name",
+								"values": [
+									{
+										"string_value": "TestMultiFieldPicklist"
+									}
+								]
+							}
+						],
+						"child_objects": [
+							{
+								"entity_id": "Locations",
+								"objects": [
+									{
+										"attributes": [
+											{
+												"id": "value",
+												"values": [
+													{
+														"string_value": "Chicago"
+													}
+												]
+											}
+										]
+									},
+									{
+										"attributes": [
+											{
+												"id": "value",
+												"values": [
+													{
+														"string_value": "New York"
+													}
+												]
+											}
+										]
+									},
+									{
+										"attributes": [
+											{
+												"id": "value",
+												"values": [
+													{
+														"string_value": "Seattle"
+													}
+												]
+											}
+										]
+									}
+								]
+							}
+						]
+					},
+					{
+						"attributes": [
+							{
+								"id": "Id",
+								"values": [
+									{
+										"string_value": "001gL00000XjjndQAB"
+									}
+								]
+							},
+							{
+								"id": "Name",
+								"values": [
+									{
+										"string_value": "TestMultiFieldPicklist-1"
+									}
+								]
+							}
+						],
+						"child_objects": [
+							{
+								"entity_id": "Locations",
+								"objects": [
+									{
+										"attributes": [
+											{
+												"id": "value",
+												"values": [
+													{
+														"string_value": "Chicago"
+													}
+												]
+											}
+										]
+									}
+								]
+							}
+						]
+					},
+					{
+						"attributes": [
+							{
+								"id": "Id",
+								"values": [
+									{
+										"string_value": "001gL00000WW0iRQAT"
+									}
+								]
+							},
+							{
+								"id": "Name",
+								"values": [
+									{
+										"string_value": "Pyramid Construction Inc."
+									}
+								]
+							}
+						]
+					}
+				],
+				"nextCursor": ""
+			}
+		}
+	`), wantResp)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if diff := cmp.Diff(gotResp, wantResp, common.CmpOpts...); diff != "" {
+		t.Fatal(diff)
+	}
+
+	close(stop)
+}
