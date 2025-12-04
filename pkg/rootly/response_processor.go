@@ -129,7 +129,7 @@ func (p *IncludedItemProcessor) ProcessAndExpand() []any {
 			entities := extractArrayField(attrs, entityKey)
 
 			for _, entity := range entities {
-				expandedItem := make(map[string]any, len(item))
+				expandedItem := make(map[string]any, len(entity)+2)
 				maps.Copy(expandedItem, entity)
 				expandedItem["entity_type"] = entityKey
 
