@@ -85,14 +85,10 @@ func (a *Adapter) RequestPageFromDatasource(
 	}
 
 	// The raw JSON objects from the response must be parsed and converted into framework.Objects.
-	// Nested attributes are flattened and delimited by the delimiter specified.
 	// DateTime values are parsed using the specified DateTimeFormatWithTimeZone.
 	parsedObjects, parserErr := web.ConvertJSONObjectList(
 		&request.Entity,
 		resp.Objects,
-
-		// TODO [sc-14078]: Remove support for complex attribute names.
-		web.WithComplexAttributeNameDelimiter("__"),
 
 		web.WithJSONPathAttributeNames(),
 
