@@ -161,6 +161,7 @@ func (a *Adapter) RequestPageFromDatasource(
 
 						// Replace the semicolon-separated string with the array of objects
 						obj[childEntity.ExternalId] = childObjects
+
 						continue
 					}
 				}
