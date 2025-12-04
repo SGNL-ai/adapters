@@ -4,6 +4,7 @@ package salesforce
 import (
 	"context"
 	"fmt"
+	"maps"
 	"strings"
 	"time"
 
@@ -130,11 +131,19 @@ func (a *Adapter) RequestPageFromDatasource(
 		}
 	}
 
+	// Create a temporary entity config without child entities for framework processing.
+	// We handle child entities (multi-select picklists) separately.
+	entityForParsing := framework.EntityConfig{
+		ExternalId:    request.Entity.ExternalId,
+		Attributes:    request.Entity.Attributes,
+		ChildEntities: nil, // Don't pass child entities to framework
+	}
+
 	// The raw JSON objects from the response must be parsed and converted into framework.Objects.
 	// DateTime values are parsed using the specified DateTimeFormatWithTimeZone.
 	parsedObjects, parserErr := web.ConvertJSONObjectList(
-		&request.Entity, // Use original entity without child entity placeholders
-		resp.Objects,    // Use original objects without transformation
+		&entityForParsing, // Use entity without child entities
+		resp.Objects,      // Use original objects without transformation
 
 		web.WithJSONPathAttributeNames(),
 
@@ -216,9 +225,7 @@ func transformMultiSelectPicklists(objects []map[string]any, childEntities []*fr
 		transformedObj := make(map[string]any, len(obj))
 
 		// Copy all fields
-		for key, value := range obj {
-			transformedObj[key] = value
-		}
+		maps.Copy(transformedObj, obj)
 
 		// Transform multi-select picklist fields
 		for fieldName, attributeName := range multiSelectFields {
