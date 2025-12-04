@@ -23,8 +23,9 @@ type Datasource struct {
 }
 
 type DatasourceResponse struct {
-	Data []map[string]any `json:"data"`
-	Meta struct {
+	Data     []map[string]any `json:"data"`
+	Included []map[string]any `json:"included,omitempty"`
+	Meta     struct {
 		Page       int `json:"current_page"`
 		Pages      int `json:"total_pages"`
 		TotalCount int `json:"total_count"`
@@ -153,8 +154,11 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		nextCursor = &nextPageStr
 	}
 
+	// Process and enrich incident data with included items
+	processedData := EnrichAllIncidentData(datasourceResponse.Data, datasourceResponse.Included)
+
 	response := &Response{
-		Objects:    datasourceResponse.Data,
+		Objects:    processedData,
 		NextCursor: nextCursor,
 	}
 
