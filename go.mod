@@ -19,7 +19,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/machinebox/graphql v0.2.2
 	github.com/ohler55/ojg v1.27.0
-	github.com/sgnl-ai/adapter-framework v0.20.0
+	github.com/sgnl-ai/adapter-framework v0.21.0
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.40.0
