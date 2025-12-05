@@ -51,13 +51,29 @@ func (a *Adapter) RequestPageFromDatasource(
 		request.Address = "https://" + request.Address
 	}
 
+	// Build the list of attributes to query from Salesforce.
+	// This includes both regular attributes and multi-select picklist fields (child entities).
+	queryAttributes := make(
+		[]*framework.AttributeConfig,
+		0,
+		len(request.Entity.Attributes)+len(request.Entity.ChildEntities),
+	)
+	queryAttributes = append(queryAttributes, request.Entity.Attributes...)
+
+	for _, childEntity := range request.Entity.ChildEntities {
+		queryAttributes = append(queryAttributes, &framework.AttributeConfig{
+			ExternalId: childEntity.ExternalId,
+			Type:       framework.AttributeTypeString,
+		})
+	}
+
 	salesforceReq := &Request{
 		BaseURL:               request.Address,
 		Token:                 request.Auth.HTTPAuthorization,
 		PageSize:              request.PageSize,
 		EntityExternalID:      request.Entity.ExternalId,
 		APIVersion:            request.Config.APIVersion,
-		Attributes:            request.Entity.Attributes,
+		Attributes:            queryAttributes,
 		RequestTimeoutSeconds: *commonConfig.RequestTimeoutSeconds,
 	}
 
@@ -84,11 +100,18 @@ func (a *Adapter) RequestPageFromDatasource(
 		return framework.NewGetPageResponseError(adapterErr)
 	}
 
+	// Create a temporary entity config without child entities for framework processing.
+	entityForParsing := framework.EntityConfig{
+		ExternalId:    request.Entity.ExternalId,
+		Attributes:    queryAttributes,
+		ChildEntities: nil,
+	}
+
 	// The raw JSON objects from the response must be parsed and converted into framework.Objects.
 	// DateTime values are parsed using the specified DateTimeFormatWithTimeZone.
 	parsedObjects, parserErr := web.ConvertJSONObjectList(
-		&request.Entity,
-		resp.Objects,
+		&entityForParsing, // Use entity without child entities
+		resp.Objects,      // Use original objects without transformation
 
 		web.WithJSONPathAttributeNames(),
 
@@ -110,6 +133,43 @@ func (a *Adapter) RequestPageFromDatasource(
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			},
 		)
+	}
+
+	// Transform multi-select picklist fields (semicolon-separated strings) into child entity arrays.
+	if len(request.Entity.ChildEntities) > 0 {
+		for _, obj := range parsedObjects {
+			for _, childEntity := range request.Entity.ChildEntities {
+				value, exists := obj[childEntity.ExternalId]
+
+				// Only transform if the value is a non-empty string
+				if exists && value != nil {
+					if strValue, ok := value.(string); ok && strValue != "" {
+						// Split by semicolon and create array of child objects
+						values := strings.Split(strValue, ";")
+						childObjects := make([]framework.Object, 0, len(values))
+
+						// Get the attribute name from the child entity config (should be exactly one)
+						attributeName := childEntity.Attributes[0].ExternalId
+
+						for _, val := range values {
+							if val != "" {
+								childObjects = append(childObjects, framework.Object{
+									attributeName: val,
+								})
+							}
+						}
+
+						// Replace the semicolon-separated string with the array of objects
+						obj[childEntity.ExternalId] = childObjects
+
+						continue
+					}
+				}
+
+				// For nil, empty string, or non-existent fields, set to empty array
+				obj[childEntity.ExternalId] = []framework.Object{}
+			}
+		}
 	}
 
 	page := &framework.Page{
