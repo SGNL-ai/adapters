@@ -1,6 +1,6 @@
 module github.com/sgnl-ai/adapters
 
-go 1.24.9
+go 1.24.11
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
@@ -66,7 +66,7 @@ require (
 	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/PaesslerAG/gval v1.2.4 // indirect
-	github.com/PaesslerAG/jsonpath v0.1.1 // indirect
+	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.3 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.14 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.14 // indirect
