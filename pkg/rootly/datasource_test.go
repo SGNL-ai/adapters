@@ -361,7 +361,6 @@ func TestDatasourceGetPage(t *testing.T) {
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			ctxWithLogger, observedLogs := testutil.NewContextWithObservableLogger(t.Context())
-
 			server := httptest.NewTLSServer(tt.serverHandler)
 			defer server.Close()
 

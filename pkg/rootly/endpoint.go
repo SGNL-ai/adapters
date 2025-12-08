@@ -38,6 +38,12 @@ func ConstructEndpoint(request *Request) string {
 		}
 	}
 
+	// Add includes if provided
+	if request.Includes != "" {
+		// Rootly expects includes as a comma-separated list
+		params.Add("include", request.Includes)
+	}
+
 	if len(params) > 0 {
 		endpoint = fmt.Sprintf("%s?%s", endpoint, params.Encode())
 	}
