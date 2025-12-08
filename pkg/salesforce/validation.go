@@ -82,12 +82,12 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 		}
 	}
 
-	if len(request.Entity.ChildEntities) > 0 {
-		return &framework.Error{
-			Message: "Requested entity does not support child entities.",
-			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
-		}
-	}
+	// if len(request.Entity.ChildEntities) > 0 {
+	// 	return &framework.Error{
+	// 		Message: "Requested entity does not support child entities.",
+	// 		Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
+	// 	}
+	// }
 
 	if !request.Ordered {
 		return &framework.Error{

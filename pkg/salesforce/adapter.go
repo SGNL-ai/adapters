@@ -11,6 +11,7 @@ import (
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	"github.com/sgnl-ai/adapter-framework/web"
 	"github.com/sgnl-ai/adapters/pkg/config"
+	processCel "github.com/sgnl-ai/adapters/pkg/process-cel"
 )
 
 // Adapter implements the framework.Adapter interface to query pages of objects
@@ -84,6 +85,21 @@ func (a *Adapter) RequestPageFromDatasource(
 		return framework.NewGetPageResponseError(adapterErr)
 	}
 
+	// Process CEL expressions before converting to framework objects
+	celAttrs := make([]processCel.AttributeConfig, len(request.Entity.Attributes))
+	for i, attr := range request.Entity.Attributes {
+		celAttrs[i] = &attrWrapper{attr}
+	}
+
+	if err := processCel.ProcessCELAttributes(celAttrs, resp.Objects); err != nil {
+		return framework.NewGetPageResponseError(
+			&framework.Error{
+				Message: fmt.Sprintf("Failed to process CEL attributes: %v", err),
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+			},
+		)
+	}
+
 	// The raw JSON objects from the response must be parsed and converted into framework.Objects.
 	// DateTime values are parsed using the specified DateTimeFormatWithTimeZone.
 	parsedObjects, parserErr := web.ConvertJSONObjectList(
@@ -121,4 +137,13 @@ func (a *Adapter) RequestPageFromDatasource(
 	}
 
 	return framework.NewGetPageResponseSuccess(page)
+}
+
+// attrWrapper wraps framework.AttributeConfig to implement processCel.AttributeConfig interface
+type attrWrapper struct {
+	*framework.AttributeConfig
+}
+
+func (a *attrWrapper) GetExternalId() string {
+	return a.ExternalId
 }

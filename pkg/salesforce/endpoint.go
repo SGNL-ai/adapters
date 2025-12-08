@@ -57,6 +57,11 @@ func encodedAttributes(attributes []*framework.AttributeConfig) string {
 	attributesBuilder.Grow(len(attributes) * 6)
 
 	for _, attribute := range attributes {
+		// Skip CEL attributes as they are computed fields, not database fields
+		if strings.HasPrefix(attribute.ExternalId, "@cel") {
+			continue
+		}
+
 		// Extract the actual field name from JSONPath or use as-is
 		fieldName := extractFieldName(attribute.ExternalId)
 
