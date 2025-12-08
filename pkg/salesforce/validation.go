@@ -82,21 +82,6 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 		}
 	}
 
-	// Validate child entities for multi-select picklists.
-	// Multi-select picklists in Salesforce are returned as semicolon-separated values (e.g., "value1;value2;value3")
-	// and must be represented as child entities with exactly one attribute.
-	for _, childEntity := range request.Entity.ChildEntities {
-		if len(childEntity.Attributes) != 1 {
-			return &framework.Error{
-				Message: fmt.Sprintf(
-					"Child entity '%s' must have exactly one attribute for multi-select picklist support, but has %d attributes.",
-					childEntity.ExternalId, len(childEntity.Attributes),
-				),
-				Code: api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
-			}
-		}
-	}
-
 	if !request.Ordered {
 		return &framework.Error{
 			Message: "Ordered must be set to true.",
