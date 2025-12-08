@@ -86,6 +86,8 @@ func (a *Adapter) RequestPageFromDatasource(
 	}
 
 	// Process CEL expressions before converting to framework objects
+
+	// Process CEL attributes
 	celAttrs := make([]processCel.AttributeConfig, len(request.Entity.Attributes))
 	for i, attr := range request.Entity.Attributes {
 		celAttrs[i] = &attrWrapper{attr}
@@ -95,6 +97,21 @@ func (a *Adapter) RequestPageFromDatasource(
 		return framework.NewGetPageResponseError(
 			&framework.Error{
 				Message: fmt.Sprintf("Failed to process CEL attributes: %v", err),
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+			},
+		)
+	}
+
+	// Process CEL child entities
+	celChildEntities := make([]processCel.ChildEntityConfig, len(request.Entity.ChildEntities))
+	for i, childEntity := range request.Entity.ChildEntities {
+		celChildEntities[i] = &childEntityWrapper{childEntity}
+	}
+
+	if err := processCel.ProcessCELChildEntities(celChildEntities, resp.Objects); err != nil {
+		return framework.NewGetPageResponseError(
+			&framework.Error{
+				Message: fmt.Sprintf("Failed to process CEL child entities: %v", err),
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			},
 		)
@@ -146,4 +163,13 @@ type attrWrapper struct {
 
 func (a *attrWrapper) GetExternalId() string {
 	return a.ExternalId
+}
+
+// childEntityWrapper wraps framework.EntityConfig to implement processCel.ChildEntityConfig interface
+type childEntityWrapper struct {
+	*framework.EntityConfig
+}
+
+func (c *childEntityWrapper) GetExternalId() string {
+	return c.ExternalId
 }

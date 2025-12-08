@@ -65,10 +65,108 @@ func ProcessCELAttributes(attributes []AttributeConfig, objects []map[string]any
 	return nil
 }
 
+// ChildEntityConfig represents the minimal interface needed for child entity configuration
+type ChildEntityConfig interface {
+	GetExternalId() string
+}
+
+// ProcessCELChildEntities processes child entities that start with @cel by applying CEL expressions
+// and converting simple arrays to objects with "value" fields for proper child entity structure
+func ProcessCELChildEntities(childEntities []ChildEntityConfig, objects []map[string]any) error {
+	// Find CEL child entities (those starting with @cel)
+	var celChildEntities []string
+	for _, childEntity := range childEntities {
+		if strings.HasPrefix(childEntity.GetExternalId(), "@cel") {
+			celChildEntities = append(celChildEntities, childEntity.GetExternalId())
+		}
+	}
+
+	// If no CEL child entities, nothing to do
+	if len(celChildEntities) == 0 {
+		return nil
+	}
+
+	// Process each object
+	for i, objMap := range objects {
+		// Convert object to JSON string for CEL processing
+		objJSON, err := json.Marshal(objMap)
+		if err != nil {
+			return fmt.Errorf("failed to marshal object to JSON: %w", err)
+		}
+
+		// Process each CEL child entity
+		for _, celChildEntity := range celChildEntities {
+			// Strip the @ prefix to get the CEL expression
+			celExpression := strings.TrimPrefix(celChildEntity, "@")
+
+			// Process with CEL
+			result, err := ProcessJSON(string(objJSON), celExpression)
+			if err != nil {
+				return fmt.Errorf("failed to process CEL child entity expression '%s': %w", celExpression, err)
+			}
+
+			// Convert result to child entity format
+			childEntityData := convertToChildEntityFormat(result)
+
+			// Add the result back to the object with the full @cel child entity name
+			objMap[celChildEntity] = childEntityData
+		}
+
+		// Update the object in the slice
+		objects[i] = objMap
+	}
+
+	return nil
+}
+
+// convertToChildEntityFormat converts CEL results to proper child entity format
+// Simple arrays get converted to arrays of objects with "value" field
+// Returns []any to match framework expectations
+func convertToChildEntityFormat(result interface{}) []any {
+	switch v := result.(type) {
+	case []interface{}:
+		// Convert simple array to array of objects
+		childObjects := make([]any, len(v))
+		for i, item := range v {
+			switch itemValue := item.(type) {
+			case map[string]interface{}:
+				// Already an object, use as-is
+				childObjects[i] = itemValue
+			default:
+				// Simple value, wrap in object with "value" field
+				childObjects[i] = map[string]interface{}{
+					"value": itemValue,
+				}
+			}
+		}
+		return childObjects
+	case map[string]interface{}:
+		// Single object, return as single-element array
+		return []any{v}
+	default:
+		// Single value, wrap in object with "value" field
+		return []any{
+			map[string]interface{}{
+				"value": v,
+			},
+		}
+	}
+}
+
 // HasCELAttributes checks if any attributes start with @cel (quick check for optimization)
 func HasCELAttributes(attributes []AttributeConfig) bool {
 	for _, attr := range attributes {
 		if strings.HasPrefix(attr.GetExternalId(), "@cel") {
+			return true
+		}
+	}
+	return false
+}
+
+// HasCELChildEntities checks if any child entities start with @cel (quick check for optimization)
+func HasCELChildEntities(childEntities []ChildEntityConfig) bool {
+	for _, childEntity := range childEntities {
+		if strings.HasPrefix(childEntity.GetExternalId(), "@cel") {
 			return true
 		}
 	}
