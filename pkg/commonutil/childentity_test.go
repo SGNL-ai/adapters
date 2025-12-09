@@ -1,11 +1,11 @@
 // Copyright 2025 SGNL.ai, Inc.
-package util_test
+package commonutil_test
 
 import (
 	"reflect"
 	"testing"
 
-	"github.com/sgnl-ai/adapters/pkg/util"
+	common "github.com/sgnl-ai/adapters/pkg/commonutil"
 )
 
 func TestCreateChildEntitiesFromValues(t *testing.T) {
@@ -63,7 +63,7 @@ func TestCreateChildEntitiesFromValues(t *testing.T) {
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-			got := util.CreateChildEntitiesFromValues(tt.parentID, tt.values)
+			got := common.CreateChildEntitiesFromValues(tt.parentID, tt.values)
 
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("CreateChildEntitiesFromValues() = %v, want %v", got, tt.want)

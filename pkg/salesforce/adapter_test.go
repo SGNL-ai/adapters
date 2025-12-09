@@ -24,6 +24,7 @@ func sortChildEntitiesByID(objects []framework.Object) {
 				sort.Slice(childArray, func(i, j int) bool {
 					id1, _ := childArray[i]["id"].(string)
 					id2, _ := childArray[j]["id"].(string)
+
 					return id1 < id2
 				})
 				// Update the object with sorted array

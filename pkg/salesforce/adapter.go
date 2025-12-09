@@ -10,8 +10,8 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	"github.com/sgnl-ai/adapter-framework/web"
+	"github.com/sgnl-ai/adapters/pkg/commonutil"
 	"github.com/sgnl-ai/adapters/pkg/config"
-	"github.com/sgnl-ai/adapters/pkg/util"
 )
 
 // Adapter implements the framework.Adapter interface to query pages of objects
@@ -204,6 +204,7 @@ func transformMultiSelectPicklists(objects []map[string]any, childEntities []*fr
 
 			if strValue == "" {
 				transformedObj[fieldName] = []any{}
+
 				continue
 			}
 
@@ -214,6 +215,7 @@ func transformMultiSelectPicklists(objects []map[string]any, childEntities []*fr
 
 			// De-duplicate values using a map
 			uniqueValues := make(map[string]bool)
+
 			for _, val := range values {
 				trimmedVal := strings.TrimSpace(val)
 				if trimmedVal != "" {
@@ -227,7 +229,7 @@ func transformMultiSelectPicklists(objects []map[string]any, childEntities []*fr
 				uniqueValuesList = append(uniqueValuesList, val)
 			}
 
-			transformedObj[fieldName] = util.CreateChildEntitiesFromValues(parentID, uniqueValuesList)
+			transformedObj[fieldName] = commonutil.CreateChildEntitiesFromValues(parentID, uniqueValuesList)
 		}
 
 		transformedObjects[i] = transformedObj

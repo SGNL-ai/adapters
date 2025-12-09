@@ -1,5 +1,5 @@
 // Copyright 2025 SGNL.ai, Inc.
-package util
+package commonutil
 
 import "fmt"
 

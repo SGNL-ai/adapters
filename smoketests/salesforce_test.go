@@ -750,15 +750,18 @@ func sortChildObjectsByID(resp *adapter_api_v1.GetPageResponse) {
 				for _, attr := range objects[i].GetAttributes() {
 					if attr.GetId() == "id" && len(attr.GetValues()) > 0 {
 						id1 = attr.GetValues()[0].GetStringValue()
+
 						break
 					}
 				}
 				for _, attr := range objects[j].GetAttributes() {
 					if attr.GetId() == "id" && len(attr.GetValues()) > 0 {
 						id2 = attr.GetValues()[0].GetStringValue()
+
 						break
 					}
 				}
+
 				return id1 < id2
 			})
 		}
