@@ -104,8 +104,28 @@ func TestCreateChildEntitiesFromList(t *testing.T) {
 			// Sort both got and want by ID for order-independent comparison
 			sortByID := func(items []any) {
 				sort.Slice(items, func(i, j int) bool {
-					id1 := items[i].(map[string]any)["id"].(string)
-					id2 := items[j].(map[string]any)["id"].(string)
+					// Check first type assertion
+					item1, ok := items[i].(map[string]any)
+					if !ok {
+						t.Fatalf("items[%d] is not map[string]any", i)
+					}
+
+					item2, ok := items[j].(map[string]any)
+					if !ok {
+						t.Fatalf("items[%d] is not map[string]any", j)
+					}
+
+					// Check second type assertion
+					id1, ok := item1["id"].(string)
+					if !ok {
+						t.Fatalf("items[%d][\"id\"] is not string", i)
+					}
+
+					id2, ok := item2["id"].(string)
+					if !ok {
+						t.Fatalf("items[%d][\"id\"] is not string", j)
+					}
+
 					return id1 < id2
 				})
 			}
@@ -227,9 +247,9 @@ func TestCreateChildEntitiesFromDelimitedString(t *testing.T) {
 			objects: []map[string]any{
 				{"Id": "123", "Name": "John", "Interests": "Sports;Music;Sports"},
 			},
-			parentEntityConfig: parentConfig,
-			childEntities:      []*framework.EntityConfig{childConfig},
-			delimiter:          ";",
+			parentEntityConfig:   parentConfig,
+			childEntities:        []*framework.EntityConfig{childConfig},
+			delimiter:            ";",
 			wantTransformedCount: 1,
 			validateFirst: func(t *testing.T, obj map[string]any) {
 				interests, ok := obj["Interests"].([]any)
@@ -245,9 +265,9 @@ func TestCreateChildEntitiesFromDelimitedString(t *testing.T) {
 			objects: []map[string]any{
 				{"Id": "456", "Name": "Jane", "Interests": nil},
 			},
-			parentEntityConfig: parentConfig,
-			childEntities:      []*framework.EntityConfig{childConfig},
-			delimiter:          ";",
+			parentEntityConfig:   parentConfig,
+			childEntities:        []*framework.EntityConfig{childConfig},
+			delimiter:            ";",
 			wantTransformedCount: 1,
 			validateFirst: func(t *testing.T, obj map[string]any) {
 				interests, ok := obj["Interests"].([]any)
@@ -263,9 +283,9 @@ func TestCreateChildEntitiesFromDelimitedString(t *testing.T) {
 			objects: []map[string]any{
 				{"Id": "789", "Name": "Bob", "Interests": ""},
 			},
-			parentEntityConfig: parentConfig,
-			childEntities:      []*framework.EntityConfig{childConfig},
-			delimiter:          ";",
+			parentEntityConfig:   parentConfig,
+			childEntities:        []*framework.EntityConfig{childConfig},
+			delimiter:            ";",
 			wantTransformedCount: 1,
 			validateFirst: func(t *testing.T, obj map[string]any) {
 				interests, ok := obj["Interests"].([]any)

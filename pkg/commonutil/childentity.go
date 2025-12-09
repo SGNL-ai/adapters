@@ -17,13 +17,15 @@ import (
 //
 // Returns:
 // - string: The unique ID value
-// - bool: Whether the unique ID was found and is a string
+// - bool: Whether the unique ID was found and is a string.
 func GetUniqueIDValue(obj map[string]any, entityConfig *framework.EntityConfig) (string, bool) {
 	// Find the unique ID attribute in the entity config
 	var uniqueIDExternalID string
+
 	for _, attr := range entityConfig.Attributes {
 		if attr.UniqueId {
 			uniqueIDExternalID = attr.ExternalId
+
 			break
 		}
 	}
@@ -92,6 +94,7 @@ func CreateChildEntitiesFromList(
 ) []any {
 	// Extract attribute names from config
 	var idAttr, valueAttr string
+
 	for _, attr := range childEntityConfig.Attributes {
 		switch attr.ExternalId {
 		case "id":
@@ -203,6 +206,7 @@ func CreateChildEntitiesFromDelimitedString(
 		if !ok {
 			// If we can't get the parent ID, keep the object as-is
 			transformedObjects[i] = transformedObj
+
 			continue
 		}
 
@@ -249,7 +253,7 @@ func CreateChildEntitiesFromDelimitedString(
 
 // generateCompositeID generates a deterministic, human-readable composite ID.
 // Format: {parentID}_{fieldName}_{cleanValue}
-// Example: "003Hu000020yLuHIAU_Interests__c_sports"
+// Example: "003Hu000020yLuHIAU_Interests__c_sports".
 func generateCompositeID(parentID string, fieldName string, value string) string {
 	// Clean value to make it URL-safe and consistent
 	// Value should already be lowercase from the caller
