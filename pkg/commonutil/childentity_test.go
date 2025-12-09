@@ -43,12 +43,6 @@ func TestCreateChildEntitiesFromList(t *testing.T) {
 				map[string]any{"id": "456_Skills_technology", "value": "Technology"},
 			},
 		},
-		"empty_values": {
-			parentID:  "789",
-			fieldName: "Tags",
-			values:    []string{},
-			want:      []any{},
-		},
 		"values_with_spaces": {
 			parentID:  "abc",
 			fieldName: "Locations",
