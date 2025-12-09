@@ -189,8 +189,8 @@ var TestServerHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Req
 			]
 		}`))
 
-	// Contact with Multi-Select Picklist
-	case "/services/data/v58.0/query?q=SELECT+Id,Interests__c+FROM+Contact+ORDER+BY+Id+ASC":
+	// Account with Multi-Select Picklist
+	case "/services/data/v58.0/query?q=SELECT+Id,Interests__c+FROM+Account+ORDER+BY+Id+ASC":
 		w.Write([]byte(`{
 			"totalSize": 3,
 			"done": true,
@@ -198,27 +198,60 @@ var TestServerHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Req
 			"records": [
 				{
 					"attributes": {
-						"type": "Contact",
-						"url": "/services/data/v58.0/sobjects/Contact/003Hu000020yLuHIAU"
+						"type": "Account",
+						"url": "/services/data/v58.0/sobjects/Account/003Hu000020yLuHIAU"
 					},
 					"Id": "003Hu000020yLuHIAU",
 					"Interests__c": "Sports;Music;Reading"
 				},
 				{
 					"attributes": {
-						"type": "Contact",
-						"url": "/services/data/v58.0/sobjects/Contact/003Hu000020yLuMIAU"
+						"type": "Account",
+						"url": "/services/data/v58.0/sobjects/Account/003Hu000020yLuMIAU"
 					},
 					"Id": "003Hu000020yLuMIAU",
 					"Interests__c": "Technology"
 				},
 				{
 					"attributes": {
-						"type": "Contact",
-						"url": "/services/data/v58.0/sobjects/Contact/003Hu000020yLuPIAU"
+						"type": "Account",
+						"url": "/services/data/v58.0/sobjects/Account/003Hu000020yLuPIAU"
 					},
 					"Id": "003Hu000020yLuPIAU",
 					"Interests__c": null
+				}
+			]
+		}`))
+
+	// Account with both List-based and Complex Object Child Entities
+	case "/services/data/v58.0/query?q=SELECT+Id,Interests__c,Tags__c+FROM+Account+ORDER+BY+Id+ASC":
+		w.Write([]byte(`{
+			"totalSize": 2,
+			"done": true,
+			"nextRecordsUrl": "",
+			"records": [
+				{
+					"attributes": {
+						"type": "Account",
+						"url": "/services/data/v58.0/sobjects/Account/001Hu000020yLuXYZ"
+					},
+					"Id": "001Hu000020yLuXYZ",
+					"Interests__c": "Sports;Music",
+					"Tags__c": [
+						{"Name": "VIP", "Priority": "High"},
+						{"Name": "Region", "Priority": "Medium"}
+					]
+				},
+				{
+					"attributes": {
+						"type": "Account",
+						"url": "/services/data/v58.0/sobjects/Account/001Hu000020yLuABC"
+					},
+					"Id": "001Hu000020yLuABC",
+					"Interests__c": "Technology",
+					"Tags__c": [
+						{"Name": "Status", "Priority": "Low"}
+					]
 				}
 			]
 		}`))

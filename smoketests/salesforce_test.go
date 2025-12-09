@@ -810,6 +810,7 @@ func TestSalesforceAdapter_MultiSelectPicklist(t *testing.T) {
 					Id:         "Id",
 					ExternalId: "Id",
 					Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+					UniqueId:   true,
 				},
 				{
 					Id:         "Name",
@@ -879,7 +880,7 @@ func TestSalesforceAdapter_MultiSelectPicklist(t *testing.T) {
 												"id": "id",
 												"values": [
 													{
-														"string_value": "001gL00000XgJxhQAF_Chicago"
+														"string_value": "001gL00000XgJxhQAF_Locations__c_chicago"
 													}
 												]
 											},
@@ -899,7 +900,7 @@ func TestSalesforceAdapter_MultiSelectPicklist(t *testing.T) {
 												"id": "id",
 												"values": [
 													{
-														"string_value": "001gL00000XgJxhQAF_New York"
+														"string_value": "001gL00000XgJxhQAF_Locations__c_new-york"
 													}
 												]
 											},
@@ -919,7 +920,7 @@ func TestSalesforceAdapter_MultiSelectPicklist(t *testing.T) {
 												"id": "id",
 												"values": [
 													{
-														"string_value": "001gL00000XgJxhQAF_Seattle"
+														"string_value": "001gL00000XgJxhQAF_Locations__c_seattle"
 													}
 												]
 											},
@@ -966,7 +967,7 @@ func TestSalesforceAdapter_MultiSelectPicklist(t *testing.T) {
 												"id": "id",
 												"values": [
 													{
-														"string_value": "001gL00000XjjndQAB_Chicago"
+														"string_value": "001gL00000XjjndQAB_Locations__c_chicago"
 													}
 												]
 											},

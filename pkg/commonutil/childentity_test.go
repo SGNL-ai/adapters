@@ -229,80 +229,132 @@ func TestCreateChildEntitiesFromDelimitedString(t *testing.T) {
 		},
 	}
 
+	skillsConfig := &framework.EntityConfig{
+		ExternalId: "Skills",
+		Attributes: []*framework.AttributeConfig{
+			{ExternalId: "id", Type: framework.AttributeTypeString},
+			{ExternalId: "value", Type: framework.AttributeTypeString},
+		},
+	}
+
 	tests := map[string]struct {
-		objects              []map[string]any
-		parentEntityConfig   *framework.EntityConfig
-		childEntities        []*framework.EntityConfig
-		delimiter            string
-		wantTransformedCount int
-		validateFirst        func(t *testing.T, obj map[string]any)
+		objects            []map[string]any
+		parentEntityConfig *framework.EntityConfig
+		childEntities      []*framework.EntityConfig
+		delimiter          string
+		want               []map[string]any
 	}{
 		"semicolon_delimited_with_duplicates": {
 			objects: []map[string]any{
 				{"Id": "123", "Name": "John", "Interests": "Sports;Music;Sports"},
 			},
-			parentEntityConfig:   parentConfig,
-			childEntities:        []*framework.EntityConfig{childConfig},
-			delimiter:            ";",
-			wantTransformedCount: 1,
-			validateFirst: func(t *testing.T, obj map[string]any) {
-				interests, ok := obj["Interests"].([]any)
-				if !ok {
-					t.Fatal("Interests should be []any")
-				}
-				if len(interests) != 2 {
-					t.Errorf("Expected 2 deduplicated interests, got %d", len(interests))
-				}
+			parentEntityConfig: parentConfig,
+			childEntities:      []*framework.EntityConfig{childConfig},
+			delimiter:          ";",
+			want: []map[string]any{
+				{
+					"Id":   "123",
+					"Name": "John",
+					"Interests": []any{
+						map[string]any{"id": "123_Interests_sports", "value": "Sports"},
+						map[string]any{"id": "123_Interests_music", "value": "Music"},
+					},
+				},
 			},
 		},
 		"nil_value": {
 			objects: []map[string]any{
 				{"Id": "456", "Name": "Jane", "Interests": nil},
 			},
-			parentEntityConfig:   parentConfig,
-			childEntities:        []*framework.EntityConfig{childConfig},
-			delimiter:            ";",
-			wantTransformedCount: 1,
-			validateFirst: func(t *testing.T, obj map[string]any) {
-				interests, ok := obj["Interests"].([]any)
-				if !ok {
-					t.Fatal("Interests should be []any")
-				}
-				if len(interests) != 0 {
-					t.Errorf("Expected empty array for nil, got %d items", len(interests))
-				}
+			parentEntityConfig: parentConfig,
+			childEntities:      []*framework.EntityConfig{childConfig},
+			delimiter:          ";",
+			want: []map[string]any{
+				{
+					"Id":        "456",
+					"Name":      "Jane",
+					"Interests": []any{},
+				},
 			},
 		},
 		"empty_string": {
 			objects: []map[string]any{
 				{"Id": "789", "Name": "Bob", "Interests": ""},
 			},
-			parentEntityConfig:   parentConfig,
-			childEntities:        []*framework.EntityConfig{childConfig},
-			delimiter:            ";",
-			wantTransformedCount: 1,
-			validateFirst: func(t *testing.T, obj map[string]any) {
-				interests, ok := obj["Interests"].([]any)
-				if !ok {
-					t.Fatal("Interests should be []any")
-				}
-				if len(interests) != 0 {
-					t.Errorf("Expected empty array for empty string, got %d items", len(interests))
-				}
+			parentEntityConfig: parentConfig,
+			childEntities:      []*framework.EntityConfig{childConfig},
+			delimiter:          ";",
+			want: []map[string]any{
+				{
+					"Id":        "789",
+					"Name":      "Bob",
+					"Interests": []any{},
+				},
 			},
 		},
 		"no_child_entities": {
 			objects: []map[string]any{
 				{"Id": "123", "Name": "John"},
 			},
-			parentEntityConfig:   parentConfig,
-			childEntities:        []*framework.EntityConfig{},
-			delimiter:            ";",
-			wantTransformedCount: 1,
-			validateFirst: func(t *testing.T, obj map[string]any) {
-				if _, exists := obj["Interests"]; exists {
-					t.Error("Interests field should not exist when no child entities configured")
-				}
+			parentEntityConfig: parentConfig,
+			childEntities:      []*framework.EntityConfig{},
+			delimiter:          ";",
+			want: []map[string]any{
+				{"Id": "123", "Name": "John"},
+			},
+		},
+		"single_value_without_delimiter": {
+			objects: []map[string]any{
+				{"Id": "999", "Name": "Alice", "Interests": "Technology"},
+			},
+			parentEntityConfig: parentConfig,
+			childEntities:      []*framework.EntityConfig{childConfig},
+			delimiter:          ";",
+			want: []map[string]any{
+				{
+					"Id":   "999",
+					"Name": "Alice",
+					"Interests": []any{
+						map[string]any{"id": "999_Interests_technology", "value": "Technology"},
+					},
+				},
+			},
+		},
+		"multiple_child_entities": {
+			objects: []map[string]any{
+				{"Id": "888", "Name": "Charlie", "Interests": "Sports;Music", "Skills": "Go;Python"},
+			},
+			parentEntityConfig: parentConfig,
+			childEntities:      []*framework.EntityConfig{childConfig, skillsConfig},
+			delimiter:          ";",
+			want: []map[string]any{
+				{
+					"Id":   "888",
+					"Name": "Charlie",
+					"Interests": []any{
+						map[string]any{"id": "888_Interests_sports", "value": "Sports"},
+						map[string]any{"id": "888_Interests_music", "value": "Music"},
+					},
+					"Skills": []any{
+						map[string]any{"id": "888_Skills_go", "value": "Go"},
+						map[string]any{"id": "888_Skills_python", "value": "Python"},
+					},
+				},
+			},
+		},
+		"non_string_field_value": {
+			objects: []map[string]any{
+				{"Id": "777", "Name": "David", "Interests": 12345},
+			},
+			parentEntityConfig: parentConfig,
+			childEntities:      []*framework.EntityConfig{childConfig},
+			delimiter:          ";",
+			want: []map[string]any{
+				{
+					"Id":        "777",
+					"Name":      "David",
+					"Interests": 12345,
+				},
 			},
 		},
 	}
@@ -316,12 +368,52 @@ func TestCreateChildEntitiesFromDelimitedString(t *testing.T) {
 				tt.delimiter,
 			)
 
-			if len(got) != tt.wantTransformedCount {
-				t.Fatalf("Expected %d transformed objects, got %d", tt.wantTransformedCount, len(got))
+			// Sort child entity arrays by ID for order-independent comparison
+			sortByID := func(items []any) {
+				sort.Slice(items, func(i, j int) bool {
+					item1, ok := items[i].(map[string]any)
+					if !ok {
+						t.Fatalf("items[%d] is not map[string]any", i)
+					}
+
+					item2, ok := items[j].(map[string]any)
+					if !ok {
+						t.Fatalf("items[%d] is not map[string]any", j)
+					}
+
+					id1, ok := item1["id"].(string)
+					if !ok {
+						t.Fatalf("items[%d][\"id\"] is not string", i)
+					}
+
+					id2, ok := item2["id"].(string)
+					if !ok {
+						t.Fatalf("items[%d][\"id\"] is not string", j)
+					}
+
+					return id1 < id2
+				})
 			}
 
-			if tt.validateFirst != nil && len(got) > 0 {
-				tt.validateFirst(t, got[0])
+			// Sort both got and want child entity arrays
+			for i := range got {
+				for _, value := range got[i] {
+					if childArray, ok := value.([]any); ok {
+						sortByID(childArray)
+					}
+				}
+			}
+
+			for i := range tt.want {
+				for _, value := range tt.want[i] {
+					if childArray, ok := value.([]any); ok {
+						sortByID(childArray)
+					}
+				}
+			}
+
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("CreateChildEntitiesFromDelimitedString() = %v, want %v", got, tt.want)
 			}
 		})
 	}

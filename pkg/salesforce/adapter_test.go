@@ -549,7 +549,7 @@ func TestAdapterGetPage(t *testing.T) {
 					APIVersion: "58.0",
 				},
 				Entity: framework.EntityConfig{
-					ExternalId: "Contact",
+					ExternalId: "Account",
 					Attributes: []*framework.AttributeConfig{
 						{
 							ExternalId: "Id",
@@ -601,6 +601,85 @@ func TestAdapterGetPage(t *testing.T) {
 				},
 			},
 		},
+		"valid_request_with_list_and_complex_object_child_entities": {
+			ctx: context.Background(),
+			request: &framework.Request[salesforce_adapter.Config]{
+				Address: server.URL,
+				Auth: &framework.DatasourceAuthCredentials{
+					HTTPAuthorization: "Bearer Testtoken",
+				},
+				Config: &salesforce_adapter.Config{
+					APIVersion: "58.0",
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "Account",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "Id",
+							Type:       framework.AttributeTypeString,
+							UniqueId:   true,
+						},
+					},
+					ChildEntities: []*framework.EntityConfig{
+						{
+							ExternalId: "Interests__c",
+							Attributes: []*framework.AttributeConfig{
+								{
+									ExternalId: "id",
+									Type:       framework.AttributeTypeString,
+									UniqueId:   true,
+								},
+								{
+									ExternalId: "value",
+									Type:       framework.AttributeTypeString,
+								},
+							},
+						},
+						{
+							ExternalId: "Tags__c",
+							Attributes: []*framework.AttributeConfig{
+								{
+									ExternalId: "Name",
+									Type:       framework.AttributeTypeString,
+								},
+								{
+									ExternalId: "Priority",
+									Type:       framework.AttributeTypeString,
+								},
+							},
+						},
+					},
+				},
+				Ordered:  true,
+				PageSize: 200,
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"Id": "001Hu000020yLuXYZ",
+							"Interests__c": []framework.Object{
+								{"id": "001Hu000020yLuXYZ_Interests__c_sports", "value": "Sports"},
+								{"id": "001Hu000020yLuXYZ_Interests__c_music", "value": "Music"},
+							},
+							"Tags__c": []framework.Object{
+								{"Name": "VIP", "Priority": "High"},
+								{"Name": "Region", "Priority": "Medium"},
+							},
+						},
+						{
+							"Id": "001Hu000020yLuABC",
+							"Interests__c": []framework.Object{
+								{"id": "001Hu000020yLuABC_Interests__c_technology", "value": "Technology"},
+							},
+							"Tags__c": []framework.Object{
+								{"Name": "Status", "Priority": "Low"},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for name, tt := range tests {
@@ -608,7 +687,7 @@ func TestAdapterGetPage(t *testing.T) {
 			gotResponse := adapter.GetPage(tt.ctx, tt.request)
 
 			// For multi-select picklist tests, sort child entities before comparison
-			if name == "valid_request_with_multi_select_picklist" {
+			if name == "valid_request_with_multi_select_picklist" || name == "valid_request_with_list_and_complex_object_child_entities" {
 				sortChildEntitiesByID(gotResponse.Success.Objects)
 				sortChildEntitiesByID(tt.wantResponse.Success.Objects)
 			}
