@@ -2,6 +2,7 @@
 package smoketests
 
 import (
+	"sort"
 	"testing"
 	"time"
 
@@ -734,6 +735,36 @@ func TestSalesforceAdapter_FiveLevelRelationship(t *testing.T) {
 	close(stop)
 }
 
+// sortChildObjectsByID sorts child objects within a GetPageResponse by their "id" attribute
+// to enable order-independent comparison in tests.
+func sortChildObjectsByID(resp *adapter_api_v1.GetPageResponse) {
+	if resp == nil || resp.GetSuccess() == nil {
+		return
+	}
+
+	for _, obj := range resp.GetSuccess().GetObjects() {
+		for _, childEntity := range obj.GetChildObjects() {
+			objects := childEntity.GetObjects()
+			sort.Slice(objects, func(i, j int) bool {
+				var id1, id2 string
+				for _, attr := range objects[i].GetAttributes() {
+					if attr.GetId() == "id" && len(attr.GetValues()) > 0 {
+						id1 = attr.GetValues()[0].GetStringValue()
+						break
+					}
+				}
+				for _, attr := range objects[j].GetAttributes() {
+					if attr.GetId() == "id" && len(attr.GetValues()) > 0 {
+						id2 = attr.GetValues()[0].GetStringValue()
+						break
+					}
+				}
+				return id1 < id2
+			})
+		}
+	}
+}
+
 func TestSalesforceAdapter_MultiSelectPicklist(t *testing.T) {
 	httpClient, recorder := common.StartRecorder(t, "fixtures/salesforce/account_multiselectpicklist")
 	defer recorder.Stop()
@@ -789,6 +820,12 @@ func TestSalesforceAdapter_MultiSelectPicklist(t *testing.T) {
 					ExternalId: "Locations__c",
 					Attributes: []*adapter_api_v1.AttributeConfig{
 						{
+							Id:         "id",
+							ExternalId: "id",
+							Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
+							UniqueId:   true,
+						},
+						{
 							Id:         "value",
 							ExternalId: "value",
 							Type:       adapter_api_v1.AttributeType_ATTRIBUTE_TYPE_STRING,
@@ -836,6 +873,14 @@ func TestSalesforceAdapter_MultiSelectPicklist(t *testing.T) {
 									{
 										"attributes": [
 											{
+												"id": "id",
+												"values": [
+													{
+														"string_value": "001gL00000XgJxhQAF_Chicago"
+													}
+												]
+											},
+											{
 												"id": "value",
 												"values": [
 													{
@@ -848,6 +893,14 @@ func TestSalesforceAdapter_MultiSelectPicklist(t *testing.T) {
 									{
 										"attributes": [
 											{
+												"id": "id",
+												"values": [
+													{
+														"string_value": "001gL00000XgJxhQAF_New York"
+													}
+												]
+											},
+											{
 												"id": "value",
 												"values": [
 													{
@@ -859,6 +912,14 @@ func TestSalesforceAdapter_MultiSelectPicklist(t *testing.T) {
 									},
 									{
 										"attributes": [
+											{
+												"id": "id",
+												"values": [
+													{
+														"string_value": "001gL00000XgJxhQAF_Seattle"
+													}
+												]
+											},
 											{
 												"id": "value",
 												"values": [
@@ -898,6 +959,14 @@ func TestSalesforceAdapter_MultiSelectPicklist(t *testing.T) {
 								"objects": [
 									{
 										"attributes": [
+											{
+												"id": "id",
+												"values": [
+													{
+														"string_value": "001gL00000XjjndQAB_Chicago"
+													}
+												]
+											},
 											{
 												"id": "value",
 												"values": [
@@ -940,6 +1009,10 @@ func TestSalesforceAdapter_MultiSelectPicklist(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	// Sort child objects by ID for order-independent comparison
+	sortChildObjectsByID(gotResp)
+	sortChildObjectsByID(wantResp)
 
 	if diff := cmp.Diff(gotResp, wantResp, common.CmpOpts...); diff != "" {
 		t.Fatal(diff)
