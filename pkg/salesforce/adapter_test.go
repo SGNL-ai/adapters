@@ -554,7 +554,7 @@ func TestAdapterGetPage(t *testing.T) {
 						{
 							ExternalId: "Id",
 							Type:       framework.AttributeTypeString,
-							List:       false,
+							UniqueId:   true,
 						},
 					},
 					ChildEntities: []*framework.EntityConfig{
@@ -583,15 +583,15 @@ func TestAdapterGetPage(t *testing.T) {
 						{
 							"Id": "003Hu000020yLuHIAU",
 							"Interests__c": []framework.Object{
-								{"id": "003Hu000020yLuHIAU_Sports", "value": "Sports"},
-								{"id": "003Hu000020yLuHIAU_Music", "value": "Music"},
-								{"id": "003Hu000020yLuHIAU_Reading", "value": "Reading"},
+								{"id": "003Hu000020yLuHIAU_Interests__c_sports", "value": "Sports"},
+								{"id": "003Hu000020yLuHIAU_Interests__c_music", "value": "Music"},
+								{"id": "003Hu000020yLuHIAU_Interests__c_reading", "value": "Reading"},
 							},
 						},
 						{
 							"Id": "003Hu000020yLuMIAU",
 							"Interests__c": []framework.Object{
-								{"id": "003Hu000020yLuMIAU_Technology", "value": "Technology"},
+								{"id": "003Hu000020yLuMIAU_Interests__c_technology", "value": "Technology"},
 							},
 						},
 						{
@@ -608,7 +608,6 @@ func TestAdapterGetPage(t *testing.T) {
 			gotResponse := adapter.GetPage(tt.ctx, tt.request)
 
 			// For multi-select picklist tests, sort child entities before comparison
-			// since order doesn't matter in production
 			if name == "valid_request_with_multi_select_picklist" {
 				sortChildEntitiesByID(gotResponse.Success.Objects)
 				sortChildEntitiesByID(tt.wantResponse.Success.Objects)

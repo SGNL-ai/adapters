@@ -64,7 +64,6 @@ func (a *Adapter) RequestPageFromDatasource(
 	for _, childEntity := range request.Entity.ChildEntities {
 		queryAttributes = append(queryAttributes, &framework.AttributeConfig{
 			ExternalId: childEntity.ExternalId,
-			Type:       framework.AttributeTypeString,
 		})
 	}
 
@@ -101,9 +100,19 @@ func (a *Adapter) RequestPageFromDatasource(
 		return framework.NewGetPageResponseError(adapterErr)
 	}
 
+	// CreateChildEntitiesFromDelimitedString transforms Salesforce multi-select picklist fields from
+	// semicolon-separated strings into arrays of child entity objects.
+	//
+	// Salesforce returns multi-select picklists as semicolon-separated values.
+	// Example: "Sports;Music;Reading"
 	objectsToConvert := resp.Objects
 	if len(request.Entity.ChildEntities) > 0 {
-		objectsToConvert = transformMultiSelectPicklists(resp.Objects, request.Entity.ChildEntities)
+		objectsToConvert = commonutil.CreateChildEntitiesFromDelimitedString(
+			resp.Objects,
+			&request.Entity,
+			request.Entity.ChildEntities,
+			";",
+		)
 	}
 
 	// The raw JSON objects from the response must be parsed and converted into framework.Objects.
@@ -143,97 +152,4 @@ func (a *Adapter) RequestPageFromDatasource(
 	}
 
 	return framework.NewGetPageResponseSuccess(page)
-}
-
-// transformMultiSelectPicklists transforms multi-select picklist fields from semicolon-separated strings
-// into arrays of objects for child entity processing.
-//
-// In Salesforce, multi-select picklists are returned as semicolon-separated values (e.g., "value1;value2;value3").
-// To support these as child entities in the framework, we need to:
-// 1. Check if the field value is a string to identify multi-select picklists
-// 2. Split the semicolon-separated string into individual values
-// 3. De-duplicate values
-// 4. Convert to child entities using util.CreateChildEntitiesFromValues, which:
-//   - Creates unique IDs for each child object in the format: parentId_value
-//   - Creates an array of objects with both id and value attributes
-//   - Returns []any type so the framework can properly assert the type
-//
-// Example transformation:
-// Input: {"Id": "123", "Interests__c": "Sports;Music;Sports"}
-// With child entity ExternalId="Interests__c" with attributes "id" and "value"
-//
-//	Output: {"Id": "123", "Interests__c": []any{
-//	  map[string]any{"id": "123_Sports", "value": "Sports"},
-//	  map[string]any{"id": "123_Music", "value": "Music"}
-//	}}.
-func transformMultiSelectPicklists(objects []map[string]any, childEntities []*framework.EntityConfig) []map[string]any {
-	if len(childEntities) == 0 {
-		return objects
-	}
-
-	// Map of field name -> child entity config for fields that have child entities defined
-	childEntityFields := make(map[string]*framework.EntityConfig)
-
-	for _, childEntity := range childEntities {
-		childEntityFields[childEntity.ExternalId] = childEntity
-	}
-
-	transformedObjects := make([]map[string]any, len(objects))
-	for i, obj := range objects {
-		transformedObj := make(map[string]any, len(obj))
-
-		for key, value := range obj {
-			transformedObj[key] = value
-		}
-
-		parentID, _ := obj["Id"].(string)
-
-		for fieldName := range childEntityFields {
-			value, exists := obj[fieldName]
-
-			if !exists || value == nil {
-				transformedObj[fieldName] = []any{}
-
-				continue
-			}
-
-			strValue, ok := value.(string)
-			if !ok {
-				continue
-			}
-
-			if strValue == "" {
-				transformedObj[fieldName] = []any{}
-
-				continue
-			}
-
-			// Split by semicolon - works for both single and multiple values
-			// Single value: "Technology" → ["Technology"]
-			// Multiple values: "Sports;Music" → ["Sports", "Music"]
-			values := strings.Split(strValue, ";")
-
-			// De-duplicate values using a map
-			uniqueValues := make(map[string]bool)
-
-			for _, val := range values {
-				trimmedVal := strings.TrimSpace(val)
-				if trimmedVal != "" {
-					uniqueValues[trimmedVal] = true
-				}
-			}
-
-			// Convert map keys to slice for utility function
-			uniqueValuesList := make([]string, 0, len(uniqueValues))
-			for val := range uniqueValues {
-				uniqueValuesList = append(uniqueValuesList, val)
-			}
-
-			transformedObj[fieldName] = commonutil.CreateChildEntitiesFromValues(parentID, uniqueValuesList)
-		}
-
-		transformedObjects[i] = transformedObj
-	}
-
-	return transformedObjects
 }
