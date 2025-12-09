@@ -11,6 +11,7 @@ import (
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	"github.com/sgnl-ai/adapter-framework/web"
 	"github.com/sgnl-ai/adapters/pkg/config"
+	"github.com/sgnl-ai/adapters/pkg/util"
 )
 
 // Adapter implements the framework.Adapter interface to query pages of objects
@@ -149,30 +150,32 @@ func (a *Adapter) RequestPageFromDatasource(
 //
 // In Salesforce, multi-select picklists are returned as semicolon-separated values (e.g., "value1;value2;value3").
 // To support these as child entities in the framework, we need to:
-// 1. Split the semicolon-separated string into individual values
-// 2. Create an array of objects, where each object contains the single attribute specified in the child entity config
-// 3. Use []any type (not []map[string]any) so the framework can properly assert the type
+// 1. Check if the field value is a string to identify multi-select picklists
+// 2. Split the semicolon-separated string into individual values
+// 3. De-duplicate values
+// 4. Convert to child entities using util.CreateChildEntitiesFromValues, which:
+//   - Creates unique IDs for each child object in the format: parentId_value
+//   - Creates an array of objects with both id and value attributes
+//   - Returns []any type so the framework can properly assert the type
 //
 // Example transformation:
-// Input: {"Id": "123", "Interests__c": "Sports;Music;Reading"}
-// With child entity ExternalId="Interests__c" and attribute ExternalId="value"
-// Output: {"Id": "123", "Interests__c": []any{map[string]any{"value":"Sports"},
-// map[string]any{"value":"Music"}, map[string]any{"value":"Reading"}}}.
+// Input: {"Id": "123", "Interests__c": "Sports;Music;Sports"}
+// With child entity ExternalId="Interests__c" with attributes "id" and "value"
+//
+//	Output: {"Id": "123", "Interests__c": []any{
+//	  map[string]any{"id": "123_Sports", "value": "Sports"},
+//	  map[string]any{"id": "123_Music", "value": "Music"}
+//	}}.
 func transformMultiSelectPicklists(objects []map[string]any, childEntities []*framework.EntityConfig) []map[string]any {
 	if len(childEntities) == 0 {
 		return objects
 	}
 
-	multiSelectFields := make(map[string]string)
+	// Map of field name -> child entity config for fields that have child entities defined
+	childEntityFields := make(map[string]*framework.EntityConfig)
 
 	for _, childEntity := range childEntities {
-		if len(childEntity.Attributes) == 1 {
-			multiSelectFields[childEntity.ExternalId] = childEntity.Attributes[0].ExternalId
-		}
-	}
-
-	if len(multiSelectFields) == 0 {
-		return objects
+		childEntityFields[childEntity.ExternalId] = childEntity
 	}
 
 	transformedObjects := make([]map[string]any, len(objects))
@@ -183,7 +186,9 @@ func transformMultiSelectPicklists(objects []map[string]any, childEntities []*fr
 			transformedObj[key] = value
 		}
 
-		for fieldName, attributeName := range multiSelectFields {
+		parentID, _ := obj["Id"].(string)
+
+		for fieldName := range childEntityFields {
 			value, exists := obj[fieldName]
 
 			if !exists || value == nil {
@@ -199,23 +204,30 @@ func transformMultiSelectPicklists(objects []map[string]any, childEntities []*fr
 
 			if strValue == "" {
 				transformedObj[fieldName] = []any{}
-			} else {
-				values := strings.Split(strValue, ";")
-
-				// Create []any because framework requires this type for child entities
-				childObjects := make([]any, 0, len(values))
-
-				for _, val := range values {
-					trimmedVal := strings.TrimSpace(val)
-					if trimmedVal != "" {
-						childObjects = append(childObjects, map[string]any{
-							attributeName: trimmedVal,
-						})
-					}
-				}
-
-				transformedObj[fieldName] = childObjects
+				continue
 			}
+
+			// Split by semicolon - works for both single and multiple values
+			// Single value: "Technology" → ["Technology"]
+			// Multiple values: "Sports;Music" → ["Sports", "Music"]
+			values := strings.Split(strValue, ";")
+
+			// De-duplicate values using a map
+			uniqueValues := make(map[string]bool)
+			for _, val := range values {
+				trimmedVal := strings.TrimSpace(val)
+				if trimmedVal != "" {
+					uniqueValues[trimmedVal] = true
+				}
+			}
+
+			// Convert map keys to slice for utility function
+			uniqueValuesList := make([]string, 0, len(uniqueValues))
+			for val := range uniqueValues {
+				uniqueValuesList = append(uniqueValuesList, val)
+			}
+
+			transformedObj[fieldName] = util.CreateChildEntitiesFromValues(parentID, uniqueValuesList)
 		}
 
 		transformedObjects[i] = transformedObj

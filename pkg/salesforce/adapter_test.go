@@ -5,6 +5,7 @@ import (
 	"context"
 	"net/http/httptest"
 	"reflect"
+	"sort"
 	"strings"
 	"testing"
 
@@ -12,6 +13,25 @@ import (
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	salesforce_adapter "github.com/sgnl-ai/adapters/pkg/salesforce"
 )
+
+// sortChildEntitiesByID sorts child entity arrays by their "id" field to enable order-independent comparison.
+// This is needed because map iteration order is non-deterministic in Go, but the test needs consistent results.
+func sortChildEntitiesByID(objects []framework.Object) {
+	for _, obj := range objects {
+		for key, value := range obj {
+			// Check if this field is a child entity array
+			if childArray, ok := value.([]framework.Object); ok {
+				sort.Slice(childArray, func(i, j int) bool {
+					id1, _ := childArray[i]["id"].(string)
+					id2, _ := childArray[j]["id"].(string)
+					return id1 < id2
+				})
+				// Update the object with sorted array
+				obj[key] = childArray
+			}
+		}
+	}
+}
 
 func TestAdapterGetPage(t *testing.T) {
 	server := httptest.NewTLSServer(TestServerHandler)
@@ -541,6 +561,11 @@ func TestAdapterGetPage(t *testing.T) {
 							ExternalId: "Interests__c",
 							Attributes: []*framework.AttributeConfig{
 								{
+									ExternalId: "id",
+									Type:       framework.AttributeTypeString,
+									UniqueId:   true,
+								},
+								{
 									ExternalId: "value",
 									Type:       framework.AttributeTypeString,
 								},
@@ -557,15 +582,15 @@ func TestAdapterGetPage(t *testing.T) {
 						{
 							"Id": "003Hu000020yLuHIAU",
 							"Interests__c": []framework.Object{
-								{"value": "Sports"},
-								{"value": "Music"},
-								{"value": "Reading"},
+								{"id": "003Hu000020yLuHIAU_Sports", "value": "Sports"},
+								{"id": "003Hu000020yLuHIAU_Music", "value": "Music"},
+								{"id": "003Hu000020yLuHIAU_Reading", "value": "Reading"},
 							},
 						},
 						{
 							"Id": "003Hu000020yLuMIAU",
 							"Interests__c": []framework.Object{
-								{"value": "Technology"},
+								{"id": "003Hu000020yLuMIAU_Technology", "value": "Technology"},
 							},
 						},
 						{
@@ -580,6 +605,13 @@ func TestAdapterGetPage(t *testing.T) {
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			gotResponse := adapter.GetPage(tt.ctx, tt.request)
+
+			// For multi-select picklist tests, sort child entities before comparison
+			// since order doesn't matter in production
+			if name == "valid_request_with_multi_select_picklist" {
+				sortChildEntitiesByID(gotResponse.Success.Objects)
+				sortChildEntitiesByID(tt.wantResponse.Success.Objects)
+			}
 
 			if !reflect.DeepEqual(gotResponse, tt.wantResponse) {
 				t.Errorf("gotResponse: %v, wantResponse: %v", gotResponse, tt.wantResponse)
