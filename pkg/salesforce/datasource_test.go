@@ -256,6 +256,33 @@ var TestServerHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Req
 			]
 		}`))
 
+	// Account with missing picklist field - Locations__c is configured but not present
+	case "/services/data/v58.0/query?q=SELECT+Id,Name,Locations__c+FROM+Account+ORDER+BY+Id+ASC":
+		w.Write([]byte(`{
+			"totalSize": 2,
+			"done": true,
+			"nextRecordsUrl": "",
+			"records": [
+				{
+					"attributes": {
+						"type": "Account",
+						"url": "/services/data/v58.0/sobjects/Account/001Hu000020yLuJKL"
+					},
+					"Id": "001Hu000020yLuJKL",
+					"Name": "Account Without Locations"
+				},
+				{
+					"attributes": {
+						"type": "Account",
+						"url": "/services/data/v58.0/sobjects/Account/001Hu000020yLuMNO"
+					},
+					"Id": "001Hu000020yLuMNO",
+					"Name": "Another Account",
+					"Locations__c": "Seattle;Portland"
+				}
+			]
+		}`))
+
 	default:
 		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte(``))

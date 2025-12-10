@@ -680,6 +680,68 @@ func TestAdapterGetPage(t *testing.T) {
 				},
 			},
 		},
+		"valid_request_with_missing_picklist_field": {
+			ctx: context.Background(),
+			request: &framework.Request[salesforce_adapter.Config]{
+				Address: server.URL,
+				Auth: &framework.DatasourceAuthCredentials{
+					HTTPAuthorization: "Bearer Testtoken",
+				},
+				Config: &salesforce_adapter.Config{
+					APIVersion: "58.0",
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "Account",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "Id",
+							Type:       framework.AttributeTypeString,
+							UniqueId:   true,
+						},
+						{
+							ExternalId: "Name",
+							Type:       framework.AttributeTypeString,
+						},
+					},
+					ChildEntities: []*framework.EntityConfig{
+						{
+							ExternalId: "Locations__c",
+							Attributes: []*framework.AttributeConfig{
+								{
+									ExternalId: "id",
+									Type:       framework.AttributeTypeString,
+									UniqueId:   true,
+								},
+								{
+									ExternalId: "value",
+									Type:       framework.AttributeTypeString,
+								},
+							},
+						},
+					},
+				},
+				Ordered:  true,
+				PageSize: 200,
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"Id":   "001Hu000020yLuJKL",
+							"Name": "Account Without Locations",
+						},
+						{
+							"Id":   "001Hu000020yLuMNO",
+							"Name": "Another Account",
+							"Locations__c": []framework.Object{
+								{"id": "001Hu000020yLuMNO_Locations__c_seattle", "value": "Seattle"},
+								{"id": "001Hu000020yLuMNO_Locations__c_portland", "value": "Portland"},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for name, tt := range tests {
@@ -688,7 +750,9 @@ func TestAdapterGetPage(t *testing.T) {
 
 			// For multi-select picklist tests, sort child entities before comparison
 			if name == "valid_request_with_multi_select_picklist" ||
-				name == "valid_request_with_list_and_complex_object_child_entities" {
+				name == "valid_request_with_list_and_complex_object_child_entities" ||
+				name == "valid_request_with_missing_picklist_field" ||
+				name == "valid_request_with_simple_list_child_entity" {
 				sortChildEntitiesByID(gotResponse.Success.Objects)
 				sortChildEntitiesByID(tt.wantResponse.Success.Objects)
 			}
