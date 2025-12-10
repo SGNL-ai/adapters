@@ -5,6 +5,7 @@ import (
 	"context"
 	"net/http/httptest"
 	"reflect"
+	"sort"
 	"strings"
 	"testing"
 
@@ -12,6 +13,26 @@ import (
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	salesforce_adapter "github.com/sgnl-ai/adapters/pkg/salesforce"
 )
+
+// sortChildEntitiesByID sorts child entity arrays by their "id" field to enable order-independent comparison.
+// This is needed because map iteration order is non-deterministic in Go, but the test needs consistent results.
+func sortChildEntitiesByID(objects []framework.Object) {
+	for _, obj := range objects {
+		for key, value := range obj {
+			// Check if this field is a child entity array
+			if childArray, ok := value.([]framework.Object); ok {
+				sort.Slice(childArray, func(i, j int) bool {
+					id1, _ := childArray[i]["id"].(string)
+					id2, _ := childArray[j]["id"].(string)
+
+					return id1 < id2
+				})
+				// Update the object with sorted array
+				obj[key] = childArray
+			}
+		}
+	}
+}
 
 func TestAdapterGetPage(t *testing.T) {
 	server := httptest.NewTLSServer(TestServerHandler)
@@ -517,11 +538,224 @@ func TestAdapterGetPage(t *testing.T) {
 				},
 			},
 		},
+		"valid_request_with_multi_select_picklist": {
+			ctx: context.Background(),
+			request: &framework.Request[salesforce_adapter.Config]{
+				Address: server.URL,
+				Auth: &framework.DatasourceAuthCredentials{
+					HTTPAuthorization: "Bearer Testtoken",
+				},
+				Config: &salesforce_adapter.Config{
+					APIVersion: "58.0",
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "Account",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "Id",
+							Type:       framework.AttributeTypeString,
+							UniqueId:   true,
+						},
+					},
+					ChildEntities: []*framework.EntityConfig{
+						{
+							ExternalId: "Interests__c",
+							Attributes: []*framework.AttributeConfig{
+								{
+									ExternalId: "id",
+									Type:       framework.AttributeTypeString,
+									UniqueId:   true,
+								},
+								{
+									ExternalId: "value",
+									Type:       framework.AttributeTypeString,
+								},
+							},
+						},
+					},
+				},
+				Ordered:  true,
+				PageSize: 200,
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"Id": "003Hu000020yLuHIAU",
+							"Interests__c": []framework.Object{
+								{"id": "003Hu000020yLuHIAU_Interests__c_sports", "value": "Sports"},
+								{"id": "003Hu000020yLuHIAU_Interests__c_music", "value": "Music"},
+								{"id": "003Hu000020yLuHIAU_Interests__c_reading", "value": "Reading"},
+							},
+						},
+						{
+							"Id": "003Hu000020yLuMIAU",
+							"Interests__c": []framework.Object{
+								{"id": "003Hu000020yLuMIAU_Interests__c_technology", "value": "Technology"},
+							},
+						},
+						{
+							"Id": "003Hu000020yLuPIAU",
+						},
+					},
+				},
+			},
+		},
+		"valid_request_with_list_and_complex_object_child_entities": {
+			ctx: context.Background(),
+			request: &framework.Request[salesforce_adapter.Config]{
+				Address: server.URL,
+				Auth: &framework.DatasourceAuthCredentials{
+					HTTPAuthorization: "Bearer Testtoken",
+				},
+				Config: &salesforce_adapter.Config{
+					APIVersion: "58.0",
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "Account",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "Id",
+							Type:       framework.AttributeTypeString,
+							UniqueId:   true,
+						},
+					},
+					ChildEntities: []*framework.EntityConfig{
+						{
+							ExternalId: "Interests__c",
+							Attributes: []*framework.AttributeConfig{
+								{
+									ExternalId: "id",
+									Type:       framework.AttributeTypeString,
+									UniqueId:   true,
+								},
+								{
+									ExternalId: "value",
+									Type:       framework.AttributeTypeString,
+								},
+							},
+						},
+						{
+							ExternalId: "Tags__c",
+							Attributes: []*framework.AttributeConfig{
+								{
+									ExternalId: "Name",
+									Type:       framework.AttributeTypeString,
+									UniqueId:   true,
+								},
+								{
+									ExternalId: "Priority",
+									Type:       framework.AttributeTypeString,
+								},
+							},
+						},
+					},
+				},
+				Ordered:  true,
+				PageSize: 200,
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"Id": "001Hu000020yLuXYZ",
+							"Interests__c": []framework.Object{
+								{"id": "001Hu000020yLuXYZ_Interests__c_sports", "value": "Sports"},
+								{"id": "001Hu000020yLuXYZ_Interests__c_music", "value": "Music"},
+							},
+							"Tags__c": []framework.Object{
+								{"Name": "VIP", "Priority": "High"},
+								{"Name": "Region", "Priority": "Medium"},
+							},
+						},
+						{
+							"Id": "001Hu000020yLuABC",
+							"Interests__c": []framework.Object{
+								{"id": "001Hu000020yLuABC_Interests__c_technology", "value": "Technology"},
+							},
+							"Tags__c": []framework.Object{
+								{"Name": "Status", "Priority": "Low"},
+							},
+						},
+					},
+				},
+			},
+		},
+		"valid_request_with_missing_picklist_field": {
+			ctx: context.Background(),
+			request: &framework.Request[salesforce_adapter.Config]{
+				Address: server.URL,
+				Auth: &framework.DatasourceAuthCredentials{
+					HTTPAuthorization: "Bearer Testtoken",
+				},
+				Config: &salesforce_adapter.Config{
+					APIVersion: "58.0",
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "Account",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "Id",
+							Type:       framework.AttributeTypeString,
+							UniqueId:   true,
+						},
+						{
+							ExternalId: "Name",
+							Type:       framework.AttributeTypeString,
+						},
+					},
+					ChildEntities: []*framework.EntityConfig{
+						{
+							ExternalId: "Locations__c",
+							Attributes: []*framework.AttributeConfig{
+								{
+									ExternalId: "id",
+									Type:       framework.AttributeTypeString,
+									UniqueId:   true,
+								},
+								{
+									ExternalId: "value",
+									Type:       framework.AttributeTypeString,
+								},
+							},
+						},
+					},
+				},
+				Ordered:  true,
+				PageSize: 200,
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"Id":   "001Hu000020yLuJKL",
+							"Name": "Account Without Locations",
+						},
+						{
+							"Id":   "001Hu000020yLuMNO",
+							"Name": "Another Account",
+							"Locations__c": []framework.Object{
+								{"id": "001Hu000020yLuMNO_Locations__c_seattle", "value": "Seattle"},
+								{"id": "001Hu000020yLuMNO_Locations__c_portland", "value": "Portland"},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			gotResponse := adapter.GetPage(tt.ctx, tt.request)
+
+			// For multi-select picklist tests, sort child entities before comparison
+			if name == "valid_request_with_multi_select_picklist" ||
+				name == "valid_request_with_list_and_complex_object_child_entities" ||
+				name == "valid_request_with_missing_picklist_field" {
+				sortChildEntitiesByID(gotResponse.Success.Objects)
+				sortChildEntitiesByID(tt.wantResponse.Success.Objects)
+			}
 
 			if !reflect.DeepEqual(gotResponse, tt.wantResponse) {
 				t.Errorf("gotResponse: %v, wantResponse: %v", gotResponse, tt.wantResponse)
