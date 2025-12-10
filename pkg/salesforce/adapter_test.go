@@ -751,8 +751,7 @@ func TestAdapterGetPage(t *testing.T) {
 			// For multi-select picklist tests, sort child entities before comparison
 			if name == "valid_request_with_multi_select_picklist" ||
 				name == "valid_request_with_list_and_complex_object_child_entities" ||
-				name == "valid_request_with_missing_picklist_field" ||
-				name == "valid_request_with_simple_list_child_entity" {
+				name == "valid_request_with_missing_picklist_field" {
 				sortChildEntitiesByID(gotResponse.Success.Objects)
 				sortChildEntitiesByID(tt.wantResponse.Success.Objects)
 			}
