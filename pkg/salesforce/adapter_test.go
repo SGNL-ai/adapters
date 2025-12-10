@@ -641,6 +641,7 @@ func TestAdapterGetPage(t *testing.T) {
 								{
 									ExternalId: "Name",
 									Type:       framework.AttributeTypeString,
+									UniqueId:   true,
 								},
 								{
 									ExternalId: "Priority",

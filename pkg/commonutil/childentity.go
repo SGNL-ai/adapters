@@ -149,8 +149,7 @@ func CreateChildEntitiesFromList(
 //
 // Parameters:
 // - objects: The raw objects from the datasource
-// - parentEntityConfig: The parent entity configuration (used to find unique ID)
-// - childEntities: Configuration of which fields should be transformed
+// - entityConfig: The entity configuration (contains both parent attributes and child entities)
 // - delimiter: The delimiter used to separate values (e.g., ";", ",", "|")
 //
 // Returns:
@@ -161,26 +160,27 @@ func CreateChildEntitiesFromList(
 //	objects := []map[string]any{
 //	  {"Id": "123", "Interests": "Sports;Music;Reading"},
 //	}
-//	parentConfig := &framework.EntityConfig{
+//	entityConfig := &framework.EntityConfig{
 //	  Attributes: []*framework.AttributeConfig{
 //	    {ExternalId: "Id", UniqueId: true},
 //	  },
-//	}
-//	childEntities := []*framework.EntityConfig{
-//	  {
-//	    ExternalId: "Interests",
-//	    Attributes: []*framework.AttributeConfig{
-//	      {ExternalId: "id"}, {ExternalId: "value"},
+//	  ChildEntities: []*framework.EntityConfig{
+//	    {
+//	      ExternalId: "Interests",
+//	      Attributes: []*framework.AttributeConfig{
+//	        {ExternalId: "id"}, {ExternalId: "value"},
+//	      },
 //	    },
 //	  },
 //	}
-//	transformed := CreateChildEntitiesFromDelimitedString(objects, parentConfig, childEntities, ";")
+//	transformed := CreateChildEntitiesFromDelimitedString(objects, entityConfig, ";")
 func CreateChildEntitiesFromDelimitedString(
 	objects []map[string]any,
-	parentEntityConfig *framework.EntityConfig,
-	childEntities []*framework.EntityConfig,
+	entityConfig *framework.EntityConfig,
 	delimiter string,
 ) []map[string]any {
+	var childEntities = entityConfig.ChildEntities
+
 	if len(childEntities) == 0 {
 		return objects
 	}
@@ -202,7 +202,7 @@ func CreateChildEntitiesFromDelimitedString(
 		}
 
 		// Extract parent unique ID using the entity config
-		parentID, ok := GetUniqueIDValue(obj, parentEntityConfig)
+		parentID, ok := GetUniqueIDValue(obj, entityConfig)
 		if !ok {
 			// If we can't get the parent ID, keep the object as-is
 			transformedObjects[i] = transformedObj

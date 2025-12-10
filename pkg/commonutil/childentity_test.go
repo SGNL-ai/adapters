@@ -219,19 +219,20 @@ func TestCreateChildEntitiesFromDelimitedString(t *testing.T) {
 	}
 
 	tests := map[string]struct {
-		objects            []map[string]any
-		parentEntityConfig *framework.EntityConfig
-		childEntities      []*framework.EntityConfig
-		delimiter          string
-		want               []map[string]any
+		objects      []map[string]any
+		entityConfig *framework.EntityConfig
+		delimiter    string
+		want         []map[string]any
 	}{
 		"semicolon_delimited_with_duplicates": {
 			objects: []map[string]any{
 				{"Id": "123", "Name": "John", "Interests": "Sports;Music;Sports"},
 			},
-			parentEntityConfig: parentConfig,
-			childEntities:      []*framework.EntityConfig{childConfig},
-			delimiter:          ";",
+			entityConfig: &framework.EntityConfig{
+				Attributes:    parentConfig.Attributes,
+				ChildEntities: []*framework.EntityConfig{childConfig},
+			},
+			delimiter: ";",
 			want: []map[string]any{
 				{
 					"Id":   "123",
@@ -247,9 +248,11 @@ func TestCreateChildEntitiesFromDelimitedString(t *testing.T) {
 			objects: []map[string]any{
 				{"Id": "456", "Name": "Jane", "Interests": nil},
 			},
-			parentEntityConfig: parentConfig,
-			childEntities:      []*framework.EntityConfig{childConfig},
-			delimiter:          ";",
+			entityConfig: &framework.EntityConfig{
+				Attributes:    parentConfig.Attributes,
+				ChildEntities: []*framework.EntityConfig{childConfig},
+			},
+			delimiter: ";",
 			want: []map[string]any{
 				{
 					"Id":        "456",
@@ -262,9 +265,11 @@ func TestCreateChildEntitiesFromDelimitedString(t *testing.T) {
 			objects: []map[string]any{
 				{"Id": "789", "Name": "Bob", "Interests": ""},
 			},
-			parentEntityConfig: parentConfig,
-			childEntities:      []*framework.EntityConfig{childConfig},
-			delimiter:          ";",
+			entityConfig: &framework.EntityConfig{
+				Attributes:    parentConfig.Attributes,
+				ChildEntities: []*framework.EntityConfig{childConfig},
+			},
+			delimiter: ";",
 			want: []map[string]any{
 				{
 					"Id":        "789",
@@ -277,9 +282,11 @@ func TestCreateChildEntitiesFromDelimitedString(t *testing.T) {
 			objects: []map[string]any{
 				{"Id": "123", "Name": "John"},
 			},
-			parentEntityConfig: parentConfig,
-			childEntities:      []*framework.EntityConfig{},
-			delimiter:          ";",
+			entityConfig: &framework.EntityConfig{
+				Attributes:    parentConfig.Attributes,
+				ChildEntities: []*framework.EntityConfig{},
+			},
+			delimiter: ";",
 			want: []map[string]any{
 				{"Id": "123", "Name": "John"},
 			},
@@ -288,9 +295,11 @@ func TestCreateChildEntitiesFromDelimitedString(t *testing.T) {
 			objects: []map[string]any{
 				{"Id": "999", "Name": "Alice", "Interests": "Technology"},
 			},
-			parentEntityConfig: parentConfig,
-			childEntities:      []*framework.EntityConfig{childConfig},
-			delimiter:          ";",
+			entityConfig: &framework.EntityConfig{
+				Attributes:    parentConfig.Attributes,
+				ChildEntities: []*framework.EntityConfig{childConfig},
+			},
+			delimiter: ";",
 			want: []map[string]any{
 				{
 					"Id":   "999",
@@ -305,9 +314,11 @@ func TestCreateChildEntitiesFromDelimitedString(t *testing.T) {
 			objects: []map[string]any{
 				{"Id": "888", "Name": "Charlie", "Interests": "Sports;Music", "Skills": "Go;Python"},
 			},
-			parentEntityConfig: parentConfig,
-			childEntities:      []*framework.EntityConfig{childConfig, skillsConfig},
-			delimiter:          ";",
+			entityConfig: &framework.EntityConfig{
+				Attributes:    parentConfig.Attributes,
+				ChildEntities: []*framework.EntityConfig{childConfig, skillsConfig},
+			},
+			delimiter: ";",
 			want: []map[string]any{
 				{
 					"Id":   "888",
@@ -327,9 +338,11 @@ func TestCreateChildEntitiesFromDelimitedString(t *testing.T) {
 			objects: []map[string]any{
 				{"Id": "777", "Name": "David", "Interests": 12345},
 			},
-			parentEntityConfig: parentConfig,
-			childEntities:      []*framework.EntityConfig{childConfig},
-			delimiter:          ";",
+			entityConfig: &framework.EntityConfig{
+				Attributes:    parentConfig.Attributes,
+				ChildEntities: []*framework.EntityConfig{childConfig},
+			},
+			delimiter: ";",
 			want: []map[string]any{
 				{
 					"Id":        "777",
@@ -344,8 +357,7 @@ func TestCreateChildEntitiesFromDelimitedString(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			got := commonutil.CreateChildEntitiesFromDelimitedString(
 				tt.objects,
-				tt.parentEntityConfig,
-				tt.childEntities,
+				tt.entityConfig,
 				tt.delimiter,
 			)
 

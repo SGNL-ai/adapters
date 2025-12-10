@@ -110,7 +110,6 @@ func (a *Adapter) RequestPageFromDatasource(
 		objectsToConvert = commonutil.CreateChildEntitiesFromDelimitedString(
 			resp.Objects,
 			&request.Entity,
-			request.Entity.ChildEntities,
 			";",
 		)
 	}
