@@ -75,11 +75,52 @@ func (a *Adapter) RequestPageFromDatasource(
 		Cursor:                cursor,
 		RequestTimeoutSeconds: *commonConfig.RequestTimeoutSeconds,
 		Filter:                a.getFilterForEntity(request),
+		Includes:              a.getIncludesForEntity(request),
 	}
 
 	response, err := a.RootlyClient.GetPage(ctx, apiRequest)
 	if err != nil {
 		return framework.NewGetPageResponseError(err)
+	}
+
+	// Type conversion for Rootly attributes
+	for i, obj := range response.Objects {
+		if attrsMap, ok := obj["attributes"].(map[string]any); ok {
+			val, exists := attrsMap["sequential_id"]
+			if !exists {
+				continue
+			}
+
+			// Update the sequential_id attribute based upon the type.
+			for _, attr := range request.Entity.Attributes {
+				// Special case for sequential_id attribute for converting to correct type.
+				if strings.HasSuffix(attr.ExternalId, "attributes.sequential_id") {
+					switch attr.Type {
+					case framework.AttributeTypeInt64, framework.AttributeTypeDouble:
+						// Convert to float64 as required by the framework
+						if floatVal, err := castToFloat64(val); err == nil {
+							attrsMap["sequential_id"] = floatVal
+						}
+					case framework.AttributeTypeBool:
+						if boolVal, err := castToBool(val); err == nil {
+							attrsMap["sequential_id"] = boolVal
+						}
+					case framework.AttributeTypeString,
+						framework.AttributeTypeDateTime,
+						framework.AttributeTypeDuration:
+						if strVal, err := castToString(val); err == nil {
+							attrsMap["sequential_id"] = strVal
+						}
+					}
+
+					break
+				}
+			}
+
+			obj["attributes"] = attrsMap
+		}
+
+		response.Objects[i] = obj
 	}
 
 	// Convert JSON objects to framework objects
@@ -123,6 +164,19 @@ func (a *Adapter) getFilterForEntity(request *framework.Request[Config]) string 
 
 	if filter, exists := request.Config.Filters[request.Entity.ExternalId]; exists {
 		return filter
+	}
+
+	return ""
+}
+
+// getIncludesForEntity builds the includes string for the given entity from the config.
+func (a *Adapter) getIncludesForEntity(request *framework.Request[Config]) string {
+	if request.Config == nil || request.Config.Includes == nil {
+		return ""
+	}
+
+	if includes, exists := request.Config.Includes[request.Entity.ExternalId]; exists {
+		return includes
 	}
 
 	return ""
