@@ -24,6 +24,10 @@ var supportedAPIVersions = map[string]struct{}{
 	"filters": {
 		"users": "email=rufus_raynor@hegmann.test",
 		"incidents": "status=started&severity=high"
+	},
+	"includes": {
+		"users": "role,email_addresses",
+		"incidents": "roles"
 	}
 }
 */
@@ -37,6 +41,11 @@ type Config struct {
 	// Filters contains a map of filters for each entity associated with this
 	// datasource. The key is the entity's external_name, and the value is the filter string.
 	Filters map[string]string `json:"filters,omitempty"`
+
+	// Includes contains a map of fields to include for each entity associated with this
+	// datasource. The key is the entity's external_name, and the value is a comma-separated
+	// list of fields to include in the response.
+	Includes map[string]string `json:"includes,omitempty"`
 }
 
 // ValidateConfig validates that a Config received in a GetPage call is valid.

@@ -1,0 +1,64 @@
+---
+version: 2
+interactions:
+    - id: 0
+      request:
+        proto: HTTP/1.1
+        proto_major: 1
+        proto_minor: 1
+        content_length: 0
+        transfer_encoding: []
+        trailer: {}
+        host: test-instance.my.salesforce.com
+        remote_addr: ""
+        request_uri: ""
+        body: ""
+        form: {}
+        headers:
+            Authorization:
+                - Bearer {{OMITTED}}
+            Sforce-Query-Options:
+                - batchSize=200
+        url: https://test-instance.my.salesforce.com/services/data/v58.0/query?q=SELECT+Id,Name,Active__c+FROM+Account+ORDER+BY+Id+ASC
+        method: GET
+      response:
+        proto: HTTP/2.0
+        proto_major: 2
+        proto_minor: 0
+        transfer_encoding: []
+        trailer: {}
+        content_length: -1
+        uncompressed: true
+        body: '{"totalSize":3,"done":true,"records":[{"attributes":{"type":"Account","url":"/services/data/v58.0/sobjects/Account/001gL00000WW0iPQAT"},"Id":"001gL00000WW0iPQAT","Name":"Edge Communications","Active__c":"Yes"},{"attributes":{"type":"Account","url":"/services/data/v58.0/sobjects/Account/001gL00000WW0iQQAT"},"Id":"001gL00000WW0iQQAT","Name":"Burlington Textiles Corp of America","Active__c":null},{"attributes":{"type":"Account","url":"/services/data/v58.0/sobjects/Account/001gL00000WW0iRQAT"},"Id":"001gL00000WW0iRQAT","Name":"Pyramid Construction Inc.","Active__c":"Yes"}]}'
+        headers:
+            Cache-Control:
+                - no-cache,must-revalidate,max-age=0,no-store,private
+            Content-Type:
+                - application/json;charset=UTF-8
+            Date:
+                - Wed, 03 Dec 2025 18:39:22 GMT
+            Server:
+                - sfdcedge
+            Set-Cookie:
+                - CookieConsentPolicy=0:1; path=/; expires=Thu, 03-Dec-2026 18:39:22 GMT; Max-Age=31536000; secure
+                - LSKey-c$CookieConsentPolicy=0:1; path=/; expires=Thu, 03-Dec-2026 18:39:22 GMT; Max-Age=31536000; secure
+                - BrowserId=YsSQQNB3EfCKa3VbuxwMZg; domain=.salesforce.com; path=/; expires=Thu, 03-Dec-2026 18:39:22 GMT; Max-Age=31536000; secure; SameSite=None
+            Sforce-Limit-Info:
+                - api-usage=9/15000
+            Strict-Transport-Security:
+                - max-age=63072000; includeSubDomains
+            Vary:
+                - Accept-Encoding
+            X-Content-Type-Options:
+                - nosniff
+            X-Request-Id:
+                - 0548c3669c477be94360231cae34a594
+            X-Robots-Tag:
+                - none
+            X-Sfdc-Edge-Cache:
+                - MISS
+            X-Sfdc-Request-Id:
+                - 0548c3669c477be94360231cae34a594
+        status: 200 OK
+        code: 200
+        duration: 149.700949ms
