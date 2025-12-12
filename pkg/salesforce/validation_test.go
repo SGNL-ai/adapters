@@ -232,50 +232,6 @@ func TestValidateGetPageRequest(t *testing.T) {
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_PAGE_REQUEST_CONFIG,
 			},
 		},
-		"invalid_child_entities_provided_false": {
-			request: &framework.Request[salesforce_adapter.Config]{
-				Address: "sgnl-dev.my.salesforce.com",
-				Auth: &framework.DatasourceAuthCredentials{
-					HTTPAuthorization: "Bearer testtoken",
-				},
-				Entity: framework.EntityConfig{
-					ExternalId: "User",
-					Attributes: []*framework.AttributeConfig{
-						{
-							ExternalId: "Id",
-							Type:       framework.AttributeTypeString,
-						},
-						{
-							ExternalId: "Name",
-							Type:       framework.AttributeTypeString,
-						},
-					},
-					ChildEntities: []*framework.EntityConfig{
-						{
-							ExternalId: "child",
-							Attributes: []*framework.AttributeConfig{
-								{
-									ExternalId: "id",
-									Type:       framework.AttributeTypeString,
-								},
-							},
-						},
-					},
-				},
-				Config: &salesforce_adapter.Config{
-					APIVersion: "58.0",
-					Filters: map[string]string{
-						"User": "Name = 'John'",
-					},
-				},
-				Ordered:  true,
-				PageSize: 250,
-			},
-			wantErr: &framework.Error{
-				Message: "Requested entity does not support child entities.",
-				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
-			},
-		},
 		"invalid_missing_auth": {
 			request: &framework.Request[salesforce_adapter.Config]{
 				Address: "sgnl-dev.my.salesforce.com",

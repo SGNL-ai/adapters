@@ -10,6 +10,7 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	"github.com/sgnl-ai/adapter-framework/web"
+	"github.com/sgnl-ai/adapters/pkg/commonutil"
 	"github.com/sgnl-ai/adapters/pkg/config"
 )
 
@@ -51,13 +52,28 @@ func (a *Adapter) RequestPageFromDatasource(
 		request.Address = "https://" + request.Address
 	}
 
+	// Build the list of attributes to query from Salesforce.
+	// This includes both regular attributes and multi-select picklist fields (child entities).
+	queryAttributes := make(
+		[]*framework.AttributeConfig,
+		0,
+		len(request.Entity.Attributes)+len(request.Entity.ChildEntities),
+	)
+	queryAttributes = append(queryAttributes, request.Entity.Attributes...)
+
+	for _, childEntity := range request.Entity.ChildEntities {
+		queryAttributes = append(queryAttributes, &framework.AttributeConfig{
+			ExternalId: childEntity.ExternalId,
+		})
+	}
+
 	salesforceReq := &Request{
 		BaseURL:               request.Address,
 		Token:                 request.Auth.HTTPAuthorization,
 		PageSize:              request.PageSize,
 		EntityExternalID:      request.Entity.ExternalId,
 		APIVersion:            request.Config.APIVersion,
-		Attributes:            request.Entity.Attributes,
+		Attributes:            queryAttributes,
 		RequestTimeoutSeconds: *commonConfig.RequestTimeoutSeconds,
 	}
 
@@ -84,11 +100,25 @@ func (a *Adapter) RequestPageFromDatasource(
 		return framework.NewGetPageResponseError(adapterErr)
 	}
 
+	// CreateChildEntitiesFromDelimitedString transforms Salesforce multi-select picklist fields from
+	// semicolon-separated strings into arrays of child entity objects.
+	//
+	// Salesforce returns multi-select picklists as semicolon-separated values.
+	// Example: "Sports;Music;Reading"
+	objectsToConvert := resp.Objects
+	if len(request.Entity.ChildEntities) > 0 {
+		objectsToConvert = commonutil.CreateChildEntitiesFromDelimitedString(
+			resp.Objects,
+			&request.Entity,
+			";",
+		)
+	}
+
 	// The raw JSON objects from the response must be parsed and converted into framework.Objects.
 	// DateTime values are parsed using the specified DateTimeFormatWithTimeZone.
 	parsedObjects, parserErr := web.ConvertJSONObjectList(
 		&request.Entity,
-		resp.Objects,
+		objectsToConvert,
 
 		web.WithJSONPathAttributeNames(),
 
