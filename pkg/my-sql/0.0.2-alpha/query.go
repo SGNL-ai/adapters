@@ -12,6 +12,10 @@ import (
 	_ "github.com/doug-martin/goqu/v9/dialect/mysql" // goqu MySQL Dialect required for constructing correct queries.
 )
 
+// TotalRemainingRowsColumn is the column name for the COUNT window function result
+// that provides the total count of rows matching the query conditions.
+const TotalRemainingRowsColumn = "total_remaining_rows"
+
 func ConstructQuery(request *Request) (string, []any, error) {
 	if request == nil {
 		return "", nil, errors.New("nil request provided")
@@ -22,6 +26,7 @@ func ConstructQuery(request *Request) (string, []any, error) {
 	expr := dialect.Select(
 		"*",
 		goqu.Cast(goqu.I(request.UniqueAttributeExternalID), "CHAR(50)").As("str_id"),
+		goqu.L("COUNT(*) OVER()").As(TotalRemainingRowsColumn),
 	).From(request.EntityConfig.ExternalId).Prepared(true)
 
 	if request.Cursor != nil && *request.Cursor != "" {
