@@ -517,8 +517,10 @@ func (e Entity) ConstructURL(request *Request, cursor *pagination.CompositeCurso
 	switch request.EntityExternalID {
 	case GroupExternalID:
 		// Groups/picker endpoint doesn't support standard pagination
-		sb.Grow(len(e.endpoint))
+		// Adding maxResults parmeter per sc-69001 to override the default of 20
+		sb.Grow(len(e.endpoint) + len("?maxResults=1000"))
 		sb.WriteString(e.endpoint)
+		sb.WriteString("?maxResults=1000")
 
 		return sb.String(), nil
 	case UserExternalID, GroupMemberExternalID:
