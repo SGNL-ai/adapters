@@ -356,7 +356,8 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
-					Message: `Failed to execute Jira request: Get "https://localhost:1/rest/api/latest/groups/picker": ` +
+					Message: `Failed to execute Jira request: ` +
+						`Get "https://localhost:1/rest/api/latest/groups/picker?maxResults=1000": ` +
 						`dial tcp [::1]:1: connect: connection refused.`,
 					Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 				},
@@ -389,7 +390,8 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
-					Message: `Failed to execute Jira request: Get "https:///example.com/rest/api/latest/groups/picker": ` +
+					Message: `Failed to execute Jira request: ` +
+						`Get "https:///example.com/rest/api/latest/groups/picker?maxResults=1000": ` +
 						`http: no Host in request URL.`,
 					Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 				},

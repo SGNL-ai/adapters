@@ -188,7 +188,7 @@ var TestServerHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Req
 		w.Write([]byte(`{"issues": [{"id": "1", "key": "TEST-1", "summary": "Test Issue", "status": "Open"}]}`))
 
 	// Group endpoints
-	case "/rest/api/latest/groups/picker":
+	case "/rest/api/latest/groups/picker?maxResults=1000":
 		w.WriteHeader(http.StatusOK)
 		// nolint: lll
 		w.Write([]byte(`{"groups": [{"name": "group1"}, {"name": "group2"}, {"name": "group3"}]}`))
@@ -220,11 +220,11 @@ var TestServerHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Req
 	// Hence, they start from page 99 to avoid colliding with the above endpoints.
 	// Return an empty list of groups.
 	// Omit the Group's uniqueId.
-	case "/rest/api/failing-version-one/groups/picker":
+	case "/rest/api/failing-version-one/groups/picker?maxResults=1000":
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"groups": [{"NOT_UNIQUE_ID":"group1"}]}`))
 	// Make the Group's uniqueId not parsable as a string.
-	case "/rest/api/failing-version-two/groups/picker":
+	case "/rest/api/failing-version-two/groups/picker?maxResults=1000":
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"groups": [{"name":10}]}`))
 
@@ -724,7 +724,7 @@ func TestConstructURL(t *testing.T) {
 			cursor: &pagination.CompositeCursor[int64]{
 				Cursor: testutil.GenPtr[int64](10),
 			},
-			wantURL: "https://jira.com/rest/api/latest/groups/picker",
+			wantURL: "https://jira.com/rest/api/latest/groups/picker?maxResults=1000",
 		},
 		"groups_with_inactive_users_set_true": {
 			request: &jiradatacenter.Request{
@@ -738,7 +738,7 @@ func TestConstructURL(t *testing.T) {
 			cursor: &pagination.CompositeCursor[int64]{
 				Cursor: testutil.GenPtr[int64](10),
 			},
-			wantURL: "https://jira.com/rest/api/latest/groups/picker",
+			wantURL: "https://jira.com/rest/api/latest/groups/picker?maxResults=1000",
 		},
 		"issues": {
 			request: &jiradatacenter.Request{
@@ -974,7 +974,7 @@ func (ts *TestSuite) TestGetPageUsers(t *testing.T) {
 					"msg":                               "Sending request to datasource",
 					fields.FieldRequestEntityExternalID: "Group",
 					fields.FieldRequestPageSize:         int64(1),
-					fields.FieldRequestURL:              ts.server.URL + "/rest/api/latest/groups/picker",
+					fields.FieldRequestURL:              ts.server.URL + "/rest/api/latest/groups/picker?maxResults=1000",
 				},
 				{
 					"level":                             "info",
@@ -1259,7 +1259,8 @@ func (ts *TestSuite) TestGetPageUsers(t *testing.T) {
 			},
 			wantResponse: nil,
 			wantErr: &framework.Error{
-				Message: `Failed to execute Jira request: Get "http://localhost:1234/rest/api/latest/groups/picker": ` +
+				Message: `Failed to execute Jira request: ` +
+					`Get "http://localhost:1234/rest/api/latest/groups/picker?maxResults=1000": ` +
 					`dial tcp [::1]:1234: connect: connection refused.`,
 				Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			},
@@ -2031,7 +2032,8 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 			},
 			wantResponse: nil,
 			wantErr: &framework.Error{
-				Message: `Failed to execute Jira request: Get "http://localhost:1234/rest/api/latest/groups/picker": ` +
+				Message: `Failed to execute Jira request: ` +
+					`Get "http://localhost:1234/rest/api/latest/groups/picker?maxResults=1000": ` +
 					`dial tcp [::1]:1234: connect: connection refused.`,
 				Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			},
