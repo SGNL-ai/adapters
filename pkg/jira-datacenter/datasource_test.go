@@ -1259,7 +1259,8 @@ func (ts *TestSuite) TestGetPageUsers(t *testing.T) {
 			},
 			wantResponse: nil,
 			wantErr: &framework.Error{
-				Message: `Failed to execute Jira request: Get "http://localhost:1234/rest/api/latest/groups/picker?maxResults=1000": ` +
+				Message: `Failed to execute Jira request: ` +
+					`Get "http://localhost:1234/rest/api/latest/groups/picker?maxResults=1000": ` +
 					`dial tcp 127.0.0.1:1234: connect: connection refused.`,
 				Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			},
@@ -2031,7 +2032,8 @@ func (ts *TestSuite) TestGetPageGroupMembers(t *testing.T) {
 			},
 			wantResponse: nil,
 			wantErr: &framework.Error{
-				Message: `Failed to execute Jira request: Get "http://localhost:1234/rest/api/latest/groups/picker?maxResults=1000": ` +
+				Message: `Failed to execute Jira request: ` +
+					`Get "http://localhost:1234/rest/api/latest/groups/picker?maxResults=1000": ` +
 					`dial tcp 127.0.0.1:1234: connect: connection refused.`,
 				Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			},
