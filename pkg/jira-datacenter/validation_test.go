@@ -464,6 +464,81 @@ func TestValidateGetPageRequest(t *testing.T) {
 			},
 			wantErr: nil,
 		},
+		"valid_with_groups_max_results": {
+			request: &framework.Request[jiradatacenter_adapter.Config]{
+				Address: "https://example.com",
+				Auth: &framework.DatasourceAuthCredentials{
+					Basic: &framework.BasicAuthCredentials{
+						Username: "username",
+						Password: "password",
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: jiradatacenter_adapter.GroupExternalID,
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "name",
+						},
+					},
+				},
+				Config: &jiradatacenter_adapter.Config{
+					GroupsMaxResults: testutil.GenPtr[int64](50),
+				},
+			},
+			wantErr: nil,
+		},
+		"invalid_groups_max_results_zero": {
+			request: &framework.Request[jiradatacenter_adapter.Config]{
+				Address: "https://example.com",
+				Auth: &framework.DatasourceAuthCredentials{
+					Basic: &framework.BasicAuthCredentials{
+						Username: "username",
+						Password: "password",
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: jiradatacenter_adapter.GroupExternalID,
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "name",
+						},
+					},
+				},
+				Config: &jiradatacenter_adapter.Config{
+					GroupsMaxResults: testutil.GenPtr[int64](0),
+				},
+			},
+			wantErr: &framework.Error{
+				Message: "Jira config is invalid: groupsMaxResults must be greater than 0.",
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
+			},
+		},
+		"invalid_groups_max_results_too_large": {
+			request: &framework.Request[jiradatacenter_adapter.Config]{
+				Address: "https://example.com",
+				Auth: &framework.DatasourceAuthCredentials{
+					Basic: &framework.BasicAuthCredentials{
+						Username: "username",
+						Password: "password",
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: jiradatacenter_adapter.GroupExternalID,
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "name",
+						},
+					},
+				},
+				Config: &jiradatacenter_adapter.Config{
+					GroupsMaxResults: testutil.GenPtr[int64](1001),
+				},
+			},
+			wantErr: &framework.Error{
+				Message: "Jira config is invalid: groupsMaxResults cannot exceed 1000.",
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
+			},
+		},
 	}
 
 	adapter := &jiradatacenter_adapter.Adapter{}

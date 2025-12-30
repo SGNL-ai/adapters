@@ -55,6 +55,11 @@ type Config struct {
 	// when querying for User or GroupMember entities. If not specified or set to false,
 	// only active users are returned.
 	IncludeInactiveUsers *bool `json:"includeInactiveUsers,omitempty"`
+
+	// GroupsMaxResults is the maximum number of groups to return per page from the groups/picker API.
+	// This is used as the "maxResults" parameter in the Jira groups/picker endpoint.
+	// If not specified, the Jira API default behavior is used (returns all matching groups).
+	GroupsMaxResults *int64 `json:"groupsMaxResults,omitempty"`
 }
 
 // ValidateConfig validates that a Config received in a GetPage call is valid.
@@ -103,6 +108,18 @@ func (c *Config) Validate(_ context.Context) error {
 		// Jira docs don't specify a max length; use a conservative estimate.
 		if len(*c.IssuesJQLFilter) > 1024 {
 			return errors.New("issuesJqlFilter exceeds the 1024 character limit")
+		}
+	}
+
+	// The GroupsMaxResults is optional so only validate if it's set.
+	if c.GroupsMaxResults != nil {
+		if *c.GroupsMaxResults <= 0 {
+			return errors.New("groupsMaxResults must be greater than 0")
+		}
+
+		// Jira groups/picker endpoint may have limits; use a reasonable maximum.
+		if *c.GroupsMaxResults > 1000 {
+			return errors.New("groupsMaxResults cannot exceed 1000")
 		}
 	}
 

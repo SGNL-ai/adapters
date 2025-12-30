@@ -83,6 +83,8 @@ func (a *Adapter) RequestPageFromDatasource(
 		switch request.Entity.ExternalId {
 		case IssueExternalID:
 			jiraReq.IssuesJQLFilter = request.Config.IssuesJQLFilter
+		case GroupExternalID:
+			jiraReq.GroupsMaxResults = request.Config.GroupsMaxResults
 		}
 	}
 
