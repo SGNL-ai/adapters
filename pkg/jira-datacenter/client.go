@@ -56,6 +56,11 @@ type Request struct {
 	// when querying for User or GroupMember entities.
 	IncludeInactiveUsers *bool
 
+	// GroupsMaxResults is the maximum number of groups to return per page from the groups/picker API.
+	// This is only used when EntityExternalID = "Group".
+	// If not specified, the Jira API default behavior is used.
+	GroupsMaxResults *int64
+
 	// Attributes contains the list of attributes to request along with the current request.
 	// This is used to limit the fields returned in the API response.
 	Attributes []*framework.AttributeConfig
