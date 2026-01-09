@@ -740,6 +740,20 @@ func TestConstructURL(t *testing.T) {
 			},
 			wantURL: "https://jira.com/rest/api/latest/groups/picker",
 		},
+		"groups_with_max_results": {
+			request: &jiradatacenter.Request{
+				RequestTimeoutSeconds: 5,
+				BaseURL:               "https://jira.com",
+				PageSize:              10,
+				EntityExternalID:      jiradatacenter.GroupExternalID,
+				GroupsMaxResults:      testutil.GenPtr[int64](50),
+			},
+			entity: jiradatacenter.ValidEntityExternalIDs[jiradatacenter.GroupExternalID],
+			cursor: &pagination.CompositeCursor[int64]{
+				Cursor: testutil.GenPtr[int64](10),
+			},
+			wantURL: "https://jira.com/rest/api/latest/groups/picker?maxResults=50",
+		},
 		"issues": {
 			request: &jiradatacenter.Request{
 				RequestTimeoutSeconds: 5,
