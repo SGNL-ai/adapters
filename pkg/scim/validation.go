@@ -10,7 +10,8 @@ import (
 
 // ValidateGetPageRequest validates the fields of the GetPage Request.
 func (a *Adapter) ValidateGetPageRequest(request *framework.Request[Config]) *framework.Error {
-	if strings.HasPrefix(request.Address, "http://") {
+	sanitizedAddress := strings.TrimSpace(strings.ToLower(request.Address))
+	if strings.HasPrefix(sanitizedAddress, "http://") {
 		return &framework.Error{
 			Message: "The provided HTTP protocol is not supported.",
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,

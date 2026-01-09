@@ -72,6 +72,7 @@ func (a *Adapter) requestPageFromDatasource(
 		})
 	}
 
+	sanitizedAddress := strings.TrimSpace(strings.ToLower(request.Address))
 	adReq := &Request{
 		BaseURL:          request.Address,
 		PageSize:         request.PageSize,
@@ -82,7 +83,7 @@ func (a *Adapter) requestPageFromDatasource(
 			BindPassword:     request.Auth.Basic.Password,
 			BaseDN:           request.Config.BaseDN,
 			CertificateChain: request.Config.CertificateChain,
-			IsLDAPS:          strings.HasPrefix(request.Address, "ldaps://"),
+			IsLDAPS:          strings.HasPrefix(sanitizedAddress, "ldaps://"),
 			Host:             url.Hostname(),
 		},
 		UniqueIDAttribute:     *getUniqueIDAttribute(request.Entity.Attributes),

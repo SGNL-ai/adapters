@@ -69,7 +69,8 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 
 	// Check if scheme is present in address, if not
 	// set scheme based on certificateChain input
-	if !strings.HasPrefix(request.Address, "ldap://") && !strings.HasPrefix(request.Address, "ldaps://") {
+	sanitizedAddress := strings.TrimSpace(strings.ToLower(request.Address))
+	if !strings.HasPrefix(sanitizedAddress, "ldap://") && !strings.HasPrefix(sanitizedAddress, "ldaps://") {
 		if request.Config.CertificateChain != "" {
 			request.Address = "ldaps://" + request.Address
 		} else {

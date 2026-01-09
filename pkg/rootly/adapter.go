@@ -47,7 +47,8 @@ func (a *Adapter) RequestPageFromDatasource(
 
 	commonConfig = config.SetMissingCommonConfigDefaults(commonConfig)
 
-	if !strings.HasPrefix(request.Address, "https://") {
+	sanitizedAddress := strings.TrimSpace(strings.ToLower(request.Address))
+	if !strings.HasPrefix(sanitizedAddress, "https://") {
 		request.Address = fmt.Sprintf("https://%s", request.Address)
 	}
 

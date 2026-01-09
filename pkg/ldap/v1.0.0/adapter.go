@@ -67,7 +67,9 @@ func (a *Adapter) RequestPageFromDatasource(
 	url, _ := url.Parse(request.Address)
 
 	var isLDAPS bool
-	if strings.HasPrefix(request.Address, "ldaps://") {
+
+	sanitizedAddress := strings.TrimSpace(strings.ToLower(request.Address))
+	if strings.HasPrefix(sanitizedAddress, "ldaps://") {
 		isLDAPS = true
 	}
 
