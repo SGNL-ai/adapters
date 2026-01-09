@@ -54,9 +54,10 @@ func (a *Adapter) RequestPageFromDatasource(
 		return framework.NewGetPageResponseError(err)
 	}
 
-	sanitizedAddress := strings.TrimSpace(strings.ToLower(request.Address))
+	trimmedAddress := strings.TrimSpace(request.Address)
+	sanitizedAddress := strings.ToLower(trimmedAddress)
 	if !strings.HasPrefix(sanitizedAddress, "https://") {
-		request.Address = "https://" + request.Address
+		request.Address = "https://" + trimmedAddress
 	}
 
 	req := &Request{

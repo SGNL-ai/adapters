@@ -63,9 +63,10 @@ func (a *Adapter) RequestPageFromDatasource(
 		)
 	}
 
-	sanitizedAddress := strings.TrimSpace(strings.ToLower(request.Address))
+	trimmedAddress := strings.TrimSpace(request.Address)
+	sanitizedAddress := strings.ToLower(trimmedAddress)
 	if !strings.HasPrefix(sanitizedAddress, "https://") {
-		request.Address = "https://" + request.Address
+		request.Address = "https://" + trimmedAddress
 	}
 
 	bambooReq := &Request{
