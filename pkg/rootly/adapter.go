@@ -1,4 +1,4 @@
-// Copyright 2025 SGNL.ai, Inc.
+// Copyright 2026 SGNL.ai, Inc.
 package rootly
 
 import (
@@ -49,12 +49,13 @@ func (a *Adapter) RequestPageFromDatasource(
 
 	trimmedAddress := strings.TrimSpace(request.Address)
 	sanitizedAddress := strings.ToLower(trimmedAddress)
+
 	if !strings.HasPrefix(sanitizedAddress, "https://") {
 		request.Address = fmt.Sprintf("https://%s", trimmedAddress)
 	}
 
 	if !strings.HasSuffix(trimmedAddress, "/") {
-		request.Address = fmt.Sprintf("%s/", trimmedAddress)
+		request.Address = fmt.Sprintf("%s/", request.Address)
 	}
 
 	baseURL := fmt.Sprintf("%s%s", request.Address, request.Config.APIVersion)

@@ -1,4 +1,4 @@
-// Copyright 2025 SGNL.ai, Inc.
+// Copyright 2026 SGNL.ai, Inc.
 package identitynow
 
 import (
@@ -49,6 +49,7 @@ func (a *Adapter) RequestPageFromDatasource(
 
 	trimmedAddress := strings.TrimSpace(request.Address)
 	sanitizedAddress := strings.ToLower(trimmedAddress)
+
 	if !strings.HasPrefix(sanitizedAddress, "https://") {
 		request.Address = "https://" + trimmedAddress
 	}

@@ -1,4 +1,4 @@
-// Copyright 2025 SGNL.ai, Inc.
+// Copyright 2026 SGNL.ai, Inc.
 package github
 
 import (
@@ -579,6 +579,7 @@ func ParseGraphQLResponseForOrganization(
 		}
 	}
 
+	// nolint: prealloc
 	objects = make([]map[string]any, 0)
 
 	objects = append(objects, *response.Data.Organization)

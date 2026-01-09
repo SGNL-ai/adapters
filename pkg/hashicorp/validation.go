@@ -1,4 +1,4 @@
-// Copyright 2025 SGNL.ai, Inc.
+// Copyright 2026 SGNL.ai, Inc.
 package hashicorp
 
 import (
@@ -53,6 +53,7 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 
 	trimmedAddress := strings.TrimSpace(request.Address)
 	sanitizedAddress := strings.ToLower(trimmedAddress)
+
 	if strings.HasPrefix(sanitizedAddress, "http://") {
 		return &framework.Error{
 			Message: "The provided HTTP protocol is not supported.",

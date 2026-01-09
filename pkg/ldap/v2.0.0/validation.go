@@ -1,4 +1,4 @@
-// Copyright 2025 SGNL.ai, Inc.
+// Copyright 2026 SGNL.ai, Inc.
 
 package ldap
 
@@ -71,6 +71,7 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 	// set scheme based on certificateChain input
 	trimmedAddress := strings.TrimSpace(request.Address)
 	sanitizedAddress := strings.ToLower(trimmedAddress)
+
 	if !strings.HasPrefix(sanitizedAddress, "ldap://") && !strings.HasPrefix(sanitizedAddress, "ldaps://") {
 		if request.Config.CertificateChain != "" {
 			request.Address = "ldaps://" + trimmedAddress
