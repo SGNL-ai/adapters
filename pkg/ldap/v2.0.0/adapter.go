@@ -72,9 +72,10 @@ func (a *Adapter) requestPageFromDatasource(
 		})
 	}
 
-	sanitizedAddress := strings.TrimSpace(strings.ToLower(request.Address))
+	trimmedAddress := strings.TrimSpace(request.Address)
+	sanitizedAddress := strings.ToLower(trimmedAddress)
 	adReq := &Request{
-		BaseURL:          request.Address,
+		BaseURL:          trimmedAddress,
 		PageSize:         request.PageSize,
 		EntityExternalID: request.Entity.ExternalId,
 		Attributes:       request.Entity.Attributes,
