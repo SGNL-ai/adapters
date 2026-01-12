@@ -1,4 +1,4 @@
-// Copyright 2026 SGNL.ai, Inc.
+// Copyright 2025 SGNL.ai, Inc.
 
 // nolint: lll
 package scim_test

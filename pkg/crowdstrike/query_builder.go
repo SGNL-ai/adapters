@@ -1,4 +1,4 @@
-// Copyright 2026 SGNL.ai, Inc.
+// Copyright 2025 SGNL.ai, Inc.
 
 // TODO: The contents of this file are unused at the moment. Do not remove. We need it for future improvements.
 package crowdstrike

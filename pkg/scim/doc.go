@@ -1,4 +1,4 @@
-// Copyright 2026 SGNL.ai, Inc.
+// Copyright 2025 SGNL.ai, Inc.
 
 /*
 Package scim implements an adapter for the System for Cross-domain Identity Management (SCIM) protocol v2.

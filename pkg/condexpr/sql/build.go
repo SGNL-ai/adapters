@@ -1,4 +1,4 @@
-// Copyright 2026 SGNL.ai, Inc.
+// Copyright 2025 SGNL.ai, Inc.
 
 // Package sql provides utilities for building SQL expressions from conditional expressions.
 // This package is designed to work with the goqu library to construct SQL queries dynamically.

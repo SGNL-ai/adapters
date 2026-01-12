@@ -1,4 +1,4 @@
-// Copyright 2026 SGNL.ai, Inc.
+// Copyright 2025 SGNL.ai, Inc.
 
 // ABOUTME: Response processing utilities for Rootly JSON:API responses.
 // ABOUTME: Handles enrichment of incident data with included relationships.
