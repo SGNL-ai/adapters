@@ -1,6 +1,5 @@
-// Copyright 2025 SGNL.ai, Inc.
-//
-//nolint:forcetypeassert
+// Copyright 2026 SGNL.ai, Inc.
+
 package hashicorp_test
 
 import (
