@@ -1,4 +1,4 @@
-// Copyright 2025 SGNL.ai, Inc.
+// Copyright 2026 SGNL.ai, Inc.
 
 // nolint: goconst
 
@@ -445,7 +445,13 @@ func TestDataFetchRangeHeaderIncludesEndByte(t *testing.T) {
 		EntityExternalID:      "customers",
 		PageSize:              2,
 		RequestTimeoutSeconds: 30,
-		AttributeConfig:       []*framework.AttributeConfig{{ExternalId: "Email", Type: framework.AttributeTypeString, UniqueId: true}},
+		AttributeConfig: []*framework.AttributeConfig{
+			{
+				ExternalId: "Email",
+				Type:       framework.AttributeTypeString,
+				UniqueId:   true,
+			},
+		},
 	}
 
 	ctx := context.Background()
