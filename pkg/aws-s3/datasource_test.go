@@ -1,4 +1,4 @@
-// Copyright 2025 SGNL.ai, Inc.
+// Copyright 2026 SGNL.ai, Inc.
 
 // nolint: goconst
 
@@ -7,6 +7,7 @@ package awss3_test
 import (
 	"context"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -419,5 +420,52 @@ func validateFirstObjectOfLargeFile(t *testing.T, firstObj map[string]any) {
 		}
 	} else {
 		t.Errorf("Customer Id field should be string, got %T", firstObj["Customer Id"])
+	}
+}
+
+// TestDataFetchRangeHeader verifies S3 data fetch requests use bounded range headers (bytes=start-end).
+// Uses small config values so calculated end byte (startByte + maxBytesPerPage + 2*maxRowSize - 1)
+// is less than file size.
+func TestDataFetchRangeHeader(t *testing.T) {
+	mockConfig, tracker := newRangeTrackingConfig(http.StatusOK, http.StatusOK)
+
+	// Use config values so end byte is calculated by formula, not clamped to file size
+	// validCSVData is ~1095 bytes, header is 121 bytes
+	maxRowSize := int64(300)      // Enough for CSV rows
+	maxBytesPerPage := int64(200) // Small so calculated end < file size
+	datasource, _ := s3_adapter.NewClient(http.DefaultClient, mockConfig, maxRowSize, maxBytesPerPage)
+
+	startByte := int64(200)
+	// Expected: startByte + maxBytesPerPage + 2*maxRowSize - 1 = 200 + 200 + 600 - 1 = 999
+	expectedEndByte := startByte + maxBytesPerPage + (2 * maxRowSize) - 1
+	expectedRange := "bytes=200-" + strconv.FormatInt(expectedEndByte, 10)
+
+	request := &s3_adapter.Request{
+		Auth:                  s3_adapter.Auth{AccessKey: "key", SecretKey: "secret", Region: "us-west-1"},
+		Bucket:                "test-bucket",
+		PathPrefix:            "data",
+		FileType:              "csv",
+		EntityExternalID:      "customers",
+		PageSize:              2,
+		RequestTimeoutSeconds: 30,
+		Cursor:                &pagination.CompositeCursor[int64]{Cursor: &startByte},
+		AttributeConfig: []*framework.AttributeConfig{
+			{
+				ExternalId: "Email",
+				Type:       framework.AttributeTypeString,
+				UniqueId:   true,
+			},
+		},
+	}
+
+	ctxWithLogger, _ := testutil.NewContextWithObservableLogger(context.Background())
+	datasource.GetPage(ctxWithLogger, request)
+
+	if len(tracker.CapturedRanges) < 2 {
+		t.Fatalf("Expected at least 2 GetObject calls, got %d", len(tracker.CapturedRanges))
+	}
+
+	if tracker.CapturedRanges[1] != expectedRange {
+		t.Errorf("Expected range %q, got %q", expectedRange, tracker.CapturedRanges[1])
 	}
 }

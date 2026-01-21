@@ -1,4 +1,4 @@
-// Copyright 2025 SGNL.ai, Inc.
+// Copyright 2026 SGNL.ai, Inc.
 
 package awss3
 
@@ -174,7 +174,15 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		return &Response{StatusCode: 200, Objects: []map[string]any{}}, nil
 	}
 
-	rangeHeaderForData := fmt.Sprintf("bytes=%d-", startBytePos)
+	// Calculate end byte position to avoid fetching the entire remainder of the file.
+	// Add 2x MaxCSVRowSizeBytes as buffer to ensure we don't cut off in the middle of a row,
+	// accounting for CSV parsing which may peek ahead at row boundaries.
+	endBytePos := startBytePos + d.MaxBytesToProcessPerPage + (2 * d.MaxCSVRowSizeBytes) - 1
+	if endBytePos >= fileSize {
+		endBytePos = fileSize - 1
+	}
+
+	rangeHeaderForData := fmt.Sprintf("bytes=%d-%d", startBytePos, endBytePos)
 
 	s3DataStreamOutput, err := handler.GetObjectStream(ctx, request.Bucket, objectKey, &rangeHeaderForData)
 	if err != nil {
