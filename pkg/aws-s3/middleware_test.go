@@ -224,3 +224,51 @@ func mockS3Config(headStatusCode, getStatusCode int) *aws.Config {
 		},
 	}
 }
+
+// rangeTrackingMiddleware wraps mockS3Middleware and captures range headers for testing.
+type rangeTrackingMiddleware struct {
+	mockS3Middleware
+	CapturedRanges []string
+}
+
+func (m *rangeTrackingMiddleware) HandleSerialize(
+	ctx context.Context,
+	in middleware.SerializeInput,
+	next middleware.SerializeHandler,
+) (
+	out middleware.SerializeOutput,
+	metadata middleware.Metadata,
+	err error,
+) {
+	if getObjectInput, ok := in.Parameters.(*s3.GetObjectInput); ok {
+		rangeHeader := ""
+		if getObjectInput.Range != nil {
+			rangeHeader = *getObjectInput.Range
+		}
+
+		m.CapturedRanges = append(m.CapturedRanges, rangeHeader)
+	}
+
+	return m.mockS3Middleware.HandleSerialize(ctx, in, next)
+}
+
+func newRangeTrackingConfig(headStatusCode, getStatusCode int) (*aws.Config, *rangeTrackingMiddleware) {
+	trackingMiddleware := &rangeTrackingMiddleware{
+		mockS3Middleware: mockS3Middleware{
+			headStatusCode: headStatusCode,
+			getStatusCode:  getStatusCode,
+		},
+		CapturedRanges: []string{},
+	}
+
+	config := &aws.Config{
+		Region: "us-west-2",
+		APIOptions: []func(*middleware.Stack) error{
+			func(s *middleware.Stack) error {
+				return s.Serialize.Add(trackingMiddleware, middleware.After)
+			},
+		},
+	}
+
+	return config, trackingMiddleware
+}

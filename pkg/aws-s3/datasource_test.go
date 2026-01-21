@@ -421,3 +421,57 @@ func validateFirstObjectOfLargeFile(t *testing.T, firstObj map[string]any) {
 		t.Errorf("Customer Id field should be string, got %T", firstObj["Customer Id"])
 	}
 }
+
+// TestDataFetchRangeHeaderIncludesEndByte verifies that S3 data fetch requests
+// use bounded range headers (bytes=start-end) to prevent excessive data transfer.
+func TestDataFetchRangeHeaderIncludesEndByte(t *testing.T) {
+	mockConfig, tracker := newRangeTrackingConfig(http.StatusOK, http.StatusOK)
+
+	datasource, err := s3_adapter.NewClient(
+		http.DefaultClient,
+		mockConfig,
+		MaxCSVRowSizeBytes,
+		MaxBytesToProcessPerPage,
+	)
+	if err != nil {
+		t.Fatalf("Failed to create datasource: %v", err)
+	}
+
+	request := &s3_adapter.Request{
+		Auth:                  s3_adapter.Auth{AccessKey: "key", SecretKey: "secret", Region: "us-west-1"},
+		Bucket:                "test-bucket",
+		PathPrefix:            "data",
+		FileType:              "csv",
+		EntityExternalID:      "customers",
+		PageSize:              2,
+		RequestTimeoutSeconds: 30,
+		AttributeConfig:       []*framework.AttributeConfig{{ExternalId: "Email", Type: framework.AttributeTypeString, UniqueId: true}},
+	}
+
+	ctx := context.Background()
+	ctxWithLogger, _ := testutil.NewContextWithObservableLogger(ctx)
+
+	_, frameworkErr := datasource.GetPage(ctxWithLogger, request)
+	if frameworkErr != nil {
+		t.Fatalf("GetPage failed: %v", frameworkErr)
+	}
+
+	// Expect 2 GetObject calls: one for headers, one for data
+	if len(tracker.CapturedRanges) < 2 {
+		t.Fatalf("Expected at least 2 GetObject calls, got %d", len(tracker.CapturedRanges))
+	}
+
+	// Verify data fetch (second call) uses bounded range format: bytes=start-end
+	dataRange := tracker.CapturedRanges[1]
+	if !strings.HasPrefix(dataRange, "bytes=") {
+		t.Errorf("Data range should start with 'bytes=', got: %s", dataRange)
+	}
+
+	// Check format is "bytes=X-Y" not "bytes=X-" (must have end byte)
+	rangeValue := strings.TrimPrefix(dataRange, "bytes=")
+	parts := strings.Split(rangeValue, "-")
+
+	if len(parts) != 2 || parts[1] == "" {
+		t.Errorf("Data range should have format 'bytes=start-end', got: %s", dataRange)
+	}
+}
