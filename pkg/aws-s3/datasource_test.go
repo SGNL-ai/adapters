@@ -7,6 +7,7 @@ package awss3_test
 import (
 	"context"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -422,20 +423,21 @@ func validateFirstObjectOfLargeFile(t *testing.T, firstObj map[string]any) {
 	}
 }
 
-// TestDataFetchRangeHeaderIncludesEndByte verifies that S3 data fetch requests
-// use bounded range headers (bytes=start-end) to prevent excessive data transfer.
-func TestDataFetchRangeHeaderIncludesEndByte(t *testing.T) {
+// TestDataFetchRangeHeader verifies S3 data fetch requests use bounded range headers (bytes=start-end).
+// Uses small config values so calculated end byte (startByte + maxBytesPerPage + 2*maxRowSize - 1) is less than file size.
+func TestDataFetchRangeHeader(t *testing.T) {
 	mockConfig, tracker := newRangeTrackingConfig(http.StatusOK, http.StatusOK)
 
-	datasource, err := s3_adapter.NewClient(
-		http.DefaultClient,
-		mockConfig,
-		MaxCSVRowSizeBytes,
-		MaxBytesToProcessPerPage,
-	)
-	if err != nil {
-		t.Fatalf("Failed to create datasource: %v", err)
-	}
+	// Use config values so end byte is calculated by formula, not clamped to file size
+	// validCSVData is ~1095 bytes, header is 121 bytes
+	maxRowSize := int64(300)       // Enough for CSV rows
+	maxBytesPerPage := int64(200)  // Small so calculated end < file size
+	datasource, _ := s3_adapter.NewClient(http.DefaultClient, mockConfig, maxRowSize, maxBytesPerPage)
+
+	startByte := int64(200)
+	// Expected: startByte + maxBytesPerPage + 2*maxRowSize - 1 = 200 + 200 + 600 - 1 = 999
+	expectedEndByte := startByte + maxBytesPerPage + (2 * maxRowSize) - 1
+	expectedRange := "bytes=200-" + strconv.FormatInt(expectedEndByte, 10)
 
 	request := &s3_adapter.Request{
 		Auth:                  s3_adapter.Auth{AccessKey: "key", SecretKey: "secret", Region: "us-west-1"},
@@ -445,39 +447,18 @@ func TestDataFetchRangeHeaderIncludesEndByte(t *testing.T) {
 		EntityExternalID:      "customers",
 		PageSize:              2,
 		RequestTimeoutSeconds: 30,
-		AttributeConfig: []*framework.AttributeConfig{
-			{
-				ExternalId: "Email",
-				Type:       framework.AttributeTypeString,
-				UniqueId:   true,
-			},
-		},
+		Cursor:                &pagination.CompositeCursor[int64]{Cursor: &startByte},
+		AttributeConfig:       []*framework.AttributeConfig{{ExternalId: "Email", Type: framework.AttributeTypeString, UniqueId: true}},
 	}
 
-	ctx := context.Background()
-	ctxWithLogger, _ := testutil.NewContextWithObservableLogger(ctx)
+	ctxWithLogger, _ := testutil.NewContextWithObservableLogger(context.Background())
+	datasource.GetPage(ctxWithLogger, request)
 
-	_, frameworkErr := datasource.GetPage(ctxWithLogger, request)
-	if frameworkErr != nil {
-		t.Fatalf("GetPage failed: %v", frameworkErr)
-	}
-
-	// Expect 2 GetObject calls: one for headers, one for data
 	if len(tracker.CapturedRanges) < 2 {
 		t.Fatalf("Expected at least 2 GetObject calls, got %d", len(tracker.CapturedRanges))
 	}
 
-	// Verify data fetch (second call) uses bounded range format: bytes=start-end
-	dataRange := tracker.CapturedRanges[1]
-	if !strings.HasPrefix(dataRange, "bytes=") {
-		t.Errorf("Data range should start with 'bytes=', got: %s", dataRange)
-	}
-
-	// Check format is "bytes=X-Y" not "bytes=X-" (must have end byte)
-	rangeValue := strings.TrimPrefix(dataRange, "bytes=")
-	parts := strings.Split(rangeValue, "-")
-
-	if len(parts) != 2 || parts[1] == "" {
-		t.Errorf("Data range should have format 'bytes=start-end', got: %s", dataRange)
+	if tracker.CapturedRanges[1] != expectedRange {
+		t.Errorf("Expected range %q, got %q", expectedRange, tracker.CapturedRanges[1])
 	}
 }
