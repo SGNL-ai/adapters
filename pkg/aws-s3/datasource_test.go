@@ -424,14 +424,15 @@ func validateFirstObjectOfLargeFile(t *testing.T, firstObj map[string]any) {
 }
 
 // TestDataFetchRangeHeader verifies S3 data fetch requests use bounded range headers (bytes=start-end).
-// Uses small config values so calculated end byte (startByte + maxBytesPerPage + 2*maxRowSize - 1) is less than file size.
+// Uses small config values so calculated end byte (startByte + maxBytesPerPage + 2*maxRowSize - 1)
+// is less than file size.
 func TestDataFetchRangeHeader(t *testing.T) {
 	mockConfig, tracker := newRangeTrackingConfig(http.StatusOK, http.StatusOK)
 
 	// Use config values so end byte is calculated by formula, not clamped to file size
 	// validCSVData is ~1095 bytes, header is 121 bytes
-	maxRowSize := int64(300)       // Enough for CSV rows
-	maxBytesPerPage := int64(200)  // Small so calculated end < file size
+	maxRowSize := int64(300)      // Enough for CSV rows
+	maxBytesPerPage := int64(200) // Small so calculated end < file size
 	datasource, _ := s3_adapter.NewClient(http.DefaultClient, mockConfig, maxRowSize, maxBytesPerPage)
 
 	startByte := int64(200)
@@ -448,7 +449,13 @@ func TestDataFetchRangeHeader(t *testing.T) {
 		PageSize:              2,
 		RequestTimeoutSeconds: 30,
 		Cursor:                &pagination.CompositeCursor[int64]{Cursor: &startByte},
-		AttributeConfig:       []*framework.AttributeConfig{{ExternalId: "Email", Type: framework.AttributeTypeString, UniqueId: true}},
+		AttributeConfig: []*framework.AttributeConfig{
+			{
+				ExternalId: "Email",
+				Type:       framework.AttributeTypeString,
+				UniqueId:   true,
+			},
+		},
 	}
 
 	ctxWithLogger, _ := testutil.NewContextWithObservableLogger(context.Background())
