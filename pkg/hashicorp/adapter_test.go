@@ -553,7 +553,11 @@ func TestAdapterGetPageWithPagination(t *testing.T) {
 			"created_time": time.Date(2023, 9, 29, 0, 0, i, 0, time.UTC).Format(time.RFC3339),
 		}
 		handler.users = append(handler.users, user)
-		allUsers[user["id"].(string)] = struct{}{}
+		id, ok := user["id"].(string)
+		if !ok {
+			t.Fatal("user id is not a string")
+		}
+		allUsers[id] = struct{}{}
 	}
 
 	server := httptest.NewTLSServer(handler)
@@ -615,7 +619,10 @@ func TestAdapterGetPageWithPagination(t *testing.T) {
 
 		// Add retrieved users to our map
 		for _, obj := range response.Success.Objects {
-			id := obj["id"].(string)
+			id, ok := obj["id"].(string)
+			if !ok {
+				t.Fatal("object id is not a string")
+			}
 			retrievedUsers[id] = struct{}{}
 		}
 
