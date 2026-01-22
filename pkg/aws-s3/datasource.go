@@ -132,7 +132,14 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		}
 	}
 
-	s3HeaderStreamOutput, err := handler.GetObjectStream(ctx, request.Bucket, objectKey, nil)
+	// Use a bounded range for the header fetch to avoid S3 streaming the entire file.
+	// Without a Range header, S3 starts streaming the full file, and even though we only
+	// read the header line before closing, TCP buffering causes significant data transfer.
+	// We need enough bytes to read the BOM (up to 4 bytes) and the header row, so we use
+	// 2x MaxCSVRowSizeBytes as a safe buffer that's consistent with the data fetch approach.
+	headerRangeHeader := fmt.Sprintf("bytes=0-%d", (2*d.MaxCSVRowSizeBytes)-1)
+
+	s3HeaderStreamOutput, err := handler.GetObjectStream(ctx, request.Bucket, objectKey, &headerRangeHeader)
 	if err != nil {
 		return nil, customerror.UpdateError(&framework.Error{
 			Message: fmt.Sprintf("Failed to fetch entity from AWS S3: %s, error: %v.", entityName, err),

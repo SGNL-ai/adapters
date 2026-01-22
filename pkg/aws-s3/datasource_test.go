@@ -423,10 +423,10 @@ func validateFirstObjectOfLargeFile(t *testing.T, firstObj map[string]any) {
 	}
 }
 
-// TestDataFetchRangeHeader verifies S3 data fetch requests use bounded range headers (bytes=start-end).
-// Uses small config values so calculated end byte (startByte + maxBytesPerPage + 2*maxRowSize - 1)
-// is less than file size.
-func TestDataFetchRangeHeader(t *testing.T) {
+// TestS3RangeHeaders verifies S3 requests use bounded range headers for both header and data fetches.
+// This prevents excessive data transfer by ensuring we never fetch the entire file when only
+// portions are needed. Uses small config values so calculated end bytes are less than file size.
+func TestS3RangeHeaders(t *testing.T) {
 	mockConfig, tracker := newRangeTrackingConfig(http.StatusOK, http.StatusOK)
 
 	// Use config values so end byte is calculated by formula, not clamped to file size
@@ -436,9 +436,13 @@ func TestDataFetchRangeHeader(t *testing.T) {
 	datasource, _ := s3_adapter.NewClient(http.DefaultClient, mockConfig, maxRowSize, maxBytesPerPage)
 
 	startByte := int64(200)
-	// Expected: startByte + maxBytesPerPage + 2*maxRowSize - 1 = 200 + 200 + 600 - 1 = 999
-	expectedEndByte := startByte + maxBytesPerPage + (2 * maxRowSize) - 1
-	expectedRange := "bytes=200-" + strconv.FormatInt(expectedEndByte, 10)
+
+	// Expected header fetch range: bytes=0-{(2*maxRowSize)-1} = bytes=0-599
+	expectedHeaderRange := "bytes=0-" + strconv.FormatInt((2*maxRowSize)-1, 10)
+
+	// Expected data fetch range: startByte + maxBytesPerPage + 2*maxRowSize - 1 = 200 + 200 + 600 - 1 = 999
+	expectedDataEndByte := startByte + maxBytesPerPage + (2 * maxRowSize) - 1
+	expectedDataRange := "bytes=200-" + strconv.FormatInt(expectedDataEndByte, 10)
 
 	request := &s3_adapter.Request{
 		Auth:                  s3_adapter.Auth{AccessKey: "key", SecretKey: "secret", Region: "us-west-1"},
@@ -465,7 +469,13 @@ func TestDataFetchRangeHeader(t *testing.T) {
 		t.Fatalf("Expected at least 2 GetObject calls, got %d", len(tracker.CapturedRanges))
 	}
 
-	if tracker.CapturedRanges[1] != expectedRange {
-		t.Errorf("Expected range %q, got %q", expectedRange, tracker.CapturedRanges[1])
+	// First GetObject call is for fetching headers (should use bounded range, not fetch entire file)
+	if tracker.CapturedRanges[0] != expectedHeaderRange {
+		t.Errorf("Header fetch: expected range %q, got %q", expectedHeaderRange, tracker.CapturedRanges[0])
+	}
+
+	// Second GetObject call is for fetching data
+	if tracker.CapturedRanges[1] != expectedDataRange {
+		t.Errorf("Data fetch: expected range %q, got %q", expectedDataRange, tracker.CapturedRanges[1])
 	}
 }
