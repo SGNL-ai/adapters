@@ -17,8 +17,22 @@ import (
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	s3_adapter "github.com/sgnl-ai/adapters/pkg/aws-s3"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
+)
 
-	"github.com/sgnl-ai/adapters/pkg/pagination"
+// expectedCSVHeaders are the headers from validCSVData in common_test.go.
+var adapterTestExpectedCSVHeaders = []string{
+	"Score", "Customer Id", "First Name", "Last Name", "Company", "City",
+	"Country", "Phone 1", "Phone 2", "Email", "Subscription Date", "Website",
+	"KnownAliases",
+}
+
+// Base64 encoded cursor strings with headers for test assertions.
+// These are the JSON cursors {"cursor":N,"headers":[...]} encoded in base64.
+var (
+	// nolint: lll
+	cursorWithHeaders655 = "eyJjdXJzb3IiOjY1NSwiaGVhZGVycyI6WyJTY29yZSIsIkN1c3RvbWVyIElkIiwiRmlyc3QgTmFtZSIsIkxhc3QgTmFtZSIsIkNvbXBhbnkiLCJDaXR5IiwiQ291bnRyeSIsIlBob25lIDEiLCJQaG9uZSAyIiwiRW1haWwiLCJTdWJzY3JpcHRpb24gRGF0ZSIsIldlYnNpdGUiLCJLbm93bkFsaWFzZXMiXX0="
+	// nolint: lll
+	cursorWithHeaders1095 = "eyJjdXJzb3IiOjEwOTUsImhlYWRlcnMiOlsiU2NvcmUiLCJDdXN0b21lciBJZCIsIkZpcnN0IE5hbWUiLCJMYXN0IE5hbWUiLCJDb21wYW55IiwiQ2l0eSIsIkNvdW50cnkiLCJQaG9uZSAxIiwiUGhvbmUgMiIsIkVtYWlsIiwiU3Vic2NyaXB0aW9uIERhdGUiLCJXZWJzaXRlIiwiS25vd25BbGlhc2VzIl19"
 )
 
 func TestAdapterGetPage(t *testing.T) {
@@ -26,7 +40,7 @@ func TestAdapterGetPage(t *testing.T) {
 		ctx                  context.Context
 		request              *framework.Request[s3_adapter.Config]
 		wantResponse         framework.Response
-		wantCursor           *pagination.CompositeCursor[int64]
+		wantCursor           *s3_adapter.S3Cursor
 		headObjectStatusCode int
 		getObjectStatusCode  int
 	}{
@@ -71,11 +85,12 @@ func TestAdapterGetPage(t *testing.T) {
 							"Subscription Date": time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 						},
 					},
-					NextCursor: "eyJjdXJzb3IiOjY1NX0=",
+					NextCursor: cursorWithHeaders655,
 				},
 			},
-			wantCursor: &pagination.CompositeCursor[int64]{
-				Cursor: testutil.GenPtr(int64(655)),
+			wantCursor: &s3_adapter.S3Cursor{
+				Cursor:  testutil.GenPtr(int64(655)),
+				Headers: adapterTestExpectedCSVHeaders,
 			},
 		},
 		"success_HeadObject_200_GetObject_200_middle_page": {
@@ -120,7 +135,7 @@ func TestAdapterGetPage(t *testing.T) {
 							"Subscription Date": time.Date(2022, 1, 18, 0, 0, 0, 0, time.UTC),
 						},
 					},
-					NextCursor: "eyJjdXJzb3IiOjEwOTV9",
+					NextCursor: cursorWithHeaders1095,
 				},
 			},
 		},
@@ -233,11 +248,12 @@ func TestAdapterGetPage(t *testing.T) {
 							"Score": "2.2",
 						},
 					},
-					NextCursor: "eyJjdXJzb3IiOjY1NX0=",
+					NextCursor: cursorWithHeaders655,
 				},
 			},
-			wantCursor: &pagination.CompositeCursor[int64]{
-				Cursor: testutil.GenPtr(int64(655)),
+			wantCursor: &s3_adapter.S3Cursor{
+				Cursor:  testutil.GenPtr(int64(655)),
+				Headers: adapterTestExpectedCSVHeaders,
 			},
 		},
 		"success_read_child_objects_HeadObject_200_GetObject_200": {
@@ -304,11 +320,12 @@ func TestAdapterGetPage(t *testing.T) {
 							},
 						},
 					},
-					NextCursor: "eyJjdXJzb3IiOjY1NX0=",
+					NextCursor: cursorWithHeaders655,
 				},
 			},
-			wantCursor: &pagination.CompositeCursor[int64]{
-				Cursor: testutil.GenPtr(int64(655)),
+			wantCursor: &s3_adapter.S3Cursor{
+				Cursor:  testutil.GenPtr(int64(655)),
+				Headers: adapterTestExpectedCSVHeaders,
 			},
 		},
 		// Check if a number in the CSV can be ingested as a double type based on entity configuration
@@ -347,11 +364,12 @@ func TestAdapterGetPage(t *testing.T) {
 							"Score": float64(2.2),
 						},
 					},
-					NextCursor: "eyJjdXJzb3IiOjY1NX0=",
+					NextCursor: cursorWithHeaders655,
 				},
 			},
-			wantCursor: &pagination.CompositeCursor[int64]{
-				Cursor: testutil.GenPtr(int64(655)),
+			wantCursor: &s3_adapter.S3Cursor{
+				Cursor:  testutil.GenPtr(int64(655)),
+				Headers: adapterTestExpectedCSVHeaders,
 			},
 		},
 		"error_empty_csv_file_HeadObject_200_GetObject_800": {
@@ -665,7 +683,7 @@ func TestAdapterGetPage(t *testing.T) {
 			// decipher the cursor just by reading the test case.
 			// So in addition, decode the b64 cursor and compare structs.
 			if gotResponse.Success != nil && tt.wantCursor != nil {
-				var gotCursor pagination.CompositeCursor[int64]
+				var gotCursor s3_adapter.S3Cursor
 
 				decodedCursor, err := base64.StdEncoding.DecodeString(gotResponse.Success.NextCursor)
 				if err != nil {
@@ -679,6 +697,92 @@ func TestAdapterGetPage(t *testing.T) {
 				if !reflect.DeepEqual(&gotCursor, tt.wantCursor) {
 					t.Errorf("gotCursor: %v, wantCursor: %v", gotCursor, tt.wantCursor)
 				}
+			}
+		})
+	}
+}
+
+// TestUnmarshalS3CursorBackwardCompatibility verifies that UnmarshalS3Cursor
+// can handle both old cursor format (without headers) and new cursor format (with headers).
+func TestUnmarshalS3CursorBackwardCompatibility(t *testing.T) {
+	tests := map[string]struct {
+		cursorString   string
+		wantCursor     *s3_adapter.S3Cursor
+		wantErr        bool
+		wantErrMessage string
+	}{
+		"empty_cursor": {
+			cursorString: "",
+			wantCursor:   nil,
+			wantErr:      false,
+		},
+		"old_format_cursor_only": {
+			// {"cursor":655} - old format without headers
+			cursorString: "eyJjdXJzb3IiOjY1NX0=",
+			wantCursor: &s3_adapter.S3Cursor{
+				Cursor:  testutil.GenPtr(int64(655)),
+				Headers: nil,
+			},
+			wantErr: false,
+		},
+		"old_format_with_collection_fields": {
+			// {"cursor":655,"collectionId":null,"collectionCursor":null} - old format with collection fields
+			cursorString: "eyJjdXJzb3IiOjY1NSwiY29sbGVjdGlvbklkIjpudWxsLCJjb2xsZWN0aW9uQ3Vyc29yIjpudWxsfQ==",
+			wantCursor: &s3_adapter.S3Cursor{
+				Cursor:  testutil.GenPtr(int64(655)),
+				Headers: nil,
+			},
+			wantErr: false,
+		},
+		"new_format_with_headers": {
+			// {"cursor":655,"headers":["Email","Score"]} - new format with headers
+			cursorString: "eyJjdXJzb3IiOjY1NSwiaGVhZGVycyI6WyJFbWFpbCIsIlNjb3JlIl19",
+			wantCursor: &s3_adapter.S3Cursor{
+				Cursor:  testutil.GenPtr(int64(655)),
+				Headers: []string{"Email", "Score"},
+			},
+			wantErr: false,
+		},
+		"invalid_base64": {
+			cursorString:   "not-valid-base64!!!",
+			wantCursor:     nil,
+			wantErr:        true,
+			wantErrMessage: "Failed to decode base64 cursor",
+		},
+		"invalid_json": {
+			// base64 of "not json"
+			cursorString:   "bm90IGpzb24=",
+			wantCursor:     nil,
+			wantErr:        true,
+			wantErrMessage: "Failed to unmarshal JSON cursor",
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			gotCursor, err := s3_adapter.UnmarshalS3Cursor(tt.cursorString)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Errorf("Expected error but got none")
+
+					return
+				}
+				if tt.wantErrMessage != "" && !reflect.DeepEqual(err.Message[:len(tt.wantErrMessage)], tt.wantErrMessage) {
+					t.Errorf("Expected error message to start with %q, got %q", tt.wantErrMessage, err.Message)
+				}
+
+				return
+			}
+
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+
+				return
+			}
+
+			if !reflect.DeepEqual(gotCursor, tt.wantCursor) {
+				t.Errorf("gotCursor: %+v, wantCursor: %+v", gotCursor, tt.wantCursor)
 			}
 		})
 	}
