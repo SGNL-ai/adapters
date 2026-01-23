@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -768,7 +769,7 @@ func TestUnmarshalS3CursorBackwardCompatibility(t *testing.T) {
 
 					return
 				}
-				if tt.wantErrMessage != "" && !reflect.DeepEqual(err.Message[:len(tt.wantErrMessage)], tt.wantErrMessage) {
+				if tt.wantErrMessage != "" && !strings.HasPrefix(err.Message, tt.wantErrMessage) {
 					t.Errorf("Expected error message to start with %q, got %q", tt.wantErrMessage, err.Message)
 				}
 
