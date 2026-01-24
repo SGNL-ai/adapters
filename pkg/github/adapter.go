@@ -59,6 +59,19 @@ func (a *Adapter) RequestPageFromDatasource(
 		return framework.NewGetPageResponseError(err)
 	}
 
+	// Get entity-specific filter and ordering from config
+	var filter, orderBy *string
+	if request.Config.Filters != nil {
+		if filterValue, exists := request.Config.Filters[request.Entity.ExternalId]; exists && filterValue != "" {
+			filter = &filterValue
+		}
+	}
+	if request.Config.OrderBy != nil {
+		if orderByValue, exists := request.Config.OrderBy[request.Entity.ExternalId]; exists && orderByValue != "" {
+			orderBy = &orderByValue
+		}
+	}
+
 	githubReq := &Request{
 		BaseURL:               request.Address,
 		Token:                 request.Auth.HTTPAuthorization,
@@ -71,6 +84,8 @@ func (a *Adapter) RequestPageFromDatasource(
 		PageSize:              request.PageSize,
 		Organizations:         request.Config.Organizations,
 		RequestTimeoutSeconds: *commonConfig.RequestTimeoutSeconds,
+		Filter:                filter,
+		OrderBy:               orderBy,
 	}
 
 	resp, err := a.GithubClient.GetPage(ctx, githubReq)
