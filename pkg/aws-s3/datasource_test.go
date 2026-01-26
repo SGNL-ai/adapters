@@ -27,8 +27,8 @@ const (
 	validCSVDataRow3Length   = 232
 	validCSVDataRow4Length   = 208
 	validCSVDataRow5Length   = 246
-	MaxCSVRowSizeBytes       = 1 * 1024 * 1024  // 1MiB
-	MaxBytesToProcessPerPage = 10 * 1024 * 1024 // 10MiB
+	MaxCSVRowSizeBytes       = 1 * 1024 * 1024 // 1MiB
+	MaxBytesToProcessPerPage = 1 * 1024 * 1024 // 1MiB
 )
 
 // validCSVDataTotalLength is the total size of validCSVData.
