@@ -48,9 +48,22 @@ func (a *Adapter) RequestPageFromDatasource(
 	commonConfig = config.SetMissingCommonConfigDefaults(commonConfig)
 
 	// Unmarshal the current cursor.
-	cursor, err := pagination.UnmarshalCursor[int64](request.Cursor)
+	cursor, err := UnmarshalS3Cursor(request.Cursor)
 	if err != nil {
-		return framework.NewGetPageResponseError(err)
+		// Fallback: try to unmarshal using the old pagination.CompositeCursor format.
+		// This handles cursors created before headers were cached in the cursor.
+		legacyCursor, legacyErr := pagination.UnmarshalCursor[int64](request.Cursor)
+		if legacyErr != nil || legacyCursor == nil {
+			// Both formats failed, return the original error.
+			return framework.NewGetPageResponseError(err)
+		}
+
+		// Successfully parsed old format - convert to S3Cursor with nil headers.
+		// The datasource will fetch headers from S3 when headers are nil.
+		cursor = &S3Cursor{
+			Cursor:  legacyCursor.Cursor,
+			Headers: nil,
+		}
 	}
 
 	if request.Config.FileType == nil {
@@ -99,7 +112,7 @@ func (a *Adapter) RequestPageFromDatasource(
 	}
 
 	// Marshal the next cursor.
-	nextCursor, err := pagination.MarshalCursor(resp.NextCursor)
+	nextCursor, err := MarshalS3Cursor(resp.NextCursor)
 	if err != nil {
 		return framework.NewGetPageResponseError(err)
 	}
