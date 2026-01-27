@@ -136,8 +136,13 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		startBytePos  int64
 	)
 
-	// Step 1: Get headers - either from cursor cache or fetch from S3.
+	// For the first page or old cursor format without headers, two S3 requests are made:
+	// 1. Fetch the headers (the first line of the file) to determine the CSV column names.
+	// 2. Fetch the actual data starting from the byte position after the headers.
+	// For subsequent pages, only one S3 request is made to fetch the data starting from
+	// the byte position indicated by the cursor.
 
+	// Step 1: Get headers - either from cursor cache or fetch from S3.
 	if request.Cursor != nil && len(request.Cursor.Headers) > 0 {
 		// Use cached headers from cursor - skip S3 header fetch.
 		parsedHeaders = request.Cursor.Headers
