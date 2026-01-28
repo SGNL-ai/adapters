@@ -26,9 +26,14 @@ const (
 	validCSVDataRow2Length   = 260
 	validCSVDataRow3Length   = 232
 	validCSVDataRow4Length   = 208
-	MaxCSVRowSizeBytes       = 1 * 1024 * 1024  // 1MiB
-	MaxBytesToProcessPerPage = 10 * 1024 * 1024 // 10MiB
+	validCSVDataRow5Length   = 246
+	MaxCSVRowSizeBytes       = 1 * 1024 * 1024 // 1MiB
+	MaxBytesToProcessPerPage = 1 * 1024 * 1024 // 1MiB
 )
+
+// validCSVDataTotalLength is the total size of validCSVData.
+var validCSVDataTotalLength = int64(validCSVDataHeaderLength + validCSVDataRow1Length +
+	validCSVDataRow2Length + validCSVDataRow3Length + validCSVDataRow4Length + validCSVDataRow5Length)
 
 // expectedCSVHeaders are the headers from validCSVData in common_test.go.
 var expectedCSVHeaders = []string{
@@ -101,10 +106,18 @@ func TestGetObjectKeyFromRequest(t *testing.T) {
 }
 
 func TestDatasource_GetPage(t *testing.T) {
-	cursorPage1Next := int64(validCSVDataHeaderLength + validCSVDataRow1Length + validCSVDataRow2Length)
-	cursorPage2Start := cursorPage1Next
-	cursorPage2Next := cursorPage2Start + validCSVDataRow3Length + validCSVDataRow4Length
-	cursorPage3Start := cursorPage2Next
+	// With remainder-based approach, cursor points to next S3 fetch position (end of file for small files).
+	cursorAfterFirstFetch := validCSVDataTotalLength // All data fetched on first request
+	cursorPage2Start := int64(validCSVDataHeaderLength + validCSVDataRow1Length + validCSVDataRow2Length)
+	cursorPage3Start := int64(validCSVDataHeaderLength + validCSVDataRow1Length + validCSVDataRow2Length +
+		validCSVDataRow3Length + validCSVDataRow4Length)
+
+	// Actual remainder bytes for each page.
+	remainderPage1Start := validCSVDataHeaderLength + validCSVDataRow1Length + validCSVDataRow2Length
+	remainderPage2Start := validCSVDataHeaderLength + validCSVDataRow1Length + validCSVDataRow2Length +
+		validCSVDataRow3Length + validCSVDataRow4Length
+	remainderPage1 := []byte(validCSVData[remainderPage1Start:]) // Rows 3-5
+	remainderPage2 := []byte(validCSVData[remainderPage2Start:]) // Row 5 only
 
 	tests := map[string]struct {
 		request              *s3_adapter.Request
@@ -140,7 +153,11 @@ func TestDatasource_GetPage(t *testing.T) {
 						"Phone 1": "9610730173", "Phone 2": "531-482-3000x7085", "Score": 2.2,
 						"Subscription Date": "2021-01-01", "Website": "https://www.paul.org/"},
 				},
-				NextCursor: &s3_adapter.S3Cursor{Cursor: testutil.GenPtr(cursorPage1Next), Headers: expectedCSVHeaders},
+				NextCursor: &s3_adapter.S3Cursor{
+					Cursor:    testutil.GenPtr(cursorAfterFirstFetch),
+					Headers:   expectedCSVHeaders,
+					Remainder: remainderPage1,
+				},
 			},
 			expectedLogs: []map[string]any{
 				{
@@ -156,9 +173,10 @@ func TestDatasource_GetPage(t *testing.T) {
 					fields.FieldRequestPageSize:         int64(2),
 					fields.FieldResponseStatusCode:      int64(200),
 					fields.FieldResponseObjectCount:     int64(2),
-					fields.FieldResponseNextCursor: &s3_adapter.S3Cursor{
-						Cursor:  testutil.GenPtr(int64(validCSVDataHeaderLength + validCSVDataRow1Length + validCSVDataRow2Length)),
-						Headers: expectedCSVHeaders,
+					fields.FieldResponseNextCursor: map[string]any{
+						"cursor":          validCSVDataTotalLength,
+						"headersCount":    len(expectedCSVHeaders),
+						"remainderLength": len(remainderPage1),
 					},
 				},
 			},
@@ -188,7 +206,11 @@ func TestDatasource_GetPage(t *testing.T) {
 						"Phone 1": "+1-985-596-1072x3040", "Phone 2": "(528)734-8924x054", "Score": 4.4,
 						"Subscription Date": "2022-01-18", "Website": "https://brennan.com/"},
 				},
-				NextCursor: &s3_adapter.S3Cursor{Cursor: testutil.GenPtr(cursorPage2Next), Headers: expectedCSVHeaders},
+				NextCursor: &s3_adapter.S3Cursor{
+					Cursor:    testutil.GenPtr(cursorAfterFirstFetch),
+					Headers:   expectedCSVHeaders,
+					Remainder: remainderPage2,
+				},
 			},
 		},
 		"success_last_page_no_cursor": {
@@ -447,8 +469,9 @@ func TestS3RangeHeaders(t *testing.T) {
 	// Expected header fetch range: bytes=0-{(2*maxRowSize)-1} = bytes=0-599
 	expectedHeaderRange := "bytes=0-" + strconv.FormatInt((2*maxRowSize)-1, 10)
 
-	// Expected data fetch range: startByte + maxBytesPerPage + 2*maxRowSize - 1 = 200 + 200 + 600 - 1 = 999
-	expectedDataEndByte := startByte + maxBytesPerPage + (2 * maxRowSize) - 1
+	// With remainder-based approach, fetchSize = maxBytesPerPage - len(remainder)
+	// For cursor without remainder: fetchSize = 200, endByte = 200 + 200 - 1 = 399
+	expectedDataEndByte := startByte + maxBytesPerPage - 1
 	expectedDataRange := "bytes=200-" + strconv.FormatInt(expectedDataEndByte, 10)
 
 	request := &s3_adapter.Request{

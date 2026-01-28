@@ -55,8 +55,11 @@ func main() {
 	viper.SetDefault("MAX_CONCURRENCY", 20)
 	// ADAPTER_MAX_S3_CSV_ROW_SIZE_BYTES: The maximum size of a CSV row in bytes (default: 1MiB)
 	viper.SetDefault("MAX_S3_CSV_ROW_SIZE_BYTES", 1*MiB)
-	// ADAPTER_MAX_S3_BYTES_TO_PROCESS_PER_PAGE: The maximum number of bytes to process per page (default: 10MiB)
-	viper.SetDefault("MAX_S3_BYTES_TO_PROCESS_PER_PAGE", 10*MiB)
+	// ADAPTER_MAX_S3_BYTES_TO_PROCESS_PER_PAGE: The maximum number of bytes to process per page (default: 1MiB)
+	// 1 MiB supports ~10,000 narrow rows (~100 bytes), ~3,500 medium rows (~300 bytes), or ~1,000 wide rows (~1KB).
+	// With default page size of 100, this supports rows up to ~10 KB wide.
+	// If a page doesn't fit within 1 MiB, reduce the page size.
+	viper.SetDefault("MAX_S3_BYTES_TO_PROCESS_PER_PAGE", 1*MiB)
 	// ADAPTER_MAX_CALL_RECV_MSG_SIZE_MB: Maximum gRPC receive message size in MB (default: 8MB, matches ingestion)
 	viper.SetDefault("MAX_CALL_RECV_MSG_SIZE_MB", 8)
 	// ADAPTER_MAX_CALL_SEND_MSG_SIZE_MB: Maximum gRPC send message size in MB (default: 8MB, matches ingestion)
