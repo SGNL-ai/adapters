@@ -614,6 +614,26 @@ func (s *LDAPTestSuite) Test_AdapterGetGroupMemberPage() {
 							"group_dn":  "cn=Sales Team (APAC),ou=Groups,dc=example,dc=org",
 							"member_dn": "cn=bobby,ou=People,dc=example,dc=org",
 						},
+						{
+							"id":        "cn=zach,ou=People,dc=example,dc=org-cn=Team * Stars,ou=Groups,dc=example,dc=org",
+							"group_dn":  "cn=Team * Stars,ou=Groups,dc=example,dc=org",
+							"member_dn": "cn=zach,ou=People,dc=example,dc=org",
+						},
+						{
+							"id":        "cn=lorem,ou=People,dc=example,dc=org-cn=Team * Stars,ou=Groups,dc=example,dc=org",
+							"group_dn":  "cn=Team * Stars,ou=Groups,dc=example,dc=org",
+							"member_dn": "cn=lorem,ou=People,dc=example,dc=org",
+						},
+						{
+							"id":        "cn=Robert Smith,ou=People,dc=example,dc=org-cn=Legal\\2C Compliance,ou=Groups,dc=example,dc=org",
+							"group_dn":  "cn=Legal\\2C Compliance,ou=Groups,dc=example,dc=org",
+							"member_dn": "cn=Robert Smith,ou=People,dc=example,dc=org",
+						},
+						{
+							"id":        "cn=Barbara Jensen,ou=People,dc=example,dc=org-cn=Legal\\2C Compliance,ou=Groups,dc=example,dc=org",
+							"group_dn":  "cn=Legal\\2C Compliance,ou=Groups,dc=example,dc=org",
+							"member_dn": "cn=Barbara Jensen,ou=People,dc=example,dc=org",
+						},
 					},
 					NextCursor: "",
 				},
