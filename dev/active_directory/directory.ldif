@@ -161,3 +161,12 @@ ou: Groups
 cn: Science
 uniquemember: cn=lorem,ou=People,dc=example,dc=org
 uniquemember: cn=bobby,ou=People,dc=example,dc=org
+
+# Group with parentheses in the name - used to test LDAP filter escaping
+dn: cn=Sales Team (APAC),ou=Groups,dc=example,dc=org
+objectClass: groupofuniquenames
+objectClass: top
+ou: Groups
+cn: Sales Team (APAC)
+uniquemember: cn=alice,ou=People,dc=example,dc=org
+uniquemember: cn=bobby,ou=People,dc=example,dc=org
