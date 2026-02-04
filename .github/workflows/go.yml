@@ -8,7 +8,7 @@ on:
 env:
   REGISTRY: ghcr.io
   CODE_COVERAGE_THRESHOLD: 60
-  GOLANG_IMAGE: golang:1.24.11-bookworm
+  GOLANG_IMAGE: golang:1.24.12-bookworm
 
 # Cancel previous workflows on the PR branch when there are multiple fast commits.
 # `head_ref` is the name of the PR branch and is defined only on pushes to a PR branch. Thus, it
