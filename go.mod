@@ -1,6 +1,6 @@
 module github.com/sgnl-ai/adapters
 
-go 1.24.12
+go 1.24.13
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
