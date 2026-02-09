@@ -639,7 +639,13 @@ func (d *Datasource) getMemberOfPage(
 			modifiedGroupMemberQuery := strings.ReplaceAll(
 				entityConfig.Query, "{{CollectionAttribute}}", *entityConfig.CollectionAttribute,
 			)
-			modifiedGroupMemberQuery = strings.ReplaceAll(modifiedGroupMemberQuery, "{{CollectionId}}", groupUniqueIDValue)
+
+			// Escape the group unique ID value to handle LDAP special characters in DNs
+			// (e.g., parentheses in group names like "Sales Team (APAC)")
+			escapedGroupUniqueIDValue := ldap_v3.EscapeFilter(groupUniqueIDValue)
+			modifiedGroupMemberQuery = strings.ReplaceAll(
+				modifiedGroupMemberQuery, "{{CollectionId}}", escapedGroupUniqueIDValue,
+			)
 
 			modifiedEntityConfigMap := make(map[string]*EntityConfig)
 
