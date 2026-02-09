@@ -55,8 +55,11 @@ func (a *Adapter) RequestPageFromDatasource(
 		return framework.NewGetPageResponseError(err)
 	}
 
-	if !strings.HasPrefix(request.Address, "https://") {
-		request.Address = "https://" + request.Address
+	trimmedAddress := strings.TrimSpace(request.Address)
+	sanitizedAddress := strings.ToLower(trimmedAddress)
+
+	if !strings.HasPrefix(sanitizedAddress, "https://") {
+		request.Address = "https://" + trimmedAddress
 	}
 
 	duoReq := &Request{
