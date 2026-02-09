@@ -295,10 +295,21 @@ func (c *ldapClient) Request(ctx context.Context, request *Request) (*Response, 
 		logger.Error("Request to datasource failed",
 			fields.SGNLEventTypeError(),
 			zap.Error(err),
+			zap.String("baseDN", request.BaseDN),
+			zap.String("filters", filters),
+			zap.Strings("attributes", attributes),
+			zap.Int64("pageSize", request.PageSize),
+			zap.Bool("hasCursor", request.Cursor != nil && request.Cursor.Cursor != nil),
 		)
 
 		// Extract LDAP result code from the error
 		if ldapErr, ok := err.(*ldap_v3.Error); ok {
+			logger.Error("LDAP error details",
+				zap.Uint16("resultCode", ldapErr.ResultCode),
+				zap.String("resultCodeName", ldap_v3.LDAPResultCodeMap[ldapErr.ResultCode]),
+				zap.String("matchedDN", ldapErr.MatchedDN),
+			)
+
 			return &Response{
 				StatusCode: ldapErrToHTTPStatusCode(ldapErr),
 			}, nil
