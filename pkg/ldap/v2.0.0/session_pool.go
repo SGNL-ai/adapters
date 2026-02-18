@@ -3,20 +3,27 @@
 package ldap
 
 import (
+	"crypto/tls"
+	"strings"
 	"sync"
 	"time"
-
-	"crypto/tls"
 
 	ldap_v3 "github.com/go-ldap/ldap/v3"
 )
 
 type Session struct {
 	conn     interface{ Close() error }
-	lastUsed time.Time
+	currKey  string    // currently active session key
+	newKey   string    // new session key (used during pagination)
+	lastUsed time.Time // timestamp of last access to manage TTL-based cleanup
 	mu       sync.Mutex
 }
 
+// GetOrCreateConn retrieves the existing LDAP connection if it's healthy,
+// or creates a new one if it doesn't exist or is unhealthy. It uses the provided
+// address, TLS configuration, and bind credentials to establish the connection.
+// The session's lastUsed timestamp is updated on each access to facilitate
+// TTL-based cleanup in the session pool.
 func (s *Session) GetOrCreateConn(
 	address string,
 	tlsConfig *tls.Config,
@@ -78,6 +85,12 @@ func NewSessionPool(ttl, cleanupInterval time.Duration) *SessionPool {
 	return sp
 }
 
+// Get retrieves a session from the pool by key. If the session exists, it updates
+// the lastUsed timestamp. It also manages the promotion of newKey to currKey when
+// accessed via newKey, and cleanup of alternate keys to ensure that only one active
+// key (currKey) is maintained for each session. Note that sessions accessed via
+// non-cookie keys (keys ending with "|") are not cleaned up since they are used
+// for non-paged queries and should be reusable.
 func (sp *SessionPool) Get(key string) (*Session, bool) {
 	sp.mu.Lock()
 	defer sp.mu.Unlock()
@@ -90,12 +103,31 @@ func (sp *SessionPool) Get(key string) (*Session, bool) {
 			return nil, false
 		}
 
+		// Clean up the alternate key that wasn't used.
+		// This determines which cookie (old vs new) the caller is using.
+		// Exception: Don't clean up when accessed via non-cookie key (ends with "|")
+		// because internal non-paged queries shouldn't affect paged query keys.
+		if key == s.currKey && s.newKey != "" && !strings.HasSuffix(key, "|") {
+			// Accessed via current key (with cookie) - discard new key
+			delete(sp.pool, s.newKey)
+			s.newKey = ""
+		} else if key == s.newKey {
+			// Accessed via new key - promote new to current
+			delete(sp.pool, s.currKey)
+			s.currKey = s.newKey
+			s.newKey = ""
+		}
+
 		s.lastUsed = time.Now()
 	}
 
 	return s, ok
 }
 
+// Set adds a new session to the pool with the given key. If a session already
+// exists for the key, it is replaced and its connection is closed. The session's
+// currKey is set to the provided key. Note that Set does not handle the newKey -
+// that is managed separately in Get and UpdateKey.
 func (sp *SessionPool) Set(key string, session *Session) {
 	sp.mu.Lock()
 	defer sp.mu.Unlock()
@@ -104,19 +136,37 @@ func (sp *SessionPool) Set(key string, session *Session) {
 		old.conn.Close()
 	}
 
+	session.currKey = key
 	sp.pool[key] = session
 }
 
+// Delete removes a session from the pool and closes its connection if it exists.
+// It deletes both the current and new keys associated with the session to ensure
+// complete cleanup. However, it does not delete sessions that are accessed via
+// non-cookie keys (keys ending with "|") since those are used for non-paged queries
+// and should be reusable.
 func (sp *SessionPool) Delete(key string) {
+	// Only delete sessions that have a cookie (paging was in progress).
+	// Keys ending with "|" have no cookie - keep these sessions for reuse.
+	if strings.HasSuffix(key, "|") {
+		return
+	}
+
 	sp.mu.Lock()
 	defer sp.mu.Unlock()
 
 	if s, ok := sp.pool[key]; ok {
-		if s.conn != nil {
-			s.conn.Close()
+		// Delete both keys
+		delete(sp.pool, s.currKey)
+
+		if s.newKey != "" {
+			delete(sp.pool, s.newKey)
 		}
 
-		delete(sp.pool, key)
+		if s.conn != nil {
+			s.conn.Close()
+			s.conn = nil
+		}
 	}
 }
 
@@ -130,13 +180,19 @@ func (sp *SessionPool) startCleanupLoop() {
 
 			sp.mu.Lock()
 
-			for key, session := range sp.pool {
+			for _, session := range sp.pool {
 				if now.Sub(session.lastUsed) > sp.ttl {
-					if session.conn != nil {
-						session.conn.Close()
+					// Delete both keys
+					delete(sp.pool, session.currKey)
+
+					if session.newKey != "" {
+						delete(sp.pool, session.newKey)
 					}
 
-					delete(sp.pool, key)
+					if session.conn != nil {
+						session.conn.Close()
+						session.conn = nil
+					}
 				}
 			}
 
@@ -145,14 +201,21 @@ func (sp *SessionPool) startCleanupLoop() {
 	}()
 }
 
-func (sp *SessionPool) UpdateKey(oldKey, newKey string) {
+// UpdateKey updates a new session key to an existing session using currKey in the
+// pool. This is used when a new cookie is received in the middle of pagination
+// and we want to associate it with the existing session.
+func (sp *SessionPool) UpdateKey(currKey, newKey string) {
+	if currKey == newKey {
+		return
+	}
+
 	sp.mu.Lock()
 	defer sp.mu.Unlock()
 
-	s, ok := sp.pool[oldKey]
+	s, ok := sp.pool[currKey]
 	if ok {
+		s.newKey = newKey
 		sp.pool[newKey] = s
-		delete(sp.pool, oldKey)
 	}
 }
 
@@ -161,6 +224,21 @@ func (sp *SessionPool) SessionCount() int {
 	defer sp.mu.Unlock()
 
 	return len(sp.pool)
+}
+
+// UniqueSessionCount returns the number of unique sessions in the pool.
+// This differs from SessionCount() which returns the number of keys.
+// With dual-key design, multiple keys can point to the same session.
+func (sp *SessionPool) UniqueSessionCount() int {
+	sp.mu.Lock()
+	defer sp.mu.Unlock()
+
+	seen := make(map[*Session]struct{})
+	for _, s := range sp.pool {
+		seen[s] = struct{}{}
+	}
+
+	return len(seen)
 }
 
 // Example usage:
