@@ -206,35 +206,46 @@ func (sp *SessionPool) startCleanupLoop() {
 			case <-sp.done:
 				return
 			case <-ticker.C:
-				now := time.Now()
-
-				sp.mu.Lock()
-
-				for key, session := range sp.pool {
-					if now.Sub(session.lastUsed) > sp.ttl {
-						// Delete the key we're iterating on
-						delete(sp.pool, key)
-
-						// Also delete the session's other stored keys
-						if session.currKey != "" && session.currKey != key {
-							delete(sp.pool, session.currKey)
-						}
-
-						if session.newKey != "" && session.newKey != key {
-							delete(sp.pool, session.newKey)
-						}
-
-						if session.conn != nil {
-							session.conn.Close()
-							session.conn = nil
-						}
-					}
-				}
-
-				sp.mu.Unlock()
+				sp.cleanupExpiredSessions()
 			}
 		}
 	}()
+}
+
+// cleanupExpiredSessions removes sessions that have exceeded their TTL.
+// It deletes all keys associated with each expired session and closes its connection.
+func (sp *SessionPool) cleanupExpiredSessions() {
+	now := time.Now()
+
+	sp.mu.Lock()
+	defer sp.mu.Unlock()
+
+	for key, session := range sp.pool {
+		if now.Sub(session.lastUsed) <= sp.ttl {
+			continue
+		}
+
+		sp.deleteSessionKeys(key, session)
+
+		if session.conn != nil {
+			session.conn.Close()
+			session.conn = nil
+		}
+	}
+}
+
+// deleteSessionKeys removes all keys associated with a session from the pool.
+// Caller must hold sp.mu.
+func (sp *SessionPool) deleteSessionKeys(key string, session *Session) {
+	delete(sp.pool, key)
+
+	if session.currKey != "" && session.currKey != key {
+		delete(sp.pool, session.currKey)
+	}
+
+	if session.newKey != "" && session.newKey != key {
+		delete(sp.pool, session.newKey)
+	}
 }
 
 // UpdateKey updates a new session key to an existing session using currKey in the
