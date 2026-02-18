@@ -73,6 +73,7 @@ type SessionPool struct {
 	ttl             time.Duration
 	cleanupInterval time.Duration
 	done            chan struct{}
+	closeOnce       sync.Once
 }
 
 func NewSessionPool(ttl, cleanupInterval time.Duration) *SessionPool {
@@ -89,26 +90,29 @@ func NewSessionPool(ttl, cleanupInterval time.Duration) *SessionPool {
 
 // Close stops the cleanup goroutine and closes all connections in the pool.
 // Connections are closed after releasing the lock to avoid blocking other operations.
+// Safe to call multiple times - subsequent calls are no-ops.
 func (sp *SessionPool) Close() {
-	close(sp.done)
+	sp.closeOnce.Do(func() {
+		close(sp.done)
 
-	var toClose []interface{ Close() error }
+		var toClose []interface{ Close() error }
 
-	sp.mu.Lock()
+		sp.mu.Lock()
 
-	for _, session := range sp.pool {
-		if session != nil && session.conn != nil {
-			toClose = append(toClose, session.conn)
+		for _, session := range sp.pool {
+			if session != nil && session.conn != nil {
+				toClose = append(toClose, session.conn)
+			}
 		}
-	}
 
-	sp.pool = make(map[string]*Session)
+		sp.pool = make(map[string]*Session)
 
-	sp.mu.Unlock()
+		sp.mu.Unlock()
 
-	for _, conn := range toClose {
-		conn.Close()
-	}
+		for _, conn := range toClose {
+			conn.Close()
+		}
+	})
 }
 
 // Get retrieves a session from the pool by key. If the session exists, it updates

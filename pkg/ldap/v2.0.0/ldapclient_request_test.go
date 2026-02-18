@@ -76,6 +76,8 @@ func (s *ldapClientRequestTestSuite) newRequest(cursor *pagination.CompositeCurs
 func (s *ldapClientRequestTestSuite) Test_GivenNonPagedRequests_WhenSameAddress_ThenSessionIsReused() {
 	// Arrange
 	pool := NewSessionPool(5*time.Minute, time.Minute)
+	defer pool.Close()
+
 	client := &ldapClient{sessionPool: pool}
 	request := s.newRequest(nil)
 
@@ -102,6 +104,8 @@ func (s *ldapClientRequestTestSuite) Test_GivenNonPagedRequests_WhenSameAddress_
 func (s *ldapClientRequestTestSuite) Test_GivenPagedRequest_WhenNewCookieReceived_ThenSessionKeyIsUpdated() {
 	// Arrange
 	pool := NewSessionPool(5*time.Minute, time.Minute)
+	defer pool.Close()
+
 	client := &ldapClient{sessionPool: pool}
 	request := s.newRequest(nil)
 
@@ -127,6 +131,8 @@ func (s *ldapClientRequestTestSuite) Test_GivenPagedRequest_WhenNewCookieReceive
 func (s *ldapClientRequestTestSuite) Test_GivenPagedSequence_WhenMultiplePages_ThenSessionIsReusedAcrossPages() {
 	// Arrange
 	pool := NewSessionPool(5*time.Minute, time.Minute)
+	defer pool.Close()
+
 	client := &ldapClient{sessionPool: pool}
 
 	// Act - Page through all results
