@@ -72,6 +72,7 @@ type SessionPool struct {
 	pool            map[string]*Session
 	ttl             time.Duration
 	cleanupInterval time.Duration
+	done            chan struct{}
 }
 
 func NewSessionPool(ttl, cleanupInterval time.Duration) *SessionPool {
@@ -79,10 +80,27 @@ func NewSessionPool(ttl, cleanupInterval time.Duration) *SessionPool {
 		pool:            make(map[string]*Session),
 		ttl:             ttl,
 		cleanupInterval: cleanupInterval,
+		done:            make(chan struct{}),
 	}
 	sp.startCleanupLoop()
 
 	return sp
+}
+
+// Close stops the cleanup goroutine and closes all connections in the pool.
+func (sp *SessionPool) Close() {
+	close(sp.done)
+
+	sp.mu.Lock()
+	defer sp.mu.Unlock()
+
+	for _, session := range sp.pool {
+		if session != nil && session.conn != nil {
+			session.conn.Close()
+		}
+	}
+
+	sp.pool = make(map[string]*Session)
 }
 
 // Get retrieves a session from the pool by key. If the session exists, it updates
@@ -118,7 +136,9 @@ func (sp *SessionPool) Get(key string) (*Session, bool) {
 			s.newKey = ""
 		}
 
+		s.mu.Lock()
 		s.lastUsed = time.Now()
+		s.mu.Unlock()
 	}
 
 	return s, ok
@@ -126,14 +146,20 @@ func (sp *SessionPool) Get(key string) (*Session, bool) {
 
 // Set adds a new session to the pool with the given key. If a session already
 // exists for the key, it is replaced and its connection is closed. The session's
-// currKey is set to the provided key. Note that Set does not handle the newKey -
-// that is managed separately in Get and UpdateKey.
+// currKey is set to the provided key.
 func (sp *SessionPool) Set(key string, session *Session) {
 	sp.mu.Lock()
 	defer sp.mu.Unlock()
 
-	if old, ok := sp.pool[key]; ok && old != nil && old.conn != nil {
-		old.conn.Close()
+	if old, ok := sp.pool[key]; ok && old != nil {
+		// Clean up old session's newKey entry if it exists
+		if old.newKey != "" {
+			delete(sp.pool, old.newKey)
+		}
+
+		if old.conn != nil {
+			old.conn.Close()
+		}
 	}
 
 	session.currKey = key
@@ -175,28 +201,38 @@ func (sp *SessionPool) startCleanupLoop() {
 		ticker := time.NewTicker(sp.cleanupInterval)
 		defer ticker.Stop()
 
-		for range ticker.C {
-			now := time.Now()
+		for {
+			select {
+			case <-sp.done:
+				return
+			case <-ticker.C:
+				now := time.Now()
 
-			sp.mu.Lock()
+				sp.mu.Lock()
 
-			for _, session := range sp.pool {
-				if now.Sub(session.lastUsed) > sp.ttl {
-					// Delete both keys
-					delete(sp.pool, session.currKey)
+				for key, session := range sp.pool {
+					if now.Sub(session.lastUsed) > sp.ttl {
+						// Delete the key we're iterating on
+						delete(sp.pool, key)
 
-					if session.newKey != "" {
-						delete(sp.pool, session.newKey)
-					}
+						// Also delete the session's other stored keys
+						if session.currKey != "" && session.currKey != key {
+							delete(sp.pool, session.currKey)
+						}
 
-					if session.conn != nil {
-						session.conn.Close()
-						session.conn = nil
+						if session.newKey != "" && session.newKey != key {
+							delete(sp.pool, session.newKey)
+						}
+
+						if session.conn != nil {
+							session.conn.Close()
+							session.conn = nil
+						}
 					}
 				}
-			}
 
-			sp.mu.Unlock()
+				sp.mu.Unlock()
+			}
 		}
 	}()
 }

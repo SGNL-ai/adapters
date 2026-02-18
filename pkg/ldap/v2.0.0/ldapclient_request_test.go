@@ -23,6 +23,7 @@ type ldapClientRequestTestSuite struct {
 	ldapContainer testcontainers.Container
 	ldapHost      string
 	ctx           context.Context
+	cancel        context.CancelFunc
 }
 
 func Test_LdapClientRequestSuite(t *testing.T) {
@@ -30,9 +31,7 @@ func Test_LdapClientRequestSuite(t *testing.T) {
 }
 
 func (s *ldapClientRequestTestSuite) SetupSuite() {
-	var cancel context.CancelFunc
-	s.ctx, cancel = context.WithTimeout(context.Background(), time.Minute*5)
-	defer cancel()
+	s.ctx, s.cancel = context.WithTimeout(context.Background(), time.Minute*5)
 
 	var ldapPort nat.Port
 	s.ldapContainer, ldapPort = s.StartLDAPServer(s.ctx, false)
@@ -42,6 +41,10 @@ func (s *ldapClientRequestTestSuite) SetupSuite() {
 }
 
 func (s *ldapClientRequestTestSuite) TearDownSuite() {
+	if s.cancel != nil {
+		s.cancel()
+	}
+
 	if s.ldapContainer != nil {
 		s.ldapContainer.Terminate(s.ctx)
 	}
