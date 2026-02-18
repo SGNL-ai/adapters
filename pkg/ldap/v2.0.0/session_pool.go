@@ -88,19 +88,27 @@ func NewSessionPool(ttl, cleanupInterval time.Duration) *SessionPool {
 }
 
 // Close stops the cleanup goroutine and closes all connections in the pool.
+// Connections are closed after releasing the lock to avoid blocking other operations.
 func (sp *SessionPool) Close() {
 	close(sp.done)
 
+	var toClose []interface{ Close() error }
+
 	sp.mu.Lock()
-	defer sp.mu.Unlock()
 
 	for _, session := range sp.pool {
 		if session != nil && session.conn != nil {
-			session.conn.Close()
+			toClose = append(toClose, session.conn)
 		}
 	}
 
 	sp.pool = make(map[string]*Session)
+
+	sp.mu.Unlock()
+
+	for _, conn := range toClose {
+		conn.Close()
+	}
 }
 
 // Get retrieves a session from the pool by key. If the session exists, it updates
@@ -214,11 +222,13 @@ func (sp *SessionPool) startCleanupLoop() {
 
 // cleanupExpiredSessions removes sessions that have exceeded their TTL.
 // It deletes all keys associated with each expired session and closes its connection.
+// Connections are closed after releasing the lock to avoid blocking other operations.
 func (sp *SessionPool) cleanupExpiredSessions() {
 	now := time.Now()
 
+	var toClose []interface{ Close() error }
+
 	sp.mu.Lock()
-	defer sp.mu.Unlock()
 
 	for key, session := range sp.pool {
 		if now.Sub(session.lastUsed) <= sp.ttl {
@@ -228,9 +238,15 @@ func (sp *SessionPool) cleanupExpiredSessions() {
 		sp.deleteSessionKeys(key, session)
 
 		if session.conn != nil {
-			session.conn.Close()
+			toClose = append(toClose, session.conn)
 			session.conn = nil
 		}
+	}
+
+	sp.mu.Unlock()
+
+	for _, conn := range toClose {
+		conn.Close()
 	}
 }
 
