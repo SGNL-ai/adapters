@@ -41,12 +41,12 @@ func (s *ldapClientRequestTestSuite) SetupSuite() {
 }
 
 func (s *ldapClientRequestTestSuite) TearDownSuite() {
-	if s.cancel != nil {
-		s.cancel()
-	}
-
 	if s.ldapContainer != nil {
 		s.ldapContainer.Terminate(s.ctx)
+	}
+
+	if s.cancel != nil {
+		s.cancel()
 	}
 }
 

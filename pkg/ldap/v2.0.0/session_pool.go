@@ -231,7 +231,11 @@ func (sp *SessionPool) cleanupExpiredSessions() {
 	sp.mu.Lock()
 
 	for key, session := range sp.pool {
-		if now.Sub(session.lastUsed) <= sp.ttl {
+		session.mu.Lock()
+		expired := now.Sub(session.lastUsed) > sp.ttl
+		session.mu.Unlock()
+
+		if !expired {
 			continue
 		}
 
