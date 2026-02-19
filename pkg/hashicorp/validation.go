@@ -54,14 +54,14 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 		}
 	}
 
-	trimmedAddress, _, err := validation.ParseAndValidateAddress(request.Address, []string{"https"})
+	trimmedAddress, parsed, err := validation.ParseAndValidateAddress(request.Address, []string{"https"})
 	if err != nil {
 		return err
 	}
 
-	// We prepend "https://" in GetPage so do it here before validation as well.
+	// Normalize address with https:// scheme if not provided
 	rawURL := strings.TrimSuffix(trimmedAddress, "/")
-	if !strings.HasPrefix(strings.ToLower(trimmedAddress), "https://") {
+	if parsed.Scheme == "" {
 		rawURL = "https://" + rawURL
 	}
 

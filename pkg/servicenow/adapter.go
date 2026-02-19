@@ -54,13 +54,6 @@ func (a *Adapter) RequestPageFromDatasource(
 
 	commonConfig = config.SetMissingCommonConfigDefaults(commonConfig)
 
-	trimmedAddress := strings.TrimSpace(request.Address)
-	sanitizedAddress := strings.ToLower(trimmedAddress)
-
-	if !strings.HasPrefix(sanitizedAddress, "https://") {
-		request.Address = "https://" + trimmedAddress
-	}
-
 	var authorizationHeader string
 
 	switch {

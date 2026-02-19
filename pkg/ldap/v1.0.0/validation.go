@@ -28,15 +28,20 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 		}
 	}
 
-	if _, _, err := validation.ParseAndValidateAddress(request.Address, []string{"ldap", "ldaps"}); err != nil {
+	trimmedAddress, parsed, err := validation.ParseAndValidateAddress(request.Address, []string{"ldap", "ldaps"})
+	if err != nil {
 		return err
 	}
 
-	// set scheme based on certificateChain input
-	if request.Config.CertificateChain != "" {
-		request.Address = "ldaps://" + request.Address
+	// If no scheme was provided, set scheme based on certificateChain config
+	if parsed.Scheme == "" {
+		if request.Config.CertificateChain != "" {
+			request.Address = "ldaps://" + trimmedAddress
+		} else {
+			request.Address = "ldap://" + trimmedAddress
+		}
 	} else {
-		request.Address = "ldap://" + request.Address
+		request.Address = trimmedAddress
 	}
 
 	if request.Auth == nil || request.Auth.Basic == nil ||

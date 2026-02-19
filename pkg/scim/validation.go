@@ -11,8 +11,16 @@ import (
 
 // ValidateGetPageRequest validates the fields of the GetPage Request.
 func (a *Adapter) ValidateGetPageRequest(request *framework.Request[Config]) *framework.Error {
-	if _, _, err := validation.ParseAndValidateAddress(request.Address, []string{"https"}); err != nil {
+	trimmedAddress, parsed, err := validation.ParseAndValidateAddress(request.Address, []string{"https"})
+	if err != nil {
 		return err
+	}
+
+	// Normalize address with https:// scheme if not provided
+	if parsed.Scheme == "" {
+		request.Address = "https://" + trimmedAddress
+	} else {
+		request.Address = trimmedAddress
 	}
 
 	// SCIM server can use any of the Auth mechanisms

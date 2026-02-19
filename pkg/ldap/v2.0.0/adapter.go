@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"strings"
 	"time"
 
 	framework "github.com/sgnl-ai/adapter-framework"
@@ -64,7 +63,7 @@ func (a *Adapter) requestPageFromDatasource(
 		return framework.NewGetPageResponseError(err)
 	}
 
-	url, perr := url.Parse(request.Address)
+	parsed, perr := url.Parse(request.Address)
 	if perr != nil {
 		return framework.NewGetPageResponseError(&framework.Error{
 			Message: fmt.Sprintf("Failed to parse the URL: %v.", perr),
@@ -72,10 +71,8 @@ func (a *Adapter) requestPageFromDatasource(
 		})
 	}
 
-	trimmedAddress := strings.TrimSpace(request.Address)
-	sanitizedAddress := strings.ToLower(trimmedAddress)
 	adReq := &Request{
-		BaseURL:          trimmedAddress,
+		BaseURL:          request.Address,
 		PageSize:         request.PageSize,
 		EntityExternalID: request.Entity.ExternalId,
 		Attributes:       request.Entity.Attributes,
@@ -84,8 +81,8 @@ func (a *Adapter) requestPageFromDatasource(
 			BindPassword:     request.Auth.Basic.Password,
 			BaseDN:           request.Config.BaseDN,
 			CertificateChain: request.Config.CertificateChain,
-			IsLDAPS:          strings.HasPrefix(sanitizedAddress, "ldaps://"),
-			Host:             url.Hostname(),
+			IsLDAPS:          parsed.Scheme == "ldaps",
+			Host:             parsed.Hostname(),
 		},
 		UniqueIDAttribute:     *getUniqueIDAttribute(request.Entity.Attributes),
 		Cursor:                cursor,

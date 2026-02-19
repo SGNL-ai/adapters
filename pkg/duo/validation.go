@@ -21,8 +21,16 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 		}
 	}
 
-	if _, _, err := validation.ParseAndValidateAddress(request.Address, []string{"https"}); err != nil {
+	trimmedAddress, parsed, err := validation.ParseAndValidateAddress(request.Address, []string{"https"})
+	if err != nil {
 		return err
+	}
+
+	// Normalize address with https:// scheme if not provided
+	if parsed.Scheme == "" {
+		request.Address = "https://" + trimmedAddress
+	} else {
+		request.Address = trimmedAddress
 	}
 
 	if request.Auth == nil || request.Auth.Basic == nil ||

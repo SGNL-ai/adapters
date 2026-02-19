@@ -5,7 +5,6 @@ package scim
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
@@ -52,13 +51,6 @@ func (a *Adapter) RequestPageFromDatasource(
 	}
 
 	commonConfig = config.SetMissingCommonConfigDefaults(commonConfig)
-
-	trimmedAddress := strings.TrimSpace(request.Address)
-	sanitizedAddress := strings.ToLower(trimmedAddress)
-
-	if !strings.HasPrefix(sanitizedAddress, "https://") {
-		request.Address = "https://" + trimmedAddress
-	}
 
 	var authorizationHeader string
 

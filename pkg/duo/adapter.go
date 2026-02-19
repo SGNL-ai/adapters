@@ -5,7 +5,6 @@ package duo
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	framework "github.com/sgnl-ai/adapter-framework"
@@ -53,13 +52,6 @@ func (a *Adapter) RequestPageFromDatasource(
 	cursor, err := pagination.UnmarshalCursor[int64](request.Cursor)
 	if err != nil {
 		return framework.NewGetPageResponseError(err)
-	}
-
-	trimmedAddress := strings.TrimSpace(request.Address)
-	sanitizedAddress := strings.ToLower(trimmedAddress)
-
-	if !strings.HasPrefix(sanitizedAddress, "https://") {
-		request.Address = "https://" + trimmedAddress
 	}
 
 	duoReq := &Request{

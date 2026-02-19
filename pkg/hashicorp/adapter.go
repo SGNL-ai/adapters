@@ -56,12 +56,6 @@ func (a *Adapter) RequestPageFromDatasource(
 	commonConfig = config.SetMissingCommonConfigDefaults(commonConfig)
 
 	request.Address = strings.TrimSuffix(request.Address, "/")
-	trimmedAddress := strings.TrimSpace(request.Address)
-	sanitizedAddress := strings.ToLower(trimmedAddress)
-
-	if !strings.HasPrefix(sanitizedAddress, "https://") {
-		request.Address = "https://" + trimmedAddress
-	}
 
 	cursor, err := pagination.UnmarshalCursor[string](request.Cursor)
 	if err != nil {

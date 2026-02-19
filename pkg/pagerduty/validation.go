@@ -50,20 +50,26 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 		}
 	}
 
-	if _, _, err := validation.ParseAndValidateAddress(request.Address, []string{"https"}); err != nil {
+	trimmedAddress, parsed, err := validation.ParseAndValidateAddress(request.Address, []string{"https"})
+	if err != nil {
 		return err
 	}
 
 	// All API calls are made to the same DNS domain name.
 	// The authentication token dictates what data to return.
 	// https://developer.pagerduty.com/docs/ZG9jOjExMDI5NTUw-rest-api-v2-overview#what-and-where.
-	// The "https://" prefix will be automatically added by the adapter. This is to be consistent with the rest of the
-	// adapters that do not require the client to specify the protocol.
-	if request.Address != "api.pagerduty.com" {
+	if parsed.Host != "api.pagerduty.com" {
 		return &framework.Error{
 			Message: "Invalid PagerDuty address. Must be api.pagerduty.com.",
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
 		}
+	}
+
+	// Normalize address with https:// scheme if not provided
+	if parsed.Scheme == "" {
+		request.Address = "https://" + trimmedAddress
+	} else {
+		request.Address = trimmedAddress
 	}
 
 	// Validate that at least the unique ID attribute for the requested entity
