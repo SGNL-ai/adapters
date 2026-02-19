@@ -33,7 +33,11 @@ linters:
     - wsl_v5
   settings:
     goheader:
-      template: Copyright 2025 SGNL.ai, Inc.
+      template: |-
+        Copyright {{ YEAR }} SGNL.ai, Inc.
+      values:
+        regexp:
+          YEAR: \d{4}
     nestif:
       min-complexity: 10
     wsl_v5:
