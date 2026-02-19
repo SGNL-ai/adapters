@@ -1,4 +1,4 @@
-// Copyright 2025 SGNL.ai, Inc.
+// Copyright 2026 SGNL.ai, Inc.
 
 // nolint: goconst
 
@@ -7,6 +7,7 @@ package awss3_test
 import (
 	"context"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -16,7 +17,6 @@ import (
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	s3_adapter "github.com/sgnl-ai/adapters/pkg/aws-s3"
 	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
-	"github.com/sgnl-ai/adapters/pkg/pagination"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 )
 
@@ -26,9 +26,21 @@ const (
 	validCSVDataRow2Length   = 260
 	validCSVDataRow3Length   = 232
 	validCSVDataRow4Length   = 208
-	MaxCSVRowSizeBytes       = 1 * 1024 * 1024  // 1MiB
-	MaxBytesToProcessPerPage = 10 * 1024 * 1024 // 10MiB
+	validCSVDataRow5Length   = 246
+	MaxCSVRowSizeBytes       = 1 * 1024 * 1024 // 1MiB
+	MaxBytesToProcessPerPage = 1 * 1024 * 1024 // 1MiB
 )
+
+// validCSVDataTotalLength is the total size of validCSVData.
+var validCSVDataTotalLength = int64(validCSVDataHeaderLength + validCSVDataRow1Length +
+	validCSVDataRow2Length + validCSVDataRow3Length + validCSVDataRow4Length + validCSVDataRow5Length)
+
+// expectedCSVHeaders are the headers from validCSVData in common_test.go.
+var expectedCSVHeaders = []string{
+	"Score", "Customer Id", "First Name", "Last Name", "Company", "City",
+	"Country", "Phone 1", "Phone 2", "Email", "Subscription Date", "Website",
+	"KnownAliases",
+}
 
 func TestGetObjectKeyFromRequest(t *testing.T) {
 	tests := []struct {
@@ -94,10 +106,18 @@ func TestGetObjectKeyFromRequest(t *testing.T) {
 }
 
 func TestDatasource_GetPage(t *testing.T) {
-	cursorPage1Next := int64(validCSVDataHeaderLength + validCSVDataRow1Length + validCSVDataRow2Length)
-	cursorPage2Start := cursorPage1Next
-	cursorPage2Next := cursorPage2Start + validCSVDataRow3Length + validCSVDataRow4Length
-	cursorPage3Start := cursorPage2Next
+	// With remainder-based approach, cursor points to next S3 fetch position (end of file for small files).
+	cursorAfterFirstFetch := validCSVDataTotalLength // All data fetched on first request
+	cursorPage2Start := int64(validCSVDataHeaderLength + validCSVDataRow1Length + validCSVDataRow2Length)
+	cursorPage3Start := int64(validCSVDataHeaderLength + validCSVDataRow1Length + validCSVDataRow2Length +
+		validCSVDataRow3Length + validCSVDataRow4Length)
+
+	// Actual remainder bytes for each page.
+	remainderPage1Start := validCSVDataHeaderLength + validCSVDataRow1Length + validCSVDataRow2Length
+	remainderPage2Start := validCSVDataHeaderLength + validCSVDataRow1Length + validCSVDataRow2Length +
+		validCSVDataRow3Length + validCSVDataRow4Length
+	remainderPage1 := []byte(validCSVData[remainderPage1Start:]) // Rows 3-5
+	remainderPage2 := []byte(validCSVData[remainderPage2Start:]) // Row 5 only
 
 	tests := map[string]struct {
 		request              *s3_adapter.Request
@@ -133,7 +153,11 @@ func TestDatasource_GetPage(t *testing.T) {
 						"Phone 1": "9610730173", "Phone 2": "531-482-3000x7085", "Score": 2.2,
 						"Subscription Date": "2021-01-01", "Website": "https://www.paul.org/"},
 				},
-				NextCursor: &pagination.CompositeCursor[int64]{Cursor: testutil.GenPtr(cursorPage1Next)},
+				NextCursor: &s3_adapter.S3Cursor{
+					Cursor:    testutil.GenPtr(cursorAfterFirstFetch),
+					Headers:   expectedCSVHeaders,
+					Remainder: remainderPage1,
+				},
 			},
 			expectedLogs: []map[string]any{
 				{
@@ -150,7 +174,9 @@ func TestDatasource_GetPage(t *testing.T) {
 					fields.FieldResponseStatusCode:      int64(200),
 					fields.FieldResponseObjectCount:     int64(2),
 					fields.FieldResponseNextCursor: map[string]any{
-						"cursor": int64(validCSVDataHeaderLength + validCSVDataRow1Length + validCSVDataRow2Length),
+						"cursor":          validCSVDataTotalLength,
+						"headersCount":    len(expectedCSVHeaders),
+						"remainderLength": len(remainderPage1),
 					},
 				},
 			},
@@ -160,7 +186,7 @@ func TestDatasource_GetPage(t *testing.T) {
 				Auth:   s3_adapter.Auth{AccessKey: "test-access-key", SecretKey: "test-secret-key", Region: "us-west-1"},
 				Bucket: "test-bucket", PathPrefix: "data", FileType: "csv", EntityExternalID: "customers",
 				PageSize: 2, RequestTimeoutSeconds: 30,
-				Cursor: &pagination.CompositeCursor[int64]{Cursor: testutil.GenPtr(cursorPage2Start)},
+				Cursor: &s3_adapter.S3Cursor{Cursor: testutil.GenPtr(cursorPage2Start)},
 				AttributeConfig: []*framework.AttributeConfig{{ExternalId: "Email", Type: framework.AttributeTypeString,
 					UniqueId: true}, {ExternalId: "Score", Type: framework.AttributeTypeDouble}},
 			},
@@ -180,7 +206,11 @@ func TestDatasource_GetPage(t *testing.T) {
 						"Phone 1": "+1-985-596-1072x3040", "Phone 2": "(528)734-8924x054", "Score": 4.4,
 						"Subscription Date": "2022-01-18", "Website": "https://brennan.com/"},
 				},
-				NextCursor: &pagination.CompositeCursor[int64]{Cursor: testutil.GenPtr(cursorPage2Next)},
+				NextCursor: &s3_adapter.S3Cursor{
+					Cursor:    testutil.GenPtr(cursorAfterFirstFetch),
+					Headers:   expectedCSVHeaders,
+					Remainder: remainderPage2,
+				},
 			},
 		},
 		"success_last_page_no_cursor": {
@@ -188,7 +218,7 @@ func TestDatasource_GetPage(t *testing.T) {
 				Auth:   s3_adapter.Auth{AccessKey: "test-access-key", SecretKey: "test-secret-key", Region: "us-west-1"},
 				Bucket: "test-bucket", PathPrefix: "data", FileType: "csv", EntityExternalID: "customers",
 				PageSize: 2, RequestTimeoutSeconds: 30,
-				Cursor: &pagination.CompositeCursor[int64]{Cursor: testutil.GenPtr(cursorPage3Start)},
+				Cursor: &s3_adapter.S3Cursor{Cursor: testutil.GenPtr(cursorPage3Start)},
 				AttributeConfig: []*framework.AttributeConfig{{ExternalId: "Email", Type: framework.AttributeTypeString,
 					UniqueId: true}, {ExternalId: "Score", Type: framework.AttributeTypeDouble}},
 			},
@@ -419,5 +449,167 @@ func validateFirstObjectOfLargeFile(t *testing.T, firstObj map[string]any) {
 		}
 	} else {
 		t.Errorf("Customer Id field should be string, got %T", firstObj["Customer Id"])
+	}
+}
+
+// TestS3RangeHeaders verifies S3 requests use bounded range headers for both header and data fetches.
+// This prevents excessive data transfer by ensuring we never fetch the entire file when only
+// portions are needed. Uses small config values so calculated end bytes are less than file size.
+func TestS3RangeHeaders(t *testing.T) {
+	mockConfig, tracker := newRangeTrackingConfig(http.StatusOK, http.StatusOK)
+
+	// Use config values so end byte is calculated by formula, not clamped to file size
+	// validCSVData is ~1095 bytes, header is 121 bytes
+	maxRowSize := int64(300)      // Enough for CSV rows
+	maxBytesPerPage := int64(200) // Small so calculated end < file size
+	datasource, _ := s3_adapter.NewClient(http.DefaultClient, mockConfig, maxRowSize, maxBytesPerPage)
+
+	startByte := int64(200)
+
+	// Expected header fetch range: bytes=0-{(2*maxRowSize)-1} = bytes=0-599
+	expectedHeaderRange := "bytes=0-" + strconv.FormatInt((2*maxRowSize)-1, 10)
+
+	// With remainder-based approach, fetchSize = maxBytesPerPage - len(remainder)
+	// For cursor without remainder: fetchSize = 200, endByte = 200 + 200 - 1 = 399
+	expectedDataEndByte := startByte + maxBytesPerPage - 1
+	expectedDataRange := "bytes=200-" + strconv.FormatInt(expectedDataEndByte, 10)
+
+	request := &s3_adapter.Request{
+		Auth:                  s3_adapter.Auth{AccessKey: "key", SecretKey: "secret", Region: "us-west-1"},
+		Bucket:                "test-bucket",
+		PathPrefix:            "data",
+		FileType:              "csv",
+		EntityExternalID:      "customers",
+		PageSize:              2,
+		RequestTimeoutSeconds: 30,
+		Cursor:                &s3_adapter.S3Cursor{Cursor: &startByte},
+		AttributeConfig: []*framework.AttributeConfig{
+			{
+				ExternalId: "Email",
+				Type:       framework.AttributeTypeString,
+				UniqueId:   true,
+			},
+		},
+	}
+
+	ctxWithLogger, _ := testutil.NewContextWithObservableLogger(context.Background())
+	datasource.GetPage(ctxWithLogger, request)
+
+	if len(tracker.CapturedRanges) < 2 {
+		t.Fatalf("Expected at least 2 GetObject calls, got %d", len(tracker.CapturedRanges))
+	}
+
+	// First GetObject call is for fetching headers (should use bounded range, not fetch entire file)
+	if tracker.CapturedRanges[0] != expectedHeaderRange {
+		t.Errorf("Header fetch: expected range %q, got %q", expectedHeaderRange, tracker.CapturedRanges[0])
+	}
+
+	// Second GetObject call is for fetching data
+	if tracker.CapturedRanges[1] != expectedDataRange {
+		t.Errorf("Data fetch: expected range %q, got %q", expectedDataRange, tracker.CapturedRanges[1])
+	}
+}
+
+// TestCursorWithHeadersSkipsHeaderFetch verifies that when a cursor contains cached headers,
+// the S3 header fetch is skipped and only the data fetch is performed.
+func TestCursorWithHeadersSkipsHeaderFetch(t *testing.T) {
+	mockConfig, tracker := newRangeTrackingConfig(http.StatusOK, http.StatusOK)
+
+	maxRowSize := int64(300)
+	maxBytesPerPage := int64(200)
+	datasource, _ := s3_adapter.NewClient(http.DefaultClient, mockConfig, maxRowSize, maxBytesPerPage)
+
+	startByte := int64(200)
+
+	// Cursor WITH headers - should skip header fetch
+	request := &s3_adapter.Request{
+		Auth:                  s3_adapter.Auth{AccessKey: "key", SecretKey: "secret", Region: "us-west-1"},
+		Bucket:                "test-bucket",
+		PathPrefix:            "data",
+		FileType:              "csv",
+		EntityExternalID:      "customers",
+		PageSize:              2,
+		RequestTimeoutSeconds: 30,
+		Cursor: &s3_adapter.S3Cursor{
+			Cursor:  &startByte,
+			Headers: expectedCSVHeaders, // Headers are cached in cursor
+		},
+		AttributeConfig: []*framework.AttributeConfig{
+			{ExternalId: "Email", Type: framework.AttributeTypeString, UniqueId: true},
+		},
+	}
+
+	ctxWithLogger, _ := testutil.NewContextWithObservableLogger(context.Background())
+	_, err := datasource.GetPage(ctxWithLogger, request)
+
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	// When cursor has headers, only 1 GetObject call should be made (data fetch only)
+	// No header fetch should occur
+	if len(tracker.CapturedRanges) != 1 {
+		t.Errorf("Expected exactly 1 GetObject call (data only) when cursor has headers, got %d calls: %v",
+			len(tracker.CapturedRanges), tracker.CapturedRanges)
+	}
+
+	// Verify it's the data fetch, not header fetch (should not start with "bytes=0-")
+	if len(tracker.CapturedRanges) > 0 && strings.HasPrefix(tracker.CapturedRanges[0], "bytes=0-") {
+		t.Errorf("Expected data fetch range, but got header fetch range: %s", tracker.CapturedRanges[0])
+	}
+}
+
+// TestBackwardCompatibilityOldCursorFormat verifies that old cursors without headers
+// still work correctly by fetching headers from S3.
+func TestBackwardCompatibilityOldCursorFormat(t *testing.T) {
+	mockConfig, tracker := newRangeTrackingConfig(http.StatusOK, http.StatusOK)
+
+	maxRowSize := int64(300)
+	maxBytesPerPage := int64(200)
+	datasource, _ := s3_adapter.NewClient(http.DefaultClient, mockConfig, maxRowSize, maxBytesPerPage)
+
+	startByte := int64(200)
+
+	// Old cursor format WITHOUT headers - should fetch headers from S3
+	request := &s3_adapter.Request{
+		Auth:                  s3_adapter.Auth{AccessKey: "key", SecretKey: "secret", Region: "us-west-1"},
+		Bucket:                "test-bucket",
+		PathPrefix:            "data",
+		FileType:              "csv",
+		EntityExternalID:      "customers",
+		PageSize:              2,
+		RequestTimeoutSeconds: 30,
+		Cursor: &s3_adapter.S3Cursor{
+			Cursor:  &startByte,
+			Headers: nil, // No cached headers - simulates old cursor format
+		},
+		AttributeConfig: []*framework.AttributeConfig{
+			{ExternalId: "Email", Type: framework.AttributeTypeString, UniqueId: true},
+		},
+	}
+
+	ctxWithLogger, _ := testutil.NewContextWithObservableLogger(context.Background())
+	response, err := datasource.GetPage(ctxWithLogger, request)
+
+	if err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	// When cursor doesn't have headers, 2 GetObject calls should be made:
+	// 1. Header fetch (bytes=0-...)
+	// 2. Data fetch
+	if len(tracker.CapturedRanges) != 2 {
+		t.Errorf("Expected 2 GetObject calls (header + data) for old cursor format, got %d calls: %v",
+			len(tracker.CapturedRanges), tracker.CapturedRanges)
+	}
+
+	// First call should be header fetch (starts with "bytes=0-")
+	if len(tracker.CapturedRanges) >= 1 && !strings.HasPrefix(tracker.CapturedRanges[0], "bytes=0-") {
+		t.Errorf("Expected first call to be header fetch (bytes=0-...), got: %s", tracker.CapturedRanges[0])
+	}
+
+	// Verify the response includes headers in the NextCursor for subsequent requests
+	if response.NextCursor != nil && len(response.NextCursor.Headers) == 0 {
+		t.Error("Expected NextCursor to include cached headers for subsequent requests")
 	}
 }

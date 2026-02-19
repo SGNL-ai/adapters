@@ -1,4 +1,5 @@
-// Copyright 2025 SGNL.ai, Inc.
+// Copyright 2026 SGNL.ai, Inc.
+
 package crowdstrike_test
 
 import (

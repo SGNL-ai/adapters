@@ -1,4 +1,4 @@
-// Copyright 2025 SGNL.ai, Inc.
+// Copyright 2026 SGNL.ai, Inc.
 
 // Package condexpr defines a simple DSL for building structured, nested filter expressions.
 // It supports logical operators (AND, OR) and standard comparison operators (=, !=, >, <, etc.).

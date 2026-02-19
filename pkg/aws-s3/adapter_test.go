@@ -1,4 +1,4 @@
-// Copyright 2025 SGNL.ai, Inc.
+// Copyright 2026 SGNL.ai, Inc.
 
 // nolint: goconst
 
@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -17,8 +18,37 @@ import (
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	s3_adapter "github.com/sgnl-ai/adapters/pkg/aws-s3"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
+)
 
-	"github.com/sgnl-ai/adapters/pkg/pagination"
+// expectedCSVHeaders are the headers from validCSVData in common_test.go.
+var adapterTestExpectedCSVHeaders = []string{
+	"Score", "Customer Id", "First Name", "Last Name", "Company", "City",
+	"Country", "Phone 1", "Phone 2", "Email", "Subscription Date", "Website",
+	"KnownAliases",
+}
+
+// Remainder bytes for adapter tests - actual CSV data for rows 3-5 and row 5.
+var (
+	// remainderPage1Start is the byte offset where remainder starts after processing rows 1-2.
+	remainderPage1Start = validCSVDataHeaderLength + validCSVDataRow1Length + validCSVDataRow2Length
+	// remainderPage2Start is the byte offset where remainder starts after processing rows 3-4.
+	remainderPage2Start = validCSVDataHeaderLength + validCSVDataRow1Length + validCSVDataRow2Length +
+		validCSVDataRow3Length + validCSVDataRow4Length
+	// adapterRemainderPage1 contains the actual bytes for rows 3-5.
+	adapterRemainderPage1 = []byte(validCSVData[remainderPage1Start:])
+	// adapterRemainderPage2 contains the actual bytes for row 5.
+	adapterRemainderPage2 = []byte(validCSVData[remainderPage2Start:])
+)
+
+// Base64 encoded cursor strings with headers and remainder for test assertions.
+// These are the JSON cursors {"cursor":N,"headers":[...],"remainder":"..."} encoded in base64.
+var (
+	// cursorPage1 is the cursor after first page (rows 1-2 processed, rows 3-5 in remainder).
+	// nolint: lll
+	cursorPage1 = "eyJjdXJzb3IiOjEzNDEsImhlYWRlcnMiOlsiU2NvcmUiLCJDdXN0b21lciBJZCIsIkZpcnN0IE5hbWUiLCJMYXN0IE5hbWUiLCJDb21wYW55IiwiQ2l0eSIsIkNvdW50cnkiLCJQaG9uZSAxIiwiUGhvbmUgMiIsIkVtYWlsIiwiU3Vic2NyaXB0aW9uIERhdGUiLCJXZWJzaXRlIiwiS25vd25BbGlhc2VzIl0sInJlbWFpbmRlciI6Ik15NHpMR0k1UkdFeE0ySmxaRVZqTkRka1pTeEtaV1ptWlhKNUxFbGlZWEp5WVN3aVVtOXpaU3dnUkdWc1pXOXVJR0Z1WkNCVFlXNWtaWEp6SWl4RVlYSnNaVzVsWW5WeWVTeEJiR0poYm1saExDZzROREFwTlRNNUxURTNPVGQ0TkRjNUxESXdPUzAxTVRrdE5UZ3hOeXhrWldOclpYSnFZVzFwWlVCaVlYSjBiR1YwZEM1aWFYb3NNakF5TUMwd015MHpNQ3hvZEhSd2N6b3ZMM2QzZHk1dGIzSm5ZVzR0Y0dobGJIQnpMbU52YlM4c0lsdDdJaUpoYkdsaGN5SWlPaUFpSWtSbFkydGxjaUJLWVdsdFpTSWlMQ0FpSW5CeWFXMWhjbmtpSWpvZ2RISjFaWDBpQ2pRdU5DdzNNVEJFTkdSQk1rWkJZVGsyUWpVc1NtRnRaWE1zVjJGc2RHVnljeXhMYkdsdVpTQmhibVFnVTI5dWN5eEViMjVvWVhabGJpeENZV2h5WVdsdUxDc3hMVGs0TlMwMU9UWXRNVEEzTW5nek1EUXdMQ2cxTWpncE56TTBMVGc1TWpSNE1EVTBMR1J2WTJodllVQmpZWEpsZVMxdGIzSnpaUzVqYjIwc01qQXlNaTB3TVMweE9DeG9kSFJ3Y3pvdkwySnlaVzV1WVc0dVkyOXRMeXdpVzNzaUltRnNhV0Z6SWlJNklDSWlSRzhnUTJodllTSWlMQ0FpSW5CeWFXMWhjbmtpSWpvZ2RISjFaWDFkSWdvMUxqVXNNMk0wTkdWa05qSmtOMEptUlVKRExFeGxjMnhwWlN4VGJubGtaWElzSWxCeWFXTmxMQ0JOWVhOdmJpQmhibVFnUkc5NWJHVWlMRTF2YzNObWIzSjBMRU5sYm5SeVlXd2dRV1p5YVdOaGJpQlNaWEIxWW14cFl5dzRNVEl0TURFMkxUazVNRFI0T0RJek1Td3lOVFF1TmpNeExqa3pPREFzWkdGeWNubHNZbUZ5WW1WeVFIZGhjbkpsYmk1dmNtY3NNakF5TUMwd01TMHlOU3hvZEhSd09pOHZkM2QzTG5SeWRXcHBiR3h2TFhOMWJHeHBkbUZ1TG1sdVptOHZMQ0piZXlJaVlXeHBZWE1pSWpvZ0lpSkVZWEp5ZVd3Z1FtRnlZbVZ5SWlJc0lDSWljSEpwYldGeWVTSWlPaUIwY25WbGZTST0ifQ=="
+	// cursorPage2 is the cursor after middle page (rows 3-4 processed, row 5 in remainder).
+	// nolint: lll
+	cursorPage2 = "eyJjdXJzb3IiOjEzNDEsImhlYWRlcnMiOlsiU2NvcmUiLCJDdXN0b21lciBJZCIsIkZpcnN0IE5hbWUiLCJMYXN0IE5hbWUiLCJDb21wYW55IiwiQ2l0eSIsIkNvdW50cnkiLCJQaG9uZSAxIiwiUGhvbmUgMiIsIkVtYWlsIiwiU3Vic2NyaXB0aW9uIERhdGUiLCJXZWJzaXRlIiwiS25vd25BbGlhc2VzIl0sInJlbWFpbmRlciI6Ik5TNDFMRE5qTkRSbFpEWXlaRGRDWmtWQ1F5eE1aWE5zYVdVc1UyNTVaR1Z5TENKUWNtbGpaU3dnVFdGemIyNGdZVzVrSUVSdmVXeGxJaXhOYjNOelptOXlkQ3hEWlc1MGNtRnNJRUZtY21sallXNGdVbVZ3ZFdKc2FXTXNPREV5TFRBeE5pMDVPVEEwZURneU16RXNNalUwTGpZek1TNDVNemd3TEdSaGNuSjViR0poY21KbGNrQjNZWEp5Wlc0dWIzSm5MREl3TWpBdE1ERXRNalVzYUhSMGNEb3ZMM2QzZHk1MGNuVnFhV3hzYnkxemRXeHNhWFpoYmk1cGJtWnZMeXdpVzNzaUltRnNhV0Z6SWlJNklDSWlSR0Z5Y25sc0lFSmhjbUpsY2lJaUxDQWlJbkJ5YVcxaGNua2lJam9nZEhKMVpYMGkifQ=="
 )
 
 func TestAdapterGetPage(t *testing.T) {
@@ -26,7 +56,7 @@ func TestAdapterGetPage(t *testing.T) {
 		ctx                  context.Context
 		request              *framework.Request[s3_adapter.Config]
 		wantResponse         framework.Response
-		wantCursor           *pagination.CompositeCursor[int64]
+		wantCursor           *s3_adapter.S3Cursor
 		headObjectStatusCode int
 		getObjectStatusCode  int
 	}{
@@ -71,11 +101,13 @@ func TestAdapterGetPage(t *testing.T) {
 							"Subscription Date": time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 						},
 					},
-					NextCursor: "eyJjdXJzb3IiOjY1NX0=",
+					NextCursor: cursorPage1,
 				},
 			},
-			wantCursor: &pagination.CompositeCursor[int64]{
-				Cursor: testutil.GenPtr(int64(655)),
+			wantCursor: &s3_adapter.S3Cursor{
+				Cursor:    testutil.GenPtr(validCSVDataTotalLength),
+				Headers:   adapterTestExpectedCSVHeaders,
+				Remainder: adapterRemainderPage1,
 			},
 		},
 		"success_HeadObject_200_GetObject_200_middle_page": {
@@ -120,8 +152,13 @@ func TestAdapterGetPage(t *testing.T) {
 							"Subscription Date": time.Date(2022, 1, 18, 0, 0, 0, 0, time.UTC),
 						},
 					},
-					NextCursor: "eyJjdXJzb3IiOjEwOTV9",
+					NextCursor: cursorPage2,
 				},
+			},
+			wantCursor: &s3_adapter.S3Cursor{
+				Cursor:    testutil.GenPtr(validCSVDataTotalLength),
+				Headers:   adapterTestExpectedCSVHeaders,
+				Remainder: adapterRemainderPage2,
 			},
 		},
 		"success_HeadObject_200_GetObject_200_last_page": {
@@ -233,11 +270,13 @@ func TestAdapterGetPage(t *testing.T) {
 							"Score": "2.2",
 						},
 					},
-					NextCursor: "eyJjdXJzb3IiOjY1NX0=",
+					NextCursor: cursorPage1,
 				},
 			},
-			wantCursor: &pagination.CompositeCursor[int64]{
-				Cursor: testutil.GenPtr(int64(655)),
+			wantCursor: &s3_adapter.S3Cursor{
+				Cursor:    testutil.GenPtr(validCSVDataTotalLength),
+				Headers:   adapterTestExpectedCSVHeaders,
+				Remainder: adapterRemainderPage1,
 			},
 		},
 		"success_read_child_objects_HeadObject_200_GetObject_200": {
@@ -304,11 +343,13 @@ func TestAdapterGetPage(t *testing.T) {
 							},
 						},
 					},
-					NextCursor: "eyJjdXJzb3IiOjY1NX0=",
+					NextCursor: cursorPage1,
 				},
 			},
-			wantCursor: &pagination.CompositeCursor[int64]{
-				Cursor: testutil.GenPtr(int64(655)),
+			wantCursor: &s3_adapter.S3Cursor{
+				Cursor:    testutil.GenPtr(validCSVDataTotalLength),
+				Headers:   adapterTestExpectedCSVHeaders,
+				Remainder: adapterRemainderPage1,
 			},
 		},
 		// Check if a number in the CSV can be ingested as a double type based on entity configuration
@@ -347,11 +388,13 @@ func TestAdapterGetPage(t *testing.T) {
 							"Score": float64(2.2),
 						},
 					},
-					NextCursor: "eyJjdXJzb3IiOjY1NX0=",
+					NextCursor: cursorPage1,
 				},
 			},
-			wantCursor: &pagination.CompositeCursor[int64]{
-				Cursor: testutil.GenPtr(int64(655)),
+			wantCursor: &s3_adapter.S3Cursor{
+				Cursor:    testutil.GenPtr(validCSVDataTotalLength),
+				Headers:   adapterTestExpectedCSVHeaders,
+				Remainder: adapterRemainderPage1,
 			},
 		},
 		"error_empty_csv_file_HeadObject_200_GetObject_800": {
@@ -665,7 +708,7 @@ func TestAdapterGetPage(t *testing.T) {
 			// decipher the cursor just by reading the test case.
 			// So in addition, decode the b64 cursor and compare structs.
 			if gotResponse.Success != nil && tt.wantCursor != nil {
-				var gotCursor pagination.CompositeCursor[int64]
+				var gotCursor s3_adapter.S3Cursor
 
 				decodedCursor, err := base64.StdEncoding.DecodeString(gotResponse.Success.NextCursor)
 				if err != nil {
@@ -679,6 +722,92 @@ func TestAdapterGetPage(t *testing.T) {
 				if !reflect.DeepEqual(&gotCursor, tt.wantCursor) {
 					t.Errorf("gotCursor: %v, wantCursor: %v", gotCursor, tt.wantCursor)
 				}
+			}
+		})
+	}
+}
+
+// TestUnmarshalS3CursorBackwardCompatibility verifies that UnmarshalS3Cursor
+// can handle both old cursor format (without headers) and new cursor format (with headers).
+func TestUnmarshalS3CursorBackwardCompatibility(t *testing.T) {
+	tests := map[string]struct {
+		cursorString   string
+		wantCursor     *s3_adapter.S3Cursor
+		wantErr        bool
+		wantErrMessage string
+	}{
+		"empty_cursor": {
+			cursorString: "",
+			wantCursor:   nil,
+			wantErr:      false,
+		},
+		"old_format_cursor_only": {
+			// {"cursor":655} - old format without headers
+			cursorString: "eyJjdXJzb3IiOjY1NX0=",
+			wantCursor: &s3_adapter.S3Cursor{
+				Cursor:  testutil.GenPtr(int64(655)),
+				Headers: nil,
+			},
+			wantErr: false,
+		},
+		"old_format_with_collection_fields": {
+			// {"cursor":655,"collectionId":null,"collectionCursor":null} - old format with collection fields
+			cursorString: "eyJjdXJzb3IiOjY1NSwiY29sbGVjdGlvbklkIjpudWxsLCJjb2xsZWN0aW9uQ3Vyc29yIjpudWxsfQ==",
+			wantCursor: &s3_adapter.S3Cursor{
+				Cursor:  testutil.GenPtr(int64(655)),
+				Headers: nil,
+			},
+			wantErr: false,
+		},
+		"new_format_with_headers": {
+			// {"cursor":655,"headers":["Email","Score"]} - new format with headers
+			cursorString: "eyJjdXJzb3IiOjY1NSwiaGVhZGVycyI6WyJFbWFpbCIsIlNjb3JlIl19",
+			wantCursor: &s3_adapter.S3Cursor{
+				Cursor:  testutil.GenPtr(int64(655)),
+				Headers: []string{"Email", "Score"},
+			},
+			wantErr: false,
+		},
+		"invalid_base64": {
+			cursorString:   "not-valid-base64!!!",
+			wantCursor:     nil,
+			wantErr:        true,
+			wantErrMessage: "Failed to decode base64 cursor",
+		},
+		"invalid_json": {
+			// base64 of "not json"
+			cursorString:   "bm90IGpzb24=",
+			wantCursor:     nil,
+			wantErr:        true,
+			wantErrMessage: "Failed to unmarshal JSON cursor",
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			gotCursor, err := s3_adapter.UnmarshalS3Cursor(tt.cursorString)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Errorf("Expected error but got none")
+
+					return
+				}
+				if tt.wantErrMessage != "" && !strings.HasPrefix(err.Message, tt.wantErrMessage) {
+					t.Errorf("Expected error message to start with %q, got %q", tt.wantErrMessage, err.Message)
+				}
+
+				return
+			}
+
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+
+				return
+			}
+
+			if !reflect.DeepEqual(gotCursor, tt.wantCursor) {
+				t.Errorf("gotCursor: %+v, wantCursor: %+v", gotCursor, tt.wantCursor)
 			}
 		})
 	}

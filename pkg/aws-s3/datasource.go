@@ -1,4 +1,4 @@
-// Copyright 2025 SGNL.ai, Inc.
+// Copyright 2026 SGNL.ai, Inc.
 
 package awss3
 
@@ -23,7 +23,6 @@ import (
 	customerror "github.com/sgnl-ai/adapters/pkg/errors"
 	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
 	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
-	"github.com/sgnl-ai/adapters/pkg/pagination"
 )
 
 // BOM (Byte Order Mark) patterns for different encodings.
@@ -132,63 +131,128 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		}
 	}
 
-	s3HeaderStreamOutput, err := handler.GetObjectStream(ctx, request.Bucket, objectKey, nil)
-	if err != nil {
-		return nil, customerror.UpdateError(&framework.Error{
-			Message: fmt.Sprintf("Failed to fetch entity from AWS S3: %s, error: %v.", entityName, err),
-			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
-		}, customerror.WithRequestTimeoutMessage(err, request.RequestTimeoutSeconds))
+	var (
+		parsedHeaders []string
+		startBytePos  int64
+	)
+
+	// For the first page or old cursor format without headers, two S3 requests are made:
+	// 1. Fetch the headers (the first line of the file) to determine the CSV column names.
+	// 2. Fetch the actual data starting from the byte position after the headers.
+	// For subsequent pages, only one S3 request is made to fetch the data starting from
+	// the byte position indicated by the cursor.
+
+	// Step 1: Get headers - either from cursor cache or fetch from S3.
+	if request.Cursor != nil && len(request.Cursor.Headers) > 0 {
+		// Use cached headers from cursor - skip S3 header fetch.
+		parsedHeaders = request.Cursor.Headers
+	} else {
+		// Fetch headers from S3 (first page or old cursor format without headers).
+		// Use a bounded range for the header fetch to avoid S3 streaming the entire file.
+		// Without a Range header, S3 starts streaming the full file, and even though we only
+		// read the header line before closing, TCP buffering causes significant data transfer.
+		// We need enough bytes to read the BOM (up to 4 bytes) and the header row, so we use
+		// 2x MaxCSVRowSizeBytes as a safe buffer that's consistent with the data fetch approach.
+		headerRangeHeader := fmt.Sprintf("bytes=0-%d", (2*d.MaxCSVRowSizeBytes)-1)
+
+		s3HeaderStreamOutput, err := handler.GetObjectStream(ctx, request.Bucket, objectKey, &headerRangeHeader)
+		if err != nil {
+			return nil, customerror.UpdateError(&framework.Error{
+				Message: fmt.Sprintf("Failed to fetch entity from AWS S3: %s, error: %v.", entityName, err),
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+			}, customerror.WithRequestTimeoutMessage(err, request.RequestTimeoutSeconds))
+		}
+		defer s3HeaderStreamOutput.Body.Close()
+
+		headerBufReader := bufio.NewReader(s3HeaderStreamOutput.Body)
+
+		bomLength, bomErr := stripBOM(headerBufReader)
+		if bomErr != nil {
+			return nil, customerror.UpdateError(&framework.Error{
+				Message: fmt.Sprintf("Failed to fetch entity from AWS S3: %s, error processing BOM: %v", entityName, bomErr),
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+			}, customerror.WithRequestTimeoutMessage(bomErr, request.RequestTimeoutSeconds))
+		}
+
+		var bytesReadForHeaderLine int64
+
+		parsedHeaders, bytesReadForHeaderLine, err = CSVHeaders(headerBufReader, d.MaxCSVRowSizeBytes)
+		if err != nil {
+			return nil, customerror.UpdateError(&framework.Error{
+				Message: fmt.Sprintf("Unable to parse CSV file headers: %v", err),
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+			}, customerror.WithRequestTimeoutMessage(err, request.RequestTimeoutSeconds))
+		}
+
+		s3HeaderStreamOutput.Body.Close()
+
+		// Default start position is after headers (for first page).
+		startBytePos = int64(bomLength) + bytesReadForHeaderLine
 	}
-	defer s3HeaderStreamOutput.Body.Close()
 
-	headerBufReader := bufio.NewReader(s3HeaderStreamOutput.Body)
-
-	bomLength, bomErr := stripBOM(headerBufReader)
-	if bomErr != nil {
-		return nil, customerror.UpdateError(&framework.Error{
-			Message: fmt.Sprintf("Failed to fetch entity from AWS S3: %s, error processing BOM: %v", entityName, bomErr),
-			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
-		}, customerror.WithRequestTimeoutMessage(bomErr, request.RequestTimeoutSeconds))
-	}
-
-	parsedHeaders, bytesReadForHeaderLine, err := CSVHeaders(headerBufReader, d.MaxCSVRowSizeBytes)
-	if err != nil {
-		return nil, customerror.UpdateError(&framework.Error{
-			Message: fmt.Sprintf("Unable to parse CSV file headers: %v", err),
-			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
-		}, customerror.WithRequestTimeoutMessage(err, request.RequestTimeoutSeconds))
-	}
-
-	s3HeaderStreamOutput.Body.Close()
-
-	firstDataByteOffset := int64(bomLength) + bytesReadForHeaderLine
-
-	var startBytePos int64
+	// Step 2: Override start position if cursor has one (for pagination).
+	// This handles both new cursor format (with headers) and old cursor format (without headers).
 	if request.Cursor != nil && request.Cursor.Cursor != nil {
 		startBytePos = *request.Cursor.Cursor
-	} else {
-		startBytePos = firstDataByteOffset
 	}
 
-	if startBytePos >= fileSize {
-		return &Response{StatusCode: 200, Objects: []map[string]any{}}, nil
+	// Step 3: Get remainder from cursor (unprocessed bytes from previous fetch).
+	var remainder []byte
+	if request.Cursor != nil && len(request.Cursor.Remainder) > 0 {
+		remainder = request.Cursor.Remainder
 	}
 
-	rangeHeaderForData := fmt.Sprintf("bytes=%d-", startBytePos)
+	// Step 4: Fetch data from S3 if needed.
+	var s3FetchedData []byte
 
-	s3DataStreamOutput, err := handler.GetObjectStream(ctx, request.Bucket, objectKey, &rangeHeaderForData)
-	if err != nil {
-		return nil, customerror.UpdateError(&framework.Error{
-			Message: fmt.Sprintf("Failed to fetch entity from AWS S3: %v", err),
-			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
-		}, customerror.WithRequestTimeoutMessage(err, request.RequestTimeoutSeconds))
+	if startBytePos < fileSize {
+		// Calculate how much to fetch from S3 to bring total buffer to MaxBytesToProcessPerPage.
+		remainderSize := int64(len(remainder))
+		fetchSize := d.MaxBytesToProcessPerPage - remainderSize
+
+		if fetchSize > 0 {
+			endBytePos := startBytePos + fetchSize - 1
+			if endBytePos >= fileSize {
+				endBytePos = fileSize - 1
+			}
+
+			rangeHeaderForData := fmt.Sprintf("bytes=%d-%d", startBytePos, endBytePos)
+
+			s3DataStreamOutput, err := handler.GetObjectStream(ctx, request.Bucket, objectKey, &rangeHeaderForData)
+			if err != nil {
+				return nil, customerror.UpdateError(&framework.Error{
+					Message: fmt.Sprintf("Failed to fetch entity from AWS S3: %v", err),
+					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+				}, customerror.WithRequestTimeoutMessage(err, request.RequestTimeoutSeconds))
+			}
+			defer s3DataStreamOutput.Body.Close()
+
+			// Read all fetched data into memory.
+			s3FetchedData, err = io.ReadAll(s3DataStreamOutput.Body)
+			if err != nil {
+				return nil, customerror.UpdateError(&framework.Error{
+					Message: fmt.Sprintf("Failed to read data from AWS S3: %v", err),
+					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+				}, customerror.WithRequestTimeoutMessage(err, request.RequestTimeoutSeconds))
+			}
+		}
 	}
 
-	defer s3DataStreamOutput.Body.Close()
+	// Step 5: Combine remainder + newly fetched data into a single buffer.
+	combinedData := append(remainder, s3FetchedData...)
 
-	dataBufReader := bufio.NewReader(s3DataStreamOutput.Body)
+	// If there's no data to process, return an empty response.
+	if len(combinedData) == 0 {
+		return &Response{
+			StatusCode: 200,
+			Objects:    []map[string]any{},
+		}, nil
+	}
 
-	objects, bytesReadFromDataStream, hasNext, processErr := StreamingCSVToPage(
+	// Create a reader from the combined buffer for CSV processing.
+	dataBufReader := bufio.NewReader(bytes.NewReader(combinedData))
+
+	objects, bytesConsumed, _, processErr := StreamingCSVToPage(
 		dataBufReader,
 		parsedHeaders,
 		request.PageSize,
@@ -208,10 +272,21 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		Objects:    objects,
 	}
 
-	if hasNext {
-		nextBytePos := startBytePos + bytesReadFromDataStream
-		if nextBytePos < fileSize {
-			response.NextCursor = &pagination.CompositeCursor[int64]{Cursor: &nextBytePos}
+	// Step 6: Calculate new remainder (unprocessed bytes from combined buffer).
+	var newRemainder []byte
+	if bytesConsumed < int64(len(combinedData)) {
+		newRemainder = combinedData[bytesConsumed:]
+	}
+
+	// Step 7: Build next cursor if there's more data to process.
+	// More data exists if: there's remainder OR we haven't reached EOF in S3.
+	nextBytePos := startBytePos + int64(len(s3FetchedData))
+
+	if len(newRemainder) > 0 || nextBytePos < fileSize {
+		response.NextCursor = &S3Cursor{
+			Cursor:    &nextBytePos,
+			Headers:   parsedHeaders,
+			Remainder: newRemainder,
 		}
 	}
 

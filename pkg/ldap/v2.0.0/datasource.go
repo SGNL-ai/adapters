@@ -1,4 +1,4 @@
-// Copyright 2025 SGNL.ai, Inc.
+// Copyright 2026 SGNL.ai, Inc.
 
 package ldap
 
@@ -348,13 +348,12 @@ func (c *ldapClient) Request(ctx context.Context, request *Request) (*Response, 
 	}
 
 	// If we have a cookie, update the session with the new cookie for the next request.
+	// We don't delete sessions when paging completes (no cookie) because getMemberOfPage
+	// may return the OLD cookie when stopping mid-group. The session pool's TTL cleanup
+	// handles eventual cleanup of idle sessions.
 	if len(cookie) > 0 {
-		// Move the session to the new cookie key: remove old key, add new key (without closing conn)
 		nextKey := sessionKey(address, cookie)
 		c.sessionPool.UpdateKey(key, nextKey)
-	} else {
-		// Paging done, cleanup
-		c.sessionPool.Delete(key)
 	}
 
 	logger.Info("Datasource request completed successfully",
@@ -639,7 +638,13 @@ func (d *Datasource) getMemberOfPage(
 			modifiedGroupMemberQuery := strings.ReplaceAll(
 				entityConfig.Query, "{{CollectionAttribute}}", *entityConfig.CollectionAttribute,
 			)
-			modifiedGroupMemberQuery = strings.ReplaceAll(modifiedGroupMemberQuery, "{{CollectionId}}", groupUniqueIDValue)
+
+			// Escape the group unique ID value to handle LDAP special characters in DNs
+			// (e.g., parentheses in group names like "Sales Team (APAC)")
+			escapedGroupUniqueIDValue := ldap_v3.EscapeFilter(groupUniqueIDValue)
+			modifiedGroupMemberQuery = strings.ReplaceAll(
+				modifiedGroupMemberQuery, "{{CollectionId}}", escapedGroupUniqueIDValue,
+			)
 
 			modifiedEntityConfigMap := make(map[string]*EntityConfig)
 
