@@ -9,6 +9,8 @@ import (
 
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
+
+	"github.com/sgnl-ai/adapters/pkg/validation"
 )
 
 const (
@@ -67,9 +69,14 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 		}
 	}
 
+	// Validate address scheme - only ldap:// and ldaps:// are allowed
+	trimmedAddress, _, err := validation.ParseAndValidateAddress(request.Address, []string{"ldap", "ldaps"})
+	if err != nil {
+		return err
+	}
+
 	// Check if scheme is present in address, if not
 	// set scheme based on certificateChain input
-	trimmedAddress := strings.TrimSpace(request.Address)
 	sanitizedAddress := strings.ToLower(trimmedAddress)
 
 	if !strings.HasPrefix(sanitizedAddress, "ldap://") && !strings.HasPrefix(sanitizedAddress, "ldaps://") {

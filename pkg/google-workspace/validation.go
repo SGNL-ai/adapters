@@ -9,6 +9,8 @@ import (
 
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
+
+	"github.com/sgnl-ai/adapters/pkg/validation"
 )
 
 // ValidateGetPageRequest validates the fields of the GetPage Request.
@@ -20,12 +22,8 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 		}
 	}
 
-	sanitizedAddress := strings.TrimSpace(strings.ToLower(request.Address))
-	if strings.HasPrefix(sanitizedAddress, "http://") {
-		return &framework.Error{
-			Message: "The provided HTTP protocol is not supported.",
-			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
-		}
+	if _, _, err := validation.ParseAndValidateAddress(request.Address, []string{"https"}); err != nil {
+		return err
 	}
 
 	if request.Auth == nil || request.Auth.HTTPAuthorization == "" {
