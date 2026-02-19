@@ -5,7 +5,6 @@ package okta
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	framework "github.com/sgnl-ai/adapter-framework"
@@ -48,10 +47,6 @@ func (a *Adapter) RequestPageFromDatasource(
 	}
 
 	commonConfig = config.SetMissingCommonConfigDefaults(commonConfig)
-
-	if !strings.HasPrefix(request.Address, "https://") {
-		request.Address = "https://" + request.Address
-	}
 
 	oktaReq := &Request{
 		BaseURL:               request.Address,

@@ -9,7 +9,9 @@ import (
 
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
+
 	"github.com/sgnl-ai/adapters/pkg/pagination"
+	"github.com/sgnl-ai/adapters/pkg/validation"
 )
 
 const (
@@ -52,16 +54,14 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 		}
 	}
 
-	if strings.HasPrefix(request.Address, "http://") {
-		return &framework.Error{
-			Message: "The provided HTTP protocol is not supported.",
-			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
-		}
+	trimmedAddress, parsed, err := validation.ParseAndValidateAddress(request.Address, []string{"https"})
+	if err != nil {
+		return err
 	}
 
-	// We prepend "https://" in GetPage so do it here before validation as well.
-	rawURL := strings.TrimSuffix(request.Address, "/")
-	if !strings.HasPrefix(rawURL, "https://") {
+	// Normalize address with https:// scheme if not provided
+	rawURL := strings.TrimSuffix(trimmedAddress, "/")
+	if parsed.Scheme == "" {
 		rawURL = "https://" + rawURL
 	}
 

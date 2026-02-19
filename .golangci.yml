@@ -33,10 +33,11 @@ linters:
     - wsl_v5
   settings:
     goheader:
+      template: |-
+        Copyright {{ YEAR }} SGNL.ai, Inc.
       values:
-        const:
-          COMPANY: SGNL.ai, Inc.
-      template: Copyright {{ YEAR }} {{ COMPANY }}
+        regexp:
+          YEAR: \d{4}
     nestif:
       min-complexity: 10
     wsl_v5:
