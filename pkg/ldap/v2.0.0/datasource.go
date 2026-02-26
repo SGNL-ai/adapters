@@ -693,6 +693,14 @@ func (d *Datasource) getMemberOfPage(
 				membersDN, action := extractMembersDNFromGroup(memberObj, int(memberOffsetInGroup), memberCount)
 				memberOffsetEnd = memberOffsetInGroup + int64(len(membersDN))
 
+				zaplogger.FromContext(ctx).Info("Extracted members from group",
+					zap.String("groupDN", groupUniqueIDValue),
+					zap.Int("memberOffset", int(memberOffsetInGroup)),
+					zap.Int("memberCount", memberCount),
+					zap.Int("membersExtracted", len(membersDN)),
+					zap.String("extractionAction", string(action)),
+				)
+
 				// Convert member DNs to GroupMember objects
 				objects := make([]map[string]any, len(membersDN))
 				// id
