@@ -689,8 +689,17 @@ func (d *Datasource) getMemberOfPage(
 				memberObj := memberResp.Objects[0]
 
 				// Extract member DNs from this group
-				membersDN, action := extractMembersDNFromGroup(memberObj, int(memberOffsetEnd)-int(memberOffsetInGroup))
+				memberCount := int(memberOffsetEnd) - int(memberOffsetInGroup)
+				membersDN, action := extractMembersDNFromGroup(memberObj, int(memberOffsetInGroup), memberCount)
 				memberOffsetEnd = memberOffsetInGroup + int64(len(membersDN))
+
+				zaplogger.FromContext(ctx).Info("Extracted members from group",
+					zap.String("groupDN", groupUniqueIDValue),
+					zap.Int("memberOffset", int(memberOffsetInGroup)),
+					zap.Int("memberCount", memberCount),
+					zap.Int("membersExtracted", len(membersDN)),
+					zap.String("extractionAction", string(action)),
+				)
 
 				// Convert member DNs to GroupMember objects
 				objects := make([]map[string]any, len(membersDN))
@@ -799,9 +808,9 @@ const (
 	MemberExtractionActionDone            MemberExtractionAction = "Done"
 )
 
-// extractMembersDNFromGroup extracts member DNs from a group's member attributes
-// Returns the DNs, whether range queries are needed, and any error.
-func extractMembersDNFromGroup(memberObjs map[string]any, count int) ([]string, MemberExtractionAction) {
+// extractMembersDNFromGroup extracts member DNs from a group's member attributes.
+// Returns the DNs and the next action to take (done, continue with range, or continue regular).
+func extractMembersDNFromGroup(memberObjs map[string]any, offset, count int) ([]string, MemberExtractionAction) {
 	var membersDN []string
 
 	// Check for range attributes first (indicates large groups)
@@ -809,6 +818,20 @@ func extractMembersDNFromGroup(memberObjs map[string]any, count int) ([]string, 
 		memberList, ok := value.([]any)
 		if !ok {
 			continue
+		}
+
+		// For range attributes (e.g., member;range=0-1499), the server already
+		// returns only the requested range, so offset does not apply.
+		// For plain attributes (e.g., member), the server returns all members
+		// and we must skip the first `offset` entries locally.
+		isRange := rangeAttributePattern.MatchString(attrName)
+
+		if !isRange && offset > 0 {
+			if offset >= len(memberList) {
+				return []string{}, MemberExtractionActionDone
+			}
+
+			memberList = memberList[offset:]
 		}
 
 		if count > len(memberList) {
