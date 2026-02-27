@@ -5,7 +5,6 @@ package crowdstrike
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	framework "github.com/sgnl-ai/adapter-framework"
@@ -49,10 +48,6 @@ func (a *Adapter) RequestPageFromDatasource(
 	}
 
 	commonConfig = config.SetMissingCommonConfigDefaults(commonConfig)
-
-	if !strings.HasPrefix(request.Address, "https://") {
-		request.Address = "https://" + request.Address
-	}
 
 	_, isGraphQLEntity := ValidGraphQLEntityExternalIDs[request.Entity.ExternalId]
 	_, isRESTEntity := ValidRESTEntityExternalIDs[request.Entity.ExternalId]

@@ -3,19 +3,24 @@
 package scim
 
 import (
-	"strings"
-
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
+
+	"github.com/sgnl-ai/adapters/pkg/validation"
 )
 
 // ValidateGetPageRequest validates the fields of the GetPage Request.
 func (a *Adapter) ValidateGetPageRequest(request *framework.Request[Config]) *framework.Error {
-	if strings.HasPrefix(request.Address, "http://") {
-		return &framework.Error{
-			Message: "The provided HTTP protocol is not supported.",
-			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
-		}
+	trimmedAddress, parsed, err := validation.ParseAndValidateAddress(request.Address, []string{"https"})
+	if err != nil {
+		return err
+	}
+
+	// Normalize address with https:// scheme if not provided
+	if parsed.Scheme == "" {
+		request.Address = "https://" + trimmedAddress
+	} else {
+		request.Address = trimmedAddress
 	}
 
 	// SCIM server can use any of the Auth mechanisms

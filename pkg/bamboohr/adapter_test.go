@@ -201,7 +201,7 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
-					Message: "The provided HTTP protocol is not supported.",
+					Message: `Scheme "http" is not supported.`,
 					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
 				},
 			},

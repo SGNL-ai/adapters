@@ -5,7 +5,6 @@ package pagerduty
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
@@ -53,10 +52,6 @@ func (a *Adapter) RequestPageFromDatasource(
 	}
 
 	commonConfig = config.SetMissingCommonConfigDefaults(commonConfig)
-
-	if !strings.HasPrefix(request.Address, "https://") {
-		request.Address = "https://" + request.Address
-	}
 
 	pagerDutyReq := &Request{
 		BaseURL:               request.Address,

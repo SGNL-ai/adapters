@@ -139,7 +139,7 @@ func (v *DefaultSSRFValidator) ValidateExternalURL(ctx context.Context, rawURL s
 
 // isLocalhost checks if a hostname is a localhost variation.
 func isLocalhost(hostname string) bool {
-	lower := strings.ToLower(hostname)
+	lower := strings.ToLower(strings.TrimSpace(hostname))
 
 	return lower == "localhost" ||
 		lower == "127.0.0.1" ||

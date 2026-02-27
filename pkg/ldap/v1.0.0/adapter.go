@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"strings"
 	"time"
 
 	framework "github.com/sgnl-ai/adapter-framework"
@@ -64,15 +63,7 @@ func (a *Adapter) RequestPageFromDatasource(
 	}
 
 	// At this level request.Address is already validated, skipping parsing error
-	url, _ := url.Parse(request.Address)
-
-	var isLDAPS bool
-	if strings.HasPrefix(request.Address, "ldaps://") {
-		isLDAPS = true
-	}
-
-	// Extract hostname without port for TLS verification
-	hostname := url.Hostname()
+	parsed, _ := url.Parse(request.Address)
 
 	uniqueIDAttribute := getUniqueIDAttribute(request.Entity.Attributes)
 
@@ -86,8 +77,8 @@ func (a *Adapter) RequestPageFromDatasource(
 			BindPassword:     request.Auth.Basic.Password,
 			BaseDN:           request.Config.BaseDN,
 			CertificateChain: request.Config.CertificateChain,
-			IsLDAPS:          isLDAPS,
-			Host:             hostname,
+			IsLDAPS:          parsed.Scheme == "ldaps",
+			Host:             parsed.Hostname(),
 		},
 		UniqueIDAttribute:     *uniqueIDAttribute,
 		Cursor:                cursor,

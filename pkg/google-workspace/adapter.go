@@ -5,7 +5,6 @@ package googleworkspace
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	framework "github.com/sgnl-ai/adapter-framework"
@@ -53,10 +52,6 @@ func (a *Adapter) RequestPageFromDatasource(
 	cursor, err := pagination.UnmarshalCursor[string](request.Cursor)
 	if err != nil {
 		return framework.NewGetPageResponseError(err)
-	}
-
-	if !strings.HasPrefix(request.Address, "https://") {
-		request.Address = "https://" + request.Address
 	}
 
 	req := &Request{
