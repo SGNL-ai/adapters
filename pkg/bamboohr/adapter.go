@@ -5,7 +5,6 @@ package bamboohr
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	framework "github.com/sgnl-ai/adapter-framework"
@@ -62,10 +61,6 @@ func (a *Adapter) RequestPageFromDatasource(
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_PAGE_REQUEST_CONFIG,
 			},
 		)
-	}
-
-	if !strings.HasPrefix(request.Address, "https://") {
-		request.Address = "https://" + request.Address
 	}
 
 	bambooReq := &Request{
