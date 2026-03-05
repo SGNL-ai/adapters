@@ -161,3 +161,30 @@ ou: Groups
 cn: Science
 uniquemember: cn=lorem,ou=People,dc=example,dc=org
 uniquemember: cn=bobby,ou=People,dc=example,dc=org
+
+# Group with parentheses in the name - used to test LDAP filter escaping
+dn: cn=Sales Team (APAC),ou=Groups,dc=example,dc=org
+objectClass: groupofuniquenames
+objectClass: top
+ou: Groups
+cn: Sales Team (APAC)
+uniquemember: cn=alice,ou=People,dc=example,dc=org
+uniquemember: cn=bobby,ou=People,dc=example,dc=org
+
+# Group with asterisk in the name - tests LDAP wildcard escaping
+dn: cn=Team * Stars,ou=Groups,dc=example,dc=org
+objectClass: groupofuniquenames
+objectClass: top
+ou: Groups
+cn: Team * Stars
+uniquemember: cn=zach,ou=People,dc=example,dc=org
+uniquemember: cn=lorem,ou=People,dc=example,dc=org
+
+# Group with escaped comma in the name - tests backslash escaping
+dn: cn=Legal\, Compliance,ou=Groups,dc=example,dc=org
+objectClass: groupofuniquenames
+objectClass: top
+ou: Groups
+cn: Legal, Compliance
+uniquemember: cn=Robert Smith,ou=People,dc=example,dc=org
+uniquemember: cn=Barbara Jensen,ou=People,dc=example,dc=org

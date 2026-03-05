@@ -27,13 +27,28 @@ var adapterTestExpectedCSVHeaders = []string{
 	"KnownAliases",
 }
 
-// Base64 encoded cursor strings with headers for test assertions.
-// These are the JSON cursors {"cursor":N,"headers":[...]} encoded in base64.
+// Remainder bytes for adapter tests - actual CSV data for rows 3-5 and row 5.
 var (
+	// remainderPage1Start is the byte offset where remainder starts after processing rows 1-2.
+	remainderPage1Start = validCSVDataHeaderLength + validCSVDataRow1Length + validCSVDataRow2Length
+	// remainderPage2Start is the byte offset where remainder starts after processing rows 3-4.
+	remainderPage2Start = validCSVDataHeaderLength + validCSVDataRow1Length + validCSVDataRow2Length +
+		validCSVDataRow3Length + validCSVDataRow4Length
+	// adapterRemainderPage1 contains the actual bytes for rows 3-5.
+	adapterRemainderPage1 = []byte(validCSVData[remainderPage1Start:])
+	// adapterRemainderPage2 contains the actual bytes for row 5.
+	adapterRemainderPage2 = []byte(validCSVData[remainderPage2Start:])
+)
+
+// Base64 encoded cursor strings with headers and remainder for test assertions.
+// These are the JSON cursors {"cursor":N,"headers":[...],"remainder":"..."} encoded in base64.
+var (
+	// cursorPage1 is the cursor after first page (rows 1-2 processed, rows 3-5 in remainder).
 	// nolint: lll
-	cursorWithHeaders655 = "eyJjdXJzb3IiOjY1NSwiaGVhZGVycyI6WyJTY29yZSIsIkN1c3RvbWVyIElkIiwiRmlyc3QgTmFtZSIsIkxhc3QgTmFtZSIsIkNvbXBhbnkiLCJDaXR5IiwiQ291bnRyeSIsIlBob25lIDEiLCJQaG9uZSAyIiwiRW1haWwiLCJTdWJzY3JpcHRpb24gRGF0ZSIsIldlYnNpdGUiLCJLbm93bkFsaWFzZXMiXX0="
+	cursorPage1 = "eyJjdXJzb3IiOjEzNDEsImhlYWRlcnMiOlsiU2NvcmUiLCJDdXN0b21lciBJZCIsIkZpcnN0IE5hbWUiLCJMYXN0IE5hbWUiLCJDb21wYW55IiwiQ2l0eSIsIkNvdW50cnkiLCJQaG9uZSAxIiwiUGhvbmUgMiIsIkVtYWlsIiwiU3Vic2NyaXB0aW9uIERhdGUiLCJXZWJzaXRlIiwiS25vd25BbGlhc2VzIl0sInJlbWFpbmRlciI6Ik15NHpMR0k1UkdFeE0ySmxaRVZqTkRka1pTeEtaV1ptWlhKNUxFbGlZWEp5WVN3aVVtOXpaU3dnUkdWc1pXOXVJR0Z1WkNCVFlXNWtaWEp6SWl4RVlYSnNaVzVsWW5WeWVTeEJiR0poYm1saExDZzROREFwTlRNNUxURTNPVGQ0TkRjNUxESXdPUzAxTVRrdE5UZ3hOeXhrWldOclpYSnFZVzFwWlVCaVlYSjBiR1YwZEM1aWFYb3NNakF5TUMwd015MHpNQ3hvZEhSd2N6b3ZMM2QzZHk1dGIzSm5ZVzR0Y0dobGJIQnpMbU52YlM4c0lsdDdJaUpoYkdsaGN5SWlPaUFpSWtSbFkydGxjaUJLWVdsdFpTSWlMQ0FpSW5CeWFXMWhjbmtpSWpvZ2RISjFaWDBpQ2pRdU5DdzNNVEJFTkdSQk1rWkJZVGsyUWpVc1NtRnRaWE1zVjJGc2RHVnljeXhMYkdsdVpTQmhibVFnVTI5dWN5eEViMjVvWVhabGJpeENZV2h5WVdsdUxDc3hMVGs0TlMwMU9UWXRNVEEzTW5nek1EUXdMQ2cxTWpncE56TTBMVGc1TWpSNE1EVTBMR1J2WTJodllVQmpZWEpsZVMxdGIzSnpaUzVqYjIwc01qQXlNaTB3TVMweE9DeG9kSFJ3Y3pvdkwySnlaVzV1WVc0dVkyOXRMeXdpVzNzaUltRnNhV0Z6SWlJNklDSWlSRzhnUTJodllTSWlMQ0FpSW5CeWFXMWhjbmtpSWpvZ2RISjFaWDFkSWdvMUxqVXNNMk0wTkdWa05qSmtOMEptUlVKRExFeGxjMnhwWlN4VGJubGtaWElzSWxCeWFXTmxMQ0JOWVhOdmJpQmhibVFnUkc5NWJHVWlMRTF2YzNObWIzSjBMRU5sYm5SeVlXd2dRV1p5YVdOaGJpQlNaWEIxWW14cFl5dzRNVEl0TURFMkxUazVNRFI0T0RJek1Td3lOVFF1TmpNeExqa3pPREFzWkdGeWNubHNZbUZ5WW1WeVFIZGhjbkpsYmk1dmNtY3NNakF5TUMwd01TMHlOU3hvZEhSd09pOHZkM2QzTG5SeWRXcHBiR3h2TFhOMWJHeHBkbUZ1TG1sdVptOHZMQ0piZXlJaVlXeHBZWE1pSWpvZ0lpSkVZWEp5ZVd3Z1FtRnlZbVZ5SWlJc0lDSWljSEpwYldGeWVTSWlPaUIwY25WbGZTST0ifQ=="
+	// cursorPage2 is the cursor after middle page (rows 3-4 processed, row 5 in remainder).
 	// nolint: lll
-	cursorWithHeaders1095 = "eyJjdXJzb3IiOjEwOTUsImhlYWRlcnMiOlsiU2NvcmUiLCJDdXN0b21lciBJZCIsIkZpcnN0IE5hbWUiLCJMYXN0IE5hbWUiLCJDb21wYW55IiwiQ2l0eSIsIkNvdW50cnkiLCJQaG9uZSAxIiwiUGhvbmUgMiIsIkVtYWlsIiwiU3Vic2NyaXB0aW9uIERhdGUiLCJXZWJzaXRlIiwiS25vd25BbGlhc2VzIl19"
+	cursorPage2 = "eyJjdXJzb3IiOjEzNDEsImhlYWRlcnMiOlsiU2NvcmUiLCJDdXN0b21lciBJZCIsIkZpcnN0IE5hbWUiLCJMYXN0IE5hbWUiLCJDb21wYW55IiwiQ2l0eSIsIkNvdW50cnkiLCJQaG9uZSAxIiwiUGhvbmUgMiIsIkVtYWlsIiwiU3Vic2NyaXB0aW9uIERhdGUiLCJXZWJzaXRlIiwiS25vd25BbGlhc2VzIl0sInJlbWFpbmRlciI6Ik5TNDFMRE5qTkRSbFpEWXlaRGRDWmtWQ1F5eE1aWE5zYVdVc1UyNTVaR1Z5TENKUWNtbGpaU3dnVFdGemIyNGdZVzVrSUVSdmVXeGxJaXhOYjNOelptOXlkQ3hEWlc1MGNtRnNJRUZtY21sallXNGdVbVZ3ZFdKc2FXTXNPREV5TFRBeE5pMDVPVEEwZURneU16RXNNalUwTGpZek1TNDVNemd3TEdSaGNuSjViR0poY21KbGNrQjNZWEp5Wlc0dWIzSm5MREl3TWpBdE1ERXRNalVzYUhSMGNEb3ZMM2QzZHk1MGNuVnFhV3hzYnkxemRXeHNhWFpoYmk1cGJtWnZMeXdpVzNzaUltRnNhV0Z6SWlJNklDSWlSR0Z5Y25sc0lFSmhjbUpsY2lJaUxDQWlJbkJ5YVcxaGNua2lJam9nZEhKMVpYMGkifQ=="
 )
 
 func TestAdapterGetPage(t *testing.T) {
@@ -86,12 +101,13 @@ func TestAdapterGetPage(t *testing.T) {
 							"Subscription Date": time.Date(2021, 1, 1, 0, 0, 0, 0, time.UTC),
 						},
 					},
-					NextCursor: cursorWithHeaders655,
+					NextCursor: cursorPage1,
 				},
 			},
 			wantCursor: &s3_adapter.S3Cursor{
-				Cursor:  testutil.GenPtr(int64(655)),
-				Headers: adapterTestExpectedCSVHeaders,
+				Cursor:    testutil.GenPtr(validCSVDataTotalLength),
+				Headers:   adapterTestExpectedCSVHeaders,
+				Remainder: adapterRemainderPage1,
 			},
 		},
 		"success_HeadObject_200_GetObject_200_middle_page": {
@@ -136,8 +152,13 @@ func TestAdapterGetPage(t *testing.T) {
 							"Subscription Date": time.Date(2022, 1, 18, 0, 0, 0, 0, time.UTC),
 						},
 					},
-					NextCursor: cursorWithHeaders1095,
+					NextCursor: cursorPage2,
 				},
+			},
+			wantCursor: &s3_adapter.S3Cursor{
+				Cursor:    testutil.GenPtr(validCSVDataTotalLength),
+				Headers:   adapterTestExpectedCSVHeaders,
+				Remainder: adapterRemainderPage2,
 			},
 		},
 		"success_HeadObject_200_GetObject_200_last_page": {
@@ -249,12 +270,13 @@ func TestAdapterGetPage(t *testing.T) {
 							"Score": "2.2",
 						},
 					},
-					NextCursor: cursorWithHeaders655,
+					NextCursor: cursorPage1,
 				},
 			},
 			wantCursor: &s3_adapter.S3Cursor{
-				Cursor:  testutil.GenPtr(int64(655)),
-				Headers: adapterTestExpectedCSVHeaders,
+				Cursor:    testutil.GenPtr(validCSVDataTotalLength),
+				Headers:   adapterTestExpectedCSVHeaders,
+				Remainder: adapterRemainderPage1,
 			},
 		},
 		"success_read_child_objects_HeadObject_200_GetObject_200": {
@@ -321,12 +343,13 @@ func TestAdapterGetPage(t *testing.T) {
 							},
 						},
 					},
-					NextCursor: cursorWithHeaders655,
+					NextCursor: cursorPage1,
 				},
 			},
 			wantCursor: &s3_adapter.S3Cursor{
-				Cursor:  testutil.GenPtr(int64(655)),
-				Headers: adapterTestExpectedCSVHeaders,
+				Cursor:    testutil.GenPtr(validCSVDataTotalLength),
+				Headers:   adapterTestExpectedCSVHeaders,
+				Remainder: adapterRemainderPage1,
 			},
 		},
 		// Check if a number in the CSV can be ingested as a double type based on entity configuration
@@ -365,12 +388,13 @@ func TestAdapterGetPage(t *testing.T) {
 							"Score": float64(2.2),
 						},
 					},
-					NextCursor: cursorWithHeaders655,
+					NextCursor: cursorPage1,
 				},
 			},
 			wantCursor: &s3_adapter.S3Cursor{
-				Cursor:  testutil.GenPtr(int64(655)),
-				Headers: adapterTestExpectedCSVHeaders,
+				Cursor:    testutil.GenPtr(validCSVDataTotalLength),
+				Headers:   adapterTestExpectedCSVHeaders,
+				Remainder: adapterRemainderPage1,
 			},
 		},
 		"error_empty_csv_file_HeadObject_200_GetObject_800": {

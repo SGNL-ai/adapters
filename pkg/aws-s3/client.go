@@ -10,6 +10,7 @@ import (
 
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
+	"go.uber.org/zap/zapcore"
 )
 
 // Client is a client that allows querying the datasource which contains JSON objects.
@@ -31,12 +32,33 @@ type Auth struct {
 // S3Cursor contains pagination state for S3 CSV files.
 // Headers are cached to avoid re-fetching on subsequent pages.
 type S3Cursor struct {
-	// Cursor is the byte position offset in the file.
+	// Cursor is the byte position offset in the file where the next S3 fetch should start.
 	Cursor *int64 `json:"cursor,omitempty"`
 
 	// Headers contains the parsed CSV headers from the first page.
 	// Cached to avoid re-fetching headers on subsequent pages.
 	Headers []string `json:"headers,omitempty"`
+
+	// Remainder contains unprocessed bytes from the previous fetch.
+	// These bytes are prepended to the next S3 fetch to avoid data loss.
+	Remainder []byte `json:"remainder,omitempty"`
+}
+
+// MarshalLogObject implements zapcore.ObjectMarshaler to control cursor logging.
+// Logs metadata (byte position, headers count, remainder length) without exposing actual data.
+func (c *S3Cursor) MarshalLogObject(enc zapcore.ObjectEncoder) error {
+	if c == nil {
+		return nil
+	}
+
+	if c.Cursor != nil {
+		enc.AddInt64("cursor", *c.Cursor)
+	}
+
+	enc.AddInt("headersCount", len(c.Headers))
+	enc.AddInt("remainderLength", len(c.Remainder))
+
+	return nil
 }
 
 // UnmarshalS3Cursor unmarshals the cursor from a base64 encoded JSON string.

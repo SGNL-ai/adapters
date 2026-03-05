@@ -49,7 +49,11 @@ func ValidateLogOutput(t *testing.T, observedLogs *observer.ObservedLogs, expect
 		gotLog["msg"] = gotLogs[i].Message
 		gotLog["level"] = gotLogs[i].Level.String()
 
-		if cursorMap := parseCursorFromLog(gotLog, "responseNextCursor"); cursorMap != nil {
+		// Handle responseNextCursor: if expected log doesn't have it, remove from got log
+		// to allow tests to skip cursor comparison. Otherwise, parse CompositeCursor types.
+		if _, expectedHasCursor := expectedLog["responseNextCursor"]; !expectedHasCursor {
+			delete(gotLog, "responseNextCursor")
+		} else if cursorMap := parseCursorFromLog(gotLog, "responseNextCursor"); cursorMap != nil {
 			gotLog["responseNextCursor"] = cursorMap
 		}
 

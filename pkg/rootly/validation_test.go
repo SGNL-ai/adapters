@@ -145,7 +145,7 @@ func TestValidateGetPageRequest(t *testing.T) {
 				PageSize: 100,
 			},
 			wantErrCode: api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
-			wantErrMsg:  "The provided HTTP protocol is not supported.",
+			wantErrMsg:  `Scheme "http" is not supported.`,
 		},
 		"missing_auth": {
 			ctx: context.Background(),

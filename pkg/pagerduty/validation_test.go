@@ -228,7 +228,7 @@ func TestValidateGetPageRequest(t *testing.T) {
 		},
 		"address_invalid": {
 			request: &framework.Request[pagerduty_adapter.Config]{
-				Address: "not api.pagerduty.com",
+				Address: "wrong.pagerduty.com",
 				Auth: &framework.DatasourceAuthCredentials{
 					HTTPAuthorization: "Token token=y_NbAkKc66ryYTWUXYEu",
 				},

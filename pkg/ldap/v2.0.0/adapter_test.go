@@ -604,6 +604,36 @@ func (s *LDAPTestSuite) Test_AdapterGetGroupMemberPage() {
 							"group_dn":  "cn=Science,ou=Groups,dc=example,dc=org",
 							"member_dn": "cn=bobby,ou=People,dc=example,dc=org",
 						},
+						{
+							"id":        "cn=alice,ou=People,dc=example,dc=org-cn=Sales Team (APAC),ou=Groups,dc=example,dc=org",
+							"group_dn":  "cn=Sales Team (APAC),ou=Groups,dc=example,dc=org",
+							"member_dn": "cn=alice,ou=People,dc=example,dc=org",
+						},
+						{
+							"id":        "cn=bobby,ou=People,dc=example,dc=org-cn=Sales Team (APAC),ou=Groups,dc=example,dc=org",
+							"group_dn":  "cn=Sales Team (APAC),ou=Groups,dc=example,dc=org",
+							"member_dn": "cn=bobby,ou=People,dc=example,dc=org",
+						},
+						{
+							"id":        "cn=zach,ou=People,dc=example,dc=org-cn=Team * Stars,ou=Groups,dc=example,dc=org",
+							"group_dn":  "cn=Team * Stars,ou=Groups,dc=example,dc=org",
+							"member_dn": "cn=zach,ou=People,dc=example,dc=org",
+						},
+						{
+							"id":        "cn=lorem,ou=People,dc=example,dc=org-cn=Team * Stars,ou=Groups,dc=example,dc=org",
+							"group_dn":  "cn=Team * Stars,ou=Groups,dc=example,dc=org",
+							"member_dn": "cn=lorem,ou=People,dc=example,dc=org",
+						},
+						{
+							"id":        "cn=Robert Smith,ou=People,dc=example,dc=org-cn=Legal\\2C Compliance,ou=Groups,dc=example,dc=org",
+							"group_dn":  "cn=Legal\\2C Compliance,ou=Groups,dc=example,dc=org",
+							"member_dn": "cn=Robert Smith,ou=People,dc=example,dc=org",
+						},
+						{
+							"id":        "cn=Barbara Jensen,ou=People,dc=example,dc=org-cn=Legal\\2C Compliance,ou=Groups,dc=example,dc=org",
+							"group_dn":  "cn=Legal\\2C Compliance,ou=Groups,dc=example,dc=org",
+							"member_dn": "cn=Barbara Jensen,ou=People,dc=example,dc=org",
+						},
 					},
 					NextCursor: "",
 				},
@@ -717,6 +747,69 @@ func (s *LDAPTestSuite) Test_AdapterGetGroupMemberPage() {
 						{
 							"id":        "cn=bobby,ou=People,dc=example,dc=org-cn=Science,ou=Groups,dc=example,dc=org",
 							"group_dn":  "cn=Science,ou=Groups,dc=example,dc=org",
+							"member_dn": "cn=bobby,ou=People,dc=example,dc=org",
+						},
+					},
+					NextCursor: "",
+				},
+			},
+		},
+		"valid_request_group_with_parentheses_in_name": {
+			ctx: context.Background(),
+			request: &framework.Request[ldap_adapter.Config]{
+				Address: s.ldapHost,
+				Auth:    validAuthCredentials,
+				Config: &ldap_adapter.Config{
+					BaseDN: "dc=example,dc=org",
+					EntityConfigMap: map[string]*ldap_adapter.EntityConfig{
+						"Group": {
+							Query: `(&(objectClass=groupofuniquenames)(cn=Sales Team \28APAC\29))`,
+						},
+						"GroupMember": {
+							MemberOf:                  testutil.GenPtr("Group"),
+							CollectionAttribute:       testutil.GenPtr("entryDN"),
+							Query:                     "(&(objectClass=groupofuniquenames)({{CollectionAttribute}}={{CollectionId}}))",
+							MemberUniqueIDAttribute:   testutil.GenPtr("dn"),
+							MemberOfUniqueIDAttribute: testutil.GenPtr("dn"),
+							MemberAttribute:           testutil.GenPtr("uniqueMember"),
+							MemberOfGroupBatchSize:    10,
+						},
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: "GroupMember",
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "id",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+							UniqueId:   true,
+						},
+						{
+							ExternalId: "group_dn",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+						{
+							ExternalId: "member_dn",
+							Type:       framework.AttributeTypeString,
+							List:       false,
+						},
+					},
+				},
+				PageSize: 10,
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"id":        "cn=alice,ou=People,dc=example,dc=org-cn=Sales Team (APAC),ou=Groups,dc=example,dc=org",
+							"group_dn":  "cn=Sales Team (APAC),ou=Groups,dc=example,dc=org",
+							"member_dn": "cn=alice,ou=People,dc=example,dc=org",
+						},
+						{
+							"id":        "cn=bobby,ou=People,dc=example,dc=org-cn=Sales Team (APAC),ou=Groups,dc=example,dc=org",
+							"group_dn":  "cn=Sales Team (APAC),ou=Groups,dc=example,dc=org",
 							"member_dn": "cn=bobby,ou=People,dc=example,dc=org",
 						},
 					},

@@ -196,33 +196,63 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		startBytePos = *request.Cursor.Cursor
 	}
 
-	if startBytePos >= fileSize {
-		return &Response{StatusCode: 200, Objects: []map[string]any{}}, nil
+	// Step 3: Get remainder from cursor (unprocessed bytes from previous fetch).
+	var remainder []byte
+	if request.Cursor != nil && len(request.Cursor.Remainder) > 0 {
+		remainder = request.Cursor.Remainder
 	}
 
-	// Calculate end byte position to avoid fetching the entire remainder of the file.
-	// Add 2x MaxCSVRowSizeBytes as buffer to ensure we don't cut off in the middle of a row,
-	// accounting for CSV parsing which may peek ahead at row boundaries.
-	endBytePos := startBytePos + d.MaxBytesToProcessPerPage + (2 * d.MaxCSVRowSizeBytes) - 1
-	if endBytePos >= fileSize {
-		endBytePos = fileSize - 1
+	// Step 4: Fetch data from S3 if needed.
+	var s3FetchedData []byte
+
+	if startBytePos < fileSize {
+		// Calculate how much to fetch from S3 to bring total buffer to MaxBytesToProcessPerPage.
+		remainderSize := int64(len(remainder))
+		fetchSize := d.MaxBytesToProcessPerPage - remainderSize
+
+		if fetchSize > 0 {
+			endBytePos := startBytePos + fetchSize - 1
+			if endBytePos >= fileSize {
+				endBytePos = fileSize - 1
+			}
+
+			rangeHeaderForData := fmt.Sprintf("bytes=%d-%d", startBytePos, endBytePos)
+
+			s3DataStreamOutput, err := handler.GetObjectStream(ctx, request.Bucket, objectKey, &rangeHeaderForData)
+			if err != nil {
+				return nil, customerror.UpdateError(&framework.Error{
+					Message: fmt.Sprintf("Failed to fetch entity from AWS S3: %v", err),
+					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+				}, customerror.WithRequestTimeoutMessage(err, request.RequestTimeoutSeconds))
+			}
+			defer s3DataStreamOutput.Body.Close()
+
+			// Read all fetched data into memory.
+			s3FetchedData, err = io.ReadAll(s3DataStreamOutput.Body)
+			if err != nil {
+				return nil, customerror.UpdateError(&framework.Error{
+					Message: fmt.Sprintf("Failed to read data from AWS S3: %v", err),
+					Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+				}, customerror.WithRequestTimeoutMessage(err, request.RequestTimeoutSeconds))
+			}
+		}
 	}
 
-	rangeHeaderForData := fmt.Sprintf("bytes=%d-%d", startBytePos, endBytePos)
+	// Step 5: Combine remainder + newly fetched data into a single buffer.
+	combinedData := append(remainder, s3FetchedData...)
 
-	s3DataStreamOutput, err := handler.GetObjectStream(ctx, request.Bucket, objectKey, &rangeHeaderForData)
-	if err != nil {
-		return nil, customerror.UpdateError(&framework.Error{
-			Message: fmt.Sprintf("Failed to fetch entity from AWS S3: %v", err),
-			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
-		}, customerror.WithRequestTimeoutMessage(err, request.RequestTimeoutSeconds))
+	// If there's no data to process, return an empty response.
+	if len(combinedData) == 0 {
+		return &Response{
+			StatusCode: 200,
+			Objects:    []map[string]any{},
+		}, nil
 	}
 
-	defer s3DataStreamOutput.Body.Close()
+	// Create a reader from the combined buffer for CSV processing.
+	dataBufReader := bufio.NewReader(bytes.NewReader(combinedData))
 
-	dataBufReader := bufio.NewReader(s3DataStreamOutput.Body)
-
-	objects, bytesReadFromDataStream, hasNext, processErr := StreamingCSVToPage(
+	objects, bytesConsumed, _, processErr := StreamingCSVToPage(
 		dataBufReader,
 		parsedHeaders,
 		request.PageSize,
@@ -242,13 +272,21 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		Objects:    objects,
 	}
 
-	if hasNext {
-		nextBytePos := startBytePos + bytesReadFromDataStream
-		if nextBytePos < fileSize {
-			response.NextCursor = &S3Cursor{
-				Cursor:  &nextBytePos,
-				Headers: parsedHeaders,
-			}
+	// Step 6: Calculate new remainder (unprocessed bytes from combined buffer).
+	var newRemainder []byte
+	if bytesConsumed < int64(len(combinedData)) {
+		newRemainder = combinedData[bytesConsumed:]
+	}
+
+	// Step 7: Build next cursor if there's more data to process.
+	// More data exists if: there's remainder OR we haven't reached EOF in S3.
+	nextBytePos := startBytePos + int64(len(s3FetchedData))
+
+	if len(newRemainder) > 0 || nextBytePos < fileSize {
+		response.NextCursor = &S3Cursor{
+			Cursor:    &nextBytePos,
+			Headers:   parsedHeaders,
+			Remainder: newRemainder,
 		}
 	}
 

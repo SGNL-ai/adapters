@@ -5,7 +5,6 @@ package salesforce
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	framework "github.com/sgnl-ai/adapter-framework"
@@ -48,10 +47,6 @@ func (a *Adapter) RequestPageFromDatasource(
 	}
 
 	commonConfig = config.SetMissingCommonConfigDefaults(commonConfig)
-
-	if !strings.HasPrefix(request.Address, "https://") {
-		request.Address = "https://" + request.Address
-	}
 
 	// Build the list of attributes to query from Salesforce.
 	// This includes both regular attributes and multi-select picklist fields (child entities).

@@ -348,13 +348,12 @@ func (c *ldapClient) Request(ctx context.Context, request *Request) (*Response, 
 	}
 
 	// If we have a cookie, update the session with the new cookie for the next request.
+	// We don't delete sessions when paging completes (no cookie) because getMemberOfPage
+	// may return the OLD cookie when stopping mid-group. The session pool's TTL cleanup
+	// handles eventual cleanup of idle sessions.
 	if len(cookie) > 0 {
-		// Move the session to the new cookie key: remove old key, add new key (without closing conn)
 		nextKey := sessionKey(address, cookie)
 		c.sessionPool.UpdateKey(key, nextKey)
-	} else {
-		// Paging done, cleanup
-		c.sessionPool.Delete(key)
 	}
 
 	logger.Info("Datasource request completed successfully",
@@ -639,7 +638,13 @@ func (d *Datasource) getMemberOfPage(
 			modifiedGroupMemberQuery := strings.ReplaceAll(
 				entityConfig.Query, "{{CollectionAttribute}}", *entityConfig.CollectionAttribute,
 			)
-			modifiedGroupMemberQuery = strings.ReplaceAll(modifiedGroupMemberQuery, "{{CollectionId}}", groupUniqueIDValue)
+
+			// Escape the group unique ID value to handle LDAP special characters in DNs
+			// (e.g., parentheses in group names like "Sales Team (APAC)")
+			escapedGroupUniqueIDValue := ldap_v3.EscapeFilter(groupUniqueIDValue)
+			modifiedGroupMemberQuery = strings.ReplaceAll(
+				modifiedGroupMemberQuery, "{{CollectionId}}", escapedGroupUniqueIDValue,
+			)
 
 			modifiedEntityConfigMap := make(map[string]*EntityConfig)
 
@@ -684,8 +689,17 @@ func (d *Datasource) getMemberOfPage(
 				memberObj := memberResp.Objects[0]
 
 				// Extract member DNs from this group
-				membersDN, action := extractMembersDNFromGroup(memberObj, int(memberOffsetEnd)-int(memberOffsetInGroup))
+				memberCount := int(memberOffsetEnd) - int(memberOffsetInGroup)
+				membersDN, action := extractMembersDNFromGroup(memberObj, int(memberOffsetInGroup), memberCount)
 				memberOffsetEnd = memberOffsetInGroup + int64(len(membersDN))
+
+				zaplogger.FromContext(ctx).Info("Extracted members from group",
+					zap.String("groupDN", groupUniqueIDValue),
+					zap.Int("memberOffset", int(memberOffsetInGroup)),
+					zap.Int("memberCount", memberCount),
+					zap.Int("membersExtracted", len(membersDN)),
+					zap.String("extractionAction", string(action)),
+				)
 
 				// Convert member DNs to GroupMember objects
 				objects := make([]map[string]any, len(membersDN))
@@ -794,9 +808,9 @@ const (
 	MemberExtractionActionDone            MemberExtractionAction = "Done"
 )
 
-// extractMembersDNFromGroup extracts member DNs from a group's member attributes
-// Returns the DNs, whether range queries are needed, and any error.
-func extractMembersDNFromGroup(memberObjs map[string]any, count int) ([]string, MemberExtractionAction) {
+// extractMembersDNFromGroup extracts member DNs from a group's member attributes.
+// Returns the DNs and the next action to take (done, continue with range, or continue regular).
+func extractMembersDNFromGroup(memberObjs map[string]any, offset, count int) ([]string, MemberExtractionAction) {
 	var membersDN []string
 
 	// Check for range attributes first (indicates large groups)
@@ -804,6 +818,20 @@ func extractMembersDNFromGroup(memberObjs map[string]any, count int) ([]string, 
 		memberList, ok := value.([]any)
 		if !ok {
 			continue
+		}
+
+		// For range attributes (e.g., member;range=0-1499), the server already
+		// returns only the requested range, so offset does not apply.
+		// For plain attributes (e.g., member), the server returns all members
+		// and we must skip the first `offset` entries locally.
+		isRange := rangeAttributePattern.MatchString(attrName)
+
+		if !isRange && offset > 0 {
+			if offset >= len(memberList) {
+				return []string{}, MemberExtractionActionDone
+			}
+
+			memberList = memberList[offset:]
 		}
 
 		if count > len(memberList) {

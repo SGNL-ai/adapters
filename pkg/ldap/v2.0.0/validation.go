@@ -5,10 +5,11 @@ package ldap
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
+
+	"github.com/sgnl-ai/adapters/pkg/validation"
 )
 
 const (
@@ -67,14 +68,21 @@ func (a *Adapter) ValidateGetPageRequest(ctx context.Context, request *framework
 		}
 	}
 
-	// Check if scheme is present in address, if not
-	// set scheme based on certificateChain input
-	if !strings.HasPrefix(request.Address, "ldap://") && !strings.HasPrefix(request.Address, "ldaps://") {
+	// Validate address scheme - only ldap:// and ldaps:// are allowed
+	trimmedAddress, parsed, err := validation.ParseAndValidateAddress(request.Address, []string{"ldap", "ldaps"})
+	if err != nil {
+		return err
+	}
+
+	// If no scheme was provided, set scheme based on certificateChain config
+	if parsed.Scheme == "" {
 		if request.Config.CertificateChain != "" {
-			request.Address = "ldaps://" + request.Address
+			request.Address = "ldaps://" + trimmedAddress
 		} else {
-			request.Address = "ldap://" + request.Address
+			request.Address = "ldap://" + trimmedAddress
 		}
+	} else {
+		request.Address = trimmedAddress
 	}
 
 	if request.Auth == nil || request.Auth.Basic == nil ||
