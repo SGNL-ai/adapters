@@ -22,6 +22,14 @@ updates:
           - "minor"
           - "patch"
 
+      # This name appears in the PR title: "Bump aws-sdk-v2-group dependencies"
+      aws-sdk-v2-group:
+        patterns:
+          - "github.com/aws/aws-sdk-go-v2*"
+        update-types:
+          - "minor"
+          - "patch"
+
       # Production dependencies - actual runtime code
       production-dependencies:
         patterns:
@@ -34,6 +42,7 @@ updates:
           - "github.com/DATA-DOG/go-sqlmock"
           - "github.com/testcontainers/testcontainers-go"
           - "gopkg.in/dnaeon/go-vcr.*"
+          - "github.com/aws/aws-sdk-go-v2*"
 
   # GitHub Actions with grouping
   - package-ecosystem: "github-actions"
