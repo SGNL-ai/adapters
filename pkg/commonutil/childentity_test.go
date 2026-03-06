@@ -196,6 +196,212 @@ func TestGetUniqueIDValue(t *testing.T) {
 	}
 }
 
+func TestCreateChildEntitiesFromStringArray(t *testing.T) {
+	parentConfig := &framework.EntityConfig{
+		Attributes: []*framework.AttributeConfig{
+			{ExternalId: "incidentNumber", UniqueId: true, Type: framework.AttributeTypeString},
+		},
+	}
+
+	pagedUsersConfig := &framework.EntityConfig{
+		ExternalId: "pagedUsers",
+		Attributes: []*framework.AttributeConfig{
+			{ExternalId: "id", Type: framework.AttributeTypeString},
+			{ExternalId: "value", Type: framework.AttributeTypeString},
+		},
+	}
+
+	pagedTeamsConfig := &framework.EntityConfig{
+		ExternalId: "pagedTeams",
+		Attributes: []*framework.AttributeConfig{
+			{ExternalId: "id", Type: framework.AttributeTypeString},
+			{ExternalId: "value", Type: framework.AttributeTypeString},
+		},
+	}
+
+	tests := map[string]struct {
+		objects      []map[string]any
+		entityConfig *framework.EntityConfig
+		want         []map[string]any
+	}{
+		"string_array_to_child_entities": {
+			objects: []map[string]any{
+				{
+					"incidentNumber": "1",
+					"pagedUsers":     []any{"alice", "bob"},
+				},
+			},
+			entityConfig: &framework.EntityConfig{
+				Attributes:    parentConfig.Attributes,
+				ChildEntities: []*framework.EntityConfig{pagedUsersConfig},
+			},
+			want: []map[string]any{
+				{
+					"incidentNumber": "1",
+					"pagedUsers": []any{
+						map[string]any{"id": "1_pagedUsers_alice", "value": "alice"},
+						map[string]any{"id": "1_pagedUsers_bob", "value": "bob"},
+					},
+				},
+			},
+		},
+		"nil_array_value": {
+			objects: []map[string]any{
+				{
+					"incidentNumber": "2",
+					"pagedUsers":     nil,
+				},
+			},
+			entityConfig: &framework.EntityConfig{
+				Attributes:    parentConfig.Attributes,
+				ChildEntities: []*framework.EntityConfig{pagedUsersConfig},
+			},
+			want: []map[string]any{
+				{
+					"incidentNumber": "2",
+					"pagedUsers":     []any{},
+				},
+			},
+		},
+		"empty_array": {
+			objects: []map[string]any{
+				{
+					"incidentNumber": "3",
+					"pagedUsers":     []any{},
+				},
+			},
+			entityConfig: &framework.EntityConfig{
+				Attributes:    parentConfig.Attributes,
+				ChildEntities: []*framework.EntityConfig{pagedUsersConfig},
+			},
+			want: []map[string]any{
+				{
+					"incidentNumber": "3",
+					"pagedUsers":     []any{},
+				},
+			},
+		},
+		"no_child_entities_configured": {
+			objects: []map[string]any{
+				{
+					"incidentNumber": "4",
+					"pagedUsers":     []any{"alice"},
+				},
+			},
+			entityConfig: &framework.EntityConfig{
+				Attributes: parentConfig.Attributes,
+			},
+			want: []map[string]any{
+				{
+					"incidentNumber": "4",
+					"pagedUsers":     []any{"alice"},
+				},
+			},
+		},
+		"multiple_child_entity_fields": {
+			objects: []map[string]any{
+				{
+					"incidentNumber": "5",
+					"pagedUsers":     []any{"alice", "bob"},
+					"pagedTeams":     []any{"team-alpha"},
+				},
+			},
+			entityConfig: &framework.EntityConfig{
+				Attributes:    parentConfig.Attributes,
+				ChildEntities: []*framework.EntityConfig{pagedUsersConfig, pagedTeamsConfig},
+			},
+			want: []map[string]any{
+				{
+					"incidentNumber": "5",
+					"pagedUsers": []any{
+						map[string]any{"id": "5_pagedUsers_alice", "value": "alice"},
+						map[string]any{"id": "5_pagedUsers_bob", "value": "bob"},
+					},
+					"pagedTeams": []any{
+						map[string]any{"id": "5_pagedTeams_team-alpha", "value": "team-alpha"},
+					},
+				},
+			},
+		},
+		"field_not_present_in_object": {
+			objects: []map[string]any{
+				{
+					"incidentNumber": "6",
+				},
+			},
+			entityConfig: &framework.EntityConfig{
+				Attributes:    parentConfig.Attributes,
+				ChildEntities: []*framework.EntityConfig{pagedUsersConfig},
+			},
+			want: []map[string]any{
+				{
+					"incidentNumber": "6",
+				},
+			},
+		},
+		"duplicate_values_deduplicated": {
+			objects: []map[string]any{
+				{
+					"incidentNumber": "7",
+					"pagedUsers":     []any{"alice", "Alice", "bob"},
+				},
+			},
+			entityConfig: &framework.EntityConfig{
+				Attributes:    parentConfig.Attributes,
+				ChildEntities: []*framework.EntityConfig{pagedUsersConfig},
+			},
+			want: []map[string]any{
+				{
+					"incidentNumber": "7",
+					"pagedUsers": []any{
+						map[string]any{"id": "7_pagedUsers_alice", "value": "alice"},
+						map[string]any{"id": "7_pagedUsers_bob", "value": "bob"},
+					},
+				},
+			},
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			got := commonutil.CreateChildEntitiesFromStringArray(
+				tt.objects,
+				tt.entityConfig,
+			)
+
+			// Sort child entity arrays by ID for order-independent comparison.
+			sortByID := func(items []any) {
+				sort.Slice(items, func(i, j int) bool {
+					id1, _ := items[i].(map[string]any)["id"].(string)
+					id2, _ := items[j].(map[string]any)["id"].(string)
+
+					return id1 < id2
+				})
+			}
+
+			for i := range got {
+				for _, value := range got[i] {
+					if childArray, ok := value.([]any); ok {
+						sortByID(childArray)
+					}
+				}
+			}
+
+			for i := range tt.want {
+				for _, value := range tt.want[i] {
+					if childArray, ok := value.([]any); ok {
+						sortByID(childArray)
+					}
+				}
+			}
+
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("CreateChildEntitiesFromStringArray() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestCreateChildEntitiesFromDelimitedString(t *testing.T) {
 	parentConfig := &framework.EntityConfig{
 		Attributes: []*framework.AttributeConfig{
