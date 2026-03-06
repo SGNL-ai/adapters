@@ -46,10 +46,6 @@ updates:
       - "dependencies"
       - "github-actions"
     groups:
-      # Group all GitHub Actions minor/patch updates
-      github-actions-minor-patch:
+      all-actions:
         patterns:
           - "*"
-        update-types:
-          - "minor"
-          - "patch"
