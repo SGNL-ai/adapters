@@ -33,6 +33,7 @@ import (
 	"github.com/sgnl-ai/adapters/pkg/salesforce"
 	"github.com/sgnl-ai/adapters/pkg/scim"
 	"github.com/sgnl-ai/adapters/pkg/servicenow"
+	"github.com/sgnl-ai/adapters/pkg/victorops"
 	"github.com/sgnl-ai/adapters/pkg/workday"
 	"go.uber.org/zap"
 
@@ -289,6 +290,15 @@ func main() {
 		"ServiceNow-1.0.1",
 		servicenow.NewAdapter(servicenow.NewClient(
 			client.NewSGNLHTTPClientWithProxy(timeoutDuration, "sgnl-ServiceNow/1.0.1",
+				grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
+			),
+		)),
+	)
+	server.RegisterAdapter(
+		adapterServer,
+		"VictorOps-1.0.0",
+		victorops.NewAdapter(victorops.NewClient(
+			client.NewSGNLHTTPClientWithProxy(timeoutDuration, "sgnl-VictorOps/1.0.0",
 				grpc_proxy_v1.NewProxyServiceClient(connectorServiceClient),
 			),
 		)),

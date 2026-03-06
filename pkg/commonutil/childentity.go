@@ -4,6 +4,7 @@ package commonutil
 
 import (
 	"fmt"
+	"maps"
 	"strings"
 
 	framework "github.com/sgnl-ai/adapter-framework"
@@ -197,10 +198,8 @@ func CreateChildEntitiesFromDelimitedString(
 	for i, obj := range objects {
 		transformedObj := make(map[string]any, len(obj))
 
-		// Copy all existing fields
-		for key, value := range obj {
-			transformedObj[key] = value
-		}
+		// Copy all existing fields.
+		maps.Copy(transformedObj, obj)
 
 		// Extract parent unique ID using the entity config
 		parentID, ok := GetUniqueIDValue(obj, entityConfig)
@@ -244,6 +243,93 @@ func CreateChildEntitiesFromDelimitedString(
 			// Split by delimiter and convert to child entities
 			values := strings.Split(strValue, delimiter)
 			transformedObj[fieldName] = CreateChildEntitiesFromList(parentID, fieldName, values, childConfig)
+		}
+
+		transformedObjects[i] = transformedObj
+	}
+
+	return transformedObjects
+}
+
+// CreateChildEntitiesFromStringArray transforms JSON array fields ([]any containing strings)
+// into child entity arrays. This is for datasources that return actual JSON arrays of strings
+// (e.g., VictorOps pagedUsers), as opposed to delimited strings (use CreateChildEntitiesFromDelimitedString
+// for those).
+//
+// Parameters:
+// - objects: The raw objects from the datasource
+// - entityConfig: The entity configuration (contains both parent attributes and child entities)
+//
+// Returns:
+// - []map[string]any: Transformed objects with child entity arrays.
+func CreateChildEntitiesFromStringArray(
+	objects []map[string]any,
+	entityConfig *framework.EntityConfig,
+) []map[string]any {
+	childEntities := entityConfig.ChildEntities
+
+	if len(childEntities) == 0 {
+		return objects
+	}
+
+	// Map of field name -> child entity config for O(1) lookup.
+	childEntityFields := make(map[string]*framework.EntityConfig, len(childEntities))
+	for _, childEntity := range childEntities {
+		childEntityFields[childEntity.ExternalId] = childEntity
+	}
+
+	transformedObjects := make([]map[string]any, len(objects))
+
+	for i, obj := range objects {
+		transformedObj := make(map[string]any, len(obj))
+
+		// Copy all existing fields.
+		maps.Copy(transformedObj, obj)
+
+		// Extract parent unique ID using the entity config.
+		parentID, ok := GetUniqueIDValue(obj, entityConfig)
+		if !ok {
+			transformedObjects[i] = transformedObj
+
+			continue
+		}
+
+		// Transform each child entity field from []any (strings) to []any (objects).
+		for fieldName, childConfig := range childEntityFields {
+			value, exists := obj[fieldName]
+
+			if !exists {
+				continue
+			}
+
+			if value == nil {
+				transformedObj[fieldName] = []any{}
+
+				continue
+			}
+
+			// Expect []any from JSON unmarshalling.
+			arrayValue, ok := value.([]any)
+			if !ok {
+				continue
+			}
+
+			if len(arrayValue) == 0 {
+				transformedObj[fieldName] = []any{}
+
+				continue
+			}
+
+			// Convert []any to []string.
+			stringValues := make([]string, 0, len(arrayValue))
+
+			for _, item := range arrayValue {
+				if strVal, ok := item.(string); ok {
+					stringValues = append(stringValues, strVal)
+				}
+			}
+
+			transformedObj[fieldName] = CreateChildEntitiesFromList(parentID, fieldName, stringValues, childConfig)
 		}
 
 		transformedObjects[i] = transformedObj
