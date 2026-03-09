@@ -150,7 +150,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	case IncidentReport:
 		objects, nextCursor, err = parseIncidentsResponse(body, request.PageSize, request.Cursor)
 	case User:
-		objects, err = parseUsersResponse(body)
+		objects, nextCursor, err = parseUsersResponse(body, request.PageSize, request.Cursor)
 	}
 
 	if err != nil {
@@ -243,13 +243,39 @@ type usersResponse struct {
 }
 
 // parseUsersResponse parses the VictorOps Users API response.
-// The Users API returns all users in a single response with no pagination.
-func parseUsersResponse(body []byte) ([]map[string]any, error) {
+// The Users API returns all users in a single response with no server-side pagination,
+// so client-side pagination is applied by slicing the full results based on pageSize and cursor.
+func parseUsersResponse(
+	body []byte, pageSize int64, cursor *pagination.CompositeCursor[int64],
+) ([]map[string]any, *pagination.CompositeCursor[int64], error) {
 	var data usersResponse
 
 	if err := json.Unmarshal(body, &data); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal users response: %w", err)
+		return nil, nil, fmt.Errorf("failed to unmarshal users response: %w", err)
 	}
 
-	return data.Users, nil
+	var offset int64
+	if cursor != nil && cursor.Cursor != nil {
+		offset = *cursor.Cursor
+	}
+
+	// If offset is beyond available data, return empty results with no next cursor.
+	if offset >= int64(len(data.Users)) {
+		return []map[string]any{}, nil, nil
+	}
+
+	end := offset + pageSize
+	if end > int64(len(data.Users)) {
+		end = int64(len(data.Users))
+	}
+
+	var nextCursor *pagination.CompositeCursor[int64]
+
+	if end < int64(len(data.Users)) {
+		nextCursor = &pagination.CompositeCursor[int64]{
+			Cursor: &end,
+		}
+	}
+
+	return data.Users[offset:end], nextCursor, nil
 }
