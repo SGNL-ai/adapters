@@ -148,7 +148,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 
 	switch request.EntityExternalID {
 	case IncidentReport:
-		objects, nextCursor, err = parseIncidentsResponse(body, request.PageSize, request.Cursor)
+		objects, nextCursor, err = parseIncidentsResponse(body)
 	case User:
 		objects, nextCursor, err = parseUsersResponse(body, request.PageSize, request.Cursor)
 	}
@@ -210,7 +210,7 @@ type incidentsResponse struct {
 
 // parseIncidentsResponse parses the VictorOps Incidents API response and computes the next cursor.
 func parseIncidentsResponse(
-	body []byte, pageSize int64, cursor *pagination.CompositeCursor[int64],
+	body []byte,
 ) ([]map[string]any, *pagination.CompositeCursor[int64], error) {
 	var data incidentsResponse
 
@@ -218,13 +218,15 @@ func parseIncidentsResponse(
 		return nil, nil, fmt.Errorf("failed to unmarshal incidents response: %w", err)
 	}
 
-	var currentOffset int64
-	if cursor != nil && cursor.Cursor != nil {
-		currentOffset = *cursor.Cursor
+	// Use the response's offset and the actual number of incidents returned to compute the next cursor.
+	// This is safer than using the request's pageSize, as the API may return fewer items than requested.
+	receivedCount := int64(len(data.Incidents))
+
+	if receivedCount == 0 {
+		return data.Incidents, nil, nil
 	}
 
-	// Determine if there are more pages by checking if the next offset would exceed the total.
-	nextOffset := currentOffset + pageSize
+	nextOffset := data.Offset + receivedCount
 
 	var nextCursor *pagination.CompositeCursor[int64]
 

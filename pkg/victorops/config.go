@@ -38,13 +38,26 @@ type Config struct {
 
 // Validate validates that a Config received in a GetPage call is valid.
 func (c *Config) Validate(_ context.Context) error {
+	// Reserved query parameter keys that are managed by the adapter for pagination.
+	reservedKeys := map[string]bool{
+		"offset": true,
+		"limit":  true,
+	}
+
 	for entity, params := range c.QueryParameters {
 		if params == "" {
 			return fmt.Errorf("queryParameters[%s] cannot be an empty string", entity)
 		}
 
-		if _, err := url.ParseQuery(params); err != nil {
+		parsed, err := url.ParseQuery(params)
+		if err != nil {
 			return fmt.Errorf("queryParameters[%s] is not a valid query string: %w", entity, err)
+		}
+
+		for key := range parsed {
+			if reservedKeys[key] {
+				return fmt.Errorf("queryParameters[%s] contains reserved parameter %q which is managed by the adapter", entity, key)
+			}
 		}
 	}
 

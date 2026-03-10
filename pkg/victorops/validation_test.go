@@ -110,6 +110,35 @@ func TestValidateGetPageRequest(t *testing.T) {
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
 			},
 		},
+		"invalid_query_parameters_reserved_key": {
+			request: &framework.Request[victorops_adapter.Config]{
+				Address: "https://api.victorops.com",
+				Auth: &framework.DatasourceAuthCredentials{
+					Basic: &framework.BasicAuthCredentials{
+						Username: "api-id",
+						Password: "api-key",
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: victorops_adapter.IncidentReport,
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "incidentNumber",
+						},
+					},
+				},
+				Config: &victorops_adapter.Config{
+					QueryParameters: map[string]string{
+						"IncidentReport": "offset=5",
+					},
+				},
+			},
+			wantErr: &framework.Error{
+				Message: "VictorOps config is invalid: queryParameters[IncidentReport] " +
+					`contains reserved parameter "offset" which is managed by the adapter.`,
+				Code: api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_DATASOURCE_CONFIG,
+			},
+		},
 		"valid_with_empty_config": {
 			request: &framework.Request[victorops_adapter.Config]{
 				Address: "https://api.victorops.com",
