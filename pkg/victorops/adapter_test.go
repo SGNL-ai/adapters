@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"net/http/httptest"
 	"reflect"
+	"sort"
 	"testing"
 	"time"
 
@@ -432,9 +433,35 @@ func TestAdapterGetPage(t *testing.T) {
 		},
 	}
 
+	// sortChildEntities sorts child entity arrays by their "id" field for deterministic comparison.
+	// CreateChildEntitiesFromList iterates a map, so order is not guaranteed.
+	sortChildEntities := func(objects []framework.Object) {
+		for _, obj := range objects {
+			for _, value := range obj {
+				if childObjects, ok := value.([]framework.Object); ok {
+					sort.Slice(childObjects, func(i, j int) bool {
+						id1, _ := childObjects[i]["id"].(string)
+						id2, _ := childObjects[j]["id"].(string)
+
+						return id1 < id2
+					})
+				}
+			}
+		}
+	}
+
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			gotResponse := adapter.GetPage(tt.ctx, tt.request)
+
+			// Sort child entity arrays for order-independent comparison.
+			if gotResponse.Success != nil {
+				sortChildEntities(gotResponse.Success.Objects)
+			}
+
+			if tt.wantResponse.Success != nil {
+				sortChildEntities(tt.wantResponse.Success.Objects)
+			}
 
 			if !reflect.DeepEqual(gotResponse, tt.wantResponse) {
 				t.Errorf("gotResponse: %v, wantResponse: %v", gotResponse, tt.wantResponse)

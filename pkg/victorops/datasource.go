@@ -256,6 +256,10 @@ func parseUsersResponse(
 		return nil, nil, fmt.Errorf("failed to unmarshal users response: %w", err)
 	}
 
+	if pageSize <= 0 {
+		return nil, nil, fmt.Errorf("pageSize must be greater than 0, got %d", pageSize)
+	}
+
 	var offset int64
 	if cursor != nil && cursor.Cursor != nil {
 		offset = *cursor.Cursor
