@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	framework "github.com/sgnl-ai/adapter-framework"
@@ -151,6 +152,11 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		objects, nextCursor, err = parseIncidentsResponse(body)
 	case User:
 		objects, nextCursor, err = parseUsersResponse(body, request.PageSize, request.Cursor)
+	default:
+		return nil, &framework.Error{
+			Message: fmt.Sprintf("Unsupported entity external ID: %s.", request.EntityExternalID),
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INVALID_ENTITY_CONFIG,
+		}
 	}
 
 	if err != nil {
@@ -174,7 +180,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 
 // constructURL constructs the VictorOps URL for the given request and entity.
 func constructURL(request *Request, entity Entity) string {
-	url := request.BaseURL + entity.endpoint
+	url := strings.TrimRight(request.BaseURL, "/") + entity.endpoint
 
 	switch request.EntityExternalID {
 	case IncidentReport:
