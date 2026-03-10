@@ -99,6 +99,17 @@ var TestServerHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Req
 			]
 		}`))
 
+	// User endpoint returning 3 users (for multi-page pagination test).
+	case "/api-public/v2/user?testMultiPage=true":
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{
+			"users": [
+				{"username": "user1", "firstName": "Alice", "email": "alice@example.com"},
+				{"username": "user2", "firstName": "Bob", "email": "bob@example.com"},
+				{"username": "user3", "firstName": "Charlie", "email": "charlie@example.com"}
+			]
+		}`))
+
 	// Error endpoints.
 	case "/api-reporting/v2/incidents?offset=0&limit=1":
 		w.WriteHeader(http.StatusBadRequest)

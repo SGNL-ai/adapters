@@ -160,6 +160,98 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 			wantCursor: nil,
 		},
+		"valid_request_users_first_page": {
+			ctx: context.Background(),
+			request: &framework.Request[victorops_adapter.Config]{
+				Address: server.URL,
+				Auth: &framework.DatasourceAuthCredentials{
+					Basic: &framework.BasicAuthCredentials{
+						Username: mockAPIId,
+						Password: mockAPIKey,
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: victorops_adapter.User,
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "username",
+							Type:       framework.AttributeTypeString,
+						},
+						{
+							ExternalId: "firstName",
+							Type:       framework.AttributeTypeString,
+						},
+					},
+				},
+				PageSize: 2,
+				Config: &victorops_adapter.Config{
+					QueryParameters: map[string]string{
+						"User": "testMultiPage=true",
+					},
+				},
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"username":  "user1",
+							"firstName": "Alice",
+						},
+						{
+							"username":  "user2",
+							"firstName": "Bob",
+						},
+					},
+					NextCursor: base64.StdEncoding.EncodeToString([]byte(`{"cursor":2}`)),
+				},
+			},
+			wantCursor: &pagination.CompositeCursor[int64]{
+				Cursor: testutil.GenPtr[int64](2),
+			},
+		},
+		"valid_request_users_last_page": {
+			ctx: context.Background(),
+			request: &framework.Request[victorops_adapter.Config]{
+				Address: server.URL,
+				Auth: &framework.DatasourceAuthCredentials{
+					Basic: &framework.BasicAuthCredentials{
+						Username: mockAPIId,
+						Password: mockAPIKey,
+					},
+				},
+				Entity: framework.EntityConfig{
+					ExternalId: victorops_adapter.User,
+					Attributes: []*framework.AttributeConfig{
+						{
+							ExternalId: "username",
+							Type:       framework.AttributeTypeString,
+						},
+						{
+							ExternalId: "firstName",
+							Type:       framework.AttributeTypeString,
+						},
+					},
+				},
+				PageSize: 2,
+				Cursor:   base64.StdEncoding.EncodeToString([]byte(`{"cursor":2}`)),
+				Config: &victorops_adapter.Config{
+					QueryParameters: map[string]string{
+						"User": "testMultiPage=true",
+					},
+				},
+			},
+			wantResponse: framework.Response{
+				Success: &framework.Page{
+					Objects: []framework.Object{
+						{
+							"username":  "user3",
+							"firstName": "Charlie",
+						},
+					},
+				},
+			},
+			wantCursor: nil,
+		},
 		"valid_request_incidents_with_query_parameters": {
 			ctx: context.Background(),
 			request: &framework.Request[victorops_adapter.Config]{

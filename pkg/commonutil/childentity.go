@@ -320,13 +320,24 @@ func CreateChildEntitiesFromStringArray(
 				continue
 			}
 
-			// Convert []any to []string.
+			// Convert []any to []string, but only if all elements are strings.
+			// If any element is not a string, leave the original value unchanged.
 			stringValues := make([]string, 0, len(arrayValue))
+			allStrings := true
 
 			for _, item := range arrayValue {
-				if strVal, ok := item.(string); ok {
-					stringValues = append(stringValues, strVal)
+				strVal, ok := item.(string)
+				if !ok {
+					allStrings = false
+
+					break
 				}
+
+				stringValues = append(stringValues, strVal)
+			}
+
+			if !allStrings {
+				continue
 			}
 
 			transformedObj[fieldName] = CreateChildEntitiesFromList(parentID, fieldName, stringValues, childConfig)

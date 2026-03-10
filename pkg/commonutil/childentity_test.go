@@ -339,6 +339,24 @@ func TestCreateChildEntitiesFromStringArray(t *testing.T) {
 				},
 			},
 		},
+		"non_string_array_elements_unchanged": {
+			objects: []map[string]any{
+				{
+					"incidentNumber": "8",
+					"pagedUsers":     []any{map[string]any{"name": "alice"}, map[string]any{"name": "bob"}},
+				},
+			},
+			entityConfig: &framework.EntityConfig{
+				Attributes:    parentConfig.Attributes,
+				ChildEntities: []*framework.EntityConfig{pagedUsersConfig},
+			},
+			want: []map[string]any{
+				{
+					"incidentNumber": "8",
+					"pagedUsers":     []any{map[string]any{"name": "alice"}, map[string]any{"name": "bob"}},
+				},
+			},
+		},
 		"duplicate_values_deduplicated": {
 			objects: []map[string]any{
 				{
@@ -370,7 +388,16 @@ func TestCreateChildEntitiesFromStringArray(t *testing.T) {
 			)
 
 			// Sort child entity arrays by ID for order-independent comparison.
+			// Only sort arrays whose elements are maps (child entity objects).
 			sortByID := func(items []any) {
+				if len(items) == 0 {
+					return
+				}
+
+				if _, ok := items[0].(map[string]any); !ok {
+					return
+				}
+
 				sort.Slice(items, func(i, j int) bool {
 					id1, _ := items[i].(map[string]any)["id"].(string)
 					id2, _ := items[j].(map[string]any)["id"].(string)
