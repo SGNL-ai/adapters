@@ -17,6 +17,7 @@ require (
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
+	github.com/ibmdb/go_ibm_db v0.5.4
 	github.com/machinebox/graphql v0.2.2
 	github.com/ohler55/ojg v1.28.0
 	github.com/sgnl-ai/adapter-framework v0.25.0
@@ -42,6 +43,7 @@ require (
 	github.com/ebitengine/purego v0.8.4 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.7 // indirect
+	github.com/ibmruntimes/go-recordio/v2 v2.0.0-20240416213906-ae0ad556db70 // indirect
 	github.com/matryer/is v1.4.1 // indirect
 	github.com/moby/go-archive v0.1.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect

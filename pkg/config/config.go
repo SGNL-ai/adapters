@@ -6,6 +6,10 @@ var (
 	DefaultRequestTimeout = 10 // 10 seconds
 )
 
+// MaxPageSize is the maximum number of rows that can be returned in a single page
+// from a database adapter.
+const MaxPageSize = 999
+
 // CommonConfig is a collection of configuration common to all adapters.
 type CommonConfig struct {
 	// RequestTimeoutSeconds is the timeout duration for requests made to datasources.

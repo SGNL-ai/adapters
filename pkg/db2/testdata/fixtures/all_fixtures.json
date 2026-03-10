@@ -1,0 +1,261 @@
+[
+  {
+    "name": "ekpo_with_filter",
+    "description": "EKPO entity with BUKRS=US02 filter, page size 10",
+    "recordedAt": "2026-02-13T17:29:53Z",
+    "request": {
+      "entity": "EKPO",
+      "schema": "SAP_ECC_MST_RMS",
+      "database": "LMTESTDB",
+      "pageSize": 10,
+      "filter": {
+        "field": "BUKRS",
+        "op": "=",
+        "value": "US02"
+      },
+      "attributes": [
+        "id",
+        "MANDT",
+        "EBELN",
+        "EBELP",
+        "NETPR",
+        "BUKRS"
+      ]
+    },
+    "response": {
+      "objects": [
+        {
+          "BUKRS": "US02",
+          "EBELN": "4500000003",
+          "EBELP": "00010",
+          "MANDT": "000",
+          "NETPR": 875,
+          "id": "000|4500000003|00010"
+        },
+        {
+          "BUKRS": "US02",
+          "EBELN": "4500000003",
+          "EBELP": "00020",
+          "MANDT": "000",
+          "NETPR": 22.5,
+          "id": "000|4500000003|00020"
+        },
+        {
+          "BUKRS": "US02",
+          "EBELN": "4500000003",
+          "EBELP": "00030",
+          "MANDT": "000",
+          "NETPR": 68.9,
+          "id": "000|4500000003|00030"
+        },
+        {
+          "BUKRS": "US02",
+          "EBELN": "4500000003",
+          "EBELP": "00040",
+          "MANDT": "000",
+          "NETPR": 18.75,
+          "id": "000|4500000003|00040"
+        },
+        {
+          "BUKRS": "US02",
+          "EBELN": "4500000003",
+          "EBELP": "00050",
+          "MANDT": "000",
+          "NETPR": 45.8,
+          "id": "000|4500000003|00050"
+        },
+        {
+          "BUKRS": "US02",
+          "EBELN": "4500000004",
+          "EBELP": "00010",
+          "MANDT": "000",
+          "NETPR": 8.95,
+          "id": "000|4500000004|00010"
+        },
+        {
+          "BUKRS": "US02",
+          "EBELN": "4500000004",
+          "EBELP": "00020",
+          "MANDT": "000",
+          "NETPR": 89,
+          "id": "000|4500000004|00020"
+        },
+        {
+          "BUKRS": "US02",
+          "EBELN": "4500000004",
+          "EBELP": "00030",
+          "MANDT": "000",
+          "NETPR": 1.85,
+          "id": "000|4500000004|00030"
+        },
+        {
+          "BUKRS": "US02",
+          "EBELN": "4500000004",
+          "EBELP": "00040",
+          "MANDT": "000",
+          "NETPR": 4.5,
+          "id": "000|4500000004|00040"
+        },
+        {
+          "BUKRS": "US02",
+          "EBELN": "4500000004",
+          "EBELP": "00050",
+          "MANDT": "000",
+          "NETPR": 12.5,
+          "id": "000|4500000004|00050"
+        }
+      ]
+    }
+  },
+  {
+    "name": "ekpo_small_page",
+    "description": "EKPO entity with small page size (3) for pagination testing - page 1",
+    "recordedAt": "2026-02-13T17:29:56Z",
+    "request": {
+      "entity": "EKPO",
+      "schema": "SAP_ECC_MST_RMS",
+      "database": "LMTESTDB",
+      "pageSize": 3,
+      "filter": {
+        "field": "BUKRS",
+        "op": "=",
+        "value": "US02"
+      },
+      "attributes": [
+        "id",
+        "MANDT",
+        "EBELN",
+        "EBELP",
+        "NETPR"
+      ]
+    },
+    "response": {
+      "objects": [
+        {
+          "EBELN": "4500000003",
+          "EBELP": "00010",
+          "MANDT": "000",
+          "NETPR": 875,
+          "id": "000|4500000003|00010"
+        },
+        {
+          "EBELN": "4500000003",
+          "EBELP": "00020",
+          "MANDT": "000",
+          "NETPR": 22.5,
+          "id": "000|4500000003|00020"
+        },
+        {
+          "EBELN": "4500000003",
+          "EBELP": "00030",
+          "MANDT": "000",
+          "NETPR": 68.9,
+          "id": "000|4500000003|00030"
+        }
+      ],
+      "nextCursor": "000|4500000003|00030"
+    }
+  },
+  {
+    "name": "ekpo_small_page_2",
+    "description": "EKPO entity with small page size (3) for pagination testing - page 2",
+    "recordedAt": "2026-02-13T17:29:59Z",
+    "request": {
+      "entity": "EKPO",
+      "schema": "SAP_ECC_MST_RMS",
+      "database": "LMTESTDB",
+      "pageSize": 3,
+      "cursor": "000|4500000003|00030",
+      "filter": {
+        "field": "BUKRS",
+        "op": "=",
+        "value": "US02"
+      },
+      "attributes": [
+        "id",
+        "MANDT",
+        "EBELN",
+        "EBELP",
+        "NETPR"
+      ]
+    },
+    "response": {
+      "objects": [
+        {
+          "EBELN": "4500000003",
+          "EBELP": "00040",
+          "MANDT": "000",
+          "NETPR": 18.75,
+          "id": "000|4500000003|00040"
+        },
+        {
+          "EBELN": "4500000003",
+          "EBELP": "00050",
+          "MANDT": "000",
+          "NETPR": 45.8,
+          "id": "000|4500000003|00050"
+        },
+        {
+          "EBELN": "4500000004",
+          "EBELP": "00010",
+          "MANDT": "000",
+          "NETPR": 8.95,
+          "id": "000|4500000004|00010"
+        }
+      ],
+      "nextCursor": "000|4500000004|00010"
+    }
+  },
+  {
+    "name": "ekpo_no_filter",
+    "description": "EKPO entity without filter, page size 5",
+    "recordedAt": "2026-02-13T17:30:01Z",
+    "request": {
+      "entity": "EKPO",
+      "schema": "SAP_ECC_MST_RMS",
+      "database": "LMTESTDB",
+      "pageSize": 5,
+      "attributes": [
+        "id",
+        "MANDT",
+        "EBELN",
+        "EBELP"
+      ]
+    },
+    "response": {
+      "objects": [
+        {
+          "EBELN": "4500000001",
+          "EBELP": "00010",
+          "MANDT": "000",
+          "id": "000|4500000001|00010"
+        },
+        {
+          "EBELN": "4500000001",
+          "EBELP": "00020",
+          "MANDT": "000",
+          "id": "000|4500000001|00020"
+        },
+        {
+          "EBELN": "4500000001",
+          "EBELP": "00030",
+          "MANDT": "000",
+          "id": "000|4500000001|00030"
+        },
+        {
+          "EBELN": "4500000001",
+          "EBELP": "00040",
+          "MANDT": "000",
+          "id": "000|4500000001|00040"
+        },
+        {
+          "EBELN": "4500000001",
+          "EBELP": "00050",
+          "MANDT": "000",
+          "id": "000|4500000001|00050"
+        }
+      ],
+      "nextCursor": "000|4500000001|00050"
+    }
+  }
+]
