@@ -107,7 +107,7 @@ func TestAdapter_GetPage_AddressValidation(t *testing.T) {
 			name:        "invalid_port_non_numeric",
 			address:     "localhost:abc",
 			wantErr:     true,
-			errContains: "invalid port 'abc'",
+			errContains: "Invalid URL format",
 		},
 		{
 			name:        "port_out_of_range_high",

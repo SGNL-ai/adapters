@@ -47,11 +47,18 @@ func NewRequestFromConfig(request *framework.Request[Config]) (*Request, *framew
 		}
 	}
 
+	// Validate and sanitize the address.
+	// DB2 uses direct TCP connections (hostname:port), so no URL scheme is allowed.
+	trimmedAddress, _, addrErr := validation.ParseAndValidateAddress(request.Address, []string{})
+	if addrErr != nil {
+		return nil, addrErr
+	}
+
 	// Construct the internal Request
 	req := &Request{
 		Username:     request.Auth.Basic.Username,
 		Password:     request.Auth.Basic.Password,
-		BaseURL:      request.Address,
+		BaseURL:      trimmedAddress,
 		PageSize:     request.PageSize,
 		EntityConfig: request.Entity,
 		Database:     request.Config.Database,

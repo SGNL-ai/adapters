@@ -88,6 +88,100 @@ func TestNewRequestFromConfig(t *testing.T) {
 			wantErrContain: "request contains no config",
 		},
 		{
+			name: "address_with_https_scheme_rejected",
+			request: &framework.Request[db2.Config]{
+				Auth: &framework.DatasourceAuthCredentials{
+					Basic: &framework.BasicAuthCredentials{
+						Username: "testuser",
+						Password: "testpass",
+					},
+				},
+				Address:  "https://mydb2host:50000",
+				PageSize: 100,
+				Entity: framework.EntityConfig{
+					ExternalId: "test_table",
+					Attributes: []*framework.AttributeConfig{
+						{ExternalId: "id", UniqueId: true},
+					},
+				},
+				Config: &db2.Config{
+					Database: "TESTDB",
+				},
+			},
+			wantErr:        true,
+			wantErrContain: "is not supported",
+		},
+		{
+			name: "address_with_http_scheme_rejected",
+			request: &framework.Request[db2.Config]{
+				Auth: &framework.DatasourceAuthCredentials{
+					Basic: &framework.BasicAuthCredentials{
+						Username: "testuser",
+						Password: "testpass",
+					},
+				},
+				Address:  "http://mydb2host:50000",
+				PageSize: 100,
+				Entity: framework.EntityConfig{
+					ExternalId: "test_table",
+					Attributes: []*framework.AttributeConfig{
+						{ExternalId: "id", UniqueId: true},
+					},
+				},
+				Config: &db2.Config{
+					Database: "TESTDB",
+				},
+			},
+			wantErr:        true,
+			wantErrContain: "is not supported",
+		},
+		{
+			name: "address_with_whitespace_trimmed",
+			request: &framework.Request[db2.Config]{
+				Auth: &framework.DatasourceAuthCredentials{
+					Basic: &framework.BasicAuthCredentials{
+						Username: "testuser",
+						Password: "testpass",
+					},
+				},
+				Address:  "  mydb2host:50000  ",
+				PageSize: 100,
+				Entity: framework.EntityConfig{
+					ExternalId: "test_table",
+					Attributes: []*framework.AttributeConfig{
+						{ExternalId: "id", UniqueId: true},
+					},
+				},
+				Config: &db2.Config{
+					Database: "TESTDB",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "address_without_scheme_accepted",
+			request: &framework.Request[db2.Config]{
+				Auth: &framework.DatasourceAuthCredentials{
+					Basic: &framework.BasicAuthCredentials{
+						Username: "testuser",
+						Password: "testpass",
+					},
+				},
+				Address:  "mydb2host:50000",
+				PageSize: 100,
+				Entity: framework.EntityConfig{
+					ExternalId: "test_table",
+					Attributes: []*framework.AttributeConfig{
+						{ExternalId: "id", UniqueId: true},
+					},
+				},
+				Config: &db2.Config{
+					Database: "TESTDB",
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name: "nil_attributes_handled_gracefully",
 			request: &framework.Request[db2.Config]{
 				Auth: &framework.DatasourceAuthCredentials{
