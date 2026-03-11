@@ -7,10 +7,14 @@ import (
 	"fmt"
 
 	framework "github.com/sgnl-ai/adapter-framework"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
+	"go.uber.org/zap"
 )
 
 // TestConnection tries to connect and query system tables to help debug connection issues.
 func (d *Datasource) TestConnection(ctx context.Context, request *Request) (*Response, *framework.Error) {
+	logger := zaplogger.FromContext(ctx)
+
 	// Build DB2 connection string
 	connectionString := fmt.Sprintf("HOSTNAME=%s;DATABASE=%s;UID=%s;PWD=%s;PORT=50000;PROTOCOL=TCPIP",
 		request.BaseURL, request.Database, request.Username, request.Password)
@@ -41,6 +45,8 @@ func (d *Datasource) TestConnection(ctx context.Context, request *Request) (*Res
 	for rows.Next() {
 		var schemaName, tableName string
 		if err := rows.Scan(&schemaName, &tableName); err != nil {
+			logger.Warn("Failed to scan system table row", zap.Error(err))
+
 			continue
 		}
 

@@ -12,10 +12,14 @@ import (
 )
 
 // queryResultProcessor handles processing of database query results.
+// The requestedAttrs map and needsCompositeID flag are precomputed once during
+// construction to avoid rebuilding them for every row processed.
 type queryResultProcessor struct {
 	attributes       []*framework.AttributeConfig
 	uniqueKeyColumns []string
 	logger           *zap.Logger
+	requestedAttrs   map[string]framework.AttributeConfig
+	needsCompositeID bool
 }
 
 // processedResults contains the results of processing query rows.
@@ -25,15 +29,30 @@ type processedResults struct {
 }
 
 // newQueryResultProcessor creates a new processor for query results.
+// It precomputes the requested attributes map and composite ID flag so they
+// are not rebuilt on every call to buildObject.
 func newQueryResultProcessor(
 	attributes []*framework.AttributeConfig,
 	uniqueKeyColumns []string,
 	logger *zap.Logger,
 ) *queryResultProcessor {
+	requestedAttrs := make(map[string]framework.AttributeConfig)
+	needsCompositeID := false
+
+	for _, attr := range attributes {
+		if attr.ExternalId == "id" {
+			needsCompositeID = true
+		} else {
+			requestedAttrs[attr.ExternalId] = *attr
+		}
+	}
+
 	return &queryResultProcessor{
 		attributes:       attributes,
 		uniqueKeyColumns: uniqueKeyColumns,
 		logger:           logger,
+		requestedAttrs:   requestedAttrs,
+		needsCompositeID: needsCompositeID,
 	}
 }
 
@@ -115,25 +134,14 @@ func (p *queryResultProcessor) scanRowToMap(rows Rows, columns []string) (map[st
 }
 
 // buildObject filters and casts attributes, and adds composite ID if needed.
+// Uses the precomputed requestedAttrs map and needsCompositeID flag from the processor.
 func (p *queryResultProcessor) buildObject(
 	allColumns map[string]interface{},
 ) (map[string]interface{}, *framework.Error) {
 	obj := make(map[string]interface{})
-	needsCompositeID := false
-
-	// Build map of requested attributes
-	requestedAttrs := make(map[string]framework.AttributeConfig)
-
-	for _, attr := range p.attributes {
-		if attr.ExternalId == "id" {
-			needsCompositeID = true
-		} else {
-			requestedAttrs[attr.ExternalId] = *attr
-		}
-	}
 
 	// Add requested attributes with type casting
-	for attrName, attr := range requestedAttrs {
+	for attrName, attr := range p.requestedAttrs {
 		val, exists := allColumns[attrName]
 		if !exists {
 			continue
@@ -154,7 +162,7 @@ func (p *queryResultProcessor) buildObject(
 	}
 
 	// Build composite ID if needed
-	if needsCompositeID && len(p.uniqueKeyColumns) > 0 {
+	if p.needsCompositeID && len(p.uniqueKeyColumns) > 0 {
 		keyColumns := make([]UniqueConstraintColumn, len(p.uniqueKeyColumns))
 		for i, colName := range p.uniqueKeyColumns {
 			keyColumns[i] = UniqueConstraintColumn{

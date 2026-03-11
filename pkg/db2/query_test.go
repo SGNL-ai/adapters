@@ -29,8 +29,8 @@ func TestConstructQuery(t *testing.T) {
 				UniqueKeyColumns:          []string{"id"},
 				PageSize:                  100,
 			},
-			wantQuery: "SELECT *, (CAST(id AS VARCHAR(50))) AS str_id, COUNT(*) OVER() AS total_remaining_rows " +
-				"FROM users ORDER BY CAST(id AS VARCHAR(50)) FETCH FIRST 101 ROWS ONLY",
+			wantQuery: `SELECT *, (CAST("id" AS VARCHAR(50))) AS str_id, COUNT(*) OVER() AS total_remaining_rows ` +
+				`FROM "users" ORDER BY CAST("id" AS VARCHAR(50)) FETCH FIRST 101 ROWS ONLY`,
 			wantArgs: []any{},
 			wantErr:  false,
 		},
@@ -45,8 +45,8 @@ func TestConstructQuery(t *testing.T) {
 				Cursor:                    strPtr("123"),
 				PageSize:                  50,
 			},
-			wantQuery: "SELECT *, (CAST(id AS VARCHAR(50))) AS str_id, COUNT(*) OVER() AS total_remaining_rows " +
-				"FROM users WHERE (CAST(id AS VARCHAR(50))) > (?) ORDER BY CAST(id AS VARCHAR(50)) FETCH FIRST 51 ROWS ONLY",
+			wantQuery: `SELECT *, (CAST("id" AS VARCHAR(50))) AS str_id, COUNT(*) OVER() AS total_remaining_rows ` +
+				`FROM "users" WHERE (CAST("id" AS VARCHAR(50))) > (?) ORDER BY CAST("id" AS VARCHAR(50)) FETCH FIRST 51 ROWS ONLY`,
 			wantArgs: []any{"123"},
 			wantErr:  false,
 		},
@@ -65,8 +65,8 @@ func TestConstructQuery(t *testing.T) {
 					Value:    "US02",
 				},
 			},
-			wantQuery: "SELECT *, (CAST(id AS VARCHAR(50))) AS str_id, COUNT(*) OVER() AS total_remaining_rows " +
-				"FROM users WHERE (\"BUKRS\" = ?) ORDER BY CAST(id AS VARCHAR(50)) FETCH FIRST 51 ROWS ONLY",
+			wantQuery: `SELECT *, (CAST("id" AS VARCHAR(50))) AS str_id, COUNT(*) OVER() AS total_remaining_rows ` +
+				`FROM "users" WHERE ("BUKRS" = ?) ORDER BY CAST("id" AS VARCHAR(50)) FETCH FIRST 51 ROWS ONLY`,
 			wantArgs: []any{"US02"},
 			wantErr:  false,
 		},
@@ -79,8 +79,8 @@ func TestConstructQuery(t *testing.T) {
 				UniqueAttributeExternalID: "product_id",
 				PageSize:                  0,
 			},
-			wantQuery: "SELECT *, CAST(product_id AS VARCHAR(50)) AS str_id, COUNT(*) OVER() AS total_remaining_rows " +
-				"FROM products ORDER BY CAST(product_id AS VARCHAR(50))",
+			wantQuery: `SELECT *, CAST("product_id" AS VARCHAR(50)) AS str_id, COUNT(*) OVER() AS total_remaining_rows ` +
+				`FROM "products" ORDER BY CAST("product_id" AS VARCHAR(50))`,
 			wantArgs: []any{},
 			wantErr:  false,
 		},
@@ -135,9 +135,9 @@ func TestConstructQueryShouldQuoteSpecialCharacterColumns(t *testing.T) {
 			wantQueryContains: `"col""name"`,
 		},
 		{
-			name:              "column_alphanumeric_not_quoted",
+			name:              "column_alphanumeric_is_quoted",
 			attributeExtID:    "username",
-			wantQueryContains: "username",
+			wantQueryContains: `"username"`,
 		},
 	}
 
@@ -186,7 +186,7 @@ func TestBuildSelectColumns(t *testing.T) {
 				{ExternalId: "name"},
 			},
 			uniqueKeyColumns:              []string{},
-			expectedColumns:               []string{"name"},
+			expectedColumns:               []string{`"name"`},
 			expectedNeedsCompositeKeyCols: false,
 		},
 		{
@@ -196,7 +196,7 @@ func TestBuildSelectColumns(t *testing.T) {
 				{ExternalId: "name"},
 			},
 			uniqueKeyColumns:              []string{"MANDT", "EBELN"},
-			expectedColumns:               []string{"name", "MANDT", "EBELN"},
+			expectedColumns:               []string{`"name"`, `"MANDT"`, `"EBELN"`},
 			expectedNeedsCompositeKeyCols: true,
 		},
 		{
@@ -206,7 +206,7 @@ func TestBuildSelectColumns(t *testing.T) {
 				{ExternalId: "MANDT"},
 			},
 			uniqueKeyColumns:              []string{"MANDT", "EBELN"},
-			expectedColumns:               []string{"MANDT", "EBELN"},
+			expectedColumns:               []string{`"MANDT"`, `"EBELN"`},
 			expectedNeedsCompositeKeyCols: true,
 		},
 		{
@@ -250,15 +250,15 @@ func TestBuildPaginationCastExpression(t *testing.T) {
 			name:             "single_column_key",
 			uniqueAttrID:     "user_id",
 			uniqueKeyColumns: []string{},
-			expected:         "CAST(user_id AS VARCHAR(50)) AS str_id",
+			expected:         `CAST("user_id" AS VARCHAR(50)) AS str_id`,
 		},
 		{
 			name:             "composite_key_concatenates_columns",
 			uniqueAttrID:     "id",
 			uniqueKeyColumns: []string{"MANDT", "EBELN", "EBELP"},
-			expected: "(CAST(MANDT AS VARCHAR(50)) || '|' || " +
-				"CAST(EBELN AS VARCHAR(50)) || '|' || " +
-				"CAST(EBELP AS VARCHAR(50))) AS str_id",
+			expected: `(CAST("MANDT" AS VARCHAR(50)) || '|' || ` +
+				`CAST("EBELN" AS VARCHAR(50)) || '|' || ` +
+				`CAST("EBELP" AS VARCHAR(50))) AS str_id`,
 		},
 		{
 			name:             "id_attr_without_key_columns_returns_empty",
@@ -302,19 +302,20 @@ func TestBuildOrderByClause(t *testing.T) {
 			name:             "single_column_key",
 			uniqueAttrID:     "user_id",
 			uniqueKeyColumns: []string{},
-			expected:         "ORDER BY CAST(user_id AS VARCHAR(50))",
+			expected:         `ORDER BY CAST("user_id" AS VARCHAR(50))`,
 		},
 		{
 			name:             "composite_key_orders_by_all_columns",
 			uniqueAttrID:     "id",
 			uniqueKeyColumns: []string{"MANDT", "EBELN", "EBELP"},
-			expected:         "ORDER BY CAST(MANDT AS VARCHAR(50)), CAST(EBELN AS VARCHAR(50)), CAST(EBELP AS VARCHAR(50))",
+			expected: `ORDER BY CAST("MANDT" AS VARCHAR(50)), ` +
+				`CAST("EBELN" AS VARCHAR(50)), CAST("EBELP" AS VARCHAR(50))`,
 		},
 		{
 			name:             "id_without_key_columns_treats_id_as_column",
 			uniqueAttrID:     "id",
 			uniqueKeyColumns: []string{},
-			expected:         "ORDER BY CAST(id AS VARCHAR(50))",
+			expected:         `ORDER BY CAST("id" AS VARCHAR(50))`,
 		},
 	}
 
@@ -359,7 +360,7 @@ func TestBuildCursorCondition(t *testing.T) {
 			cursor:           strPtr("123"),
 			uniqueAttrID:     "user_id",
 			uniqueKeyColumns: []string{},
-			expectedCond:     "CAST(user_id AS VARCHAR(50)) > ?",
+			expectedCond:     `CAST("user_id" AS VARCHAR(50)) > ?`,
 			expectedArgs:     []any{"123"},
 		},
 		{
@@ -367,8 +368,9 @@ func TestBuildCursorCondition(t *testing.T) {
 			cursor:           strPtr("100|4500001234|10"),
 			uniqueAttrID:     "id",
 			uniqueKeyColumns: []string{"MANDT", "EBELN", "EBELP"},
-			expectedCond:     "(CAST(MANDT AS VARCHAR(50)), CAST(EBELN AS VARCHAR(50)), CAST(EBELP AS VARCHAR(50))) > (?, ?, ?)",
-			expectedArgs:     []any{"100", "4500001234", "10"},
+			expectedCond: `(CAST("MANDT" AS VARCHAR(50)), ` +
+				`CAST("EBELN" AS VARCHAR(50)), CAST("EBELP" AS VARCHAR(50))) > (?, ?, ?)`,
+			expectedArgs: []any{"100", "4500001234", "10"},
 		},
 		{
 			name:             "cursor_parts_mismatch_returns_empty",
@@ -407,9 +409,9 @@ func TestQuoteIdentifier(t *testing.T) {
 		expected string
 	}{
 		{
-			name:     "alphanumeric_not_quoted",
+			name:     "alphanumeric_is_quoted",
 			input:    "column_name",
-			expected: "column_name",
+			expected: `"column_name"`,
 		},
 		{
 			name:     "hyphen_is_quoted",

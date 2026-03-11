@@ -16,20 +16,15 @@ import (
 // that provides the total count of rows matching the query conditions.
 const TotalRemainingRowsColumn = "total_remaining_rows"
 
-// quoteIdentifier quotes DB2 identifiers (table names, column names) that contain special characters.
-// DB2 supports delimited identifiers wrapped in double quotes for names containing /, -, or spaces.
-// Any embedded double quotes in the identifier are escaped by doubling them (SQL standard).
+// quoteIdentifier always wraps DB2 identifiers (table names, column names) in double quotes.
+// This provides defense-in-depth against SQL injection by ensuring all identifiers are
+// delimited, regardless of whether they contain special characters. Any embedded double
+// quotes in the identifier are escaped by doubling them (SQL standard).
 func quoteIdentifier(name string) string {
-	hasSpecialChars := strings.Contains(name, "/") || strings.Contains(name, "-") ||
-		strings.Contains(name, " ") || strings.Contains(name, `"`)
-	if hasSpecialChars {
-		// Escape embedded double quotes by doubling them per SQL standard
-		escaped := strings.ReplaceAll(name, `"`, `""`)
+	// Escape embedded double quotes by doubling them per SQL standard
+	escaped := strings.ReplaceAll(name, `"`, `""`)
 
-		return fmt.Sprintf(`"%s"`, escaped)
-	}
-
-	return name
+	return fmt.Sprintf(`"%s"`, escaped)
 }
 
 // buildSelectColumns constructs the list of columns for the SELECT clause.
