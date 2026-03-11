@@ -18,9 +18,8 @@ func init() {
 	sql.Register("go_ibm_db", &mockDriver{})
 }
 
-func (d *mockDriver) Open(name string) (driver.Conn, error) {
+func (d *mockDriver) Open(_ string) (driver.Conn, error) {
 	return nil, fmt.Errorf(
-		"mock DB2 driver: cannot connect to real DB2 database without client libraries. Connection string: %s",
-		name,
+		"mock DB2 driver: cannot connect to real DB2 database without client libraries",
 	)
 }

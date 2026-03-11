@@ -70,7 +70,18 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	// Get unique key columns for composite ID generation
 	uniqueKeyColumns, err := d.ExtractUniqueKeyColumns(ctx, request.EntityConfig.ExternalId)
 	if err != nil {
-		// Log warning but continue - we'll proceed without composite ID
+		// When using the synthetic "id" attribute, composite key columns are required
+		// for unique ID generation and cursor-based pagination.
+		if request.UniqueAttributeExternalID == "id" {
+			return nil, &framework.Error{
+				Message: fmt.Sprintf(
+					"Error extracting unique key columns for table %s: %v. "+
+						"Composite key columns are required when using synthetic 'id' attribute.",
+					request.EntityConfig.ExternalId, err),
+			}
+		}
+
+		// For non-synthetic unique attributes, log and continue without composite ID
 		logger.Warn("Could not extract unique key for table",
 			zap.String("table", request.EntityConfig.ExternalId),
 			zap.Error(err))

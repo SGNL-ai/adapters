@@ -37,6 +37,7 @@ func (d *Datasource) getUniqueConstraints(ctx context.Context, tableName string)
 			AND tc.TABSCHEMA = kcu.TABSCHEMA
 			AND tc.TABNAME = kcu.TABNAME
 		WHERE tc.TABNAME = ?
+			AND tc.TABSCHEMA = CURRENT SCHEMA
 			AND tc.TYPE IN ('P', 'U')
 		ORDER BY tc.CONSTNAME, kcu.COLSEQ
 	`

@@ -203,6 +203,30 @@ func TestNewRequestFromConfig(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "nil_attribute_element_skipped_gracefully",
+			request: &framework.Request[db2.Config]{
+				Auth: &framework.DatasourceAuthCredentials{
+					Basic: &framework.BasicAuthCredentials{
+						Username: "testuser",
+						Password: "testpass",
+					},
+				},
+				Address:  "localhost",
+				PageSize: 100,
+				Entity: framework.EntityConfig{
+					ExternalId: "test_table",
+					Attributes: []*framework.AttributeConfig{
+						nil,
+						{ExternalId: "id", UniqueId: true},
+					},
+				},
+				Config: &db2.Config{
+					Database: "TESTDB",
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name: "empty_attributes_handled_gracefully",
 			request: &framework.Request[db2.Config]{
 				Auth: &framework.DatasourceAuthCredentials{
@@ -572,6 +596,14 @@ func TestSimpleSQLValidationShouldValidateColumnNames(t *testing.T) {
 			wantErr:        true,
 			wantErrContain: "SQL column name validation failed",
 		},
+		{
+			name: "nil_attribute_element_skipped_gracefully",
+			attributes: []*framework.AttributeConfig{
+				nil,
+				{ExternalId: "username"},
+			},
+			wantErr: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -580,14 +612,20 @@ func TestSimpleSQLValidationShouldValidateColumnNames(t *testing.T) {
 			attrs := tt.attributes
 			hasUnique := false
 			for _, attr := range attrs {
-				if attr.UniqueId {
+				if attr != nil && attr.UniqueId {
 					hasUnique = true
 
 					break
 				}
 			}
-			if !hasUnique && len(attrs) > 0 {
-				attrs[0].UniqueId = true
+			if !hasUnique {
+				for _, attr := range attrs {
+					if attr != nil {
+						attr.UniqueId = true
+
+						break
+					}
+				}
 			}
 
 			request := &db2.Request{

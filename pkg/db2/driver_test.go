@@ -19,4 +19,6 @@ func TestMockDriverBehavior(t *testing.T) {
 	// Should get an error since we're using the mock driver
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "mock DB2 driver: cannot connect to real DB2 database without client libraries")
+	// Verify connection string (which may contain credentials) is NOT in the error
+	assert.NotContains(t, err.Error(), "Connection string")
 }

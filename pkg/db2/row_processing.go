@@ -40,6 +40,10 @@ func newQueryResultProcessor(
 	needsCompositeID := false
 
 	for _, attr := range attributes {
+		if attr == nil {
+			continue
+		}
+
 		if attr.ExternalId == "id" {
 			needsCompositeID = true
 		} else {

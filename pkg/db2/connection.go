@@ -3,11 +3,14 @@
 package db2
 
 import (
+	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/pem"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -49,8 +52,10 @@ func parseHostPort(baseURL string) (host, port string) {
 	return host, port
 }
 
-// setupSSLCertificate creates a temporary certificate file from the base64-encoded certificate chain
+// setupSSLCertificate creates a certificate file from the base64-encoded certificate chain
 // and returns the path to use in the DB2 connection string.
+// Uses a deterministic filename based on the certificate content hash to avoid
+// creating duplicate temp files on repeated calls with the same certificate.
 func setupSSLCertificate(certificateChain string) (string, error) {
 	if certificateChain == "" {
 		return "", nil
@@ -70,23 +75,34 @@ func setupSSLCertificate(certificateChain string) (string, error) {
 		return "", fmt.Errorf("failed to parse certificate: %w", err)
 	}
 
-	certFile, err := os.CreateTemp(os.TempDir(), "db2-cert-*.pem")
+	// Use a deterministic filename based on cert content hash to prevent
+	// unbounded temp file growth from repeated calls with the same cert.
+	hash := sha256.Sum256(certPEM)
+	certFileName := fmt.Sprintf("db2-cert-%s.pem", hex.EncodeToString(hash[:8]))
+	certPath := filepath.Join(os.TempDir(), certFileName)
+
+	// If the file already exists with correct content, reuse it
+	if _, err := os.Stat(certPath); err == nil {
+		return certPath, nil
+	}
+
+	certFile, err := os.Create(certPath)
 	if err != nil {
-		return "", fmt.Errorf("failed to create temporary certificate file: %w", err)
+		return "", fmt.Errorf("failed to create certificate file: %w", err)
 	}
 
 	if _, err := certFile.Write(certPEM); err != nil {
 		certFile.Close()
-		os.Remove(certFile.Name())
+		os.Remove(certPath)
 
-		return "", fmt.Errorf("failed to write certificate to temporary file: %w", err)
+		return "", fmt.Errorf("failed to write certificate to file: %w", err)
 	}
 
 	if err := certFile.Close(); err != nil {
-		os.Remove(certFile.Name())
+		os.Remove(certPath)
 
-		return "", fmt.Errorf("failed to close temporary certificate file: %w", err)
+		return "", fmt.Errorf("failed to close certificate file: %w", err)
 	}
 
-	return certFile.Name(), nil
+	return certPath, nil
 }

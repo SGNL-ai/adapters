@@ -2,9 +2,11 @@
 package db2
 
 import (
+	"database/sql"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDefaultSQLClient_ConnectReusesConnection(t *testing.T) {
@@ -14,19 +16,23 @@ func TestDefaultSQLClient_ConnectReusesConnection(t *testing.T) {
 		t.Fatal("expected *defaultSQLClient type")
 	}
 
-	// First connection attempt - will fail because no real DB, but tests the logic
-	dsn1 := "HOSTNAME=localhost;DATABASE=TEST1;UID=user;PWD=pass;PORT=50000"
+	dsn := "HOSTNAME=localhost;DATABASE=TEST1;UID=user;PWD=pass;PORT=50000"
 
-	// Store a mock db to simulate an existing connection
-	client.dataSourceName = dsn1
-	client.db = nil // Would be a real *sql.DB in production
+	// Create a *sql.DB handle via sql.Open (succeeds even with mock driver)
+	existingDB, err := sql.Open(DB2DriverName, dsn)
+	require.NoError(t, err)
+	defer existingDB.Close()
 
-	// Calling Connect with same DSN should return early (reuse)
-	// Since db is nil, it won't actually reuse, but we're testing the branch
-	_, _ = client.Connect(dsn1)
+	// Simulate an existing connection by setting db and DSN
+	client.db = existingDB
+	client.dataSourceName = dsn
 
-	// The dataSourceName should be set after Connect
-	assert.Equal(t, dsn1, client.dataSourceName)
+	// Act - calling Connect with the same DSN should return the existing db
+	returnedDB, err := client.Connect(dsn)
+
+	// Assert - should reuse the existing connection
+	require.NoError(t, err)
+	assert.Same(t, existingDB, returnedDB)
 }
 
 func TestDefaultSQLClient_QueryWithoutConnect(t *testing.T) {

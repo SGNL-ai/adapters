@@ -3,9 +3,20 @@
 package db2
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/base64"
+	"encoding/pem"
+	"math/big"
+	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestBuildConnectionString(t *testing.T) {
@@ -117,4 +128,61 @@ func TestParseHostPort(t *testing.T) {
 			assert.Equal(t, tt.expectedPort, port)
 		})
 	}
+}
+
+// generateTestCertBase64 creates a self-signed certificate and returns it as a base64 string.
+func generateTestCertBase64(t *testing.T) string {
+	t.Helper()
+
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+
+	template := &x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		Subject:      pkix.Name{CommonName: "test"},
+		NotBefore:    time.Now(),
+		NotAfter:     time.Now().Add(time.Hour),
+	}
+
+	certDER, err := x509.CreateCertificate(rand.Reader, template, template, &key.PublicKey, key)
+	require.NoError(t, err)
+
+	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDER})
+
+	return base64.StdEncoding.EncodeToString(certPEM)
+}
+
+func TestSetupSSLCertificate_ReusesExistingFile(t *testing.T) {
+	certB64 := generateTestCertBase64(t)
+
+	// First call creates the file
+	path1, err := setupSSLCertificate(certB64)
+	require.NoError(t, err)
+	require.NotEmpty(t, path1)
+	defer os.Remove(path1)
+
+	// Second call with same cert should return the same path
+	path2, err := setupSSLCertificate(certB64)
+	require.NoError(t, err)
+	assert.Equal(t, path1, path2)
+}
+
+func TestSetupSSLCertificate_EmptyChainReturnsEmpty(t *testing.T) {
+	path, err := setupSSLCertificate("")
+	assert.NoError(t, err)
+	assert.Empty(t, path)
+}
+
+func TestSetupSSLCertificate_InvalidBase64ReturnsError(t *testing.T) {
+	_, err := setupSSLCertificate("not-valid-base64!!!")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to decode base64")
+}
+
+func TestSetupSSLCertificate_InvalidPEMReturnsError(t *testing.T) {
+	// Valid base64 but not valid PEM
+	notPEM := base64.StdEncoding.EncodeToString([]byte("this is not PEM data"))
+	_, err := setupSSLCertificate(notPEM)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "no valid PEM data found")
 }

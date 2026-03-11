@@ -71,6 +71,10 @@ func NewRequestFromConfig(request *framework.Request[Config]) (*Request, *framew
 	}
 
 	for _, attribute := range request.Entity.Attributes {
+		if attribute == nil {
+			continue
+		}
+
 		if attribute.UniqueId {
 			req.UniqueAttributeExternalID = attribute.ExternalId
 
@@ -175,6 +179,10 @@ func (r *Request) validateSQLIdentifiers() *framework.Error {
 	// Validate column names. Uses permissive validation that allows /, -, and space
 	// since quoteIdentifier() safely handles these by wrapping in double quotes.
 	for _, attr := range r.EntityConfig.Attributes {
+		if attr == nil {
+			continue
+		}
+
 		// Skip the synthetic "id" attribute used for composite key generation
 		if attr.ExternalId == "id" {
 			continue
