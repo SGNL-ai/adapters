@@ -69,3 +69,29 @@ jobs:
           docker tag ${{ env.REGISTRY }}/${{ env.REPO_LC }}:main-${{ steps.short-sha.outputs.sha }} ${{ steps.meta.outputs.tags }}
           echo "Pushing new image: ${{ steps.meta.outputs.tags }}"
           docker push ${{ steps.meta.outputs.tags }}
+
+      # Pull, re-tag, and push the DB2 adapter image
+      - name: Pull DB2 adapter image
+        id: pull-db2-image
+        run: |
+          echo "Pulling image: ${{ env.REGISTRY }}/${{ env.REPO_LC }}-db2:main-${{ steps.short-sha.outputs.sha }}"
+          docker pull ${{ env.REGISTRY }}/${{ env.REPO_LC }}-db2:main-${{ steps.short-sha.outputs.sha }}
+
+      - name: Extract metadata (tags, labels) for sgnl-ai/adapters-db2 🏷️
+        id: meta-db2
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.REPO_LC }}-db2
+          flavor: |
+            latest=false
+          tags: |
+            type=semver,pattern={{version}}
+
+      - name: Tag and push the DB2 adapter image on release
+        id: tag-push-db2-image
+        run: |
+          echo "Old tag: ${{ env.REGISTRY }}/${{ env.REPO_LC }}-db2:main-${{ steps.short-sha.outputs.sha }}"
+          echo "New tag: ${{ steps.meta-db2.outputs.tags }}"
+          docker tag ${{ env.REGISTRY }}/${{ env.REPO_LC }}-db2:main-${{ steps.short-sha.outputs.sha }} ${{ steps.meta-db2.outputs.tags }}
+          echo "Pushing new image: ${{ steps.meta-db2.outputs.tags }}"
+          docker push ${{ steps.meta-db2.outputs.tags }}
