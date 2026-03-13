@@ -17,7 +17,6 @@ import (
 	"github.com/sgnl-ai/adapters/pkg/azuread"
 	"github.com/sgnl-ai/adapters/pkg/bamboohr"
 	"github.com/sgnl-ai/adapters/pkg/crowdstrike"
-	"github.com/sgnl-ai/adapters/pkg/db2"
 	"github.com/sgnl-ai/adapters/pkg/duo"
 	"github.com/sgnl-ai/adapters/pkg/github"
 	googleworkspace "github.com/sgnl-ai/adapters/pkg/google-workspace"
@@ -168,11 +167,6 @@ func main() {
 			)),
 		),
 	)
-	// DB2 adapter - direct SQL connection, no proxy support.
-	sqlClient := db2.NewDefaultSQLClient()
-	db2Client := db2.NewClient(sqlClient)
-	server.RegisterAdapter(adapterServer, "DB2-1.0.0", db2.NewAdapter(db2Client))
-
 	server.RegisterAdapter(
 		adapterServer,
 		"Duo-1.0.0",
