@@ -1,6 +1,6 @@
 #!/bin/bash
 # Test script for DB2 connection inside Docker container.
-# Usage: ./dev/db2/test-db2-connection.sh
+# Usage: ./dev/db2-test/test-db2-connection.sh
 
 set -e
 

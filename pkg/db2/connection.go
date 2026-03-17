@@ -49,7 +49,7 @@ func parseHostPort(baseURL string) (host, port string) {
 		port = baseURL[colonIndex+1:]
 	}
 
-	return host, port
+	return
 }
 
 // setupSSLCertificate creates a certificate file from the base64-encoded certificate chain

@@ -108,6 +108,10 @@ func (d *Datasource) getPrimaryKey(ctx context.Context, tableName string) (*uniq
 		return nil, err
 	}
 
+	if len(constraints) == 0 {
+		return nil, nil
+	}
+
 	// Look for primary key constraint (usually named with a pattern or has type 'P')
 	for _, constraint := range constraints {
 		// Primary keys in DB2 often have names containing "PK" or are the first constraint
@@ -119,11 +123,7 @@ func (d *Datasource) getPrimaryKey(ctx context.Context, tableName string) (*uniq
 	}
 
 	// If no explicit primary key found, return the first unique constraint
-	if len(constraints) > 0 {
-		return &constraints[0], nil
-	}
-
-	return nil, nil
+	return &constraints[0], nil
 }
 
 // BuildCompositeID creates a composite ID by concatenating the values of the key columns.

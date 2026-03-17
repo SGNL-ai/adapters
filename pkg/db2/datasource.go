@@ -9,9 +9,17 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
 	"go.uber.org/zap"
-	// IBM DB2 Driver - uncomment when DB2 client libraries are installed.
-	// _ "github.com/ibmdb/go_ibm_db" .
 )
+
+// CompositeIDKey is the row map key used to store a generated composite ID
+// for tables with multi-column primary keys. It is set during row processing
+// and read back during cursor generation for pagination.
+const CompositeIDKey = "composite_id"
+
+// SyntheticIDAttr is the attribute external ID that signals the adapter should
+// generate a unique identifier from the table's primary key columns rather
+// than reading an existing column value.
+const SyntheticIDAttr = "id"
 
 type Datasource struct {
 	Client SQLClient
@@ -19,9 +27,9 @@ type Datasource struct {
 
 // generateCursor creates a cursor string for pagination from the last row.
 func generateCursor(lastRow map[string]interface{}, uniqueAttrID string, uniqueKeyColumns []string) string {
-	if uniqueAttrID == "id" && len(uniqueKeyColumns) > 0 {
+	if uniqueAttrID == SyntheticIDAttr && len(uniqueKeyColumns) > 0 {
 		// For composite keys, use the composite ID as cursor
-		if compositeID, exists := lastRow["composite_id"]; exists {
+		if compositeID, exists := lastRow[CompositeIDKey]; exists {
 			return fmt.Sprintf("%v", compositeID)
 		}
 	} else if uniqueAttrID != "" {
@@ -72,7 +80,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	if err != nil {
 		// When using the synthetic "id" attribute, composite key columns are required
 		// for unique ID generation and cursor-based pagination.
-		if request.UniqueAttributeExternalID == "id" {
+		if request.UniqueAttributeExternalID == SyntheticIDAttr {
 			return nil, &framework.Error{
 				Message: fmt.Sprintf(
 					"Error extracting unique key columns for table %s: %v. "+

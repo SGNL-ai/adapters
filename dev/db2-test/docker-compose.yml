@@ -2,16 +2,16 @@ version: '3.8'
 
 # Docker Compose for testing with real IBM DB2 client libraries.
 # Usage (from project root):
-#   docker compose -f dev/db2/docker-compose.yml build
-#   docker compose -f dev/db2/docker-compose.yml run --rm db2-test bash
-#   docker compose -f dev/db2/docker-compose.yml down --rmi local
+#   docker compose -f dev/db2-test/docker-compose.yml build
+#   docker compose -f dev/db2-test/docker-compose.yml run --rm db2-test bash
+#   docker compose -f dev/db2-test/docker-compose.yml down --rmi local
 
 services:
   db2-test:
     platform: linux/amd64  # Force x86_64 for Apple Silicon
     build:
       context: ../..
-      dockerfile: dev/db2/Dockerfile
+      dockerfile: dev/db2-test/Dockerfile
     environment:
       - IBM_DB_HOME=/opt/ibm/clidriver
       - LD_LIBRARY_PATH=/opt/ibm/clidriver/lib

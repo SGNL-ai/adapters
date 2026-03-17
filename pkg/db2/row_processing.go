@@ -176,8 +176,8 @@ func (p *queryResultProcessor) buildObject(
 		}
 
 		compositeID := BuildCompositeID(allColumns, keyColumns, "|")
-		obj["id"] = compositeID
-		obj["composite_id"] = compositeID // Keep for cursor generation
+		obj[SyntheticIDAttr] = compositeID
+		obj[CompositeIDKey] = compositeID // Keep for cursor generation
 	}
 
 	return obj, nil
