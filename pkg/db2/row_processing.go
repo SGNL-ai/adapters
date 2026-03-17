@@ -86,7 +86,11 @@ func (p *queryResultProcessor) process(rows Rows) (*processedResults, *framework
 			return nil, buildErr
 		}
 
-		// Extract total count (don't include in response object)
+		// Extract the total matching row count from the COUNT(*) OVER() window function
+		// column. This value is returned in Response.TotalCount for the caller to report
+		// how many total rows match the query (across all pages). The column itself is not
+		// included in the response object because buildObject only copies columns that are
+		// in the entity's configured attributes (requestedAttrs).
 		if val, exists := allColumns[TotalRemainingRowsColumn]; exists {
 			if count, ok := val.(int64); ok {
 				results.totalCount = count

@@ -9,6 +9,14 @@ import (
 	"time"
 )
 
+// Connection pool defaults for DB2 database connections.
+const (
+	DefaultMaxOpenConns    = 25
+	DefaultMaxIdleConns    = 5
+	DefaultConnMaxLifetime = 5 * time.Minute
+	DefaultPingTimeout     = 10 * time.Second
+)
+
 type SQLRows []SQLRow
 type SQLRow map[string]string
 type SQLColumnTypes map[string]string
@@ -63,12 +71,12 @@ func (c *defaultSQLClient) Connect(dataSourceName string) (*sql.DB, error) {
 	}
 
 	// Set connection pool settings for long-lived connection reuse
-	db.SetMaxOpenConns(25)
-	db.SetMaxIdleConns(5)
-	db.SetConnMaxLifetime(5 * time.Minute)
+	db.SetMaxOpenConns(DefaultMaxOpenConns)
+	db.SetMaxIdleConns(DefaultMaxIdleConns)
+	db.SetConnMaxLifetime(DefaultConnMaxLifetime)
 
 	// Test the connection
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), DefaultPingTimeout)
 	defer cancel()
 
 	if err = db.PingContext(ctx); err != nil {
