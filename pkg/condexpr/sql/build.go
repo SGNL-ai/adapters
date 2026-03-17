@@ -35,22 +35,17 @@ package sql
 import (
 	"errors"
 	"fmt"
-	"regexp"
 
 	"github.com/doug-martin/goqu/v9"
 
 	"github.com/sgnl-ai/adapters/pkg/condexpr"
+	"github.com/sgnl-ai/adapters/pkg/validation"
 )
 
 var (
-	// validSQLIdentifier checks if a string is a valid SQL identifier:
-	// - Contains only alphanumeric characters, $ and _.
-	// - Length between 1-128 characters.
-	validSQLIdentifier = regexp.MustCompile(`^[a-zA-Z0-9$_]{1,128}$`)
-
-	errMissingValue    = errors.New("missing required value")
 	errMissingField    = errors.New("missing required field")
 	errMissingOperator = errors.New("missing required operator")
+	errMissingValue    = errors.New("missing required value")
 )
 
 type ConditionBuilder struct{}
@@ -115,7 +110,7 @@ func (cb ConditionBuilder) BuildLeafCondition(cond condexpr.Condition) (goqu.Exp
 		}
 	}
 
-	if valid := validSQLIdentifier.MatchString(cond.Field); !valid {
+	if !validation.IsValidSQLIdentifier(cond.Field) {
 		return nil, fmt.Errorf(
 			"field validation failed for '%s': unsupported characters found or length is not in range 1-128",
 			cond.Field,

@@ -1,0 +1,49 @@
+{
+  "name": "ekpo_small_page",
+  "description": "EKPO entity with small page size (3) for pagination testing - page 1",
+  "recordedAt": "2026-02-13T17:29:56Z",
+  "request": {
+    "entity": "EKPO",
+    "schema": "SAP_ECC_MST_RMS",
+    "database": "LMTESTDB",
+    "pageSize": 3,
+    "filter": {
+      "field": "BUKRS",
+      "op": "=",
+      "value": "US02"
+    },
+    "attributes": [
+      "id",
+      "MANDT",
+      "EBELN",
+      "EBELP",
+      "NETPR"
+    ]
+  },
+  "response": {
+    "objects": [
+      {
+        "EBELN": "4500000003",
+        "EBELP": "00010",
+        "MANDT": "000",
+        "NETPR": 875,
+        "id": "000|4500000003|00010"
+      },
+      {
+        "EBELN": "4500000003",
+        "EBELP": "00020",
+        "MANDT": "000",
+        "NETPR": 22.5,
+        "id": "000|4500000003|00020"
+      },
+      {
+        "EBELN": "4500000003",
+        "EBELP": "00030",
+        "MANDT": "000",
+        "NETPR": 68.9,
+        "id": "000|4500000003|00030"
+      }
+    ],
+    "nextCursor": "000|4500000003|00030"
+  }
+}
