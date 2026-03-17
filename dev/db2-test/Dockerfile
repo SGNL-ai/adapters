@@ -17,7 +17,7 @@ RUN apt-get update && \
 
 # Download and install IBM DB2 CLI Driver (x86_64)
 RUN cd /tmp && \
-    wget -q https://public.dhe.ibm.com/ibmdl/export/pub/software/data/db2/drivers/odbc_cli/linuxx64_odbc_cli.tar.gz && \
+    wget -q https://public.dhe.ibm.com/ibmdl/export/pub/software/data/db2/drivers/odbc_cli/v12.1.2/linuxx64_odbc_cli.tar.gz && \
     tar -xzf linuxx64_odbc_cli.tar.gz && \
     mkdir -p /opt/ibm && \
     mv clidriver /opt/ibm/ && \

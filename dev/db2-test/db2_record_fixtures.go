@@ -1,5 +1,4 @@
 //go:build db2
-// +build db2
 
 // Script to record real DB2 responses as test fixtures for contract testing.
 // Usage: CGO_ENABLED=1 go run -tags db2 scripts/db2_record_fixtures.go
@@ -18,6 +17,34 @@ import (
 	framework "github.com/sgnl-ai/adapter-framework"
 	"github.com/sgnl-ai/adapters/pkg/condexpr"
 	"github.com/sgnl-ai/adapters/pkg/db2"
+)
+
+// SAP EKPO (Purchase Order Items) column names.
+const (
+	AttrID    = "id"    // Composite unique ID constructed by the adapter
+	AttrMANDT = "MANDT" // SAP Client number (tenant identifier)
+	AttrEBELN = "EBELN" // Purchase Order number (Einkaufsbelegnummer)
+	AttrEBELP = "EBELP" // Purchase Order Item number (Einkaufsbelegposition)
+	AttrNETPR = "NETPR" // Net Price (Nettopreis)
+	AttrBUKRS = "BUKRS" // Company Code (Buchungskreis)
+)
+
+// Environment variable keys for DB2 connection configuration.
+const (
+	EnvDB2Password = "DB2_PASSWORD"
+	EnvDB2CertB64  = "DB2_CERT_BASE64"
+	EnvDB2Database = "DB2_DATABASE"
+	EnvDB2User     = "DB2_USER"
+	EnvDB2Host     = "DB2_HOST"
+	EnvDB2Port     = "DB2_PORT"
+)
+
+// Default values for DB2 connection parameters.
+const (
+	DefaultDB2Database = "LMTESTDB"
+	DefaultDB2User     = "db2inst1"
+	DefaultDB2Host     = "localhost"
+	DefaultDB2Port     = "50001"
 )
 
 // FixtureRequest captures the request parameters for replay.
@@ -48,7 +75,7 @@ type FixtureError struct {
 type Fixture struct {
 	Name        string          `json:"name"`
 	Description string          `json:"description"`
-	RecordedAt  string          `json:"recordedAt"`
+	RecordedAt  time.Time       `json:"recordedAt"`
 	Request     FixtureRequest  `json:"request"`
 	Response    FixtureResponse `json:"response"`
 }
@@ -66,8 +93,8 @@ type TestCase struct {
 }
 
 func main() {
-	password := os.Getenv("DB2_PASSWORD")
-	certB64 := os.Getenv("DB2_CERT_BASE64")
+	password := os.Getenv(EnvDB2Password)
+	certB64 := os.Getenv(EnvDB2CertB64)
 
 	if password == "" {
 		fmt.Println("ERROR: DB2_PASSWORD not set")
@@ -83,11 +110,11 @@ func main() {
 			Schema:      "SAP_ECC_MST_RMS",
 			PageSize:    10,
 			Filter: &condexpr.Condition{
-				Field:    "BUKRS",
+				Field:    AttrBUKRS,
 				Operator: "=",
 				Value:    "US02",
 			},
-			Attributes: []string{"id", "MANDT", "EBELN", "EBELP", "NETPR", "BUKRS"},
+			Attributes: []string{AttrID, AttrMANDT, AttrEBELN, AttrEBELP, AttrNETPR, AttrBUKRS},
 		},
 		{
 			Name:        "ekpo_small_page",
@@ -96,11 +123,11 @@ func main() {
 			Schema:      "SAP_ECC_MST_RMS",
 			PageSize:    3,
 			Filter: &condexpr.Condition{
-				Field:    "BUKRS",
+				Field:    AttrBUKRS,
 				Operator: "=",
 				Value:    "US02",
 			},
-			Attributes: []string{"id", "MANDT", "EBELN", "EBELP", "NETPR"},
+			Attributes: []string{AttrID, AttrMANDT, AttrEBELN, AttrEBELP, AttrNETPR},
 		},
 		{
 			Name:        "ekpo_small_page_2",
@@ -110,11 +137,11 @@ func main() {
 			PageSize:    3,
 			Cursor:      "000|4500000003|00030", // Cursor from ekpo_small_page
 			Filter: &condexpr.Condition{
-				Field:    "BUKRS",
+				Field:    AttrBUKRS,
 				Operator: "=",
 				Value:    "US02",
 			},
-			Attributes: []string{"id", "MANDT", "EBELN", "EBELP", "NETPR"},
+			Attributes: []string{AttrID, AttrMANDT, AttrEBELN, AttrEBELP, AttrNETPR},
 		},
 		{
 			Name:        "ekpo_no_filter",
@@ -122,7 +149,7 @@ func main() {
 			Entity:      "EKPO",
 			Schema:      "SAP_ECC_MST_RMS",
 			PageSize:    5,
-			Attributes: []string{"id", "MANDT", "EBELN", "EBELP"},
+			Attributes: []string{AttrID, AttrMANDT, AttrEBELN, AttrEBELP},
 		},
 	}
 
@@ -178,7 +205,7 @@ func main() {
 
 func recordFixture(adapter framework.Adapter[db2.Config], tc TestCase, password, certB64 string) (*Fixture, error) {
 	config := &db2.Config{
-		Database: getEnvOrDefault("DB2_DATABASE", "LMTESTDB"),
+		Database: getEnvOrDefault(EnvDB2Database, DefaultDB2Database),
 		Schema:   tc.Schema,
 	}
 
@@ -196,24 +223,24 @@ func recordFixture(adapter framework.Adapter[db2.Config], tc TestCase, password,
 	var attrConfigs []*framework.AttributeConfig
 	for _, attr := range tc.Attributes {
 		attrType := framework.AttributeTypeString
-		if attr == "NETPR" {
+		if attr == AttrNETPR {
 			attrType = framework.AttributeTypeDouble
 		}
 		attrConfigs = append(attrConfigs, &framework.AttributeConfig{
 			ExternalId: attr,
 			Type:       attrType,
-			UniqueId:   attr == "id",
+			UniqueId:   attr == AttrID,
 		})
 	}
 
 	request := &framework.Request[db2.Config]{
 		Auth: &framework.DatasourceAuthCredentials{
 			Basic: &framework.BasicAuthCredentials{
-				Username: getEnvOrDefault("DB2_USER", "db2inst1"),
+				Username: getEnvOrDefault(EnvDB2User, DefaultDB2User),
 				Password: password,
 			},
 		},
-		Address:  fmt.Sprintf("%s:%s", getEnvOrDefault("DB2_HOST", "ec2-18-191-143-175.us-east-2.compute.amazonaws.com"), getEnvOrDefault("DB2_PORT", "50001")),
+		Address:  fmt.Sprintf("%s:%s", getEnvOrDefault(EnvDB2Host, DefaultDB2Host), getEnvOrDefault(EnvDB2Port, DefaultDB2Port)),
 		PageSize: tc.PageSize,
 		Cursor:   tc.Cursor,
 		Entity: framework.EntityConfig{
@@ -228,7 +255,7 @@ func recordFixture(adapter framework.Adapter[db2.Config], tc TestCase, password,
 	fixture := &Fixture{
 		Name:        tc.Name,
 		Description: tc.Description,
-		RecordedAt:  time.Now().UTC().Format(time.RFC3339),
+		RecordedAt:  time.Now().UTC(),
 		Request: FixtureRequest{
 			Entity:     tc.Entity,
 			Schema:     tc.Schema,
