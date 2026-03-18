@@ -1,7 +1,12 @@
 # Dockerfile for testing with IBM DB2 client libraries.
 # This creates an interactive development environment with DB2 support.
 
-FROM --platform=linux/amd64 golang:1.25-bookworm
+ARG DB2_CLI_VERSION=v12.1.2
+
+# Note: IBM DB2 CLI driver is x86_64 only. Use --platform linux/amd64 when building on ARM.
+FROM golang:1.25-bookworm
+
+ARG DB2_CLI_VERSION
 
 # Install dependencies
 RUN apt-get update && \
@@ -17,7 +22,7 @@ RUN apt-get update && \
 
 # Download and install IBM DB2 CLI Driver (x86_64)
 RUN cd /tmp && \
-    wget -q https://public.dhe.ibm.com/ibmdl/export/pub/software/data/db2/drivers/odbc_cli/v12.1.2/linuxx64_odbc_cli.tar.gz && \
+    wget -q https://public.dhe.ibm.com/ibmdl/export/pub/software/data/db2/drivers/odbc_cli/${DB2_CLI_VERSION}/linuxx64_odbc_cli.tar.gz && \
     tar -xzf linuxx64_odbc_cli.tar.gz && \
     mkdir -p /opt/ibm && \
     mv clidriver /opt/ibm/ && \

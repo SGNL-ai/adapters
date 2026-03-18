@@ -69,6 +69,7 @@ jobs:
         with:
           target: build
           context: .
+          file: Dockerfile
           tags: ${{ env.REGISTRY }}/${{ env.REPO_LC }}-test:${{ github.sha }}
           build-args: |
             GITHUB_USERNAME=sgnl-robot
@@ -89,6 +90,7 @@ jobs:
           push: true
           target: run
           context: .
+          file: Dockerfile
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
@@ -148,6 +150,20 @@ jobs:
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
+
+      - name: Build DB2 test image ⬆️
+        uses: docker/build-push-action@v7
+        with:
+          target: build
+          context: .
+          file: Dockerfile.db2
+          tags: ${{ env.REGISTRY }}/${{ env.REPO_LC }}-db2-test:${{ github.sha }}
+          build-args: |
+            GITHUB_USERNAME=sgnl-robot
+            GITHUB_PAT=${{ secrets.SGNL_ROBOT_PAT }}
+
+      - name: Run DB2 adapter tests 🧪
+        run: docker run --rm ${{ env.REGISTRY }}/${{ env.REPO_LC }}-db2-test:${{ github.sha }} go test -tags db2 -v ./pkg/db2/... ./cmd/db2-adapter/...
 
       - name: Build and push DB2 adapter image ⬆️
         uses: docker/build-push-action@v7

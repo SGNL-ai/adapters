@@ -70,7 +70,31 @@ jobs:
           echo "Pushing new image: ${{ steps.meta.outputs.tags }}"
           docker push ${{ steps.meta.outputs.tags }}
 
-      # Pull, re-tag, and push the DB2 adapter image
+  pull-tag-push-db2:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - name: Log in to GHCR 🔑
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prepare repository name
+        id: repo-name
+        run: |
+          echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+        shell: bash
+
+      # Get the 7 char commit SHA: https://github.com/benjlevesque/short-sha
+      - uses: benjlevesque/short-sha@v3.0
+        name: short-sha
+        id: short-sha
+        with:
+          length: 7
+
       - name: Pull DB2 adapter image
         id: pull-db2-image
         run: |
