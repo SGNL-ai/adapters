@@ -1,261 +1,261 @@
 [
   {
-    "name": "ekpo_with_filter",
-    "description": "EKPO entity with BUKRS=US02 filter, page size 10",
+    "name": "items_with_filter",
+    "description": "ITEMS entity with REGION=WEST filter, page size 10",
     "recordedAt": "2026-02-13T17:29:53Z",
     "request": {
-      "entity": "EKPO",
-      "schema": "SAP_ECC_MST_RMS",
-      "database": "LMTESTDB",
+      "entity": "ITEMS",
+      "schema": "TEST_SCHEMA",
+      "database": "TESTDB",
       "pageSize": 10,
       "filter": {
-        "field": "BUKRS",
+        "field": "REGION",
         "op": "=",
-        "value": "US02"
+        "value": "WEST"
       },
       "attributes": [
         "id",
-        "MANDT",
-        "EBELN",
-        "EBELP",
-        "NETPR",
-        "BUKRS"
+        "TENANT_ID",
+        "DOC_NUM",
+        "LINE_NUM",
+        "AMOUNT",
+        "REGION"
       ]
     },
     "response": {
       "objects": [
         {
-          "BUKRS": "US02",
-          "EBELN": "4500000003",
-          "EBELP": "00010",
-          "MANDT": "000",
-          "NETPR": 875,
-          "id": "000|4500000003|00010"
+          "REGION": "WEST",
+          "DOC_NUM": "D1003",
+          "LINE_NUM": "L01",
+          "TENANT_ID": "T1",
+          "AMOUNT": 875,
+          "id": "T1|D1003|L01"
         },
         {
-          "BUKRS": "US02",
-          "EBELN": "4500000003",
-          "EBELP": "00020",
-          "MANDT": "000",
-          "NETPR": 22.5,
-          "id": "000|4500000003|00020"
+          "REGION": "WEST",
+          "DOC_NUM": "D1003",
+          "LINE_NUM": "L02",
+          "TENANT_ID": "T1",
+          "AMOUNT": 22.5,
+          "id": "T1|D1003|L02"
         },
         {
-          "BUKRS": "US02",
-          "EBELN": "4500000003",
-          "EBELP": "00030",
-          "MANDT": "000",
-          "NETPR": 68.9,
-          "id": "000|4500000003|00030"
+          "REGION": "WEST",
+          "DOC_NUM": "D1003",
+          "LINE_NUM": "L03",
+          "TENANT_ID": "T1",
+          "AMOUNT": 68.9,
+          "id": "T1|D1003|L03"
         },
         {
-          "BUKRS": "US02",
-          "EBELN": "4500000003",
-          "EBELP": "00040",
-          "MANDT": "000",
-          "NETPR": 18.75,
-          "id": "000|4500000003|00040"
+          "REGION": "WEST",
+          "DOC_NUM": "D1003",
+          "LINE_NUM": "L04",
+          "TENANT_ID": "T1",
+          "AMOUNT": 18.75,
+          "id": "T1|D1003|L04"
         },
         {
-          "BUKRS": "US02",
-          "EBELN": "4500000003",
-          "EBELP": "00050",
-          "MANDT": "000",
-          "NETPR": 45.8,
-          "id": "000|4500000003|00050"
+          "REGION": "WEST",
+          "DOC_NUM": "D1003",
+          "LINE_NUM": "L05",
+          "TENANT_ID": "T1",
+          "AMOUNT": 45.8,
+          "id": "T1|D1003|L05"
         },
         {
-          "BUKRS": "US02",
-          "EBELN": "4500000004",
-          "EBELP": "00010",
-          "MANDT": "000",
-          "NETPR": 8.95,
-          "id": "000|4500000004|00010"
+          "REGION": "WEST",
+          "DOC_NUM": "D1004",
+          "LINE_NUM": "L01",
+          "TENANT_ID": "T1",
+          "AMOUNT": 8.95,
+          "id": "T1|D1004|L01"
         },
         {
-          "BUKRS": "US02",
-          "EBELN": "4500000004",
-          "EBELP": "00020",
-          "MANDT": "000",
-          "NETPR": 89,
-          "id": "000|4500000004|00020"
+          "REGION": "WEST",
+          "DOC_NUM": "D1004",
+          "LINE_NUM": "L02",
+          "TENANT_ID": "T1",
+          "AMOUNT": 89,
+          "id": "T1|D1004|L02"
         },
         {
-          "BUKRS": "US02",
-          "EBELN": "4500000004",
-          "EBELP": "00030",
-          "MANDT": "000",
-          "NETPR": 1.85,
-          "id": "000|4500000004|00030"
+          "REGION": "WEST",
+          "DOC_NUM": "D1004",
+          "LINE_NUM": "L03",
+          "TENANT_ID": "T1",
+          "AMOUNT": 1.85,
+          "id": "T1|D1004|L03"
         },
         {
-          "BUKRS": "US02",
-          "EBELN": "4500000004",
-          "EBELP": "00040",
-          "MANDT": "000",
-          "NETPR": 4.5,
-          "id": "000|4500000004|00040"
+          "REGION": "WEST",
+          "DOC_NUM": "D1004",
+          "LINE_NUM": "L04",
+          "TENANT_ID": "T1",
+          "AMOUNT": 4.5,
+          "id": "T1|D1004|L04"
         },
         {
-          "BUKRS": "US02",
-          "EBELN": "4500000004",
-          "EBELP": "00050",
-          "MANDT": "000",
-          "NETPR": 12.5,
-          "id": "000|4500000004|00050"
+          "REGION": "WEST",
+          "DOC_NUM": "D1004",
+          "LINE_NUM": "L05",
+          "TENANT_ID": "T1",
+          "AMOUNT": 12.5,
+          "id": "T1|D1004|L05"
         }
       ]
     }
   },
   {
-    "name": "ekpo_small_page",
-    "description": "EKPO entity with small page size (3) for pagination testing - page 1",
+    "name": "items_small_page",
+    "description": "ITEMS entity with small page size (3) for pagination testing - page 1",
     "recordedAt": "2026-02-13T17:29:56Z",
     "request": {
-      "entity": "EKPO",
-      "schema": "SAP_ECC_MST_RMS",
-      "database": "LMTESTDB",
+      "entity": "ITEMS",
+      "schema": "TEST_SCHEMA",
+      "database": "TESTDB",
       "pageSize": 3,
       "filter": {
-        "field": "BUKRS",
+        "field": "REGION",
         "op": "=",
-        "value": "US02"
+        "value": "WEST"
       },
       "attributes": [
         "id",
-        "MANDT",
-        "EBELN",
-        "EBELP",
-        "NETPR"
+        "TENANT_ID",
+        "DOC_NUM",
+        "LINE_NUM",
+        "AMOUNT"
       ]
     },
     "response": {
       "objects": [
         {
-          "EBELN": "4500000003",
-          "EBELP": "00010",
-          "MANDT": "000",
-          "NETPR": 875,
-          "id": "000|4500000003|00010"
+          "DOC_NUM": "D1003",
+          "LINE_NUM": "L01",
+          "TENANT_ID": "T1",
+          "AMOUNT": 875,
+          "id": "T1|D1003|L01"
         },
         {
-          "EBELN": "4500000003",
-          "EBELP": "00020",
-          "MANDT": "000",
-          "NETPR": 22.5,
-          "id": "000|4500000003|00020"
+          "DOC_NUM": "D1003",
+          "LINE_NUM": "L02",
+          "TENANT_ID": "T1",
+          "AMOUNT": 22.5,
+          "id": "T1|D1003|L02"
         },
         {
-          "EBELN": "4500000003",
-          "EBELP": "00030",
-          "MANDT": "000",
-          "NETPR": 68.9,
-          "id": "000|4500000003|00030"
+          "DOC_NUM": "D1003",
+          "LINE_NUM": "L03",
+          "TENANT_ID": "T1",
+          "AMOUNT": 68.9,
+          "id": "T1|D1003|L03"
         }
       ],
-      "nextCursor": "000|4500000003|00030"
+      "nextCursor": "T1|D1003|L03"
     }
   },
   {
-    "name": "ekpo_small_page_2",
-    "description": "EKPO entity with small page size (3) for pagination testing - page 2",
+    "name": "items_small_page_2",
+    "description": "ITEMS entity with small page size (3) for pagination testing - page 2",
     "recordedAt": "2026-02-13T17:29:59Z",
     "request": {
-      "entity": "EKPO",
-      "schema": "SAP_ECC_MST_RMS",
-      "database": "LMTESTDB",
+      "entity": "ITEMS",
+      "schema": "TEST_SCHEMA",
+      "database": "TESTDB",
       "pageSize": 3,
-      "cursor": "000|4500000003|00030",
+      "cursor": "T1|D1003|L03",
       "filter": {
-        "field": "BUKRS",
+        "field": "REGION",
         "op": "=",
-        "value": "US02"
+        "value": "WEST"
       },
       "attributes": [
         "id",
-        "MANDT",
-        "EBELN",
-        "EBELP",
-        "NETPR"
+        "TENANT_ID",
+        "DOC_NUM",
+        "LINE_NUM",
+        "AMOUNT"
       ]
     },
     "response": {
       "objects": [
         {
-          "EBELN": "4500000003",
-          "EBELP": "00040",
-          "MANDT": "000",
-          "NETPR": 18.75,
-          "id": "000|4500000003|00040"
+          "DOC_NUM": "D1003",
+          "LINE_NUM": "L04",
+          "TENANT_ID": "T1",
+          "AMOUNT": 18.75,
+          "id": "T1|D1003|L04"
         },
         {
-          "EBELN": "4500000003",
-          "EBELP": "00050",
-          "MANDT": "000",
-          "NETPR": 45.8,
-          "id": "000|4500000003|00050"
+          "DOC_NUM": "D1003",
+          "LINE_NUM": "L05",
+          "TENANT_ID": "T1",
+          "AMOUNT": 45.8,
+          "id": "T1|D1003|L05"
         },
         {
-          "EBELN": "4500000004",
-          "EBELP": "00010",
-          "MANDT": "000",
-          "NETPR": 8.95,
-          "id": "000|4500000004|00010"
+          "DOC_NUM": "D1004",
+          "LINE_NUM": "L01",
+          "TENANT_ID": "T1",
+          "AMOUNT": 8.95,
+          "id": "T1|D1004|L01"
         }
       ],
-      "nextCursor": "000|4500000004|00010"
+      "nextCursor": "T1|D1004|L01"
     }
   },
   {
-    "name": "ekpo_no_filter",
-    "description": "EKPO entity without filter, page size 5",
+    "name": "items_no_filter",
+    "description": "ITEMS entity without filter, page size 5",
     "recordedAt": "2026-02-13T17:30:01Z",
     "request": {
-      "entity": "EKPO",
-      "schema": "SAP_ECC_MST_RMS",
-      "database": "LMTESTDB",
+      "entity": "ITEMS",
+      "schema": "TEST_SCHEMA",
+      "database": "TESTDB",
       "pageSize": 5,
       "attributes": [
         "id",
-        "MANDT",
-        "EBELN",
-        "EBELP"
+        "TENANT_ID",
+        "DOC_NUM",
+        "LINE_NUM"
       ]
     },
     "response": {
       "objects": [
         {
-          "EBELN": "4500000001",
-          "EBELP": "00010",
-          "MANDT": "000",
-          "id": "000|4500000001|00010"
+          "DOC_NUM": "D1001",
+          "LINE_NUM": "L01",
+          "TENANT_ID": "T1",
+          "id": "T1|D1001|L01"
         },
         {
-          "EBELN": "4500000001",
-          "EBELP": "00020",
-          "MANDT": "000",
-          "id": "000|4500000001|00020"
+          "DOC_NUM": "D1001",
+          "LINE_NUM": "L02",
+          "TENANT_ID": "T1",
+          "id": "T1|D1001|L02"
         },
         {
-          "EBELN": "4500000001",
-          "EBELP": "00030",
-          "MANDT": "000",
-          "id": "000|4500000001|00030"
+          "DOC_NUM": "D1001",
+          "LINE_NUM": "L03",
+          "TENANT_ID": "T1",
+          "id": "T1|D1001|L03"
         },
         {
-          "EBELN": "4500000001",
-          "EBELP": "00040",
-          "MANDT": "000",
-          "id": "000|4500000001|00040"
+          "DOC_NUM": "D1001",
+          "LINE_NUM": "L04",
+          "TENANT_ID": "T1",
+          "id": "T1|D1001|L04"
         },
         {
-          "EBELN": "4500000001",
-          "EBELP": "00050",
-          "MANDT": "000",
-          "id": "000|4500000001|00050"
+          "DOC_NUM": "D1001",
+          "LINE_NUM": "L05",
+          "TENANT_ID": "T1",
+          "id": "T1|D1001|L05"
         }
       ],
-      "nextCursor": "000|4500000001|00050"
+      "nextCursor": "T1|D1001|L05"
     }
   }
 ]

@@ -19,14 +19,14 @@ import (
 	"github.com/sgnl-ai/adapters/pkg/db2"
 )
 
-// SAP EKPO (Purchase Order Items) column names.
+// Test entity column names for fixture recording.
 const (
-	AttrID    = "id"    // Composite unique ID constructed by the adapter
-	AttrMANDT = "MANDT" // SAP Client number (tenant identifier)
-	AttrEBELN = "EBELN" // Purchase Order number (Einkaufsbelegnummer)
-	AttrEBELP = "EBELP" // Purchase Order Item number (Einkaufsbelegposition)
-	AttrNETPR = "NETPR" // Net Price (Nettopreis)
-	AttrBUKRS = "BUKRS" // Company Code (Buchungskreis)
+	AttrID       = "id"        // Composite unique ID constructed by the adapter
+	AttrTenantID = "TENANT_ID" // Tenant identifier
+	AttrDocNum   = "DOC_NUM"   // Document number
+	AttrLineNum  = "LINE_NUM"  // Line item number
+	AttrAmount   = "AMOUNT"    // Monetary amount
+	AttrRegion   = "REGION"    // Region code
 )
 
 // Environment variable keys for DB2 connection configuration.
@@ -41,7 +41,7 @@ const (
 
 // Default values for DB2 connection parameters.
 const (
-	DefaultDB2Database = "LMTESTDB"
+	DefaultDB2Database = "TESTDB"
 	DefaultDB2User     = "db2inst1"
 	DefaultDB2Host     = "localhost"
 	DefaultDB2Port     = "50001"
@@ -104,52 +104,52 @@ func main() {
 	// Define test cases to record
 	testCases := []TestCase{
 		{
-			Name:        "ekpo_with_filter",
-			Description: "EKPO entity with BUKRS=US02 filter, page size 10",
-			Entity:      "EKPO",
-			Schema:      "SAP_ECC_MST_RMS",
+			Name:        "items_with_filter",
+			Description: "ITEMS entity with REGION=WEST filter, page size 10",
+			Entity:      "ITEMS",
+			Schema:      "TEST_SCHEMA",
 			PageSize:    10,
 			Filter: &condexpr.Condition{
-				Field:    AttrBUKRS,
+				Field:    AttrRegion,
 				Operator: "=",
-				Value:    "US02",
+				Value:    "WEST",
 			},
-			Attributes: []string{AttrID, AttrMANDT, AttrEBELN, AttrEBELP, AttrNETPR, AttrBUKRS},
+			Attributes: []string{AttrID, AttrTenantID, AttrDocNum, AttrLineNum, AttrAmount, AttrRegion},
 		},
 		{
-			Name:        "ekpo_small_page",
-			Description: "EKPO entity with small page size (3) for pagination testing - page 1",
-			Entity:      "EKPO",
-			Schema:      "SAP_ECC_MST_RMS",
+			Name:        "items_small_page",
+			Description: "ITEMS entity with small page size (3) for pagination testing - page 1",
+			Entity:      "ITEMS",
+			Schema:      "TEST_SCHEMA",
 			PageSize:    3,
 			Filter: &condexpr.Condition{
-				Field:    AttrBUKRS,
+				Field:    AttrRegion,
 				Operator: "=",
-				Value:    "US02",
+				Value:    "WEST",
 			},
-			Attributes: []string{AttrID, AttrMANDT, AttrEBELN, AttrEBELP, AttrNETPR},
+			Attributes: []string{AttrID, AttrTenantID, AttrDocNum, AttrLineNum, AttrAmount},
 		},
 		{
-			Name:        "ekpo_small_page_2",
-			Description: "EKPO entity with small page size (3) for pagination testing - page 2",
-			Entity:      "EKPO",
-			Schema:      "SAP_ECC_MST_RMS",
+			Name:        "items_small_page_2",
+			Description: "ITEMS entity with small page size (3) for pagination testing - page 2",
+			Entity:      "ITEMS",
+			Schema:      "TEST_SCHEMA",
 			PageSize:    3,
-			Cursor:      "000|4500000003|00030", // Cursor from ekpo_small_page
+			Cursor:      "T1|D1003|L03", // Cursor from items_small_page
 			Filter: &condexpr.Condition{
-				Field:    AttrBUKRS,
+				Field:    AttrRegion,
 				Operator: "=",
-				Value:    "US02",
+				Value:    "WEST",
 			},
-			Attributes: []string{AttrID, AttrMANDT, AttrEBELN, AttrEBELP, AttrNETPR},
+			Attributes: []string{AttrID, AttrTenantID, AttrDocNum, AttrLineNum, AttrAmount},
 		},
 		{
-			Name:        "ekpo_no_filter",
-			Description: "EKPO entity without filter, page size 5",
-			Entity:      "EKPO",
-			Schema:      "SAP_ECC_MST_RMS",
+			Name:        "items_no_filter",
+			Description: "ITEMS entity without filter, page size 5",
+			Entity:      "ITEMS",
+			Schema:      "TEST_SCHEMA",
 			PageSize:    5,
-			Attributes: []string{AttrID, AttrMANDT, AttrEBELN, AttrEBELP},
+			Attributes: []string{AttrID, AttrTenantID, AttrDocNum, AttrLineNum},
 		},
 	}
 
@@ -223,7 +223,7 @@ func recordFixture(adapter framework.Adapter[db2.Config], tc TestCase, password,
 	var attrConfigs []*framework.AttributeConfig
 	for _, attr := range tc.Attributes {
 		attrType := framework.AttributeTypeString
-		if attr == AttrNETPR {
+		if attr == AttrAmount {
 			attrType = framework.AttributeTypeDouble
 		}
 		attrConfigs = append(attrConfigs, &framework.AttributeConfig{

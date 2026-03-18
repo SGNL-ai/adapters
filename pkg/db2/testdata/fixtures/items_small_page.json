@@ -1,0 +1,49 @@
+{
+  "name": "items_small_page",
+  "description": "ITEMS entity with small page size (3) for pagination testing - page 1",
+  "recordedAt": "2026-02-13T17:29:56Z",
+  "request": {
+    "entity": "ITEMS",
+    "schema": "TEST_SCHEMA",
+    "database": "TESTDB",
+    "pageSize": 3,
+    "filter": {
+      "field": "REGION",
+      "op": "=",
+      "value": "WEST"
+    },
+    "attributes": [
+      "id",
+      "TENANT_ID",
+      "DOC_NUM",
+      "LINE_NUM",
+      "AMOUNT"
+    ]
+  },
+  "response": {
+    "objects": [
+      {
+        "DOC_NUM": "D1003",
+        "LINE_NUM": "L01",
+        "TENANT_ID": "T1",
+        "AMOUNT": 875,
+        "id": "T1|D1003|L01"
+      },
+      {
+        "DOC_NUM": "D1003",
+        "LINE_NUM": "L02",
+        "TENANT_ID": "T1",
+        "AMOUNT": 22.5,
+        "id": "T1|D1003|L02"
+      },
+      {
+        "DOC_NUM": "D1003",
+        "LINE_NUM": "L03",
+        "TENANT_ID": "T1",
+        "AMOUNT": 68.9,
+        "id": "T1|D1003|L03"
+      }
+    ],
+    "nextCursor": "T1|D1003|L03"
+  }
+}

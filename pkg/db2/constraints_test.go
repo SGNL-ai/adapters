@@ -35,24 +35,24 @@ func Test_getUniqueConstraints(t *testing.T) {
 		},
 		{
 			name:      "table with composite key",
-			tableName: "EKPO",
+			tableName: "ITEMS",
 			mockData: []map[string]interface{}{
 				{
-					"CONSTNAME": "PK_EKPO",
-					"TABNAME":   "EKPO",
-					"COLNAME":   "MANDT",
+					"CONSTNAME": "PK_ITEMS",
+					"TABNAME":   "ITEMS",
+					"COLNAME":   "TENANT_ID",
 					"COLSEQ":    1,
 				},
 				{
-					"CONSTNAME": "PK_EKPO",
-					"TABNAME":   "EKPO",
-					"COLNAME":   "EBELN",
+					"CONSTNAME": "PK_ITEMS",
+					"TABNAME":   "ITEMS",
+					"COLNAME":   "DOC_NUM",
 					"COLSEQ":    2,
 				},
 				{
-					"CONSTNAME": "PK_EKPO",
-					"TABNAME":   "EKPO",
-					"COLNAME":   "EBELP",
+					"CONSTNAME": "PK_ITEMS",
+					"TABNAME":   "ITEMS",
+					"COLNAME":   "LINE_NUM",
 					"COLSEQ":    3,
 				},
 			},
@@ -133,9 +133,9 @@ func Test_getUniqueConstraints(t *testing.T) {
 					// For composite key test, verify column order
 					if tt.name == "table with composite key" {
 						assert.Len(t, constraint.columns, 3)
-						assert.Equal(t, "MANDT", constraint.columns[0].ColumnName)
-						assert.Equal(t, "EBELN", constraint.columns[1].ColumnName)
-						assert.Equal(t, "EBELP", constraint.columns[2].ColumnName)
+						assert.Equal(t, "TENANT_ID", constraint.columns[0].ColumnName)
+						assert.Equal(t, "DOC_NUM", constraint.columns[1].ColumnName)
+						assert.Equal(t, "LINE_NUM", constraint.columns[2].ColumnName)
 					}
 				}
 			}
@@ -448,17 +448,17 @@ func TestBuildCompositeID(t *testing.T) {
 		{
 			name: "composite ID with three columns",
 			row: map[string]interface{}{
-				"MANDT": "100",
-				"EBELN": "4500001234",
-				"EBELP": "10",
+				"TENANT_ID": "T1",
+				"DOC_NUM":   "D1001",
+				"LINE_NUM":  "L01",
 			},
 			columns: []UniqueConstraintColumn{
-				{ColumnName: "MANDT", Position: 1},
-				{ColumnName: "EBELN", Position: 2},
-				{ColumnName: "EBELP", Position: 3},
+				{ColumnName: "TENANT_ID", Position: 1},
+				{ColumnName: "DOC_NUM", Position: 2},
+				{ColumnName: "LINE_NUM", Position: 3},
 			},
 			separator: "|",
-			expected:  "100|4500001234|10",
+			expected:  "T1|D1001|L01",
 		},
 		{
 			name: "composite ID with different separator",
@@ -476,32 +476,32 @@ func TestBuildCompositeID(t *testing.T) {
 		{
 			name: "missing column value",
 			row: map[string]interface{}{
-				"MANDT": "100",
-				// EBELN missing
-				"EBELP": "10",
+				"TENANT_ID": "T1",
+				// DOC_NUM missing
+				"LINE_NUM": "L01",
 			},
 			columns: []UniqueConstraintColumn{
-				{ColumnName: "MANDT", Position: 1},
-				{ColumnName: "EBELN", Position: 2},
-				{ColumnName: "EBELP", Position: 3},
+				{ColumnName: "TENANT_ID", Position: 1},
+				{ColumnName: "DOC_NUM", Position: 2},
+				{ColumnName: "LINE_NUM", Position: 3},
 			},
 			separator: "|",
-			expected:  "100||10",
+			expected:  "T1||L01",
 		},
 		{
 			name: "nil column value",
 			row: map[string]interface{}{
-				"MANDT": "100",
-				"EBELN": nil,
-				"EBELP": "10",
+				"TENANT_ID": "T1",
+				"DOC_NUM":   nil,
+				"LINE_NUM":  "L01",
 			},
 			columns: []UniqueConstraintColumn{
-				{ColumnName: "MANDT", Position: 1},
-				{ColumnName: "EBELN", Position: 2},
-				{ColumnName: "EBELP", Position: 3},
+				{ColumnName: "TENANT_ID", Position: 1},
+				{ColumnName: "DOC_NUM", Position: 2},
+				{ColumnName: "LINE_NUM", Position: 3},
 			},
 			separator: "|",
-			expected:  "100||10",
+			expected:  "T1||L01",
 		},
 		{
 			name: "empty_columns_returns_empty_string",
@@ -583,28 +583,28 @@ func TestExtractUniqueKeyColumns(t *testing.T) {
 		},
 		{
 			name:      "table with composite primary key",
-			tableName: "EKPO",
+			tableName: "ITEMS",
 			mockConstraints: []map[string]interface{}{
 				{
-					"CONSTNAME": "PK_EKPO",
-					"TABNAME":   "EKPO",
-					"COLNAME":   "MANDT",
+					"CONSTNAME": "PK_ITEMS",
+					"TABNAME":   "ITEMS",
+					"COLNAME":   "TENANT_ID",
 					"COLSEQ":    1,
 				},
 				{
-					"CONSTNAME": "PK_EKPO",
-					"TABNAME":   "EKPO",
-					"COLNAME":   "EBELN",
+					"CONSTNAME": "PK_ITEMS",
+					"TABNAME":   "ITEMS",
+					"COLNAME":   "DOC_NUM",
 					"COLSEQ":    2,
 				},
 				{
-					"CONSTNAME": "PK_EKPO",
-					"TABNAME":   "EKPO",
-					"COLNAME":   "EBELP",
+					"CONSTNAME": "PK_ITEMS",
+					"TABNAME":   "ITEMS",
+					"COLNAME":   "LINE_NUM",
 					"COLSEQ":    3,
 				},
 			},
-			expectedColumns: []string{"MANDT", "EBELN", "EBELP"},
+			expectedColumns: []string{"TENANT_ID", "DOC_NUM", "LINE_NUM"},
 			expectError:     false,
 		},
 		{

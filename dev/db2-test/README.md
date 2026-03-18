@@ -46,7 +46,7 @@ Environment variables (constants and defaults defined in `db2_record_fixtures.go
 |---|---|---|---|
 | `DB2_PASSWORD` | `EnvDB2Password` | DB2 user password | *(required)* |
 | `DB2_CERT_BASE64` | `EnvDB2CertB64` | Base64-encoded TLS certificate | *(optional)* |
-| `DB2_DATABASE` | `EnvDB2Database` | Database name | `LMTESTDB` |
+| `DB2_DATABASE` | `EnvDB2Database` | Database name | `TESTDB` |
 | `DB2_USER` | `EnvDB2User` | Database user | `db2inst1` |
 | `DB2_HOST` | `EnvDB2Host` | Database host | `localhost` |
 | `DB2_PORT` | `EnvDB2Port` | Database port | `50001` |
