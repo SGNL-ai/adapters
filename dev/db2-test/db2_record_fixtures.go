@@ -1,7 +1,7 @@
 //go:build db2
 
 // Script to record real DB2 responses as test fixtures for contract testing.
-// Usage: CGO_ENABLED=1 go run -tags db2 scripts/db2_record_fixtures.go
+// Usage: CGO_ENABLED=1 go run -tags db2 dev/db2-test/db2_record_fixtures.go
 
 package main
 

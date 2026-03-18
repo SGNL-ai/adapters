@@ -65,11 +65,13 @@ func main() {
 
 	// Register DB2 adapter. The DB2 adapter connects directly to the database
 	// and does not require a connector service proxy.
-	server.RegisterAdapter(
+	if err := server.RegisterAdapter(
 		adapterServer,
 		"DB2-1.0.0",
 		db2.NewAdapter(db2.NewClient(db2.NewDefaultSQLClient())),
-	)
+	); err != nil {
+		logger.Fatal("Failed to register DB2 adapter", zap.Error(err))
+	}
 
 	api_adapter_v1.RegisterAdapterServer(s, adapterServer)
 
