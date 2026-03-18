@@ -1,5 +1,4 @@
 //go:build db2
-// +build db2
 
 // Copyright 2026 SGNL.ai, Inc.
 
