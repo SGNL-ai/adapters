@@ -115,7 +115,7 @@ func Test_getUniqueConstraints(t *testing.T) {
 			}
 
 			datasource := &Datasource{Client: mockClient}
-			constraints, err := datasource.getUniqueConstraints(context.Background(), tt.tableName)
+			constraints, err := datasource.getUniqueConstraints(context.Background(), tt.tableName, "")
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -268,7 +268,7 @@ func TestGetUniqueConstraintsQueryExecution(t *testing.T) {
 		datasource := &Datasource{Client: mockClient}
 
 		// Act
-		constraints, err := datasource.getUniqueConstraints(context.Background(), "USERS")
+		constraints, err := datasource.getUniqueConstraints(context.Background(), "USERS", "")
 
 		// Assert
 		require.Error(t, err)
@@ -290,11 +290,59 @@ func TestGetUniqueConstraintsQueryExecution(t *testing.T) {
 		datasource := &Datasource{Client: mockClient}
 
 		// Act
-		_, _ = datasource.getUniqueConstraints(context.Background(), "lowercase_table")
+		_, _ = datasource.getUniqueConstraints(context.Background(), "lowercase_table", "")
 
 		// Assert
 		require.Len(t, capturedArgs, 1)
 		assert.Equal(t, "LOWERCASE_TABLE", capturedArgs[0])
+	})
+
+	t.Run("schema_is_used_in_query_when_provided", func(t *testing.T) {
+		// Arrange
+		var capturedQuery string
+		var capturedArgs []interface{}
+		mockClient := &MockSQLClient{
+			QueryFunc: func(_ context.Context, query string, args ...interface{}) (Rows, error) {
+				capturedQuery = query
+				capturedArgs = args
+
+				return &MockRows{Data: []map[string]interface{}{}}, nil
+			},
+		}
+		datasource := &Datasource{Client: mockClient}
+
+		// Act
+		_, _ = datasource.getUniqueConstraints(context.Background(), "USERS", "MYSCHEMA")
+
+		// Assert - query should use parameterized TABSCHEMA, not CURRENT SCHEMA
+		assert.Contains(t, capturedQuery, "tc.TABSCHEMA = ?")
+		assert.NotContains(t, capturedQuery, "CURRENT SCHEMA")
+		require.Len(t, capturedArgs, 2)
+		assert.Equal(t, "USERS", capturedArgs[0])
+		assert.Equal(t, "MYSCHEMA", capturedArgs[1])
+	})
+
+	t.Run("current_schema_used_when_schema_is_empty", func(t *testing.T) {
+		// Arrange
+		var capturedQuery string
+		var capturedArgs []interface{}
+		mockClient := &MockSQLClient{
+			QueryFunc: func(_ context.Context, query string, args ...interface{}) (Rows, error) {
+				capturedQuery = query
+				capturedArgs = args
+
+				return &MockRows{Data: []map[string]interface{}{}}, nil
+			},
+		}
+		datasource := &Datasource{Client: mockClient}
+
+		// Act
+		_, _ = datasource.getUniqueConstraints(context.Background(), "USERS", "")
+
+		// Assert - query should fall back to CURRENT SCHEMA
+		assert.Contains(t, capturedQuery, "CURRENT SCHEMA")
+		require.Len(t, capturedArgs, 1)
+		assert.Equal(t, "USERS", capturedArgs[0])
 	})
 }
 
@@ -368,7 +416,7 @@ func TestGetPrimaryKey(t *testing.T) {
 			datasource := &Datasource{Client: mockClient}
 
 			// Act
-			constraint, err := datasource.getPrimaryKey(context.Background(), "TEST")
+			constraint, err := datasource.getPrimaryKey(context.Background(), "TEST", "")
 
 			// Assert
 			if tt.expectError {
@@ -563,6 +611,7 @@ func TestExtractUniqueKeyColumns(t *testing.T) {
 	tests := []struct {
 		name            string
 		tableName       string
+		schema          string
 		mockConstraints []map[string]interface{}
 		expectedColumns []string
 		expectError     bool
@@ -613,6 +662,21 @@ func TestExtractUniqueKeyColumns(t *testing.T) {
 			mockConstraints: []map[string]interface{}{},
 			expectedColumns: nil,
 			expectError:     true,
+		},
+		{
+			name:      "table in explicit schema",
+			tableName: "ITEMS",
+			schema:    "APPSCHEMA",
+			mockConstraints: []map[string]interface{}{
+				{
+					"CONSTNAME": "PK_ITEMS",
+					"TABNAME":   "ITEMS",
+					"COLNAME":   "ID",
+					"COLSEQ":    1,
+				},
+			},
+			expectedColumns: []string{"ID"},
+			expectError:     false,
 		},
 	}
 
@@ -669,7 +733,7 @@ func TestExtractUniqueKeyColumns(t *testing.T) {
 			}
 
 			datasource := &Datasource{Client: mockClient}
-			columns, err := datasource.ExtractUniqueKeyColumns(context.Background(), tt.tableName)
+			columns, err := datasource.ExtractUniqueKeyColumns(context.Background(), tt.tableName, tt.schema)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -693,7 +757,7 @@ func TestExtractUniqueKeyColumnsErrorPropagation(t *testing.T) {
 		datasource := &Datasource{Client: mockClient}
 
 		// Act
-		columns, err := datasource.ExtractUniqueKeyColumns(context.Background(), "TEST")
+		columns, err := datasource.ExtractUniqueKeyColumns(context.Background(), "TEST", "")
 
 		// Assert
 		require.Error(t, err)
