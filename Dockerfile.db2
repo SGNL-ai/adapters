@@ -31,6 +31,7 @@ RUN cd /tmp && \
 ENV IBM_DB_HOME=/opt/ibm/clidriver
 ENV CGO_CFLAGS=-I/opt/ibm/clidriver/include
 ENV CGO_LDFLAGS=-L/opt/ibm/clidriver/lib
+ENV LD_LIBRARY_PATH=/opt/ibm/clidriver/lib
 ENV CGO_ENABLED=1
 
 WORKDIR /app
