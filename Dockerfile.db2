@@ -35,7 +35,7 @@ RUN go mod download
 
 ARG GOPS_VERSION=v0.3.27
 RUN go install -ldflags "-s -w" github.com/google/gops@${GOPS_VERSION}
-RUN GOOS=linux go build -tags db2 -C /app/cmd/db2-adapter -o /sgnl/db2-adapter
+RUN GOOS=linux go build -C /app/cmd/db2-adapter -tags db2 -o /sgnl/db2-adapter
 
 # STAGE 2: run
 FROM --platform=linux/amd64 debian:bookworm-slim AS run
