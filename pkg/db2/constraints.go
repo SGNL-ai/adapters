@@ -25,7 +25,9 @@ type uniqueConstraint struct {
 // getUniqueConstraints queries DB2 system tables to find unique constraints for a given table.
 // When schema is non-empty, the query filters by that schema (as a bind parameter).
 // When schema is empty, the query falls back to CURRENT SCHEMA (the connection user's default).
-func (d *Datasource) getUniqueConstraints(ctx context.Context, tableName string, schema string) ([]uniqueConstraint, error) {
+func (d *Datasource) getUniqueConstraints(
+	ctx context.Context, tableName string, schema string,
+) ([]uniqueConstraint, error) {
 	// DB2 system catalog query to find unique constraints
 	// This queries SYSCAT.TABCONST (table constraints) and SYSCAT.KEYCOLUSE (key column usage)
 	var schemaClause string
@@ -34,6 +36,7 @@ func (d *Datasource) getUniqueConstraints(ctx context.Context, tableName string,
 
 	if schema != "" {
 		schemaClause = "AND tc.TABSCHEMA = ?"
+
 		args = append(args, schema)
 	} else {
 		schemaClause = "AND tc.TABSCHEMA = CURRENT SCHEMA"
