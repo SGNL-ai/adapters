@@ -1,0 +1,108 @@
+{
+  "name": "items_with_filter",
+  "description": "ITEMS entity with REGION=WEST filter, page size 10",
+  "recordedAt": "2026-02-13T17:29:53Z",
+  "request": {
+    "entity": "ITEMS",
+    "schema": "TEST_SCHEMA",
+    "database": "TESTDB",
+    "pageSize": 10,
+    "filter": {
+      "field": "REGION",
+      "op": "=",
+      "value": "WEST"
+    },
+    "attributes": [
+      "id",
+      "TENANT_ID",
+      "DOC_NUM",
+      "LINE_NUM",
+      "AMOUNT",
+      "REGION"
+    ]
+  },
+  "response": {
+    "objects": [
+      {
+        "REGION": "WEST",
+        "DOC_NUM": "D1003",
+        "LINE_NUM": "L01",
+        "TENANT_ID": "T1",
+        "AMOUNT": 875,
+        "id": "T1|D1003|L01"
+      },
+      {
+        "REGION": "WEST",
+        "DOC_NUM": "D1003",
+        "LINE_NUM": "L02",
+        "TENANT_ID": "T1",
+        "AMOUNT": 22.5,
+        "id": "T1|D1003|L02"
+      },
+      {
+        "REGION": "WEST",
+        "DOC_NUM": "D1003",
+        "LINE_NUM": "L03",
+        "TENANT_ID": "T1",
+        "AMOUNT": 68.9,
+        "id": "T1|D1003|L03"
+      },
+      {
+        "REGION": "WEST",
+        "DOC_NUM": "D1003",
+        "LINE_NUM": "L04",
+        "TENANT_ID": "T1",
+        "AMOUNT": 18.75,
+        "id": "T1|D1003|L04"
+      },
+      {
+        "REGION": "WEST",
+        "DOC_NUM": "D1003",
+        "LINE_NUM": "L05",
+        "TENANT_ID": "T1",
+        "AMOUNT": 45.8,
+        "id": "T1|D1003|L05"
+      },
+      {
+        "REGION": "WEST",
+        "DOC_NUM": "D1004",
+        "LINE_NUM": "L01",
+        "TENANT_ID": "T1",
+        "AMOUNT": 8.95,
+        "id": "T1|D1004|L01"
+      },
+      {
+        "REGION": "WEST",
+        "DOC_NUM": "D1004",
+        "LINE_NUM": "L02",
+        "TENANT_ID": "T1",
+        "AMOUNT": 89,
+        "id": "T1|D1004|L02"
+      },
+      {
+        "REGION": "WEST",
+        "DOC_NUM": "D1004",
+        "LINE_NUM": "L03",
+        "TENANT_ID": "T1",
+        "AMOUNT": 1.85,
+        "id": "T1|D1004|L03"
+      },
+      {
+        "REGION": "WEST",
+        "DOC_NUM": "D1004",
+        "LINE_NUM": "L04",
+        "TENANT_ID": "T1",
+        "AMOUNT": 4.5,
+        "id": "T1|D1004|L04"
+      },
+      {
+        "REGION": "WEST",
+        "DOC_NUM": "D1004",
+        "LINE_NUM": "L05",
+        "TENANT_ID": "T1",
+        "AMOUNT": 12.5,
+        "id": "T1|D1004|L05"
+      }
+    ]
+  }
+}

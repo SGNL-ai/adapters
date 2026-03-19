@@ -179,11 +179,10 @@ func TestAdapter_GetPage_MockDriverError(t *testing.T) {
 
 	response := adapter.GetPage(context.Background(), request)
 
-	// Should get an error response with the mock driver message
+	// Should get an error response — either from mock driver (no DB2 libs)
+	// or from real driver (DB2 libs installed but no server running).
 	if response.Error != nil {
 		assert.Contains(t, response.Error.Message, "Error connecting to DB2 database")
-		assert.Contains(t, response.Error.Message,
-			"mock DB2 driver: cannot connect to real DB2 database without client libraries")
 	} else {
 		t.Errorf("Expected error response but got success")
 	}

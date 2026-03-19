@@ -35,24 +35,24 @@ func Test_getUniqueConstraints(t *testing.T) {
 		},
 		{
 			name:      "table with composite key",
-			tableName: "EKPO",
+			tableName: "ITEMS",
 			mockData: []map[string]interface{}{
 				{
-					"CONSTNAME": "PK_EKPO",
-					"TABNAME":   "EKPO",
-					"COLNAME":   "MANDT",
+					"CONSTNAME": "PK_ITEMS",
+					"TABNAME":   "ITEMS",
+					"COLNAME":   "TENANT_ID",
 					"COLSEQ":    1,
 				},
 				{
-					"CONSTNAME": "PK_EKPO",
-					"TABNAME":   "EKPO",
-					"COLNAME":   "EBELN",
+					"CONSTNAME": "PK_ITEMS",
+					"TABNAME":   "ITEMS",
+					"COLNAME":   "DOC_NUM",
 					"COLSEQ":    2,
 				},
 				{
-					"CONSTNAME": "PK_EKPO",
-					"TABNAME":   "EKPO",
-					"COLNAME":   "EBELP",
+					"CONSTNAME": "PK_ITEMS",
+					"TABNAME":   "ITEMS",
+					"COLNAME":   "LINE_NUM",
 					"COLSEQ":    3,
 				},
 			},
@@ -115,7 +115,7 @@ func Test_getUniqueConstraints(t *testing.T) {
 			}
 
 			datasource := &Datasource{Client: mockClient}
-			constraints, err := datasource.getUniqueConstraints(context.Background(), tt.tableName)
+			constraints, err := datasource.getUniqueConstraints(context.Background(), tt.tableName, "")
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -133,9 +133,9 @@ func Test_getUniqueConstraints(t *testing.T) {
 					// For composite key test, verify column order
 					if tt.name == "table with composite key" {
 						assert.Len(t, constraint.columns, 3)
-						assert.Equal(t, "MANDT", constraint.columns[0].ColumnName)
-						assert.Equal(t, "EBELN", constraint.columns[1].ColumnName)
-						assert.Equal(t, "EBELP", constraint.columns[2].ColumnName)
+						assert.Equal(t, "TENANT_ID", constraint.columns[0].ColumnName)
+						assert.Equal(t, "DOC_NUM", constraint.columns[1].ColumnName)
+						assert.Equal(t, "LINE_NUM", constraint.columns[2].ColumnName)
 					}
 				}
 			}
@@ -268,7 +268,7 @@ func TestGetUniqueConstraintsQueryExecution(t *testing.T) {
 		datasource := &Datasource{Client: mockClient}
 
 		// Act
-		constraints, err := datasource.getUniqueConstraints(context.Background(), "USERS")
+		constraints, err := datasource.getUniqueConstraints(context.Background(), "USERS", "")
 
 		// Assert
 		require.Error(t, err)
@@ -290,11 +290,59 @@ func TestGetUniqueConstraintsQueryExecution(t *testing.T) {
 		datasource := &Datasource{Client: mockClient}
 
 		// Act
-		_, _ = datasource.getUniqueConstraints(context.Background(), "lowercase_table")
+		_, _ = datasource.getUniqueConstraints(context.Background(), "lowercase_table", "")
 
 		// Assert
 		require.Len(t, capturedArgs, 1)
 		assert.Equal(t, "LOWERCASE_TABLE", capturedArgs[0])
+	})
+
+	t.Run("schema_is_used_in_query_when_provided", func(t *testing.T) {
+		// Arrange
+		var capturedQuery string
+		var capturedArgs []interface{}
+		mockClient := &MockSQLClient{
+			QueryFunc: func(_ context.Context, query string, args ...interface{}) (Rows, error) {
+				capturedQuery = query
+				capturedArgs = args
+
+				return &MockRows{Data: []map[string]interface{}{}}, nil
+			},
+		}
+		datasource := &Datasource{Client: mockClient}
+
+		// Act
+		_, _ = datasource.getUniqueConstraints(context.Background(), "USERS", "MYSCHEMA")
+
+		// Assert - query should use parameterized TABSCHEMA, not CURRENT SCHEMA
+		assert.Contains(t, capturedQuery, "tc.TABSCHEMA = ?")
+		assert.NotContains(t, capturedQuery, "CURRENT SCHEMA")
+		require.Len(t, capturedArgs, 2)
+		assert.Equal(t, "USERS", capturedArgs[0])
+		assert.Equal(t, "MYSCHEMA", capturedArgs[1])
+	})
+
+	t.Run("current_schema_used_when_schema_is_empty", func(t *testing.T) {
+		// Arrange
+		var capturedQuery string
+		var capturedArgs []interface{}
+		mockClient := &MockSQLClient{
+			QueryFunc: func(_ context.Context, query string, args ...interface{}) (Rows, error) {
+				capturedQuery = query
+				capturedArgs = args
+
+				return &MockRows{Data: []map[string]interface{}{}}, nil
+			},
+		}
+		datasource := &Datasource{Client: mockClient}
+
+		// Act
+		_, _ = datasource.getUniqueConstraints(context.Background(), "USERS", "")
+
+		// Assert - query should fall back to CURRENT SCHEMA
+		assert.Contains(t, capturedQuery, "CURRENT SCHEMA")
+		require.Len(t, capturedArgs, 1)
+		assert.Equal(t, "USERS", capturedArgs[0])
 	})
 }
 
@@ -368,7 +416,7 @@ func TestGetPrimaryKey(t *testing.T) {
 			datasource := &Datasource{Client: mockClient}
 
 			// Act
-			constraint, err := datasource.getPrimaryKey(context.Background(), "TEST")
+			constraint, err := datasource.getPrimaryKey(context.Background(), "TEST", "")
 
 			// Assert
 			if tt.expectError {
@@ -448,17 +496,17 @@ func TestBuildCompositeID(t *testing.T) {
 		{
 			name: "composite ID with three columns",
 			row: map[string]interface{}{
-				"MANDT": "100",
-				"EBELN": "4500001234",
-				"EBELP": "10",
+				"TENANT_ID": "T1",
+				"DOC_NUM":   "D1001",
+				"LINE_NUM":  "L01",
 			},
 			columns: []UniqueConstraintColumn{
-				{ColumnName: "MANDT", Position: 1},
-				{ColumnName: "EBELN", Position: 2},
-				{ColumnName: "EBELP", Position: 3},
+				{ColumnName: "TENANT_ID", Position: 1},
+				{ColumnName: "DOC_NUM", Position: 2},
+				{ColumnName: "LINE_NUM", Position: 3},
 			},
 			separator: "|",
-			expected:  "100|4500001234|10",
+			expected:  "T1|D1001|L01",
 		},
 		{
 			name: "composite ID with different separator",
@@ -476,32 +524,32 @@ func TestBuildCompositeID(t *testing.T) {
 		{
 			name: "missing column value",
 			row: map[string]interface{}{
-				"MANDT": "100",
-				// EBELN missing
-				"EBELP": "10",
+				"TENANT_ID": "T1",
+				// DOC_NUM missing
+				"LINE_NUM": "L01",
 			},
 			columns: []UniqueConstraintColumn{
-				{ColumnName: "MANDT", Position: 1},
-				{ColumnName: "EBELN", Position: 2},
-				{ColumnName: "EBELP", Position: 3},
+				{ColumnName: "TENANT_ID", Position: 1},
+				{ColumnName: "DOC_NUM", Position: 2},
+				{ColumnName: "LINE_NUM", Position: 3},
 			},
 			separator: "|",
-			expected:  "100||10",
+			expected:  "T1||L01",
 		},
 		{
 			name: "nil column value",
 			row: map[string]interface{}{
-				"MANDT": "100",
-				"EBELN": nil,
-				"EBELP": "10",
+				"TENANT_ID": "T1",
+				"DOC_NUM":   nil,
+				"LINE_NUM":  "L01",
 			},
 			columns: []UniqueConstraintColumn{
-				{ColumnName: "MANDT", Position: 1},
-				{ColumnName: "EBELN", Position: 2},
-				{ColumnName: "EBELP", Position: 3},
+				{ColumnName: "TENANT_ID", Position: 1},
+				{ColumnName: "DOC_NUM", Position: 2},
+				{ColumnName: "LINE_NUM", Position: 3},
 			},
 			separator: "|",
-			expected:  "100||10",
+			expected:  "T1||L01",
 		},
 		{
 			name: "empty_columns_returns_empty_string",
@@ -563,6 +611,7 @@ func TestExtractUniqueKeyColumns(t *testing.T) {
 	tests := []struct {
 		name            string
 		tableName       string
+		schema          string
 		mockConstraints []map[string]interface{}
 		expectedColumns []string
 		expectError     bool
@@ -583,28 +632,28 @@ func TestExtractUniqueKeyColumns(t *testing.T) {
 		},
 		{
 			name:      "table with composite primary key",
-			tableName: "EKPO",
+			tableName: "ITEMS",
 			mockConstraints: []map[string]interface{}{
 				{
-					"CONSTNAME": "PK_EKPO",
-					"TABNAME":   "EKPO",
-					"COLNAME":   "MANDT",
+					"CONSTNAME": "PK_ITEMS",
+					"TABNAME":   "ITEMS",
+					"COLNAME":   "TENANT_ID",
 					"COLSEQ":    1,
 				},
 				{
-					"CONSTNAME": "PK_EKPO",
-					"TABNAME":   "EKPO",
-					"COLNAME":   "EBELN",
+					"CONSTNAME": "PK_ITEMS",
+					"TABNAME":   "ITEMS",
+					"COLNAME":   "DOC_NUM",
 					"COLSEQ":    2,
 				},
 				{
-					"CONSTNAME": "PK_EKPO",
-					"TABNAME":   "EKPO",
-					"COLNAME":   "EBELP",
+					"CONSTNAME": "PK_ITEMS",
+					"TABNAME":   "ITEMS",
+					"COLNAME":   "LINE_NUM",
 					"COLSEQ":    3,
 				},
 			},
-			expectedColumns: []string{"MANDT", "EBELN", "EBELP"},
+			expectedColumns: []string{"TENANT_ID", "DOC_NUM", "LINE_NUM"},
 			expectError:     false,
 		},
 		{
@@ -613,6 +662,21 @@ func TestExtractUniqueKeyColumns(t *testing.T) {
 			mockConstraints: []map[string]interface{}{},
 			expectedColumns: nil,
 			expectError:     true,
+		},
+		{
+			name:      "table in explicit schema",
+			tableName: "ITEMS",
+			schema:    "APPSCHEMA",
+			mockConstraints: []map[string]interface{}{
+				{
+					"CONSTNAME": "PK_ITEMS",
+					"TABNAME":   "ITEMS",
+					"COLNAME":   "ID",
+					"COLSEQ":    1,
+				},
+			},
+			expectedColumns: []string{"ID"},
+			expectError:     false,
 		},
 	}
 
@@ -669,7 +733,7 @@ func TestExtractUniqueKeyColumns(t *testing.T) {
 			}
 
 			datasource := &Datasource{Client: mockClient}
-			columns, err := datasource.ExtractUniqueKeyColumns(context.Background(), tt.tableName)
+			columns, err := datasource.ExtractUniqueKeyColumns(context.Background(), tt.tableName, tt.schema)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -693,7 +757,7 @@ func TestExtractUniqueKeyColumnsErrorPropagation(t *testing.T) {
 		datasource := &Datasource{Client: mockClient}
 
 		// Act
-		columns, err := datasource.ExtractUniqueKeyColumns(context.Background(), "TEST")
+		columns, err := datasource.ExtractUniqueKeyColumns(context.Background(), "TEST", "")
 
 		// Assert
 		require.Error(t, err)

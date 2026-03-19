@@ -1,0 +1,52 @@
+{
+  "name": "items_no_filter",
+  "description": "ITEMS entity without filter, page size 5",
+  "recordedAt": "2026-02-13T17:30:01Z",
+  "request": {
+    "entity": "ITEMS",
+    "schema": "TEST_SCHEMA",
+    "database": "TESTDB",
+    "pageSize": 5,
+    "attributes": [
+      "id",
+      "TENANT_ID",
+      "DOC_NUM",
+      "LINE_NUM"
+    ]
+  },
+  "response": {
+    "objects": [
+      {
+        "DOC_NUM": "D1001",
+        "LINE_NUM": "L01",
+        "TENANT_ID": "T1",
+        "id": "T1|D1001|L01"
+      },
+      {
+        "DOC_NUM": "D1001",
+        "LINE_NUM": "L02",
+        "TENANT_ID": "T1",
+        "id": "T1|D1001|L02"
+      },
+      {
+        "DOC_NUM": "D1001",
+        "LINE_NUM": "L03",
+        "TENANT_ID": "T1",
+        "id": "T1|D1001|L03"
+      },
+      {
+        "DOC_NUM": "D1001",
+        "LINE_NUM": "L04",
+        "TENANT_ID": "T1",
+        "id": "T1|D1001|L04"
+      },
+      {
+        "DOC_NUM": "D1001",
+        "LINE_NUM": "L05",
+        "TENANT_ID": "T1",
+        "id": "T1|D1001|L05"
+      }
+    ],
+    "nextCursor": "T1|D1001|L05"
+  }
+}

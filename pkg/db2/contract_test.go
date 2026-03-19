@@ -20,27 +20,27 @@ import (
 
 // TestFixtureLoader verifies that fixtures can be loaded correctly.
 func TestFixtureLoader(t *testing.T) {
-	t.Run("load ekpo_with_filter fixture", func(t *testing.T) {
-		fixture, err := LoadFixture("ekpo_with_filter")
+	t.Run("load items_with_filter fixture", func(t *testing.T) {
+		fixture, err := LoadFixture("items_with_filter")
 		require.NoError(t, err)
-		assert.Equal(t, "ekpo_with_filter", fixture.Name)
-		assert.Equal(t, "EKPO", fixture.Request.Entity)
+		assert.Equal(t, "items_with_filter", fixture.Name)
+		assert.Equal(t, "ITEMS", fixture.Request.Entity)
 		assert.Len(t, fixture.Response.Objects, 10)
 		assert.Empty(t, fixture.Response.NextCursor) // Full page, no more data
 	})
 
-	t.Run("load ekpo_small_page fixture with pagination", func(t *testing.T) {
-		fixture, err := LoadFixture("ekpo_small_page")
+	t.Run("load items_small_page fixture with pagination", func(t *testing.T) {
+		fixture, err := LoadFixture("items_small_page")
 		require.NoError(t, err)
-		assert.Equal(t, "ekpo_small_page", fixture.Name)
+		assert.Equal(t, "items_small_page", fixture.Name)
 		assert.Len(t, fixture.Response.Objects, 3)
 		assert.NotEmpty(t, fixture.Response.NextCursor) // Has more pages
 	})
 
-	t.Run("load ekpo_no_filter fixture", func(t *testing.T) {
-		fixture, err := LoadFixture("ekpo_no_filter")
+	t.Run("load items_no_filter fixture", func(t *testing.T) {
+		fixture, err := LoadFixture("items_no_filter")
 		require.NoError(t, err)
-		assert.Equal(t, "ekpo_no_filter", fixture.Name)
+		assert.Equal(t, "items_no_filter", fixture.Name)
 		assert.Len(t, fixture.Response.Objects, 5)
 		assert.NotEmpty(t, fixture.Response.NextCursor) // Has more pages
 	})
@@ -60,30 +60,30 @@ func TestFixtureLoader(t *testing.T) {
 // TestFixtureMockRows verifies the MockRows implementation works correctly.
 func TestFixtureMockRows(t *testing.T) {
 	objects := []map[string]interface{}{
-		{"id": "100|001|010", "MANDT": "100", "EBELN": "001", "NETPR": 150.5},
-		{"id": "100|001|020", "MANDT": "100", "EBELN": "001", "NETPR": 275.0},
+		{"id": "T1|D1001|L01", "TENANT_ID": "T1", "DOC_NUM": "D1001", "AMOUNT": 150.5},
+		{"id": "T1|D1001|L02", "TENANT_ID": "T1", "DOC_NUM": "D1001", "AMOUNT": 275.0},
 	}
-	columns := []string{"id", "MANDT", "EBELN", "NETPR"}
+	columns := []string{"id", "TENANT_ID", "DOC_NUM", "AMOUNT"}
 
 	rows := NewFixtureMockRows(objects, columns)
 
 	// First row
 	assert.True(t, rows.Next())
-	var id, mandt, ebeln string
-	var netpr float64
-	err := rows.Scan(&id, &mandt, &ebeln, &netpr)
+	var id, tenantID, docNum string
+	var amount float64
+	err := rows.Scan(&id, &tenantID, &docNum, &amount)
 	require.NoError(t, err)
-	assert.Equal(t, "100|001|010", id)
-	assert.Equal(t, "100", mandt)
-	assert.Equal(t, "001", ebeln)
-	assert.Equal(t, 150.5, netpr)
+	assert.Equal(t, "T1|D1001|L01", id)
+	assert.Equal(t, "T1", tenantID)
+	assert.Equal(t, "D1001", docNum)
+	assert.Equal(t, 150.5, amount)
 
 	// Second row
 	assert.True(t, rows.Next())
-	err = rows.Scan(&id, &mandt, &ebeln, &netpr)
+	err = rows.Scan(&id, &tenantID, &docNum, &amount)
 	require.NoError(t, err)
-	assert.Equal(t, "100|001|020", id)
-	assert.Equal(t, 275.0, netpr)
+	assert.Equal(t, "T1|D1001|L02", id)
+	assert.Equal(t, 275.0, amount)
 
 	// No more rows
 	assert.False(t, rows.Next())
@@ -91,9 +91,9 @@ func TestFixtureMockRows(t *testing.T) {
 	assert.NoError(t, rows.Close())
 }
 
-// TestContractEKPOWithFilter verifies adapter behavior with filter.
-func TestContractEKPOWithFilter(t *testing.T) {
-	fixture, err := LoadFixture("ekpo_with_filter")
+// TestContractItemsWithFilter verifies adapter behavior with filter.
+func TestContractItemsWithFilter(t *testing.T) {
+	fixture, err := LoadFixture("items_with_filter")
 	require.NoError(t, err)
 
 	// Create a mock client that simulates both unique key query and data query
@@ -143,7 +143,7 @@ func TestContractEKPOWithFilter(t *testing.T) {
 
 // TestContractSmallPage verifies adapter behavior with pagination.
 func TestContractSmallPage(t *testing.T) {
-	fixture, err := LoadFixture("ekpo_small_page")
+	fixture, err := LoadFixture("items_small_page")
 	require.NoError(t, err)
 
 	queryCount := 0
@@ -183,12 +183,12 @@ func TestContractSmallPage(t *testing.T) {
 // TestContractPaginationContinuation verifies that using a cursor returns the next page.
 func TestContractPaginationContinuation(t *testing.T) {
 	// Load page 1 fixture
-	page1, err := LoadFixture("ekpo_small_page")
+	page1, err := LoadFixture("items_small_page")
 	require.NoError(t, err)
 	require.NotEmpty(t, page1.Response.NextCursor, "Page 1 must have a cursor for this test")
 
 	// Load page 2 fixture (uses cursor from page 1)
-	page2, err := LoadFixture("ekpo_small_page_2")
+	page2, err := LoadFixture("items_small_page_2")
 	if err != nil {
 		t.Skip("Page 2 fixture not recorded yet - run db2_record_fixtures.go to record it")
 	}
@@ -247,7 +247,7 @@ func TestContractPaginationContinuation(t *testing.T) {
 
 // TestContractNoFilter verifies adapter behavior without filter.
 func TestContractNoFilter(t *testing.T) {
-	fixture, err := LoadFixture("ekpo_no_filter")
+	fixture, err := LoadFixture("items_no_filter")
 	require.NoError(t, err)
 
 	queryCount := 0
@@ -288,7 +288,7 @@ func buildAttributeConfigs(attrs []string) []*framework.AttributeConfig {
 	configs := make([]*framework.AttributeConfig, len(attrs))
 	for i, attr := range attrs {
 		attrType := framework.AttributeTypeString
-		if attr == "NETPR" {
+		if attr == "AMOUNT" {
 			attrType = framework.AttributeTypeDouble
 		}
 		configs[i] = &framework.AttributeConfig{
@@ -330,15 +330,15 @@ func createContractMockClient(fixture *Fixture, queryCount *int) db2.SQLClient {
 	}
 }
 
-// createUniqueKeyMockRows creates MockRows that return EKPO's composite key columns.
+// createUniqueKeyMockRows creates MockRows that return the table's composite key columns.
 func createUniqueKeyMockRows(tableName string) db2.Rows {
-	// Return composite key for EKPO table
-	if tableName == "EKPO" {
+	// Return composite key for ITEMS table
+	if tableName == "ITEMS" {
 		return &db2.MockRows{
 			Data: []map[string]interface{}{
-				{"CONSTNAME": "PK_EKPO", "TABNAME": "EKPO", "COLNAME": "MANDT", "COLSEQ": 1},
-				{"CONSTNAME": "PK_EKPO", "TABNAME": "EKPO", "COLNAME": "EBELN", "COLSEQ": 2},
-				{"CONSTNAME": "PK_EKPO", "TABNAME": "EKPO", "COLNAME": "EBELP", "COLSEQ": 3},
+				{"CONSTNAME": "PK_ITEMS", "TABNAME": "ITEMS", "COLNAME": "TENANT_ID", "COLSEQ": 1},
+				{"CONSTNAME": "PK_ITEMS", "TABNAME": "ITEMS", "COLNAME": "DOC_NUM", "COLSEQ": 2},
+				{"CONSTNAME": "PK_ITEMS", "TABNAME": "ITEMS", "COLNAME": "LINE_NUM", "COLSEQ": 3},
 			},
 		}
 	}

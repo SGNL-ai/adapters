@@ -76,7 +76,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	}
 
 	// Get unique key columns for composite ID generation
-	uniqueKeyColumns, err := d.ExtractUniqueKeyColumns(ctx, request.EntityConfig.ExternalId)
+	uniqueKeyColumns, err := d.ExtractUniqueKeyColumns(ctx, request.EntityConfig.ExternalId, request.Schema)
 	if err != nil {
 		// When using the synthetic "id" attribute, composite key columns are required
 		// for unique ID generation and cursor-based pagination.

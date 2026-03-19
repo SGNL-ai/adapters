@@ -23,10 +23,26 @@ type uniqueConstraint struct {
 }
 
 // getUniqueConstraints queries DB2 system tables to find unique constraints for a given table.
-func (d *Datasource) getUniqueConstraints(ctx context.Context, tableName string) ([]uniqueConstraint, error) {
+// When schema is non-empty, the query filters by that schema (as a bind parameter).
+// When schema is empty, the query falls back to CURRENT SCHEMA (the connection user's default).
+func (d *Datasource) getUniqueConstraints(
+	ctx context.Context, tableName string, schema string,
+) ([]uniqueConstraint, error) {
 	// DB2 system catalog query to find unique constraints
 	// This queries SYSCAT.TABCONST (table constraints) and SYSCAT.KEYCOLUSE (key column usage)
-	query := `
+	var schemaClause string
+
+	args := []interface{}{strings.ToUpper(tableName)}
+
+	if schema != "" {
+		schemaClause = "AND tc.TABSCHEMA = ?"
+
+		args = append(args, schema)
+	} else {
+		schemaClause = "AND tc.TABSCHEMA = CURRENT SCHEMA"
+	}
+
+	query := fmt.Sprintf(`
 		SELECT
 			tc.CONSTNAME,
 			tc.TABNAME,
@@ -37,12 +53,12 @@ func (d *Datasource) getUniqueConstraints(ctx context.Context, tableName string)
 			AND tc.TABSCHEMA = kcu.TABSCHEMA
 			AND tc.TABNAME = kcu.TABNAME
 		WHERE tc.TABNAME = ?
-			AND tc.TABSCHEMA = CURRENT SCHEMA
+			%s
 			AND tc.TYPE IN ('P', 'U')
 		ORDER BY tc.CONSTNAME, kcu.COLSEQ
-	`
+	`, schemaClause)
 
-	rows, err := d.Client.Query(ctx, query, strings.ToUpper(tableName))
+	rows, err := d.Client.Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query unique constraints: %w", err)
 	}
@@ -102,8 +118,8 @@ func processConstraintRows(rows Rows) ([]uniqueConstraint, error) {
 }
 
 // getPrimaryKey returns the primary key constraint for a table, or nil if none exists.
-func (d *Datasource) getPrimaryKey(ctx context.Context, tableName string) (*uniqueConstraint, error) {
-	constraints, err := d.getUniqueConstraints(ctx, tableName)
+func (d *Datasource) getPrimaryKey(ctx context.Context, tableName string, schema string) (*uniqueConstraint, error) {
+	constraints, err := d.getUniqueConstraints(ctx, tableName, schema)
 	if err != nil {
 		return nil, err
 	}
@@ -173,8 +189,8 @@ func BuildCompositeID(row map[string]interface{}, columns []UniqueConstraintColu
 // The function prioritizes primary keys (constraints with "PK" or "PRIMARY" in the name)
 // over unique constraints. If no primary key is found, it falls back to the first unique
 // constraint available.
-func (d *Datasource) ExtractUniqueKeyColumns(ctx context.Context, tableName string) ([]string, error) {
-	primaryKey, err := d.getPrimaryKey(ctx, tableName)
+func (d *Datasource) ExtractUniqueKeyColumns(ctx context.Context, tableName string, schema string) ([]string, error) {
+	primaryKey, err := d.getPrimaryKey(ctx, tableName, schema)
 	if err != nil {
 		return nil, err
 	}
