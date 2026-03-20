@@ -216,15 +216,17 @@ func enrichIncidentDataWithLookup(
 // "data" field (array or single object), replaces {id, type} stubs with the corresponding
 // full object from the included lookup. This enables JSONPath traversal into nested attributes
 // such as $.relationships.roles.data[*].attributes.user.data.attributes.email.
-// The relationships map and each wrapper map are shallow-copied so the original nested maps are not
-// mutated in-place. The copied relationships are then assigned back to the passed dataObject.
-func resolveRelationshipIncludes(dataObject map[string]any, includedMap map[string]map[string]any) {
+// The top-level relationships map and each relationship wrapper map (the map that owns the "data"
+// field) are shallow-copied so the original relationships structure on dataObject is not mutated
+// in-place. The relationship "data" slice elements (stubs) themselves are not deep-copied; they are
+// either replaced by new maps from includedLookup when a match exists or left as-is when unmatched.
+func resolveRelationshipIncludes(dataObject map[string]any, includedLookup map[string]map[string]any) {
 	originalRelationships, ok := dataObject["relationships"].(map[string]any)
 	if !ok {
 		return
 	}
 
-	if len(includedMap) == 0 {
+	if len(includedLookup) == 0 {
 		return
 	}
 
@@ -246,7 +248,7 @@ func resolveRelationshipIncludes(dataObject map[string]any, includedMap map[stri
 	}
 
 	// Walk each relationship and resolve stubs.
-	for relName, relValue := range relationships {
+	for _, relValue := range relationships {
 		relData, ok := relValue.(map[string]any)
 		if !ok {
 			continue
@@ -259,9 +261,7 @@ func resolveRelationshipIncludes(dataObject map[string]any, includedMap map[stri
 
 		// Handle array of relationship references ([]any from JSON unmarshal).
 		if dataArr, ok := dataField.([]any); ok {
-			resolved := resolveRelationshipArray(dataArr, includedMap)
-			relData["data"] = resolved
-			relationships[relName] = relData
+			relData["data"] = resolveRelationshipArray(dataArr, includedLookup)
 
 			continue
 		}
@@ -273,18 +273,15 @@ func resolveRelationshipIncludes(dataObject map[string]any, includedMap map[stri
 				converted[i] = v
 			}
 
-			resolved := resolveRelationshipArray(converted, includedMap)
-			relData["data"] = resolved
-			relationships[relName] = relData
+			relData["data"] = resolveRelationshipArray(converted, includedLookup)
 
 			continue
 		}
 
 		// Handle single relationship reference.
 		if dataObj, ok := dataField.(map[string]any); ok {
-			if resolved := resolveRelationshipObject(dataObj, includedMap); resolved != nil {
+			if resolved := resolveRelationshipObject(dataObj, includedLookup); resolved != nil {
 				relData["data"] = resolved
-				relationships[relName] = relData
 			}
 		}
 	}
@@ -309,7 +306,7 @@ func buildIncludedLookup(included []map[string]any) map[string]map[string]any {
 }
 
 // resolveRelationshipArray resolves an array of relationship stubs against the included lookup.
-func resolveRelationshipArray(dataArr []any, includedMap map[string]map[string]any) []any {
+func resolveRelationshipArray(dataArr []any, includedLookup map[string]map[string]any) []any {
 	resolved := make([]any, 0, len(dataArr))
 
 	for _, item := range dataArr {
@@ -320,7 +317,7 @@ func resolveRelationshipArray(dataArr []any, includedMap map[string]map[string]a
 			continue
 		}
 
-		if merged := resolveRelationshipObject(itemMap, includedMap); merged != nil {
+		if merged := resolveRelationshipObject(itemMap, includedLookup); merged != nil {
 			resolved = append(resolved, merged)
 		} else {
 			resolved = append(resolved, itemMap)
@@ -332,7 +329,7 @@ func resolveRelationshipArray(dataArr []any, includedMap map[string]map[string]a
 
 // resolveRelationshipObject resolves a single relationship stub against the included lookup.
 // Returns a new merged map if a match is found, or nil if no match exists.
-func resolveRelationshipObject(stub map[string]any, includedMap map[string]map[string]any) map[string]any {
+func resolveRelationshipObject(stub map[string]any, includedLookup map[string]map[string]any) map[string]any {
 	relID, hasID := stub["id"].(string)
 	relType, hasType := stub["type"].(string)
 
@@ -342,7 +339,7 @@ func resolveRelationshipObject(stub map[string]any, includedMap map[string]map[s
 
 	key := relType + ":" + relID
 
-	includedObj, exists := includedMap[key]
+	includedObj, exists := includedLookup[key]
 	if !exists {
 		return nil
 	}
