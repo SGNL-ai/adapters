@@ -861,12 +861,58 @@ func TestResolveRelationshipIncludes(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Arrange
+			includedLookup := buildIncludedLookup(tt.included)
+
 			// Act
-			resolveRelationshipIncludes(tt.dataObject, tt.included)
+			resolveRelationshipIncludes(tt.dataObject, includedLookup)
 
 			// Assert
 			tt.checkFunc(t, tt.dataObject)
 		})
+	}
+}
+
+func TestResolveRelationshipIncludes_DoesNotMutateOriginal(t *testing.T) {
+	// Arrange: create an incident with a relationship stub.
+	original := map[string]any{
+		"id":   "incident-1",
+		"type": "incidents",
+		"relationships": map[string]any{
+			"roles": map[string]any{
+				"data": []any{
+					map[string]any{"id": "role-1", "type": "incident_role_assignments"},
+				},
+			},
+		},
+	}
+
+	included := []map[string]any{
+		{
+			"id":   "role-1",
+			"type": "incident_role_assignments",
+			"attributes": map[string]any{
+				"incident_role": map[string]any{
+					"data": map[string]any{
+						"attributes": map[string]any{"name": "Commander"},
+					},
+				},
+			},
+		},
+	}
+
+	// Capture the original relationships.roles.data before enrichment.
+	originalRels, _ := original["relationships"].(map[string]any)
+	originalRoles, _ := originalRels["roles"].(map[string]any)
+	originalData, _ := originalRoles["data"].([]any)
+	originalStub, _ := originalData[0].(map[string]any)
+
+	// Act: enrich via the public API which creates a shallow copy then resolves.
+	_ = EnrichIncidentData(original, included)
+
+	// Assert: the original stub should NOT have been mutated with "attributes".
+	if _, hasAttrs := originalStub["attributes"]; hasAttrs {
+		t.Error("resolveRelationshipIncludes mutated the original data object's relationship stub")
 	}
 }
 

@@ -157,6 +157,14 @@ func (p *IncludedItemProcessor) ProcessAndExpand() []any {
 
 // EnrichIncidentData enriches a single incident data object with its included items.
 func EnrichIncidentData(dataObject map[string]any, included []map[string]any) map[string]any {
+	return enrichIncidentDataWithLookup(dataObject, included, buildIncludedLookup(included))
+}
+
+// enrichIncidentDataWithLookup is the internal implementation of EnrichIncidentData that accepts
+// a pre-built included lookup to avoid redundant map construction when processing multiple incidents.
+func enrichIncidentDataWithLookup(
+	dataObject map[string]any, included []map[string]any, includedLookup map[string]map[string]any,
+) map[string]any {
 	// Only process included items if there are any
 	if len(included) == 0 {
 		return dataObject
@@ -178,7 +186,7 @@ func EnrichIncidentData(dataObject map[string]any, included []map[string]any) ma
 	// Resolve relationship stubs against included objects.
 	// This replaces bare {id, type} stubs in relationships with the full included objects,
 	// enabling JSONPath traversal into nested attributes (e.g., role assignments).
-	resolveRelationshipIncludes(enriched, included)
+	resolveRelationshipIncludes(enriched, includedLookup)
 
 	// Create processor for this incident
 	processor := NewIncludedItemProcessor(incidentIDStr, included)
@@ -202,19 +210,34 @@ func EnrichIncidentData(dataObject map[string]any, included []map[string]any) ma
 // resolveRelationshipIncludes replaces relationship stubs with full included objects.
 // It walks the data object's "relationships" map and for each relationship that has a
 // "data" field (array or single object), replaces {id, type} stubs with the corresponding
-// full object from the included array. This enables JSONPath traversal into nested attributes
+// full object from the included lookup. This enables JSONPath traversal into nested attributes
 // such as $.relationships.roles.data[*].attributes.user.data.attributes.email.
-func resolveRelationshipIncludes(dataObject map[string]any, included []map[string]any) {
-	relationships, ok := dataObject["relationships"].(map[string]any)
+// A deep copy of the relationships structure is created to avoid mutating the original data object.
+func resolveRelationshipIncludes(dataObject map[string]any, includedMap map[string]map[string]any) {
+	originalRelationships, ok := dataObject["relationships"].(map[string]any)
 	if !ok {
 		return
 	}
 
-	// Build a lookup map for included objects by "type:id".
-	includedMap := buildIncludedLookup(included)
-
 	if len(includedMap) == 0 {
 		return
+	}
+
+	// Deep copy the relationships map to avoid mutating the original data object.
+	relationships := make(map[string]any, len(originalRelationships))
+
+	for relName, relValue := range originalRelationships {
+		relData, ok := relValue.(map[string]any)
+		if !ok {
+			relationships[relName] = relValue
+
+			continue
+		}
+
+		// Copy the relationship wrapper map (contains "data" key).
+		relDataCopy := make(map[string]any, len(relData))
+		maps.Copy(relDataCopy, relData)
+		relationships[relName] = relDataCopy
 	}
 
 	// Walk each relationship and resolve stubs.
@@ -321,10 +344,13 @@ func EnrichAllIncidentData(data []map[string]any, included []map[string]any) []m
 		return data
 	}
 
+	// Build the included lookup once for all incidents to avoid redundant map construction.
+	includedLookup := buildIncludedLookup(included)
+
 	result := make([]map[string]any, len(data))
 
 	for i, dataObject := range data {
-		result[i] = EnrichIncidentData(dataObject, included)
+		result[i] = enrichIncidentDataWithLookup(dataObject, included, includedLookup)
 	}
 
 	return result
