@@ -216,7 +216,8 @@ func enrichIncidentDataWithLookup(
 // "data" field (array or single object), replaces {id, type} stubs with the corresponding
 // full object from the included lookup. This enables JSONPath traversal into nested attributes
 // such as $.relationships.roles.data[*].attributes.user.data.attributes.email.
-// The relationships map and each relationship wrapper map are copied to avoid mutating the original data object.
+// The relationships map and each wrapper map are shallow-copied so the original nested maps are not
+// mutated in-place. The copied relationships are then assigned back to the passed dataObject.
 func resolveRelationshipIncludes(dataObject map[string]any, includedMap map[string]map[string]any) {
 	originalRelationships, ok := dataObject["relationships"].(map[string]any)
 	if !ok {
@@ -256,9 +257,23 @@ func resolveRelationshipIncludes(dataObject map[string]any, includedMap map[stri
 			continue
 		}
 
-		// Handle array of relationship references.
+		// Handle array of relationship references ([]any from JSON unmarshal).
 		if dataArr, ok := dataField.([]any); ok {
 			resolved := resolveRelationshipArray(dataArr, includedMap)
+			relData["data"] = resolved
+			relationships[relName] = relData
+
+			continue
+		}
+
+		// Handle array typed as []map[string]any (defensive, in case of upstream transformations).
+		if dataArrMap, ok := dataField.([]map[string]any); ok {
+			converted := make([]any, len(dataArrMap))
+			for i, v := range dataArrMap {
+				converted[i] = v
+			}
+
+			resolved := resolveRelationshipArray(converted, includedMap)
 			relData["data"] = resolved
 			relationships[relName] = relData
 
@@ -286,8 +301,7 @@ func buildIncludedLookup(included []map[string]any) map[string]map[string]any {
 		typ, hasType := inc["type"].(string)
 
 		if hasID && hasType {
-			key := fmt.Sprintf("%s:%s", typ, id)
-			lookup[key] = inc
+			lookup[typ+":"+id] = inc
 		}
 	}
 
@@ -326,7 +340,7 @@ func resolveRelationshipObject(stub map[string]any, includedMap map[string]map[s
 		return nil
 	}
 
-	key := fmt.Sprintf("%s:%s", relType, relID)
+	key := relType + ":" + relID
 
 	includedObj, exists := includedMap[key]
 	if !exists {
