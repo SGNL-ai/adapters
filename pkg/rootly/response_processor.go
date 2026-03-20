@@ -157,6 +157,10 @@ func (p *IncludedItemProcessor) ProcessAndExpand() []any {
 
 // EnrichIncidentData enriches a single incident data object with its included items.
 func EnrichIncidentData(dataObject map[string]any, included []map[string]any) map[string]any {
+	if len(included) == 0 {
+		return dataObject
+	}
+
 	return enrichIncidentDataWithLookup(dataObject, included, buildIncludedLookup(included))
 }
 
@@ -212,7 +216,7 @@ func enrichIncidentDataWithLookup(
 // "data" field (array or single object), replaces {id, type} stubs with the corresponding
 // full object from the included lookup. This enables JSONPath traversal into nested attributes
 // such as $.relationships.roles.data[*].attributes.user.data.attributes.email.
-// A deep copy of the relationships structure is created to avoid mutating the original data object.
+// The relationships map and each relationship wrapper map are copied to avoid mutating the original data object.
 func resolveRelationshipIncludes(dataObject map[string]any, includedMap map[string]map[string]any) {
 	originalRelationships, ok := dataObject["relationships"].(map[string]any)
 	if !ok {
@@ -223,7 +227,7 @@ func resolveRelationshipIncludes(dataObject map[string]any, includedMap map[stri
 		return
 	}
 
-	// Deep copy the relationships map to avoid mutating the original data object.
+	// Copy the relationships map and each wrapper map to avoid mutating the original data object.
 	relationships := make(map[string]any, len(originalRelationships))
 
 	for relName, relValue := range originalRelationships {
