@@ -175,6 +175,11 @@ func EnrichIncidentData(dataObject map[string]any, included []map[string]any) ma
 	enriched := make(map[string]any, len(dataObject))
 	maps.Copy(enriched, dataObject)
 
+	// Resolve relationship stubs against included objects.
+	// This replaces bare {id, type} stubs in relationships with the full included objects,
+	// enabling JSONPath traversal into nested attributes (e.g., role assignments).
+	resolveRelationshipIncludes(enriched, included)
+
 	// Create processor for this incident
 	processor := NewIncludedItemProcessor(incidentIDStr, included)
 
@@ -192,6 +197,121 @@ func EnrichIncidentData(dataObject map[string]any, included []map[string]any) ma
 	}
 
 	return enriched
+}
+
+// resolveRelationshipIncludes replaces relationship stubs with full included objects.
+// It walks the data object's "relationships" map and for each relationship that has a
+// "data" field (array or single object), replaces {id, type} stubs with the corresponding
+// full object from the included array. This enables JSONPath traversal into nested attributes
+// such as $.relationships.roles.data[*].attributes.user.data.attributes.email.
+func resolveRelationshipIncludes(dataObject map[string]any, included []map[string]any) {
+	relationships, ok := dataObject["relationships"].(map[string]any)
+	if !ok {
+		return
+	}
+
+	// Build a lookup map for included objects by "type:id".
+	includedMap := buildIncludedLookup(included)
+
+	if len(includedMap) == 0 {
+		return
+	}
+
+	// Walk each relationship and resolve stubs.
+	for relName, relValue := range relationships {
+		relData, ok := relValue.(map[string]any)
+		if !ok {
+			continue
+		}
+
+		dataField, ok := relData["data"]
+		if !ok {
+			continue
+		}
+
+		// Handle array of relationship references.
+		if dataArr, ok := dataField.([]any); ok {
+			resolved := resolveRelationshipArray(dataArr, includedMap)
+			relData["data"] = resolved
+			relationships[relName] = relData
+
+			continue
+		}
+
+		// Handle single relationship reference.
+		if dataObj, ok := dataField.(map[string]any); ok {
+			if resolved := resolveRelationshipObject(dataObj, includedMap); resolved != nil {
+				relData["data"] = resolved
+				relationships[relName] = relData
+			}
+		}
+	}
+
+	dataObject["relationships"] = relationships
+}
+
+// buildIncludedLookup builds a lookup map from included objects keyed by "type:id".
+func buildIncludedLookup(included []map[string]any) map[string]map[string]any {
+	lookup := make(map[string]map[string]any, len(included))
+
+	for _, inc := range included {
+		id, hasID := inc["id"].(string)
+		typ, hasType := inc["type"].(string)
+
+		if hasID && hasType {
+			key := fmt.Sprintf("%s:%s", typ, id)
+			lookup[key] = inc
+		}
+	}
+
+	return lookup
+}
+
+// resolveRelationshipArray resolves an array of relationship stubs against the included lookup.
+func resolveRelationshipArray(dataArr []any, includedMap map[string]map[string]any) []any {
+	resolved := make([]any, 0, len(dataArr))
+
+	for _, item := range dataArr {
+		itemMap, ok := item.(map[string]any)
+		if !ok {
+			resolved = append(resolved, item)
+
+			continue
+		}
+
+		if merged := resolveRelationshipObject(itemMap, includedMap); merged != nil {
+			resolved = append(resolved, merged)
+		} else {
+			resolved = append(resolved, itemMap)
+		}
+	}
+
+	return resolved
+}
+
+// resolveRelationshipObject resolves a single relationship stub against the included lookup.
+// Returns a new merged map if a match is found, or nil if no match exists.
+func resolveRelationshipObject(stub map[string]any, includedMap map[string]map[string]any) map[string]any {
+	relID, hasID := stub["id"].(string)
+	relType, hasType := stub["type"].(string)
+
+	if !hasID || !hasType {
+		return nil
+	}
+
+	key := fmt.Sprintf("%s:%s", relType, relID)
+
+	includedObj, exists := includedMap[key]
+	if !exists {
+		return nil
+	}
+
+	// Merge: start with the stub, overlay with the full included object.
+	merged := make(map[string]any, len(includedObj))
+	maps.Copy(merged, stub)
+	maps.Copy(merged, includedObj)
+
+	return merged
 }
 
 // EnrichAllIncidentData enriches all incident data objects with their included items.

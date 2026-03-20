@@ -566,6 +566,443 @@ func TestToMap(t *testing.T) {
 	}
 }
 
+func TestResolveRelationshipIncludes(t *testing.T) {
+	tests := []struct {
+		name       string
+		dataObject map[string]any
+		included   []map[string]any
+		checkFunc  func(t *testing.T, result map[string]any)
+	}{
+		{
+			name: "resolves array relationship stubs with included objects",
+			dataObject: map[string]any{
+				"id":   "incident-1",
+				"type": "incidents",
+				"relationships": map[string]any{
+					"roles": map[string]any{
+						"data": []any{
+							map[string]any{"id": "role-1", "type": "incident_role_assignments"},
+							map[string]any{"id": "role-2", "type": "incident_role_assignments"},
+						},
+					},
+				},
+			},
+			included: []map[string]any{
+				{
+					"id":   "role-1",
+					"type": "incident_role_assignments",
+					"attributes": map[string]any{
+						"incident_role": map[string]any{
+							"data": map[string]any{
+								"attributes": map[string]any{
+									"name": "Incident Commander",
+									"slug": "incident-commander",
+								},
+							},
+						},
+						"user": map[string]any{
+							"data": map[string]any{
+								"attributes": map[string]any{
+									"email": "alice@example.com",
+									"name":  "Alice",
+								},
+							},
+						},
+					},
+				},
+				{
+					"id":   "role-2",
+					"type": "incident_role_assignments",
+					"attributes": map[string]any{
+						"incident_role": map[string]any{
+							"data": map[string]any{
+								"attributes": map[string]any{
+									"name": "Communications Lead",
+									"slug": "communications-lead",
+								},
+							},
+						},
+						"user": nil,
+					},
+				},
+			},
+			checkFunc: func(t *testing.T, result map[string]any) {
+				relationships, ok := result["relationships"].(map[string]any)
+				if !ok {
+					t.Fatal("missing relationships")
+				}
+
+				roles, ok := relationships["roles"].(map[string]any)
+				if !ok {
+					t.Fatal("missing roles relationship")
+				}
+
+				data, ok := roles["data"].([]any)
+				if !ok {
+					t.Fatal("roles data is not an array")
+				}
+
+				if len(data) != 2 {
+					t.Fatalf("roles data has %d items, want 2", len(data))
+				}
+
+				// Verify first role has full attributes.
+				role1, ok := data[0].(map[string]any)
+				if !ok {
+					t.Fatal("role-1 is not a map")
+				}
+
+				attrs1, ok := role1["attributes"].(map[string]any)
+				if !ok {
+					t.Fatal("role-1 missing attributes")
+				}
+
+				incidentRole, ok := attrs1["incident_role"].(map[string]any)
+				if !ok {
+					t.Fatal("role-1 missing incident_role")
+				}
+
+				roleData, ok := incidentRole["data"].(map[string]any)
+				if !ok {
+					t.Fatal("role-1 incident_role missing data")
+				}
+
+				roleAttrs, ok := roleData["attributes"].(map[string]any)
+				if !ok {
+					t.Fatal("role-1 incident_role data missing attributes")
+				}
+
+				if roleAttrs["slug"] != "incident-commander" {
+					t.Errorf("role-1 slug = %v, want incident-commander", roleAttrs["slug"])
+				}
+
+				user, ok := attrs1["user"].(map[string]any)
+				if !ok {
+					t.Fatal("role-1 missing user")
+				}
+
+				userData, ok := user["data"].(map[string]any)
+				if !ok {
+					t.Fatal("role-1 user missing data")
+				}
+
+				userAttrs, ok := userData["attributes"].(map[string]any)
+				if !ok {
+					t.Fatal("role-1 user data missing attributes")
+				}
+
+				if userAttrs["email"] != "alice@example.com" {
+					t.Errorf("role-1 user email = %v, want alice@example.com", userAttrs["email"])
+				}
+
+				// Verify second role (user is nil) also resolved.
+				role2, ok := data[1].(map[string]any)
+				if !ok {
+					t.Fatal("role-2 is not a map")
+				}
+
+				if role2["id"] != "role-2" {
+					t.Errorf("role-2 id = %v, want role-2", role2["id"])
+				}
+			},
+		},
+		{
+			name: "resolves single object relationship stub",
+			dataObject: map[string]any{
+				"id":   "incident-1",
+				"type": "incidents",
+				"relationships": map[string]any{
+					"severity": map[string]any{
+						"data": map[string]any{"id": "sev-1", "type": "severities"},
+					},
+				},
+			},
+			included: []map[string]any{
+				{
+					"id":   "sev-1",
+					"type": "severities",
+					"attributes": map[string]any{
+						"name": "Critical",
+						"slug": "critical",
+					},
+				},
+			},
+			checkFunc: func(t *testing.T, result map[string]any) {
+				relationships, ok := result["relationships"].(map[string]any)
+				if !ok {
+					t.Fatal("missing relationships")
+				}
+
+				severity, ok := relationships["severity"].(map[string]any)
+				if !ok {
+					t.Fatal("missing severity relationship")
+				}
+
+				data, ok := severity["data"].(map[string]any)
+				if !ok {
+					t.Fatal("severity data is not a map")
+				}
+
+				attrs, ok := data["attributes"].(map[string]any)
+				if !ok {
+					t.Fatal("severity data missing attributes after resolve")
+				}
+
+				if attrs["name"] != "Critical" {
+					t.Errorf("severity name = %v, want Critical", attrs["name"])
+				}
+			},
+		},
+		{
+			name: "preserves unmatched stubs",
+			dataObject: map[string]any{
+				"id":   "incident-1",
+				"type": "incidents",
+				"relationships": map[string]any{
+					"roles": map[string]any{
+						"data": []any{
+							map[string]any{"id": "role-unknown", "type": "incident_role_assignments"},
+						},
+					},
+				},
+			},
+			included: []map[string]any{},
+			checkFunc: func(t *testing.T, result map[string]any) {
+				relationships, ok := result["relationships"].(map[string]any)
+				if !ok {
+					t.Fatal("missing relationships")
+				}
+
+				roles, ok := relationships["roles"].(map[string]any)
+				if !ok {
+					t.Fatal("missing roles relationship")
+				}
+
+				data, ok := roles["data"].([]any)
+				if !ok {
+					t.Fatal("roles data is not an array")
+				}
+
+				if len(data) != 1 {
+					t.Fatalf("roles data has %d items, want 1", len(data))
+				}
+
+				stub, ok := data[0].(map[string]any)
+				if !ok {
+					t.Fatal("stub is not a map")
+				}
+
+				if stub["id"] != "role-unknown" {
+					t.Errorf("unmatched stub id = %v, want role-unknown", stub["id"])
+				}
+
+				// Should NOT have attributes since it was not in included.
+				if _, ok := stub["attributes"]; ok {
+					t.Error("unmatched stub should not have attributes")
+				}
+			},
+		},
+		{
+			name: "handles missing relationships gracefully",
+			dataObject: map[string]any{
+				"id":   "incident-1",
+				"type": "incidents",
+			},
+			included: []map[string]any{
+				{
+					"id":   "role-1",
+					"type": "incident_role_assignments",
+					"attributes": map[string]any{
+						"user": nil,
+					},
+				},
+			},
+			checkFunc: func(t *testing.T, result map[string]any) {
+				// Should not add relationships if none existed.
+				if _, ok := result["relationships"]; ok {
+					t.Error("should not add relationships when none existed")
+				}
+			},
+		},
+		{
+			name: "handles empty data array in relationship",
+			dataObject: map[string]any{
+				"id":   "incident-1",
+				"type": "incidents",
+				"relationships": map[string]any{
+					"roles": map[string]any{
+						"data": []any{},
+					},
+				},
+			},
+			included: []map[string]any{},
+			checkFunc: func(t *testing.T, result map[string]any) {
+				relationships, ok := result["relationships"].(map[string]any)
+				if !ok {
+					t.Fatal("missing relationships")
+				}
+
+				roles, ok := relationships["roles"].(map[string]any)
+				if !ok {
+					t.Fatal("missing roles relationship")
+				}
+
+				data, ok := roles["data"].([]any)
+				if !ok {
+					t.Fatal("roles data is not an array")
+				}
+
+				if len(data) != 0 {
+					t.Errorf("empty roles data should remain empty, got %d items", len(data))
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Act
+			resolveRelationshipIncludes(tt.dataObject, tt.included)
+
+			// Assert
+			tt.checkFunc(t, tt.dataObject)
+		})
+	}
+}
+
+func TestEnrichIncidentData_WithRoleAssignments(t *testing.T) {
+	// Arrange: an incident with both role assignments and form field selections in included.
+	dataObject := map[string]any{
+		"id":   "incident-1",
+		"type": "incidents",
+		"relationships": map[string]any{
+			"roles": map[string]any{
+				"data": []any{
+					map[string]any{"id": "role-1", "type": "incident_role_assignments"},
+				},
+			},
+		},
+	}
+
+	included := []map[string]any{
+		{
+			"id":   "role-1",
+			"type": "incident_role_assignments",
+			"attributes": map[string]any{
+				"incident_role": map[string]any{
+					"data": map[string]any{
+						"attributes": map[string]any{
+							"name": "Incident Commander",
+							"slug": "incident-commander",
+						},
+					},
+				},
+				"user": map[string]any{
+					"data": map[string]any{
+						"attributes": map[string]any{
+							"email": "alice@example.com",
+						},
+					},
+				},
+			},
+		},
+		{
+			"id":   "field-sel-1",
+			"type": "incident_form_field_selections",
+			"attributes": map[string]any{
+				"incident_id":   "incident-1",
+				"form_field_id": "field-1",
+				"selected_users": []any{
+					map[string]any{"id": "user-1", "name": "Bob"},
+				},
+			},
+		},
+	}
+
+	// Act
+	result := EnrichIncidentData(dataObject, included)
+
+	// Assert: role assignments are resolved in relationships.
+	relationships, ok := result["relationships"].(map[string]any)
+	if !ok {
+		t.Fatal("missing relationships")
+	}
+
+	roles, ok := relationships["roles"].(map[string]any)
+	if !ok {
+		t.Fatal("missing roles relationship")
+	}
+
+	roleData, ok := roles["data"].([]any)
+	if !ok {
+		t.Fatal("roles data is not an array")
+	}
+
+	role1, ok := roleData[0].(map[string]any)
+	if !ok {
+		t.Fatal("role-1 is not a map")
+	}
+
+	attrs, ok := role1["attributes"].(map[string]any)
+	if !ok {
+		t.Fatal("role-1 missing attributes")
+	}
+
+	user, ok := attrs["user"].(map[string]any)
+	if !ok {
+		t.Fatal("role-1 missing user")
+	}
+
+	userData, ok := user["data"].(map[string]any)
+	if !ok {
+		t.Fatal("role-1 user missing data")
+	}
+
+	userAttrs, ok := userData["attributes"].(map[string]any)
+	if !ok {
+		t.Fatal("role-1 user data missing attributes")
+	}
+
+	if userAttrs["email"] != "alice@example.com" {
+		t.Errorf("role user email = %v, want alice@example.com", userAttrs["email"])
+	}
+
+	// Assert: form field enrichment still works.
+	if users, ok := result["all_selected_users"].([]any); !ok {
+		t.Error("missing all_selected_users — form field enrichment broken")
+	} else if len(users) != 1 {
+		t.Errorf("all_selected_users has %d items, want 1", len(users))
+	}
+}
+
+func TestBuildIncludedLookup(t *testing.T) {
+	included := []map[string]any{
+		{"id": "a", "type": "roles"},
+		{"id": "b", "type": "roles"},
+		{"id": "a", "type": "users"},
+		{"type": "missing-id"},
+		{"id": "c"},
+	}
+
+	lookup := buildIncludedLookup(included)
+
+	if len(lookup) != 3 {
+		t.Errorf("buildIncludedLookup() returned %d entries, want 3", len(lookup))
+	}
+
+	if _, ok := lookup["roles:a"]; !ok {
+		t.Error("missing roles:a")
+	}
+
+	if _, ok := lookup["roles:b"]; !ok {
+		t.Error("missing roles:b")
+	}
+
+	if _, ok := lookup["users:a"]; !ok {
+		t.Error("missing users:a")
+	}
+}
+
 func TestExtractArrayField(t *testing.T) {
 	tests := []struct {
 		name string
