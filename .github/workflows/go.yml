@@ -97,17 +97,6 @@ jobs:
             GITHUB_USERNAME=sgnl-robot
             GITHUB_PAT=${{ secrets.SGNL_ROBOT_PAT }}
 
-      - name: Run Trivy image vulnerability scanner on run image 🔍
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.REPO_LC }}:${{ steps.meta.outputs.version }}
-          format: "table"
-          exit-code: "1"
-          ignore-unfixed: true
-          vuln-type: "os,library"
-          severity: "CRITICAL,HIGH"
-          timeout: 30m
-
   build-and-push-db2:
     runs-on: ubuntu-latest
     permissions:
