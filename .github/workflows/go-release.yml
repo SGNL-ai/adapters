@@ -36,8 +36,7 @@ jobs:
           echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
         shell: bash
 
-      # Get the 7 char commit SHA: https://github.com/benjlevesque/short-sha
-      - uses: benjlevesque/short-sha@v3.0
+      - uses: SGNL-ai/ci-actions/short-sha@main
         name: short-sha
         id: short-sha
         with:
@@ -88,8 +87,7 @@ jobs:
           echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
         shell: bash
 
-      # Get the 7 char commit SHA: https://github.com/benjlevesque/short-sha
-      - uses: benjlevesque/short-sha@v3.0
+      - uses: SGNL-ai/ci-actions/short-sha@main
         name: short-sha
         id: short-sha
         with:
