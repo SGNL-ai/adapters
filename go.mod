@@ -8,18 +8,18 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.32.12
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.12
 	github.com/aws/aws-sdk-go-v2/service/iam v1.53.6
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.97.1
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.97.2
 	github.com/aws/smithy-go v1.24.2
 	github.com/bwmarrin/go-objectsid v0.0.0-20191126144531-5fee401a2f37
 	github.com/docker/go-connections v0.6.0
 	github.com/doug-martin/goqu/v9 v9.19.0
-	github.com/go-ldap/ldap/v3 v3.4.12
+	github.com/go-ldap/ldap/v3 v3.4.13
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
 	github.com/ibmdb/go_ibm_db v0.5.4
 	github.com/machinebox/graphql v0.2.2
-	github.com/ohler55/ojg v1.28.0
+	github.com/ohler55/ojg v1.28.1
 	github.com/sgnl-ai/adapter-framework v0.27.0
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
@@ -69,11 +69,11 @@ require (
 	dario.cat/mergo v1.0.2 // indirect
 	filippo.io/edwards25519 v1.1.1 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
-	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358 // indirect
+	github.com/Azure/go-ntlmssp v0.1.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/PaesslerAG/gval v1.2.4 // indirect
 	github.com/PaesslerAG/jsonpath v0.1.1 // indirect
-	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.7 // indirect
+	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.8 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.20 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.20 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.20 // indirect
