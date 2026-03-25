@@ -21,6 +21,7 @@ jobs:
   pull-tag-push:
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       packages: write
     steps:
       - name: Log in to GHCR 🔑
@@ -72,6 +73,7 @@ jobs:
   pull-tag-push-db2:
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       packages: write
     steps:
       - name: Log in to GHCR 🔑
