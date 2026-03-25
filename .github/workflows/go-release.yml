@@ -21,7 +21,6 @@ jobs:
   pull-tag-push:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
       packages: write
     steps:
       - name: Log in to GHCR 🔑
@@ -37,11 +36,10 @@ jobs:
           echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
         shell: bash
 
-      - uses: SGNL-ai/ci-actions/short-sha@main
-        name: short-sha
+      - name: short-sha
         id: short-sha
-        with:
-          length: 7
+        run: echo "sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+        shell: bash
 
       # Pull an already existing image
       - name: Pull main image
@@ -73,7 +71,6 @@ jobs:
   pull-tag-push-db2:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
       packages: write
     steps:
       - name: Log in to GHCR 🔑
@@ -89,11 +86,10 @@ jobs:
           echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
         shell: bash
 
-      - uses: SGNL-ai/ci-actions/short-sha@main
-        name: short-sha
+      - name: short-sha
         id: short-sha
-        with:
-          length: 7
+        run: echo "sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+        shell: bash
 
       - name: Pull DB2 adapter image
         id: pull-db2-image
