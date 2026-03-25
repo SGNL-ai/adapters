@@ -20,7 +20,7 @@ require (
 	github.com/ibmdb/go_ibm_db v0.5.4
 	github.com/machinebox/graphql v0.2.2
 	github.com/ohler55/ojg v1.28.1
-	github.com/sgnl-ai/adapter-framework v0.27.0
+	github.com/sgnl-ai/adapter-framework v0.28.0
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.41.0
