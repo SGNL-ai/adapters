@@ -11,22 +11,7 @@ func processIncludes(data []map[string]any, included []map[string]any) []map[str
 		return data
 	}
 
-	// Build a lookup map for included objects by "type:id".
-	includedMap := make(map[string]map[string]any, len(included))
-
-	for _, inc := range included {
-		id, ok := inc["id"].(string)
-		if !ok {
-			continue
-		}
-
-		typ, ok := inc["type"].(string)
-		if !ok {
-			continue
-		}
-
-		includedMap[typ+":"+id] = inc
-	}
+	lookup := buildIncludedLookup(included)
 
 	// Process each data object.
 	for i, obj := range data {
@@ -49,31 +34,7 @@ func processIncludes(data []map[string]any, included []map[string]any) []map[str
 
 			// Handle array of relationship references.
 			if relDataArr, ok := relDataField.([]any); ok {
-				mergedItems := make([]any, 0, len(relDataArr))
-
-				for _, relItem := range relDataArr {
-					relItemMap, ok := relItem.(map[string]any)
-					if !ok {
-						mergedItems = append(mergedItems, relItem)
-
-						continue
-					}
-
-					relID, hasID := relItemMap["id"].(string)
-					relType, hasType := relItemMap["type"].(string)
-
-					if hasID && hasType {
-						if includedObj, exists := includedMap[relType+":"+relID]; exists {
-							mergedItems = append(mergedItems, mergeMaps(relItemMap, includedObj))
-						} else {
-							mergedItems = append(mergedItems, relItemMap)
-						}
-					} else {
-						mergedItems = append(mergedItems, relItemMap)
-					}
-				}
-
-				relData["data"] = mergedItems
+				relData["data"] = resolveStubArray(relDataArr, lookup)
 				relationships[relName] = relData
 
 				continue
@@ -81,14 +42,9 @@ func processIncludes(data []map[string]any, included []map[string]any) []map[str
 
 			// Handle single object relationship.
 			if relDataObj, ok := relDataField.(map[string]any); ok {
-				relID, hasID := relDataObj["id"].(string)
-				relType, hasType := relDataObj["type"].(string)
-
-				if hasID && hasType {
-					if includedObj, exists := includedMap[relType+":"+relID]; exists {
-						relData["data"] = mergeMaps(relDataObj, includedObj)
-						relationships[relName] = relData
-					}
+				if resolved := resolveStub(relDataObj, lookup); resolved != nil {
+					relData["data"] = resolved
+					relationships[relName] = relData
 				}
 			}
 		}
@@ -98,6 +54,67 @@ func processIncludes(data []map[string]any, included []map[string]any) []map[str
 	}
 
 	return data
+}
+
+// buildIncludedLookup indexes included objects by "type:id" for O(1) resolution.
+func buildIncludedLookup(included []map[string]any) map[string]map[string]any {
+	lookup := make(map[string]map[string]any, len(included))
+
+	for _, inc := range included {
+		id, ok := inc["id"].(string)
+		if !ok {
+			continue
+		}
+
+		typ, ok := inc["type"].(string)
+		if !ok {
+			continue
+		}
+
+		lookup[typ+":"+id] = inc
+	}
+
+	return lookup
+}
+
+// resolveStubArray resolves an array of relationship stubs against the lookup.
+func resolveStubArray(items []any, lookup map[string]map[string]any) []any {
+	resolved := make([]any, 0, len(items))
+
+	for _, item := range items {
+		itemMap, ok := item.(map[string]any)
+		if !ok {
+			resolved = append(resolved, item)
+
+			continue
+		}
+
+		if merged := resolveStub(itemMap, lookup); merged != nil {
+			resolved = append(resolved, merged)
+		} else {
+			resolved = append(resolved, itemMap)
+		}
+	}
+
+	return resolved
+}
+
+// resolveStub looks up a single {id, type} stub in the lookup map and returns
+// a merged map if found, or nil if the stub cannot be resolved.
+func resolveStub(stub map[string]any, lookup map[string]map[string]any) map[string]any {
+	id, hasID := stub["id"].(string)
+	typ, hasType := stub["type"].(string)
+
+	if !hasID || !hasType {
+		return nil
+	}
+
+	includedObj, exists := lookup[typ+":"+id]
+	if !exists {
+		return nil
+	}
+
+	return mergeMaps(stub, includedObj)
 }
 
 // mergeMaps creates a new map that contains all key/values from both maps,
