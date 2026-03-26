@@ -4,10 +4,6 @@
 // Replaces {id, type} stubs in relationships with full included objects.
 package rootly
 
-import (
-	"fmt"
-)
-
 // processIncludes takes the data and included arrays from a Rootly API response,
 // and merges the included resources into the main objects based on relationships.
 func processIncludes(data []map[string]any, included []map[string]any) []map[string]any {
@@ -29,8 +25,7 @@ func processIncludes(data []map[string]any, included []map[string]any) []map[str
 			continue
 		}
 
-		key := fmt.Sprintf("%s:%s", typ, id)
-		includedMap[key] = inc
+		includedMap[typ+":"+id] = inc
 	}
 
 	// Process each data object.
@@ -68,8 +63,7 @@ func processIncludes(data []map[string]any, included []map[string]any) []map[str
 					relType, hasType := relItemMap["type"].(string)
 
 					if hasID && hasType {
-						key := fmt.Sprintf("%s:%s", relType, relID)
-						if includedObj, exists := includedMap[key]; exists {
+						if includedObj, exists := includedMap[relType+":"+relID]; exists {
 							mergedItems = append(mergedItems, mergeMaps(relItemMap, includedObj))
 						} else {
 							mergedItems = append(mergedItems, relItemMap)
@@ -91,8 +85,7 @@ func processIncludes(data []map[string]any, included []map[string]any) []map[str
 				relType, hasType := relDataObj["type"].(string)
 
 				if hasID && hasType {
-					key := fmt.Sprintf("%s:%s", relType, relID)
-					if includedObj, exists := includedMap[key]; exists {
+					if includedObj, exists := includedMap[relType+":"+relID]; exists {
 						relData["data"] = mergeMaps(relDataObj, includedObj)
 						relationships[relName] = relData
 					}
