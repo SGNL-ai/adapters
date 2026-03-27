@@ -101,10 +101,11 @@ type Config struct {
 
 	Filters map[string]condexpr.Condition `json:"filters,omitempty"`
 
-	// ConnectionProperties is a map of arbitrary key-value pairs appended to the
-	// DB2 CLI driver connection string as ;KEY=VALUE. This enables passing driver
-	// properties like SecurityMechanism, ConnectTimeout, etc. without needing a
-	// dedicated Config field for each one.
+	// ConnectionProperties is a map of key-value pairs appended to the DB2 CLI
+	// driver connection string as ;KEY=VALUE. Keys are validated against an
+	// allow-list of supported DB2 CLI keywords (case-insensitive). This enables
+	// passing driver properties like SecurityMechanism, ConnectTimeout, etc.
+	// without needing a dedicated Config field for each one.
 	ConnectionProperties map[string]string `json:"connectionProperties,omitempty"`
 }
 

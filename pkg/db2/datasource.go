@@ -73,7 +73,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	}
 
 	// Build connection string (includes SSL setup if configured)
-	connString, err := request.BuildConnectionString()
+	connString, err := request.BuildConnectionString(ctx)
 	if err != nil {
 		logger.Error("Failed to build connection string",
 			fields.SGNLEventTypeError(),

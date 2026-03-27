@@ -3,6 +3,7 @@
 package db2
 
 import (
+	"context"
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
@@ -13,11 +14,14 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
+	"go.uber.org/zap"
 )
 
 // BuildConnectionString constructs the DB2 connection string from request parameters.
 // It handles hostname/port parsing, credentials, and optional SSL configuration.
-func (r *Request) BuildConnectionString() (string, error) {
+func (r *Request) BuildConnectionString(ctx context.Context) (string, error) {
 	host, port := parseHostPort(r.BaseURL)
 
 	connectionString := fmt.Sprintf(ConnectionStringFormat,
@@ -35,7 +39,7 @@ func (r *Request) BuildConnectionString() (string, error) {
 				connectionString += fmt.Sprintf(SSLConnectionSuffix, certPath)
 			}
 
-			suffix, err := buildConnectionPropertiesSuffix(cfg.ConnectionProperties)
+			suffix, err := buildConnectionPropertiesSuffix(ctx, cfg.ConnectionProperties)
 			if err != nil {
 				return "", err
 			}
@@ -87,20 +91,35 @@ var allowedConnectionProperties = map[string]bool{
 // allowed key-value properties. Keys are validated against the allow-list,
 // sorted for deterministic output, and checked for injection characters.
 func buildConnectionPropertiesSuffix(
+	ctx context.Context,
 	properties map[string]string,
 ) (string, error) {
 	if len(properties) == 0 {
 		return "", nil
 	}
 
+	logger := zaplogger.FromContext(ctx)
 	keys := make([]string, 0, len(properties))
+	seen := make(map[string]string, len(properties))
 
 	for k := range properties {
-		if !allowedConnectionProperties[strings.ToLower(k)] {
+		lower := strings.ToLower(k)
+
+		if !allowedConnectionProperties[lower] {
 			return "", fmt.Errorf(
 				"unsupported connection property %q", k)
 		}
 
+		if prev, exists := seen[lower]; exists {
+			logger.Warn("Skipping duplicate connection property",
+				zap.String("skipped_key", k),
+				zap.String("kept_key", prev),
+			)
+
+			continue
+		}
+
+		seen[lower] = k
 		keys = append(keys, k)
 	}
 

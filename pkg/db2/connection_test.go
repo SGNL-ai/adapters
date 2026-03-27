@@ -3,6 +3,7 @@
 package db2
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
@@ -12,6 +13,7 @@ import (
 	"encoding/pem"
 	"math/big"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -69,7 +71,7 @@ func TestBuildConnectionString(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.request.BuildConnectionString()
+			got, err := tt.request.BuildConnectionString(context.Background())
 			assert.NoError(t, err)
 			assert.Equal(t, tt.want, got)
 		})
@@ -233,7 +235,7 @@ func TestBuildConnectionString_GivenConnectionProperties_WhenBuilding_ThenAppend
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Act
-			got, err := tt.request.BuildConnectionString()
+			got, err := tt.request.BuildConnectionString(context.Background())
 
 			// Assert
 			assert.NoError(t, err)
@@ -260,13 +262,37 @@ func TestBuildConnectionString_GivenSSLAndConnectionProperties_WhenBuilding_Then
 	}
 
 	// Act
-	got, err := request.BuildConnectionString()
+	got, err := request.BuildConnectionString(context.Background())
 
 	// Assert
 	require.NoError(t, err)
 	assert.Contains(t, got, "HOSTNAME=db2server;DATABASE=SGNL;UID=admin;PWD=secret;PORT=50000;PROTOCOL=TCPIP")
 	assert.Contains(t, got, ";SECURITY=SSL;SSLServerCertificate=")
 	assert.Contains(t, got, ";ConnectTimeout=30")
+}
+
+func TestBuildConnectionString_GivenDuplicateKeysWithDifferentCase_WhenBuilding_ThenSkipsDuplicate(t *testing.T) {
+	// Arrange
+	request := &Request{
+		BaseURL:  "localhost",
+		Database: "TESTDB",
+		Username: "testuser",
+		Password: "testpass",
+		ConfigStruct: &Config{
+			ConnectionProperties: map[string]string{
+				"ConnectTimeout": "30",
+				"CONNECTTIMEOUT": "60",
+			},
+		},
+	}
+
+	// Act
+	got, err := request.BuildConnectionString(context.Background())
+
+	// Assert — duplicate is silently skipped, only one connecttimeout appears
+	assert.NoError(t, err)
+	assert.Equal(t, 1, strings.Count(strings.ToLower(got), "connecttimeout"),
+		"expected exactly one connecttimeout key in connection string")
 }
 
 func TestBuildConnectionString_GivenDisallowedProperty_WhenBuilding_ThenReturnsError(t *testing.T) {
@@ -312,7 +338,7 @@ func TestBuildConnectionString_GivenDisallowedProperty_WhenBuilding_ThenReturnsE
 			}
 
 			// Act
-			_, err := request.BuildConnectionString()
+			_, err := request.BuildConnectionString(context.Background())
 
 			// Assert
 			assert.Error(t, err)
@@ -373,7 +399,7 @@ func TestBuildConnectionString_GivenInvalidPropertyValue_WhenBuilding_ThenReturn
 			}
 
 			// Act
-			_, err := request.BuildConnectionString()
+			_, err := request.BuildConnectionString(context.Background())
 
 			// Assert
 			assert.Error(t, err)
