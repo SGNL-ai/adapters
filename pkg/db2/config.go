@@ -25,6 +25,12 @@ const (
 	// SSLConnectionSuffix is appended to connection strings when SSL is enabled.
 	// Parameter: certificate file path.
 	SSLConnectionSuffix = ";SECURITY=SSL;SSLServerCertificate=%s"
+
+	// PrintableASCIIMin is the lowest allowed byte in property values (space).
+	PrintableASCIIMin = 0x20
+
+	// PrintableASCIIMax is the highest allowed byte in property values (~).
+	PrintableASCIIMax = 0x7E
 )
 
 // Config is the configuration passed in each GetPage calls to the adapter.
@@ -67,6 +73,11 @@ const (
 			"op": "IN",
 			"value": ["active", "inactive"]
 		}
+	},
+	"connectionProperties": {
+		"SecurityMechanism": "9",
+		"ConnectTimeout": "30",
+		"Authentication": "SERVER"
 	}
 }
 */
@@ -89,6 +100,12 @@ type Config struct {
 	CertificateChain string `json:"certificateChain,omitempty"`
 
 	Filters map[string]condexpr.Condition `json:"filters,omitempty"`
+
+	// ConnectionProperties is a map of arbitrary key-value pairs appended to the
+	// DB2 CLI driver connection string as ;KEY=VALUE. This enables passing driver
+	// properties like SecurityMechanism, ConnectTimeout, etc. without needing a
+	// dedicated Config field for each one.
+	ConnectionProperties map[string]string `json:"connectionProperties,omitempty"`
 }
 
 // Validate validates that a Config received in a GetPage call is valid.
