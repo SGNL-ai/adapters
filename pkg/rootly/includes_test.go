@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestProcessIncludes_GivenArrayRelationshipStubs_WhenResolved_ThenReplacedWithFullObjects(t *testing.T) {
+func TestResolveIncludedRelationships_GivenArrayRelationshipStubs_WhenResolved_ThenReplacedWithFullObjects(t *testing.T) {
 	tests := []struct {
 		name     string
 		data     []map[string]any
@@ -331,7 +331,7 @@ func TestProcessIncludes_GivenArrayRelationshipStubs_WhenResolved_ThenReplacedWi
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Act
-			result := processIncludes(tt.data, tt.included)
+			result := resolveIncludedRelationships(tt.data, tt.included)
 
 			// Assert
 			tt.check(t, result)
@@ -383,7 +383,7 @@ func TestMergeMaps_GivenTwoMaps_WhenMerged_ThenSecondTakesPrecedence(t *testing.
 	}
 }
 
-func TestProcessIncludes_GivenRolesAndFormFields_WhenBothStagesRun_ThenBothResolved(t *testing.T) {
+func TestResolveIncludedRelationships_GivenRolesAndFormFields_WhenBothStagesRun_ThenBothResolved(t *testing.T) {
 	// Arrange: an incident with role relationships AND form field selections in included
 	data := []map[string]any{
 		{
@@ -435,7 +435,7 @@ func TestProcessIncludes_GivenRolesAndFormFields_WhenBothStagesRun_ThenBothResol
 	}
 
 	// Act: Stage 1 — resolve relationship stubs
-	resolved := processIncludes(data, included)
+	resolved := resolveIncludedRelationships(data, included)
 
 	// Act: Stage 2 — enrich with form-field data
 	enriched := EnrichAllIncidentData(resolved, included)
@@ -479,7 +479,7 @@ func TestProcessIncludes_GivenRolesAndFormFields_WhenBothStagesRun_ThenBothResol
 	assert.Equal(t, "Bob", user1["name"])
 }
 
-func TestProcessIncludes_GivenOriginalData_WhenResolved_ThenOriginalStubsNotMutated(t *testing.T) {
+func TestResolveIncludedRelationships_GivenOriginalData_WhenResolved_ThenOriginalStubsNotMutated(t *testing.T) {
 	// Arrange: create an incident with a relationship stub.
 	originalStub := map[string]any{"id": "role-1", "type": "incident_role_assignments"}
 
@@ -510,9 +510,9 @@ func TestProcessIncludes_GivenOriginalData_WhenResolved_ThenOriginalStubsNotMuta
 	}
 
 	// Act
-	_ = processIncludes(data, included)
+	_ = resolveIncludedRelationships(data, included)
 
 	// Assert: the original stub map should NOT have been mutated with "attributes".
 	_, hasAttrs := originalStub["attributes"]
-	assert.False(t, hasAttrs, "processIncludes should not mutate the original stub — mergeMaps creates a new map")
+	assert.False(t, hasAttrs, "resolveIncludedRelationships should not mutate the original stub — mergeMaps creates a new map")
 }

@@ -158,7 +158,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	// Stage 1: Resolve JSON:API relationship stubs from the included array.
 	// This replaces bare {id, type} stubs in relationships with the full included objects,
 	// enabling JSONPath traversal into nested attributes (e.g., role assignments).
-	resolved := processIncludes(datasourceResponse.Data, datasourceResponse.Included)
+	resolved := resolveIncludedRelationships(datasourceResponse.Data, datasourceResponse.Included)
 
 	// Stage 2: Enrich incident data with form-field selections (all_selected_* arrays).
 	processedData := EnrichAllIncidentData(resolved, datasourceResponse.Included)

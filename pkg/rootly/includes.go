@@ -4,9 +4,17 @@
 // Replaces {id, type} stubs in relationships with full included objects.
 package rootly
 
-// processIncludes takes the data and included arrays from a Rootly API response,
-// and merges the included resources into the main objects based on relationships.
-func processIncludes(data []map[string]any, included []map[string]any) []map[string]any {
+import "maps"
+
+// resolveIncludedRelationships replaces JSON:API relationship stubs with their
+// full objects from the included array.
+//
+// A Rootly API response follows the JSON:API spec where relationships contain
+// bare {id, type} stubs, and the full objects live in a separate "included" array:
+//
+//	Before: "roles": {"data": [{"id": "123", "type": "role"}]}
+//	After:  "roles": {"data": [{"id": "123", "type": "role", "attributes": {"name": "Commander"}}]}
+func resolveIncludedRelationships(data []map[string]any, included []map[string]any) []map[string]any {
 	if len(included) == 0 {
 		return data
 	}
@@ -32,17 +40,13 @@ func processIncludes(data []map[string]any, included []map[string]any) []map[str
 				continue
 			}
 
-			// Handle array of relationship references.
-			if relDataArr, ok := relDataField.([]any); ok {
-				relData["data"] = resolveStubArray(relDataArr, lookup)
+			switch v := relDataField.(type) {
+			case []any:
+				relData["data"] = resolveStubArray(v, lookup)
 				relationships[relName] = relData
 
-				continue
-			}
-
-			// Handle single object relationship.
-			if relDataObj, ok := relDataField.(map[string]any); ok {
-				if resolved := resolveStub(relDataObj, lookup); resolved != nil {
+			case map[string]any:
+				if resolved := resolveStub(v, lookup); resolved != nil {
 					relData["data"] = resolved
 					relationships[relName] = relData
 				}
@@ -122,13 +126,8 @@ func resolveStub(stub map[string]any, lookup map[string]map[string]any) map[stri
 func mergeMaps(m1, m2 map[string]any) map[string]any {
 	result := make(map[string]any, len(m1)+len(m2))
 
-	for k, v := range m1 {
-		result[k] = v
-	}
-
-	for k, v := range m2 {
-		result[k] = v
-	}
+	maps.Copy(result, m1)
+	maps.Copy(result, m2)
 
 	return result
 }
