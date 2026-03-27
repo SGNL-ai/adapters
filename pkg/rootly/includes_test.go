@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestResolveIncludedRelationships_GivenArrayRelationshipStubs_WhenResolved_ThenReplacedWithFullObjects(t *testing.T) {
+func TestResolveIncludedRelationships_GivenArrayStubs_WhenResolved_ThenReplacedWithFullObjects(t *testing.T) {
 	tests := []struct {
 		name     string
 		data     []map[string]any
@@ -514,5 +514,6 @@ func TestResolveIncludedRelationships_GivenOriginalData_WhenResolved_ThenOrigina
 
 	// Assert: the original stub map should NOT have been mutated with "attributes".
 	_, hasAttrs := originalStub["attributes"]
-	assert.False(t, hasAttrs, "resolveIncludedRelationships should not mutate the original stub — mergeMaps creates a new map")
+	assert.False(t, hasAttrs,
+		"resolveIncludedRelationships should not mutate the original stub — mergeMaps creates a new map")
 }
