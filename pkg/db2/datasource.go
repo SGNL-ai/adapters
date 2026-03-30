@@ -8,6 +8,7 @@ import (
 
 	framework "github.com/sgnl-ai/adapter-framework"
 	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger"
+	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"go.uber.org/zap"
 )
 
@@ -52,16 +53,33 @@ func NewClient(client SQLClient) Client {
 
 // GetPage queries a page of objects from a DB2 datasource.
 func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, *framework.Error) {
-	logger := zaplogger.FromContext(ctx)
+	logger := zaplogger.FromContext(ctx).With(
+		fields.RequestEntityExternalID(request.EntityConfig.ExternalId),
+		fields.RequestPageSize(request.PageSize),
+		fields.BaseURL(request.BaseURL),
+		fields.Database(request.Database),
+	)
+
+	logger.Info("Starting datasource request")
 
 	// Validate request fields and SQL identifiers
 	if err := request.Validate(); err != nil {
+		logger.Error("Request validation failed",
+			fields.SGNLEventTypeError(),
+			zap.Error(fmt.Errorf("%s", err.Message)),
+		)
+
 		return nil, err
 	}
 
 	// Build connection string (includes SSL setup if configured)
-	connString, err := request.BuildConnectionString()
+	connString, err := request.BuildConnectionString(ctx)
 	if err != nil {
+		logger.Error("Failed to build connection string",
+			fields.SGNLEventTypeError(),
+			zap.Error(err),
+		)
+
 		return nil, &framework.Error{
 			Message: fmt.Sprintf("Error building DB2 connection string: %v.", err),
 		}
@@ -70,6 +88,11 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	// Establish database connection
 	_, err = d.Client.Connect(connString)
 	if err != nil {
+		logger.Error("Failed to connect to datasource",
+			fields.SGNLEventTypeError(),
+			zap.Error(err),
+		)
+
 		return nil, &framework.Error{
 			Message: fmt.Sprintf("Error connecting to DB2 database: %v.", err),
 		}
@@ -81,6 +104,13 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 		// When using the synthetic "id" attribute, composite key columns are required
 		// for unique ID generation and cursor-based pagination.
 		if request.UniqueAttributeExternalID == SyntheticIDAttr {
+			logger.Error("Failed to extract unique key columns for composite ID",
+				fields.SGNLEventTypeError(),
+				zap.String("table", request.EntityConfig.ExternalId),
+				zap.String("schema", request.Schema),
+				zap.Error(err),
+			)
+
 			return nil, &framework.Error{
 				Message: fmt.Sprintf(
 					"Error extracting unique key columns for table %s: %v. "+
@@ -101,14 +131,26 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	// Construct the DB2 query
 	query, args, err := ConstructQuery(request)
 	if err != nil {
+		logger.Error("Failed to construct query",
+			fields.SGNLEventTypeError(),
+			zap.Error(err),
+		)
+
 		return nil, &framework.Error{
 			Message: fmt.Sprintf("Error constructing DB2 query: %v.", err),
 		}
 	}
 
+	logger.Info("Sending request to datasource")
+
 	// Execute the query
 	rows, err := d.Client.Query(ctx, query, args...)
 	if err != nil {
+		logger.Error("Request to datasource failed",
+			fields.SGNLEventTypeError(),
+			zap.Error(err),
+		)
+
 		return nil, &framework.Error{
 			Message: fmt.Sprintf("Error executing DB2 query: %v.", err),
 		}
@@ -120,6 +162,11 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 
 	results, procErr := processor.process(rows)
 	if procErr != nil {
+		logger.Error("Failed to process query results",
+			fields.SGNLEventTypeError(),
+			zap.String("error_message", procErr.Message),
+		)
+
 		return nil, procErr
 	}
 
@@ -139,6 +186,13 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 			nextCursor = &cursor
 		}
 	}
+
+	logger.Info("Datasource request completed successfully",
+		fields.ResponseStatusCode(200),
+		fields.ResponseObjectCount(len(objects)),
+		fields.ResponseNextCursor(nextCursor),
+		fields.TotalRemainingObjects(results.totalCount),
+	)
 
 	return &Response{
 		Objects:    objects,
