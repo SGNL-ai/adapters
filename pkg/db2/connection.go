@@ -57,35 +57,35 @@ func (r *Request) BuildConnectionString(ctx context.Context) (string, error) {
 // driver options (tracing, diagnostics, file paths, etc.).
 // Keys are stored in lowercase because DB2 CLI keywords are case-insensitive.
 // Reference: https://www.ibm.com/docs/en/db2/11.5.x?topic=odbc-cliodbc-configuration-keywords
-var allowedConnectionProperties = map[string]bool{
+var allowedConnectionProperties = map[string]struct{}{
 	// Security & Authentication
-	"authentication":    true,
-	"securitymechanism": true,
-	"krbplugin":         true,
-	"pwdplugin":         true,
-	"clientencalg":      true,
-	"targetprincipal":   true,
+	"authentication":    {},
+	"securitymechanism": {},
+	"krbplugin":         {},
+	"pwdplugin":         {},
+	"clientencalg":      {},
+	"targetprincipal":   {},
 
 	// Timeouts
-	"connecttimeout":       true,
-	"querytimeoutinterval": true,
-	"receivetimeout":       true,
-	"locktimeout":          true,
+	"connecttimeout":       {},
+	"querytimeoutinterval": {},
+	"receivetimeout":       {},
+	"locktimeout":          {},
 
 	// Transaction & Connection
-	"autocommit":         true,
-	"txnisolation":       true,
-	"readonlyconnection": true,
-	"currentschema":      true,
-	"currentpackageset":  true,
+	"autocommit":         {},
+	"txnisolation":       {},
+	"readonlyconnection": {},
+	"currentschema":      {},
+	"currentpackageset":  {},
 
 	// TLS
-	"tlsversion":                  true,
-	"sslclientkeystash":           true,
-	"sslclientkeystoredb":         true,
-	"sslclientkeystoredbpassword": true,
-	"sslclientlabel":              true,
-	"sslclienthostnamevalidation": true,
+	"tlsversion":                  {},
+	"sslclientkeystash":           {},
+	"sslclientkeystoredb":         {},
+	"sslclientkeystoredbpassword": {},
+	"sslclientlabel":              {},
+	"sslclienthostnamevalidation": {},
 }
 
 // buildConnectionPropertiesSuffix builds a connection string suffix from
@@ -106,7 +106,7 @@ func buildConnectionPropertiesSuffix(
 	for k := range properties {
 		lower := strings.ToLower(k)
 
-		if !allowedConnectionProperties[lower] {
+		if _, ok := allowedConnectionProperties[lower]; !ok {
 			return "", fmt.Errorf(
 				"unsupported connection property %q", k)
 		}

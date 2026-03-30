@@ -66,7 +66,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 	if err := request.Validate(); err != nil {
 		logger.Error("Request validation failed",
 			fields.SGNLEventTypeError(),
-			zap.String("error_message", err.Message),
+			zap.Error(fmt.Errorf("%s", err.Message)),
 		)
 
 		return nil, err

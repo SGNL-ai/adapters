@@ -5,6 +5,7 @@ package db2
 import (
 	"context"
 	"crypto/ecdsa"
+	"fmt"
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/x509"
@@ -266,9 +267,18 @@ func TestBuildConnectionString_GivenSSLAndConnectionProperties_WhenBuilding_Then
 
 	// Assert
 	require.NoError(t, err)
-	assert.Contains(t, got, "HOSTNAME=db2server;DATABASE=SGNL;UID=admin;PWD=secret;PORT=50000;PROTOCOL=TCPIP")
-	assert.Contains(t, got, ";SECURITY=SSL;SSLServerCertificate=")
-	assert.Contains(t, got, ";ConnectTimeout=30")
+
+	// The cert path is deterministic (hash-based) but OS-dependent, so extract it.
+	certPath, certErr := setupSSLCertificate(certB64)
+	require.NoError(t, certErr)
+
+	expected := fmt.Sprintf(
+		"HOSTNAME=db2server;DATABASE=SGNL;UID=admin;PWD=secret;PORT=50000;PROTOCOL=TCPIP"+
+			";SECURITY=SSL;SSLServerCertificate=%s"+
+			";ConnectTimeout=30",
+		certPath,
+	)
+	assert.Equal(t, expected, got)
 }
 
 func TestBuildConnectionString_GivenDuplicateKeysWithDifferentCase_WhenBuilding_ThenSkipsDuplicate(t *testing.T) {
@@ -413,21 +423,43 @@ func TestAllowedConnectionProperties_GivenExpectedKeys_WhenChecking_ThenContains
 	// Verify the allow-list contains the keywords we expect to support.
 	// This catches accidental deletions from the map.
 	expectedKeys := []string{
+		// Security & Authentication
 		"authentication",
 		"securitymechanism",
+		"krbplugin",
+		"pwdplugin",
+		"clientencalg",
+		"targetprincipal",
+
+		// Timeouts
 		"connecttimeout",
-		"txnisolation",
-		"tlsversion",
-		"sslclientkeystash",
+		"querytimeoutinterval",
 		"receivetimeout",
 		"locktimeout",
+
+		// Transaction & Connection
+		"autocommit",
+		"txnisolation",
 		"readonlyconnection",
 		"currentschema",
+		"currentpackageset",
+
+		// TLS
+		"tlsversion",
+		"sslclientkeystash",
+		"sslclientkeystoredb",
+		"sslclientkeystoredbpassword",
+		"sslclientlabel",
 		"sslclienthostnamevalidation",
 	}
 
+	// Verify expected count matches actual map size to catch additions without test updates.
+	assert.Equal(t, len(expectedKeys), len(allowedConnectionProperties),
+		"allowedConnectionProperties count mismatch — update this test when adding/removing keys")
+
 	for _, key := range expectedKeys {
-		assert.True(t, allowedConnectionProperties[key],
+		_, ok := allowedConnectionProperties[key]
+		assert.True(t, ok,
 			"expected %q to be in allowedConnectionProperties", key)
 	}
 }
