@@ -423,6 +423,7 @@ func TestAllowedConnectionProperties_GivenExpectedKeys_WhenChecking_ThenContains
 		"locktimeout",
 		"readonlyconnection",
 		"currentschema",
+		"sslclienthostnamevalidation",
 	}
 
 	for _, key := range expectedKeys {
