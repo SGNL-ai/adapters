@@ -80,12 +80,12 @@ var allowedConnectionProperties = map[string]bool{
 	"currentpackageset":  true,
 
 	// TLS
-	"tlsversion":                    true,
-	"sslclientkeystash":             true,
-	"sslclientkeystoredb":           true,
-	"sslclientkeystoredbpassword":   true,
-	"sslclientlabel":                true,
-	"sslclienthostnamevalidation":   true,
+	"tlsversion":                  true,
+	"sslclientkeystash":           true,
+	"sslclientkeystoredb":         true,
+	"sslclientkeystoredbpassword": true,
+	"sslclientlabel":              true,
+	"sslclienthostnamevalidation": true,
 }
 
 // buildConnectionPropertiesSuffix builds a connection string suffix from
