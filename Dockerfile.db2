@@ -57,9 +57,14 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy IBM DB2 CLI Driver libraries from build stage
+# Copy IBM DB2 CLI Driver libraries, message catalogs, and config from build stage.
+# The msg/ directory is required for human-readable error messages; without it the
+# driver returns unhelpful SQL10007N errors on connection failures.
 COPY --from=build /opt/ibm/clidriver/lib /opt/ibm/clidriver/lib
+COPY --from=build /opt/ibm/clidriver/msg /opt/ibm/clidriver/msg
+COPY --from=build /opt/ibm/clidriver/cfg /opt/ibm/clidriver/cfg
 
+ENV IBM_DB_HOME=/opt/ibm/clidriver
 ENV LD_LIBRARY_PATH=/opt/ibm/clidriver/lib
 
 WORKDIR /sgnl
