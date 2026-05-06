@@ -51,7 +51,7 @@ jobs:
           gh pr merge --auto --squash ${{ github.event.pull_request.number }}
           echo "Auto-merge enabled for ${{ steps.metadata.outputs.update-type }} update"
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.SGNL_ROBOT_PAT }}
 
       - name: Comment on major updates
         if: steps.metadata.outputs.update-type == 'version-update:semver-major'
