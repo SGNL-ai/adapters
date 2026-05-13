@@ -1,7 +1,7 @@
 # Multi-stage Dockerfile for the DB2 adapter service.
 # Builds with IBM DB2 CLI driver (CGO) and runs on debian:bookworm-slim.
 
-ARG GOLANG_IMAGE=golang:1.25-bookworm
+ARG GOLANG_IMAGE=golang:1.26-bookworm
 ARG DB2_CLI_VERSION=v12.1.2
 
 # STAGE 1: build
