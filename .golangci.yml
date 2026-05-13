@@ -62,6 +62,9 @@ linters:
           - revive
         path: smoketests/common/
         text: "var-naming: avoid meaningless package names"
+      - linters:
+          - goconst
+        path: ".*"
     paths:
       - third_party$
       - builtin$
