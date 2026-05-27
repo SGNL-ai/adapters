@@ -44,7 +44,7 @@ RUN CGO_ENABLED=0 go install -ldflags "-s -w" github.com/google/gops@${GOPS_VERS
 RUN GOOS=linux go build -C /app/cmd/db2-adapter -tags db2 -o /sgnl/db2-adapter
 
 # STAGE 2: run
-FROM debian:bookworm-slim AS run
+FROM debian:trixie-20260518-slim AS run
 
 # Install runtime dependencies for DB2 client libraries
 RUN apt-get update && \
