@@ -1,0 +1,27 @@
+repos:
+  # https://github.com/pre-commit/pre-commit-hooks#no-commit-to-branch
+  # pre-commit-hook to block commits to main branch
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: "v4.4.0"
+    hooks:
+      - id: no-commit-to-branch
+        args: ["--branch", "main"]
+
+  # Go formatting — runs gofmt on staged .go files
+  - repo: local
+    hooks:
+      - id: gofmt
+        name: gofmt
+        entry: gofmt -l -w
+        language: system
+        types: [go]
+
+  # Dependency vulnerability scanning — blocks on HIGH/CRITICAL CVEs
+  - repo: local
+    hooks:
+      - id: trivy-vuln-scan
+        name: trivy vulnerability scan
+        entry: bash -c 'trivy fs --scanners vuln --severity HIGH,CRITICAL --exit-code 1 .'
+        language: system
+        always_run: true
+        pass_filenames: false
