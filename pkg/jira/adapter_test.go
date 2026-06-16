@@ -4,10 +4,21 @@ package jira_test
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
+	"math/big"
+	"net"
+	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -19,8 +30,60 @@ import (
 	"github.com/sgnl-ai/adapters/pkg/testutil"
 )
 
+// newUntrustedTLSServer starts a TLS server with a freshly-generated self-signed
+// certificate. Because it is distinct from the hardcoded cert used by httptest.NewTLSServer,
+// any client built from httptest.Server.Client() will reject it with a cert error.
+func newUntrustedTLSServer(t *testing.T, handler http.Handler) *httptest.Server {
+	t.Helper()
+
+	priv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	template := &x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		Subject:      pkix.Name{CommonName: "untrusted-test"},
+		NotBefore:    time.Now().Add(-time.Hour),
+		NotAfter:     time.Now().Add(time.Hour),
+		KeyUsage:     x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		IPAddresses:  []net.IP{net.ParseIP("127.0.0.1")},
+	}
+
+	certDER, err := x509.CreateCertificate(rand.Reader, template, template, &priv.PublicKey, priv)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	privDER, err := x509.MarshalECPrivateKey(priv)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tlsCert, err := tls.X509KeyPair(
+		pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: certDER}),
+		pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: privDER}),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	s := httptest.NewUnstartedServer(handler)
+	s.TLS = &tls.Config{Certificates: []tls.Certificate{tlsCert}}
+	s.StartTLS()
+
+	return s
+}
+
 func TestAdapterGetPage(t *testing.T) {
 	server := httptest.NewTLSServer(TestServerHandler)
+	// server2 has a freshly-generated self-signed cert that server.Client() won't trust,
+	// allowing us to test cert verification failure without relying on external hosts.
+	server2 := newUntrustedTLSServer(t, TestServerHandler)
+	defer server2.Close()
+	server2Address := strings.TrimPrefix(server2.URL, "https://")
+
 	adapter := jira_adapter.NewAdapter(&jira_adapter.Datasource{
 		Client: server.Client(),
 	})
@@ -416,13 +479,13 @@ func TestAdapterGetPage(t *testing.T) {
 				},
 			},
 		},
-		// This test case uses a random URL instead of the test server's URL, so we should expect an invalid cert.
-		// This test case also verifies that the "https://" prefix is added to the address if it's not present
-		// which is evident by the error message.
+		// server2 uses a different self-signed cert than the one server.Client() trusts,
+		// so this guarantees a cert verification failure without relying on external hosts.
+		// Passing the address without "https://" also verifies that the adapter adds the prefix.
 		"failed_to_make_get_page_request_invalid_certs": {
 			ctx: context.Background(),
 			request: &framework.Request[jira_adapter.Config]{
-				Address: "example.com",
+				Address: server2Address,
 				Auth: &framework.DatasourceAuthCredentials{
 					Basic: &framework.BasicAuthCredentials{
 						Username: mockUsername,
@@ -443,7 +506,7 @@ func TestAdapterGetPage(t *testing.T) {
 			},
 			wantResponse: framework.Response{
 				Error: &framework.Error{
-					Message: `Failed to execute Jira request: Get "https://example.com/rest/api/3/group/bulk` +
+					Message: `Failed to execute Jira request: Get "https://` + server2Address + `/rest/api/3/group/bulk` +
 						`?startAt=0&maxResults=1": tls: failed to verify certificate: ` +
 						`x509: certificate signed by unknown authority.`,
 					Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
