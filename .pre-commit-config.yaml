@@ -21,7 +21,8 @@ repos:
     hooks:
       - id: trivy-vuln-scan
         name: trivy vulnerability scan
-        entry: bash -c 'trivy fs --scanners vuln --severity HIGH,CRITICAL --exit-code 1 .'
+        entry: |-
+          bash -c 'command -v trivy >/dev/null 2>&1 || { echo "trivy not found. Install with:"; echo "  macOS: brew install trivy"; echo "  Debian: wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add - && echo deb https://aquasecurity.github.io/trivy-repo/deb \$(lsb_release -sc) main | sudo tee /etc/apt/sources.list.d/trivy.list && sudo apt-get update && sudo apt-get install -y trivy"; exit 1; }; trivy fs --scanners vuln --severity HIGH,CRITICAL --exit-code 1 .'
         language: system
         always_run: true
         pass_filenames: false
