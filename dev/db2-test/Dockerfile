@@ -14,7 +14,7 @@ RUN apt-get update && \
         wget \
         ca-certificates \
         libxml2 \
-        libssl3 \
+        libssl3t64 \
         libc6 \
         && \
     apt-get clean && \
