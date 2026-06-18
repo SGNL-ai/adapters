@@ -1,4 +1,4 @@
-ARG GOLANG_IMAGE=golang:1.26-bookworm
+ARG GOLANG_IMAGE=golang:1.26-trixie
 ARG USE_BAZEL_VERSION=6.1.1
 
 # STAGE 1: build...

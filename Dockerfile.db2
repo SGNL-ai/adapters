@@ -1,7 +1,7 @@
 # Multi-stage Dockerfile for the DB2 adapter service.
-# Builds with IBM DB2 CLI driver (CGO) and runs on debian:bookworm-slim.
+# Builds with IBM DB2 CLI driver (CGO) and runs on debian:trixie-slim.
 
-ARG GOLANG_IMAGE=golang:1.26-bookworm
+ARG GOLANG_IMAGE=golang:1.26-trixie
 ARG DB2_CLI_VERSION=v12.1.2
 
 # STAGE 1: build
@@ -50,7 +50,7 @@ FROM debian:trixie-slim@sha256:b6e2a152f22a40ff69d92cb397223c906017e1391a73c952b
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         libxml2 \
-        libssl3 \
+        libssl3t64 \
         libc6 \
         ca-certificates \
         && \
