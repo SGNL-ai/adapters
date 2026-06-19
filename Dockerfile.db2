@@ -105,7 +105,7 @@ RUN set -eu; \
 # ---------------------------------------------------------------------------
 # Stage 3: Minimal DHI -fips runtime
 # ---------------------------------------------------------------------------
-FROM --platform=linux/amd64 ${ARTIFACTORY_DOCKER_REGISTRY}/crowdstrike/dhi-debian-base:trixie-debian13-fips
+FROM --platform=linux/amd64 ${ARTIFACTORY_DOCKER_REGISTRY}/crowdstrike/dhi-debian-base:trixie-debian13-fips AS run
 
 LABEL org.opencontainers.image.source="https://github.com/SGNL-ai/adapters" \
       org.opencontainers.image.title="SGNL DB2 Adapter" \
