@@ -46,22 +46,26 @@ ARG GOPS_VERSION=v0.3.27
 RUN CGO_ENABLED=0 go install -ldflags "-s -w" github.com/google/gops@${GOPS_VERSION}
 RUN GOOS=linux go build -C /app/cmd/db2-adapter -tags db2 -o /sgnl/db2-adapter
 
-# Collect libxml2 and its transitive shared library dependencies that are not
-# already present in the SGNL debian runtime image (which ships libc, libssl,
-# libcrypto, libgcc_s, libm, and the dynamic linker).
+# Collect shared libraries needed at runtime that are NOT in the SGNL debian
+# base image. Scans the Go binary, DB2 CLI driver libs, and libxml2.
 RUN set -eu; \
     mkdir -p /out/usr/lib; \
-    LDD_OUT=$(ldd /usr/lib/x86_64-linux-gnu/libxml2.so.2 2>/dev/null); \
-    echo "$LDD_OUT" | awk '/=>/ {print $3}' | sort -u | while read -r lib; do \
+    { ldd /sgnl/db2-adapter; \
+      find /opt/ibm/clidriver/lib -name '*.so*' -exec ldd {} + 2>/dev/null; \
+      ldd /usr/lib/x86_64-linux-gnu/libxml2.so.2; \
+    } 2>/dev/null | awk '/=>/ {print $3}' | sort -u | while read -r lib; do \
         [ -f "$lib" ] || continue; \
         case "$lib" in \
+            */ld-linux*) continue ;; \
             */libc.so*|*/libssl.so*|*/libcrypto.so*|*/libgcc_s.so*) continue ;; \
             */libm.so*|*/libdl.so*|*/libpthread.so*|*/librt.so*)   continue ;; \
-            */libz.so*) continue ;; \
+            */libz.so*|*/libtinfo.so*|*/libselinux.so*) continue ;; \
+            */liblzma.so*|*/libzstd.so*|*/libpcre2*.so*) continue ;; \
+            */libsystemd.so*|*/libcap.so*) continue ;; \
+            /opt/ibm/*) continue ;; \
         esac; \
         cp -L "$lib" /out/usr/lib/; \
-    done; \
-    cp -L /usr/lib/x86_64-linux-gnu/libxml2.so.2 /out/usr/lib/
+    done
 
 # ---------------------------------------------------------------------------
 # Stage 2: Runtime
@@ -76,7 +80,7 @@ LABEL org.opencontainers.image.source="https://github.com/SGNL-ai/adapters" \
       org.opencontainers.image.title="SGNL DB2 Adapter" \
       org.opencontainers.image.description="DB2 adapter on SGNL Debian FIPS base (no perl, no CVE exposure)"
 
-# libxml2 and transitive deps not in the base image (required by DB2 CLI driver)
+# Shared libs not in the base image (libxml2, libcrypt, libicuuc, etc.)
 COPY --from=build /out/usr/lib/ /usr/lib/x86_64-linux-gnu/
 
 # IBM DB2 CLI Driver: runtime libs, message catalogs, and config.
