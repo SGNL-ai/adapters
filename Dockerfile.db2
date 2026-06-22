@@ -60,7 +60,7 @@ RUN set -eu; \
             */libc.so*|*/libssl.so*|*/libcrypto.so*|*/libgcc_s.so*) continue ;; \
             */libm.so*|*/libdl.so*|*/libpthread.so*|*/librt.so*)   continue ;; \
             */libz.so*|*/libtinfo.so*|*/libselinux.so*) continue ;; \
-            */liblzma.so*|*/libzstd.so*|*/libpcre2*.so*) continue ;; \
+            */libzstd.so*|*/libpcre2*.so*) continue ;; \
             */libsystemd.so*|*/libcap.so*) continue ;; \
             /opt/ibm/*) continue ;; \
         esac; \
