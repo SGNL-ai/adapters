@@ -6,12 +6,13 @@
 ARG GOLANG_IMAGE=golang:1.26-trixie
 ARG RUNTIME_IMAGE=ghcr.io/sgnl-ai/debian:trixie-debian13-fips-r0
 ARG DB2_CLI_VERSION=v12.1.2
+# IBM DB2 CLI driver is x86_64 only; default platform to amd64.
+ARG TARGETPLATFORM=linux/amd64
 
 # ---------------------------------------------------------------------------
 # Stage 1: Build the Go binary with CGO (needs DB2 CLI headers + libs)
 # ---------------------------------------------------------------------------
-# IBM DB2 CLI driver is x86_64 only; pin platform for cross-build correctness.
-FROM --platform=linux/amd64 ${GOLANG_IMAGE} AS build
+FROM --platform=${TARGETPLATFORM} ${GOLANG_IMAGE} AS build
 
 ARG DB2_CLI_VERSION
 
@@ -74,7 +75,7 @@ RUN set -eu; \
 # glab/continuous-identity/infra/builders/debian/Dockerfile.
 # This image has no perl-base (eliminating the CRITICAL CVEs) but includes
 # shell, curl, CA certs, and core shared libs.
-FROM --platform=linux/amd64 ${RUNTIME_IMAGE} AS run
+FROM --platform=${TARGETPLATFORM} ${RUNTIME_IMAGE} AS run
 
 LABEL org.opencontainers.image.source="https://github.com/SGNL-ai/adapters" \
       org.opencontainers.image.title="SGNL DB2 Adapter" \
