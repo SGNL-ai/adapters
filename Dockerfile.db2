@@ -4,7 +4,7 @@
 # upstream debian:trixie-slim.
 
 ARG GOLANG_IMAGE=golang:1.26-trixie
-ARG RUNTIME_IMAGE=ghcr.io/sgnl-ai/debian:trixie-debian13-fips-r0
+ARG RUNTIME_IMAGE=ghcr.io/sgnl-ai/debian:trixie-debian13-fips-r1
 ARG DB2_CLI_VERSION=v12.1.2
 
 # ---------------------------------------------------------------------------
