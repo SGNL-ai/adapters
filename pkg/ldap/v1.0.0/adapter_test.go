@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/go-connections/nat"
 	ldap_v3 "github.com/go-ldap/ldap/v3"
 	"github.com/google/go-cmp/cmp"
+	"github.com/moby/moby/api/types/network"
 	framework "github.com/sgnl-ai/adapter-framework"
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	ldap_adapter "github.com/sgnl-ai/adapters/pkg/ldap/v1.0.0"
@@ -26,7 +26,7 @@ type LDAPTestSuite struct {
 	testutil.CommonSuite
 	ldapContainer testcontainers.Container
 	ldapHost      string
-	ldapPort      nat.Port
+	ldapPort      network.Port
 	ctx           context.Context
 }
 

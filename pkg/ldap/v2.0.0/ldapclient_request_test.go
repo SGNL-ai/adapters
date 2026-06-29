@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/go-connections/nat"
+	"github.com/moby/moby/api/types/network"
 	framework "github.com/sgnl-ai/adapter-framework"
 	"github.com/sgnl-ai/adapters/pkg/pagination"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
@@ -33,7 +33,7 @@ func Test_LdapClientRequestSuite(t *testing.T) {
 func (s *ldapClientRequestTestSuite) SetupSuite() {
 	s.ctx, s.cancel = context.WithTimeout(context.Background(), time.Minute*5)
 
-	var ldapPort nat.Port
+	var ldapPort network.Port
 	s.ldapContainer, ldapPort = s.StartLDAPServer(s.ctx, false)
 	s.ldapHost = "ldap://localhost:" + ldapPort.Port()
 
