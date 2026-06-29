@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/docker/go-connections/nat"
+	"github.com/moby/moby/api/types/network"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
@@ -64,13 +64,13 @@ func setupLDAPContainer(ctx context.Context, isLDAPS bool) (testcontainers.Conta
 // StartLDAPServer runs an instance of active directory over LDAP protocol in a local container for testing.
 // It returns the container and open port.
 // May fail the test internally if setup fails.
-func (s *CommonSuite) StartLDAPServer(ctx context.Context, isLDAPS bool) (testcontainers.Container, nat.Port) {
+func (s *CommonSuite) StartLDAPServer(ctx context.Context, isLDAPS bool) (testcontainers.Container, network.Port) {
 	container, err := setupLDAPContainer(ctx, isLDAPS)
 	if err != nil {
 		s.T().Fatalf("Failed to setup LDAP container: %v", err)
 	}
 
-	var port nat.Port
+	var port network.Port
 
 	if isLDAPS {
 		port, err = container.MappedPort(ctx, LDAPSPort)
