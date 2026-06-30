@@ -578,6 +578,16 @@ func (d *Datasource) getMemberOfPage(
 		return nil, err
 	}
 
+	if len(memberOfResp.Objects) == 0 && memberOfResp.NextCursor == nil {
+		return nil, &framework.Error{
+			Message: fmt.Sprintf(
+				"Failed to retrieve parent entities for %s: datasource returned no results for entity %s.",
+				request.EntityExternalID, *entityConfig.MemberOf,
+			),
+			Code: api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
+		}
+	}
+
 	// Process groups one by one, making individual range queries for each group
 	var (
 		allGroupMembers      []map[string]any
