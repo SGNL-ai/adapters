@@ -578,7 +578,7 @@ func (d *Datasource) getMemberOfPage(
 		return nil, err
 	}
 
-	if len(memberOfResp.Objects) == 0 && memberOfResp.NextCursor == nil {
+	if len(memberOfResp.Objects) == 0 {
 		return nil, &framework.Error{
 			Message: fmt.Sprintf(
 				"Failed to retrieve parent entities for %s: datasource returned no results for entity %s.",
