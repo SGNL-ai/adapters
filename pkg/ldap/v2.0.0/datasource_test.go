@@ -493,6 +493,234 @@ func TestGetTLSConfig(t *testing.T) {
 	}
 }
 
+func TestGetMemberOfPageReturnsErrorWhenParentEntityReturnsNoResults(t *testing.T) {
+	memberOf := "Group"
+
+	ds := ldap.Datasource{
+		Client: &testProxyClient{
+			proxiedRequest: false,
+		},
+	}
+
+	request := &ldap.Request{
+		BaseURL:          mockLDAPAddr,
+		PageSize:         10,
+		EntityExternalID: "GroupMember",
+		Attributes: []*framework.AttributeConfig{
+			{
+				ExternalId: "id",
+				Type:       framework.AttributeTypeString,
+				UniqueId:   true,
+			},
+		},
+		ConnectionParams: ldap.ConnectionParams{
+			BindDN:       "cn=user,dc=example,dc=org",
+			BindPassword: "password",
+			BaseDN:       "dc=example,dc=org",
+		},
+		UniqueIDAttribute: "id",
+		EntityConfigMap: map[string]*ldap.EntityConfig{
+			"Group": {
+				Query: "(objectClass=group)",
+			},
+			"GroupMember": {
+				MemberOf:                  &memberOf,
+				CollectionAttribute:       strPtr("distinguishedName"),
+				Query:                     "(&(objectClass=group)({{CollectionAttribute}}={{CollectionId}}))",
+				MemberUniqueIDAttribute:   strPtr("dn"),
+				MemberOfUniqueIDAttribute: strPtr("dn"),
+				MemberAttribute:           strPtr("member"),
+				MemberOfGroupBatchSize:    10,
+			},
+		},
+		RequestTimeoutSeconds: 30,
+	}
+
+	ctxWithLogger, _ := testutil.NewContextWithObservableLogger(t.Context())
+	resp, ferr := ds.GetPage(ctxWithLogger, request)
+
+	if resp != nil {
+		t.Errorf("expected nil response, got %v", resp)
+	}
+
+	if ferr == nil {
+		t.Fatal("expected error when parent entity returns no results, got nil")
+	}
+
+	if ferr.Code != api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED {
+		t.Errorf("expected error code %v, got %v",
+			api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED, ferr.Code)
+	}
+
+	expectedMsg := "Failed to retrieve parent entities for GroupMember: datasource returned no results for entity Group."
+	if ferr.Message != expectedMsg {
+		t.Errorf("expected error message %q, got %q", expectedMsg, ferr.Message)
+	}
+}
+
+func strPtr(s string) *string {
+	return &s
+}
+
+func TestGetMemberOfPageReturnsErrorWhenParentEntityReturnsNoResultsWithCursorSet(t *testing.T) {
+	memberOf := "Group"
+
+	ds := ldap.Datasource{
+		Client: &testProxyClient{
+			proxiedRequest: false,
+		},
+	}
+
+	// base64({"nextPageCursor":null}) — simulates a subsequent page cursor
+	encodedCursor := base64.StdEncoding.EncodeToString([]byte(`{"nextPageCursor":null}`))
+
+	request := &ldap.Request{
+		BaseURL:          mockLDAPAddr,
+		PageSize:         10,
+		EntityExternalID: "GroupMember",
+		Attributes: []*framework.AttributeConfig{
+			{
+				ExternalId: "id",
+				Type:       framework.AttributeTypeString,
+				UniqueId:   true,
+			},
+		},
+		ConnectionParams: ldap.ConnectionParams{
+			BindDN:       "cn=user,dc=example,dc=org",
+			BindPassword: "password",
+			BaseDN:       "dc=example,dc=org",
+		},
+		UniqueIDAttribute: "id",
+		EntityConfigMap: map[string]*ldap.EntityConfig{
+			"Group": {
+				Query: "(objectClass=group)",
+			},
+			"GroupMember": {
+				MemberOf:                  &memberOf,
+				CollectionAttribute:       strPtr("distinguishedName"),
+				Query:                     "(&(objectClass=group)({{CollectionAttribute}}={{CollectionId}}))",
+				MemberUniqueIDAttribute:   strPtr("dn"),
+				MemberOfUniqueIDAttribute: strPtr("dn"),
+				MemberAttribute:           strPtr("member"),
+				MemberOfGroupBatchSize:    10,
+			},
+		},
+		Cursor: &pagination.CompositeCursor[string]{
+			Cursor: &encodedCursor,
+		},
+		RequestTimeoutSeconds: 30,
+	}
+
+	ctxWithLogger, _ := testutil.NewContextWithObservableLogger(t.Context())
+	resp, ferr := ds.GetPage(ctxWithLogger, request)
+
+	if resp != nil {
+		t.Errorf("expected nil response, got %v", resp)
+	}
+
+	if ferr == nil {
+		t.Fatal("expected error when parent entity returns no results (even with cursor set), got nil")
+	}
+
+	if ferr.Code != api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED {
+		t.Errorf("expected error code %v, got %v",
+			api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED, ferr.Code)
+	}
+}
+
+// memberOfMockClient differentiates responses by entity type: returns groups
+// for the parent entity query but no member attribute for individual group queries.
+type memberOfMockClient struct{}
+
+func (c *memberOfMockClient) Request(_ context.Context, req *ldap.Request) (*ldap.Response, *framework.Error) {
+	if req.EntityExternalID == "Group" {
+		return &ldap.Response{
+			StatusCode: http.StatusOK,
+			Objects: []map[string]any{
+				{
+					"dn":                "cn=EmptyGroup,ou=Groups,dc=example,dc=org",
+					"distinguishedName": "cn=EmptyGroup,ou=Groups,dc=example,dc=org",
+				},
+			},
+		}, nil
+	}
+
+	// For the member query: return the group object without member attribute.
+	return &ldap.Response{
+		StatusCode: http.StatusOK,
+		Objects: []map[string]any{
+			{"dn": "cn=EmptyGroup,ou=Groups,dc=example,dc=org"},
+		},
+	}, nil
+}
+
+func (c *memberOfMockClient) ProxyRequest(_ context.Context, _ *connector.ConnectorInfo, _ *ldap.Request) (*ldap.Response, *framework.Error) {
+	return nil, nil
+}
+
+func (c *memberOfMockClient) IsProxied() bool { return false }
+
+func TestGetMemberOfPageSucceedsWhenGroupHasNoMembers(t *testing.T) {
+	memberOf := "Group"
+
+	ds := ldap.Datasource{
+		Client: &memberOfMockClient{},
+	}
+
+	request := &ldap.Request{
+		BaseURL:          mockLDAPAddr,
+		PageSize:         10,
+		EntityExternalID: "GroupMember",
+		Attributes: []*framework.AttributeConfig{
+			{
+				ExternalId: "id",
+				Type:       framework.AttributeTypeString,
+				UniqueId:   true,
+			},
+		},
+		ConnectionParams: ldap.ConnectionParams{
+			BindDN:       "cn=user,dc=example,dc=org",
+			BindPassword: "password",
+			BaseDN:       "dc=example,dc=org",
+		},
+		UniqueIDAttribute: "id",
+		EntityConfigMap: map[string]*ldap.EntityConfig{
+			"Group": {
+				Query: "(objectClass=group)",
+			},
+			"GroupMember": {
+				MemberOf:                  &memberOf,
+				CollectionAttribute:       strPtr("distinguishedName"),
+				Query:                     "(&(objectClass=group)({{CollectionAttribute}}={{CollectionId}}))",
+				MemberUniqueIDAttribute:   strPtr("dn"),
+				MemberOfUniqueIDAttribute: strPtr("dn"),
+				MemberAttribute:           strPtr("member"),
+				MemberOfGroupBatchSize:    10,
+			},
+		},
+		RequestTimeoutSeconds: 30,
+	}
+
+	ctxWithLogger, _ := testutil.NewContextWithObservableLogger(t.Context())
+	resp, ferr := ds.GetPage(ctxWithLogger, request)
+
+	if ferr != nil {
+		t.Fatalf("expected no error when group has no members, got: %v", ferr)
+	}
+
+	if resp == nil {
+		t.Fatal("expected non-nil response")
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("expected status 200, got %d", resp.StatusCode)
+	}
+
+	if len(resp.Objects) != 0 {
+		t.Errorf("expected 0 member objects for group with no members, got %d", len(resp.Objects))
+	}
+}
+
 func TestStringAttrValuesToRequestedType_EmptyValuesHandling(t *testing.T) {
 	tests := []struct {
 		name        string
