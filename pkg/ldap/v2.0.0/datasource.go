@@ -844,11 +844,12 @@ func extractMembersDNFromGroup(memberObjs map[string]any, offset, count int) ([]
 			memberList = memberList[offset:]
 		}
 
-		if count > len(memberList) {
-			count = len(memberList)
+		extractCount := count
+		if extractCount > len(memberList) {
+			extractCount = len(memberList)
 		}
 
-		for _, member := range memberList[:count] {
+		for _, member := range memberList[:extractCount] {
 			if memberDN, ok := member.(string); ok {
 				membersDN = append(membersDN, memberDN)
 			} else {
@@ -869,14 +870,14 @@ func extractMembersDNFromGroup(memberObjs map[string]any, offset, count int) ([]
 		// Ref: https://learn.microsoft.com/en-us/windows/win32/adschema/attributes/memberof
 
 		if matches := rangeAttributePattern.FindStringSubmatch(attrName); matches != nil {
-			if matches[3] == "*" && count == len(memberList) {
+			if matches[3] == "*" && extractCount == len(memberList) {
 				return membersDN, MemberExtractionActionDone
 			}
 
 			return membersDN, MemberExtractionActionContinueRange
 		}
 
-		if count == len(memberList) {
+		if extractCount == len(memberList) {
 			return membersDN, MemberExtractionActionDone
 		}
 
@@ -1049,7 +1050,7 @@ func StringAttrValuesToRequestedType(
 ) (any, *framework.Error) {
 	if isList {
 		if len(attr.Values) == 0 { // empty values
-			return attr.Values, nil
+			return []any{}, nil
 		}
 
 		values := make([]any, 0, len(attr.Values))
