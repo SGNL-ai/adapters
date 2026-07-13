@@ -245,6 +245,21 @@ func TestExtractMembersDNFromGroup(t *testing.T) {
 			expectedDNS:    []string{},
 			expectedAction: MemberExtractionActionDone,
 		},
+
+		// Proxy round-trip scenario: AD returns both empty "member" and populated range attr.
+		// JSON marshaling converts []string{} to []any{}, so "member" becomes []any{} (not []string{}).
+		// With randomized map iteration, if empty "member" is visited first it must not corrupt count.
+		{
+			name: "empty_member_with_range_attr_proxy_roundtrip",
+			memberObjs: map[string]any{
+				"member":              []any{},
+				"member;range=0-1499": makeMemberList(1500),
+			},
+			offset:         0,
+			count:          99,
+			expectedDNS:    makeExpectedDNS(0, 99),
+			expectedAction: MemberExtractionActionContinueRange,
+		},
 	}
 
 	for _, tt := range tests {
