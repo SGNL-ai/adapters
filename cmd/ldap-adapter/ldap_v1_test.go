@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"os"
 	"reflect"
 	"strings"
@@ -26,6 +27,22 @@ const (
 	// Seed test user using ldapadd.
 	ldifPath = "testdata/test.ldif"
 )
+
+// getFreePort asks the OS for an available ephemeral port and returns it.
+// Using a dynamically allocated port avoids flaky "address already in use"
+// failures that occur when a hardcoded port is already taken on the CI runner.
+func getFreePort(t *testing.T) int {
+	t.Helper()
+
+	l, err := net.Listen("tcp", "localhost:0")
+	if err != nil {
+		t.Fatalf("failed to allocate a free port: %v", err)
+	}
+
+	defer l.Close()
+
+	return l.Addr().(*net.TCPAddr).Port
+}
 
 func TestMainFunction_NoPanic(t *testing.T) {
 	t.Setenv("LDAP_ADAPTER_CONNECTOR_SERVICE_URL", "localhost:1234")
@@ -199,7 +216,7 @@ func TestGivenOpenLDAPWithUser_WhenGetPageIsCalled_ThenUserIsReturned(t *testing
 	}
 
 	// Set up the adapter port
-	adapterPort := 54321
+	adapterPort := getFreePort(t)
 	tmpDir := t.TempDir()
 	authTokensPath := tmpDir + "/fake-auth-tokens"
 
@@ -412,7 +429,7 @@ func TestGivenOpenLDAPWithMultipleUsers_WhenPagedGetPageIsCalled_ThenAllUsersAre
 	time.Sleep(500 * time.Millisecond)
 
 	// Set up the adapter port
-	adapterPort := 54322
+	adapterPort := getFreePort(t)
 	tmpDir := t.TempDir()
 	authTokensPath := tmpDir + "/fake-auth-tokens"
 
@@ -649,7 +666,7 @@ func TestGivenOpenLDAPWithGroupMembers_WhenGetGroupMemberPageIsCalled_ThenGroupD
 	time.Sleep(500 * time.Millisecond)
 
 	// Set up the adapter port
-	adapterPort := 54323
+	adapterPort := getFreePort(t)
 	tmpDir := t.TempDir()
 	authTokensPath := tmpDir + "/fake-auth-tokens"
 
