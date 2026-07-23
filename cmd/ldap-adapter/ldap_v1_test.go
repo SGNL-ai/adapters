@@ -15,6 +15,7 @@ import (
 	"time"
 
 	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
+	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 	"google.golang.org/grpc"
@@ -35,13 +36,14 @@ func getFreePort(t *testing.T) int {
 	t.Helper()
 
 	l, err := net.Listen("tcp", "localhost:0")
-	if err != nil {
-		t.Fatalf("failed to allocate a free port: %v", err)
-	}
+	require.NoError(t, err, "failed to allocate a free port")
 
 	defer l.Close()
 
-	return l.Addr().(*net.TCPAddr).Port
+	addr, ok := l.Addr().(*net.TCPAddr)
+	require.True(t, ok, "unexpected listener address type: %T", l.Addr())
+
+	return addr.Port
 }
 
 func TestMainFunction_NoPanic(t *testing.T) {
