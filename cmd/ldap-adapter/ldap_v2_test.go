@@ -149,7 +149,7 @@ func TestGivenOpenLDAPWithUser_WhenGetPageIsCalled_ThenUserIsReturned_v2(t *test
 	}
 
 	// Set up the adapter port
-	adapterPort := 54324
+	adapterPort := getFreePort(t)
 	tmpDir := t.TempDir()
 	authTokensPath := tmpDir + "/fake-auth-tokens"
 
@@ -362,7 +362,7 @@ func TestGivenOpenLDAPWithMultipleUsers_WhenPagedGetPageIsCalled_ThenAllUsersAre
 	time.Sleep(500 * time.Millisecond)
 
 	// Set up the adapter port
-	adapterPort := 54325
+	adapterPort := getFreePort(t)
 	tmpDir := t.TempDir()
 	authTokensPath := tmpDir + "/fake-auth-tokens"
 
@@ -599,7 +599,7 @@ func TestGivenOpenLDAPWithGroupMembers_WhenGetGroupMemberPageIsCalled_ThenGroupD
 	time.Sleep(500 * time.Millisecond)
 
 	// Set up the adapter port
-	adapterPort := 54326
+	adapterPort := getFreePort(t)
 	tmpDir := t.TempDir()
 	authTokensPath := tmpDir + "/fake-auth-tokens"
 
