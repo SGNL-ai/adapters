@@ -79,12 +79,6 @@ jobs:
       - name: Run tests and code coverage 🧪
         run: docker run --rm --network="host" -v /var/run/docker.sock:/var/run/docker.sock -v ${{ github.workspace }}/:/app/ ${{ env.REGISTRY }}/${{ env.REPO_LC }}-test:${{ github.sha }} go test -coverprofile=coverage.txt -covermode=atomic -v ./...
 
-      # CodeCov
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v6
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-
       - name: Build and push run image ⬆️
         uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
         with:
