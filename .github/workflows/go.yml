@@ -72,9 +72,6 @@ jobs:
           context: .
           file: Dockerfile
           tags: ${{ env.REGISTRY }}/${{ env.REPO_LC }}-test:${{ github.sha }}
-          build-args: |
-            GITHUB_USERNAME=sgnl-robot
-            GITHUB_PAT=${{ secrets.SGNL_ROBOT_PAT }}
 
       - name: Run tests and code coverage 🧪
         run: docker run --rm --network="host" -v /var/run/docker.sock:/var/run/docker.sock -v ${{ github.workspace }}/:/app/ ${{ env.REGISTRY }}/${{ env.REPO_LC }}-test:${{ github.sha }} go test -coverprofile=coverage.txt -covermode=atomic -v ./...
@@ -88,9 +85,6 @@ jobs:
           file: Dockerfile
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            GITHUB_USERNAME=sgnl-robot
-            GITHUB_PAT=${{ secrets.SGNL_ROBOT_PAT }}
 
   build-and-push-db2:
     runs-on: ubuntu-latest
@@ -142,9 +136,6 @@ jobs:
           context: .
           file: Dockerfile.db2
           tags: ${{ env.REGISTRY }}/${{ env.REPO_LC }}-db2-test:${{ github.sha }}
-          build-args: |
-            GITHUB_USERNAME=sgnl-robot
-            GITHUB_PAT=${{ secrets.SGNL_ROBOT_PAT }}
 
       - name: Run DB2 adapter tests 🧪
         run: docker run --rm ${{ env.REGISTRY }}/${{ env.REPO_LC }}-db2-test:${{ github.sha }} go test -tags db2 -v ./pkg/db2/... ./cmd/db2-adapter/...
@@ -158,9 +149,6 @@ jobs:
           file: Dockerfile.db2
           tags: ${{ steps.meta-db2.outputs.tags }}
           labels: ${{ steps.meta-db2.outputs.labels }}
-          build-args: |
-            GITHUB_USERNAME=sgnl-robot
-            GITHUB_PAT=${{ secrets.SGNL_ROBOT_PAT }}
 
   check-success:
     runs-on: ubuntu-latest
