@@ -1062,6 +1062,65 @@ func TestConstructQuery(t *testing.T) {
 				}
 			}`,
 		},
+		"issueassignee_assignee_after_parameter_fix": {
+			request: &github.Request{
+				BaseURL:           "https://api.github.com",
+				EnterpriseSlug:    testutil.GenPtr("testID"),
+				IsEnterpriseCloud: true,
+				APIVersion:        testutil.GenPtr("v3"),
+				EntityExternalID:  "IssueAssignee",
+				PageSize:          50,
+				Token:             "Bearer Testtoken",
+				Cursor: CreateGraphQLCompositeCursor(
+					[]*string{nil, nil, testutil.GenPtr("issueAfter1"), testutil.GenPtr("assigneeAfter456")},
+					nil,
+					nil,
+				),
+				EntityConfig: PopulateDefaultIssueAssigneeEntityConfig(),
+			},
+			wantQuery: `query {
+				enterprise (slug: "testID") {
+					id
+					organizations (first: 1) {
+						pageInfo {
+							endCursor
+							hasNextPage
+						}
+						nodes {
+							id
+							repositories (first: 1) {
+								pageInfo {
+									endCursor
+									hasNextPage
+								}
+								nodes {
+									id
+									issues (first: 1, after: "issueAfter1") {
+										pageInfo {
+											endCursor
+											hasNextPage
+										}
+										nodes {
+											id
+											assignees (first: 50, after: "assigneeAfter456") {
+												pageInfo {
+													endCursor
+													hasNextPage
+												}
+												nodes {
+													id
+													login
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}`,
+		},
 		"default_issueparticipant_entity_attributes": {
 			request: &github.Request{
 				BaseURL:           "https://api.github.com",

@@ -53,6 +53,12 @@ type Request struct {
 	// RequestTimeoutSeconds is the timeout duration for requests made to datasources.
 	// This should be set to the number of seconds to wait before timing out.
 	RequestTimeoutSeconds int
+
+	// Filter contains entity-specific filter expressions for GraphQL queries.
+	Filter *string
+
+	// OrderBy contains entity-specific ordering expressions for GraphQL queries.
+	OrderBy *string
 }
 
 // Response is a response returned by the datasource.
