@@ -46,6 +46,16 @@ type Config struct {
 	// APIVersion is the version of the GitHub API to use.
 	// This is only used when constructing REST endpoints.
 	APIVersion *string `json:"apiVersion"`
+
+	// Filters allows specifying entity-specific filters using GraphQL query parameters.
+	// Map keys should be entity external IDs, values should be GraphQL filter expressions.
+	// Example: {"Repository": "visibility: PUBLIC", "Issue": "states: OPEN"}
+	Filters map[string]string `json:"filters,omitempty"`
+
+	// OrderBy allows specifying entity-specific ordering using GraphQL order parameters.
+	// Map keys should be entity external IDs, values should be GraphQL order expressions.
+	// Example: {"Repository": "orderBy: {field: CREATED_AT, direction: DESC}"}
+	OrderBy map[string]string `json:"orderBy,omitempty"`
 }
 
 // ValidateConfig validates that a Config received in a GetPage call is valid.
