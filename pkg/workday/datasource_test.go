@@ -78,7 +78,7 @@ func TestParseResponse(t *testing.T) {
 				}
 			}`),
 			wantErr: &framework.Error{
-				Message: "Failed to unmarshal the datasource response: json: cannot unmarshal object into Go struct field .data of type []map[string]interface {}.",
+				Message: "Failed to unmarshal the datasource response: json: cannot unmarshal object into Go struct field DatasourceResponse.data of type []map[string]interface {}.",
 				Code:    adapter_api_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			},
 		},

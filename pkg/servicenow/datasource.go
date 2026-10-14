@@ -164,7 +164,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 }
 
 func ParseResponse(body []byte) ([]map[string]any, *framework.Error) {
-	var data *DatasourceResponse
+	var data DatasourceResponse
 
 	if unmarshalErr := json.Unmarshal(body, &data); unmarshalErr != nil {
 		return nil, &framework.Error{

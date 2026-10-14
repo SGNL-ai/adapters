@@ -190,11 +190,18 @@ func ParseResponse(body []byte) (
 	nextCursor *pagination.CompositeCursor[int64],
 	err *framework.Error,
 ) {
-	var data *DatasourceResponse
+	var data DatasourceResponse
 
-	if unmarshalErr := json.Unmarshal(body, &data); unmarshalErr != nil || data == nil {
+	if unmarshalErr := json.Unmarshal(body, &data); unmarshalErr != nil {
 		return nil, nil, &framework.Error{
 			Message: fmt.Sprintf("Failed to unmarshal the datasource response: %v.", unmarshalErr),
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}
+	}
+
+	if data.Objects == nil {
+		return nil, nil, &framework.Error{
+			Message: "Objects field is missing in the datasource response.",
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		}
 	}

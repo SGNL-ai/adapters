@@ -646,13 +646,13 @@ func ParseGraphQLResponse(
 		return ParseGraphQLResponseForOrganization(body, currentCursor, orgCount)
 	}
 
-	var response *DatasourceResponse
+	var response DatasourceResponse
 
 	var pageInfo *PageInfo
 
 	var currentPageInfo *PageInfo
 
-	if unmarshalErr := json.Unmarshal(body, &response); unmarshalErr != nil || response == nil {
+	if unmarshalErr := json.Unmarshal(body, &response); unmarshalErr != nil {
 		return nil, nil, &framework.Error{
 			Message: fmt.Sprintf("Failed to unmarshal the datasource response: %v.", unmarshalErr),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
