@@ -338,7 +338,7 @@ func TestParseResponse(t *testing.T) {
 			entityExternalID: "User",
 			wantNextCursor:   nil,
 			wantErr: testutil.GenPtr(framework.Error{
-				Message: `Failed to unmarshal the datasource response: json: cannot unmarshal string into Go struct field DatasourceResponse.records of type map[string]interface {}.`,
+				Message: `Failed to unmarshal the datasource response: json: cannot unmarshal string into DatasourceResponse.records.0 of type map[string]interface {}.`,
 				Code:    adapter_api_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			}),
 		},

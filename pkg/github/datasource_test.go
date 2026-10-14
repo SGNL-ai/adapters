@@ -307,7 +307,7 @@ func TestParseGraphQLResponse(t *testing.T) {
 			}`),
 			entityExternalID: "Organization",
 			wantErr: testutil.GenPtr(framework.Error{
-				Message: "Failed to unmarshal the datasource response: json: cannot unmarshal number into Go struct field ErrorInfo.errors.message of type string.",
+				Message: "Failed to unmarshal the datasource response: json: cannot unmarshal number into Go struct field DatasourceResponse.errors.0.message of type string.",
 				Code:    adapter_api_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			}),
 		},

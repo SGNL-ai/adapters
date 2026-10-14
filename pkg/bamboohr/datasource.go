@@ -185,9 +185,9 @@ func ParseResponse(body []byte, request *Request) (
 	*pagination.CompositeCursor[int64],
 	*framework.Error,
 ) {
-	var response *DatasourceResponse
+	var response DatasourceResponse
 
-	if unmarshalErr := json.Unmarshal(body, &response); unmarshalErr != nil || response == nil {
+	if unmarshalErr := json.Unmarshal(body, &response); unmarshalErr != nil {
 		return nil, nil, &framework.Error{
 			Message: fmt.Sprintf("Failed to unmarshal the datasource response: %v.", unmarshalErr),
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
