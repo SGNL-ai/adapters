@@ -4,7 +4,7 @@
 ARG DB2_CLI_VERSION=v12.1.2
 
 # Note: IBM DB2 CLI driver is x86_64 only. Use --platform linux/amd64 when building on ARM.
-FROM golang:1.26-trixie
+FROM golang:1.27-trixie
 
 ARG DB2_CLI_VERSION
 
