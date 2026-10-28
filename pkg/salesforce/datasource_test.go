@@ -351,6 +351,31 @@ func TestParseResponse(t *testing.T) {
 				Code:    adapter_api_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			}),
 		},
+		// An empty result set is legitimate and must still sync as an empty page.
+		"empty_records": {
+			body:             []byte(`{"records": [], "totalSize": 0, "done": true}`),
+			entityExternalID: "User",
+			wantObjects:      []map[string]interface{}{},
+			wantNextCursor:   nil,
+		},
+		"missing_records_field": {
+			body:             []byte(`{"totalSize": 0, "done": true}`),
+			entityExternalID: "User",
+			wantNextCursor:   nil,
+			wantErr: testutil.GenPtr(framework.Error{
+				Message: "Records field is missing in the datasource response.",
+				Code:    adapter_api_v1.ErrorCode_ERROR_CODE_INTERNAL,
+			}),
+		},
+		"null_body": {
+			body:             []byte(`null`),
+			entityExternalID: "User",
+			wantNextCursor:   nil,
+			wantErr: testutil.GenPtr(framework.Error{
+				Message: "Records field is missing in the datasource response.",
+				Code:    adapter_api_v1.ErrorCode_ERROR_CODE_INTERNAL,
+			}),
+		},
 	}
 
 	for name, tt := range tests {

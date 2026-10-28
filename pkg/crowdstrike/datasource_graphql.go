@@ -99,7 +99,7 @@ func parseGraphQLResponse(
 	body []byte,
 	entityExternalID string,
 ) ([]map[string]any, string, *framework.Error) {
-	var data *DatasourceResponse
+	var data DatasourceResponse
 
 	unmarshalErr := json.Unmarshal(body, &data)
 	if unmarshalErr != nil {
@@ -112,6 +112,13 @@ func parseGraphQLResponse(
 	items := data.Entities
 	if entityExternalID == Incident {
 		items = data.Incidents
+	}
+
+	if items.Nodes == nil {
+		return nil, "", &framework.Error{
+			Message: "Nodes field is missing in the datasource response.",
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}
 	}
 
 	if items.PageInfo.HasNextPage {

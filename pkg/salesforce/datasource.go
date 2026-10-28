@@ -134,5 +134,12 @@ func ParseResponse(body []byte) (objects []map[string]any, nextCursor *string, e
 		}
 	}
 
+	if data.Records == nil {
+		return nil, nil, &framework.Error{
+			Message: "Records field is missing in the datasource response.",
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}
+	}
+
 	return data.Records, data.NextRecordsURL, nil
 }

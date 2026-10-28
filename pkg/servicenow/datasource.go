@@ -173,5 +173,12 @@ func ParseResponse(body []byte) ([]map[string]any, *framework.Error) {
 		}
 	}
 
+	if data.Result == nil {
+		return nil, &framework.Error{
+			Message: "Result field is missing in the datasource response.",
+			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+		}
+	}
+
 	return data.Result, nil
 }
