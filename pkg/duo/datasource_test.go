@@ -1093,6 +1093,13 @@ func TestParseResponse(t *testing.T) {
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			}),
 		},
+		"missing_response_field": {
+			body: []byte(`{"metadata": {"total_objects": 0}, "stat": "OK"}`),
+			wantErr: testutil.GenPtr(framework.Error{
+				Message: "Objects field is missing in the datasource response.",
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+			}),
+		},
 	}
 
 	for name, tt := range tests {

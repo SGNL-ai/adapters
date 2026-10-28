@@ -697,7 +697,7 @@ func TestParseResponse(t *testing.T) {
 			entityExternalID: "sys_user",
 			wantNextCursor:   nil,
 			wantErr: testutil.GenPtr(framework.Error{
-				Message: `Failed to unmarshal the datasource response: json: cannot unmarshal string into Go struct field DatasourceResponse.result of type map[string]interface {}.`,
+				Message: `Failed to unmarshal the datasource response: json: cannot unmarshal string into DatasourceResponse.result.0 of type map[string]interface {}.`,
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			}),
 		},
@@ -707,6 +707,28 @@ func TestParseResponse(t *testing.T) {
 			wantNextCursor:   nil,
 			wantErr: testutil.GenPtr(framework.Error{
 				Message: "Failed to unmarshal the datasource response: invalid character '}' after object key.",
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+			}),
+		},
+		// An empty result set is legitimate and must still sync as an empty page.
+		"empty_result": {
+			body:             []byte(`{"result": []}`),
+			entityExternalID: "sys_user",
+			wantObjects:      []map[string]interface{}{},
+		},
+		"missing_result_field": {
+			body:             []byte(`{}`),
+			entityExternalID: "sys_user",
+			wantErr: testutil.GenPtr(framework.Error{
+				Message: "Result field is missing in the datasource response.",
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+			}),
+		},
+		"null_body": {
+			body:             []byte(`null`),
+			entityExternalID: "sys_user",
+			wantErr: testutil.GenPtr(framework.Error{
+				Message: "Result field is missing in the datasource response.",
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			}),
 		},

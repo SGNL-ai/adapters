@@ -49,6 +49,13 @@ func TestParseResponse(t *testing.T) {
 				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 			}),
 		},
+		"missing_value_field": {
+			body: []byte(`{"@odata.nextLink": "https://graph.microsoft.com/v1.0/applications?$top=1"}`),
+			wantErr: testutil.GenPtr(framework.Error{
+				Message: "Value field is missing in the datasource response.",
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+			}),
+		},
 	}
 
 	for name, tt := range tests {

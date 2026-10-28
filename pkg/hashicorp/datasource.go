@@ -101,7 +101,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*Response, 
 }
 
 func ParseResponse(body []byte) (objects []map[string]any, nextCursor *string, err *framework.Error) {
-	var data *DatasourceResponse
+	var data DatasourceResponse
 
 	if unmarshalErr := json.Unmarshal(body, &data); unmarshalErr != nil {
 		return nil, nil, &framework.Error{
@@ -110,9 +110,9 @@ func ParseResponse(body []byte) (objects []map[string]any, nextCursor *string, e
 		}
 	}
 
-	if data == nil {
+	if data.Items == nil {
 		return nil, nil, &framework.Error{
-			Message: "Unmarshaled response data is nil",
+			Message: "Items field is missing in the datasource response.",
 			Code:    api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
 		}
 	}

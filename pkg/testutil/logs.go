@@ -57,9 +57,19 @@ func ValidateLogOutput(t *testing.T, observedLogs *observer.ObservedLogs, expect
 			gotLog["responseNextCursor"] = cursorMap
 		}
 
-		// Parse responseBody if it's a json.RawMessage.
+		// Parse responseBody if it's JSON. Depending on the Go version, zap logs
+		// a json.RawMessage either as its raw type or (via its Stringer interface) as a string.
 		if responseBody, ok := gotLog[fields.FieldResponseBody]; ok {
-			if rawJSON, ok := responseBody.(json.RawMessage); ok {
+			var rawJSON []byte
+
+			switch v := responseBody.(type) {
+			case json.RawMessage:
+				rawJSON = v
+			case string:
+				rawJSON = []byte(v)
+			}
+
+			if rawJSON != nil {
 				var parsed map[string]any
 
 				if err := json.Unmarshal(rawJSON, &parsed); err == nil {

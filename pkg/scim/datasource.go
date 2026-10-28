@@ -142,7 +142,7 @@ func (d *Datasource) GetPage(ctx context.Context, request *Request) (*AdapterRes
 }
 
 func ParseResponse(body []byte, pageSize int64) (objects []map[string]any, nextCursor string, err *framework.Error) {
-	var scimResponse *Response
+	var scimResponse Response
 
 	if unmarshalErr := json.Unmarshal(body, &scimResponse); unmarshalErr != nil {
 		return nil, "", &framework.Error{
@@ -161,7 +161,9 @@ func ParseResponse(body []byte, pageSize int64) (objects []map[string]any, nextC
 	nextCursor = ""
 
 	nextStartIndex := scimResponse.StartIndex + scimResponse.ItemsPerPage
-	if nextStartIndex <= scimResponse.TotalResults {
+	// A page carrying no items has no successor; advancing by zero would re-request
+	// the same startIndex indefinitely.
+	if scimResponse.ItemsPerPage > 0 && nextStartIndex <= scimResponse.TotalResults {
 		nextCursor = strconv.FormatInt(nextStartIndex, 10)
 	}
 
