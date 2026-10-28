@@ -11,6 +11,7 @@ import (
 	"time"
 
 	framework "github.com/sgnl-ai/adapter-framework"
+	api_adapter_v1 "github.com/sgnl-ai/adapter-framework/api/adapter/v1"
 	"github.com/sgnl-ai/adapters/pkg/logs/zaplogger/fields"
 	"github.com/sgnl-ai/adapters/pkg/scim"
 	"github.com/sgnl-ai/adapters/pkg/testutil"
@@ -419,6 +420,85 @@ func TestGroupGetPage(t *testing.T) {
 
 			if !reflect.DeepEqual(gotRes, tt.wantRes) {
 				t.Errorf("gotRes: %+v, wantRes: %+v", gotRes, tt.wantRes)
+			}
+
+			if !reflect.DeepEqual(gotErr, tt.wantErr) {
+				t.Errorf("gotErr: %v, wantErr: %v", gotErr, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestParseResponse(t *testing.T) {
+	tests := map[string]struct {
+		body           []byte
+		pageSize       int64
+		wantObjects    []map[string]any
+		wantNextCursor string
+		wantErr        *framework.Error
+	}{
+		"page_with_successor": {
+			body: []byte(`{"totalResults": 5, "itemsPerPage": 2, "startIndex": 1, ` +
+				`"Resources": [{"id": "a"}, {"id": "b"}]}`),
+			pageSize:       2,
+			wantObjects:    []map[string]any{{"id": "a"}, {"id": "b"}},
+			wantNextCursor: "3",
+		},
+		"final_page": {
+			body:           []byte(`{"totalResults": 5, "itemsPerPage": 2, "startIndex": 5, "Resources": [{"id": "e"}]}`),
+			pageSize:       2,
+			wantObjects:    []map[string]any{{"id": "e"}},
+			wantNextCursor: "",
+		},
+		"empty_collection_with_resources": {
+			body:           []byte(`{"totalResults": 0, "itemsPerPage": 0, "startIndex": 1, "Resources": []}`),
+			pageSize:       2,
+			wantObjects:    []map[string]any{},
+			wantNextCursor: "",
+		},
+		"empty_collection_without_resources": {
+			body:           []byte(`{"totalResults": 0, "itemsPerPage": 0, "startIndex": 1}`),
+			pageSize:       2,
+			wantObjects:    nil,
+			wantNextCursor: "",
+		},
+		// A null body must not panic and must not yield a cursor, otherwise the
+		// sync would re-request startIndex 0 forever.
+		"null_body": {
+			body:           []byte(`null`),
+			pageSize:       2,
+			wantObjects:    nil,
+			wantNextCursor: "",
+		},
+		"page_size_exceeded": {
+			body:     []byte(`{"totalResults": 5, "itemsPerPage": 5, "startIndex": 1, "Resources": []}`),
+			pageSize: 2,
+			wantErr: testutil.GenPtr(framework.Error{
+				Message: "SCIM SoR returned more than the requested page size: 5.",
+				Code:    api_adapter_v1.ErrorCode_ERROR_CODE_DATASOURCE_FAILED,
+			}),
+		},
+		"invalid_resources_type": {
+			body:     []byte(`{"totalResults": 5, "itemsPerPage": 2, "startIndex": 1, "Resources": "nope"}`),
+			pageSize: 2,
+			wantErr: testutil.GenPtr(framework.Error{
+				Message: "Failed to unmarshal the datasource response: json: cannot unmarshal string " +
+					"into Go struct field Response.Resources of type []map[string]interface {}.",
+				Code: api_adapter_v1.ErrorCode_ERROR_CODE_INTERNAL,
+			}),
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			gotObjects, gotNextCursor, gotErr := scim.ParseResponse(tt.body, tt.pageSize)
+
+			if !reflect.DeepEqual(gotObjects, tt.wantObjects) {
+				t.Errorf("gotObjects: %v, wantObjects: %v", gotObjects, tt.wantObjects)
+			}
+
+			if gotNextCursor != tt.wantNextCursor {
+				t.Errorf("gotNextCursor: %v, wantNextCursor: %v", gotNextCursor, tt.wantNextCursor)
 			}
 
 			if !reflect.DeepEqual(gotErr, tt.wantErr) {
